@@ -1581,18 +1581,18 @@ class NetworkNode {
           // ✅ CRITICAL: التأكد من عدم إرجاع قيم سالبة أو غير صحيحة
           finalBalance = Math.max(0, finalBalance);
           
-          // 🔧 FIX: استخدام floor (تقريب لأسفل) لتجنب إضافة قيمة غير موجودة
-          // الشبكات الحقيقية لا تضيف أبداً - تستخدم Wei كأعداد صحيحة
-          // floor to 8 decimals ثم تحويل لـ Wei
-          const truncatedBalance = Math.floor(finalBalance * 1e8) / 1e8;
-          const balanceInWei = Math.floor(truncatedBalance * 1e18);
+          // 🔧 FIX: استخدام BigInt لتجنب 0.225336999999999904
+          // تقريب لـ 8 أرقام عشرية ثم تحويل لـ Wei كـ BigInt نظيف
+          // هذا يضمن رقم مثل 225337000000000000 بدلاً من 225336999999999904
+          const decimal8 = Math.floor(finalBalance * 1e8); // رقم صحيح بـ 8 أرقام
+          const balanceInWeiBigInt = BigInt(decimal8) * BigInt(1e10); // ضرب في 10^10 للوصول لـ 10^18
           
           // ✅ التحقق من صحة القيمة النهائية
-          if (balanceInWei < 0 || isNaN(balanceInWei) || !isFinite(balanceInWei)) {
+          if (balanceInWeiBigInt < 0n) {
             console.warn(`⚠️ Invalid balance calculated for ${normalizedAddress}, returning 0`);
             result = '0x0';
           } else {
-            result = '0x' + balanceInWei.toString(16);
+            result = '0x' + balanceInWeiBigInt.toString(16);
           }
           break;
 

@@ -122,14 +122,14 @@ class WebSocketRPCHandler extends EventEmitter {
           const [address] = params;
           client.address = address;
           const balance = accessNode.network.getBalance(address);
-          // 🔧 FIX: floor (لأسفل) لتجنب إضافة قيمة - مثل الشبكات الحقيقية
-          const truncatedBal = Math.floor(Math.max(0, balance) * 1e8) / 1e8;
-          const balanceWei = Math.floor(truncatedBal * 1e18);
+          // 🔧 FIX: BigInt لتجنب 0.225336999999999904
+          const decimal8Val = Math.floor(Math.max(0, balance) * 1e8);
+          const balanceWeiBigInt = BigInt(decimal8Val) * BigInt(1e10);
           
           return {
             jsonrpc: '2.0',
             id: id,
-            result: '0x' + balanceWei.toString(16)
+            result: '0x' + balanceWeiBigInt.toString(16)
           };
 
         case 'eth_blockNumber':
