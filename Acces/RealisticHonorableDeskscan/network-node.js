@@ -1581,10 +1581,11 @@ class NetworkNode {
           // ✅ CRITICAL: التأكد من عدم إرجاع قيم سالبة أو غير صحيحة
           finalBalance = Math.max(0, finalBalance);
           
-          // 🔧 FIX: تقريب الرصيد لتجنب أرقام طويلة مثل 0.225336999999999904
-          // تقريب إلى 8 أرقام عشرية (مثل Binance) ثم تحويل لـ Wei
-          const roundedBalance = Math.round(finalBalance * 1e8) / 1e8;
-          const balanceInWei = Math.floor(roundedBalance * 1e18);
+          // 🔧 FIX: استخدام floor (تقريب لأسفل) لتجنب إضافة قيمة غير موجودة
+          // الشبكات الحقيقية لا تضيف أبداً - تستخدم Wei كأعداد صحيحة
+          // floor to 8 decimals ثم تحويل لـ Wei
+          const truncatedBalance = Math.floor(finalBalance * 1e8) / 1e8;
+          const balanceInWei = Math.floor(truncatedBalance * 1e18);
           
           // ✅ التحقق من صحة القيمة النهائية
           if (balanceInWei < 0 || isNaN(balanceInWei) || !isFinite(balanceInWei)) {

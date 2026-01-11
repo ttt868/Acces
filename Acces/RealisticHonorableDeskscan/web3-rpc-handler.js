@@ -77,11 +77,11 @@ export async function handleWeb3RPC(request) {
           // ⚡ NETWORK-ONLY - قراءة مباشرة من Ledger State لضمان التحديث الفوري
           const balance = network.getBalance(address);
           
-          // 🔧 FIX: تقريب لـ 8 أرقام لتجنب أرقام طويلة مثل 0.225336999999999904
-          const roundedBalance = Math.round(Math.max(0, balance) * 1e8) / 1e8;
+          // 🔧 FIX: floor (لأسفل) لتجنب إضافة قيمة غير موجودة - مثل Ethereum
+          const truncatedBalance = Math.floor(Math.max(0, balance) * 1e8) / 1e8;
           
           // تحويل الرصيد إلى Wei (10^18) كعدد صحيح كبير جداً (BigInt)
-          const balanceWeiBigInt = BigInt(Math.floor(roundedBalance * 1e9)) * BigInt(1e9);
+          const balanceWeiBigInt = BigInt(Math.floor(truncatedBalance * 1e9)) * BigInt(1e9);
           const balanceHex = '0x' + balanceWeiBigInt.toString(16);
 
           return {
