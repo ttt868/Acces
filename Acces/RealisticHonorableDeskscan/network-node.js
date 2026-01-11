@@ -1580,7 +1580,11 @@ class NetworkNode {
           
           // ✅ CRITICAL: التأكد من عدم إرجاع قيم سالبة أو غير صحيحة
           finalBalance = Math.max(0, finalBalance);
-          const balanceInWei = Math.floor(finalBalance * 1e18);
+          
+          // 🔧 FIX: تقريب الرصيد لتجنب أرقام طويلة مثل 0.225336999999999904
+          // تقريب إلى 8 أرقام عشرية (مثل Binance) ثم تحويل لـ Wei
+          const roundedBalance = Math.round(finalBalance * 1e8) / 1e8;
+          const balanceInWei = Math.floor(roundedBalance * 1e18);
           
           // ✅ التحقق من صحة القيمة النهائية
           if (balanceInWei < 0 || isNaN(balanceInWei) || !isFinite(balanceInWei)) {

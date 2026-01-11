@@ -122,7 +122,9 @@ class WebSocketRPCHandler extends EventEmitter {
           const [address] = params;
           client.address = address;
           const balance = accessNode.network.getBalance(address);
-          const balanceWei = Math.floor(Math.max(0, balance) * 1e18);
+          // 🔧 FIX: تقريب لـ 8 أرقام لتجنب 0.225336999999999904
+          const roundedBal = Math.round(Math.max(0, balance) * 1e8) / 1e8;
+          const balanceWei = Math.floor(roundedBal * 1e18);
           
           return {
             jsonrpc: '2.0',
