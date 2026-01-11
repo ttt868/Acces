@@ -10518,8 +10518,11 @@ if (totalCost > (currentBalance + precision)) {
 
     // Show More button (only if there are more to show)
     if (displayed < total) {
+      const isDark = document.documentElement.classList.contains('dark-theme');
+      const btnBg = isDark ? '#3a3a3a' : '#60a5fa';
+      const btnBorder = isDark ? '1px solid #4a4a4a' : 'none';
       buttonsHtml += `
-        <button onclick="showMoreTransactions()" style="padding: 10px 20px; background: #007AFF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px;">
+        <button onclick="showMoreTransactions()" style="padding: 10px 20px; background: ${btnBg}; color: white; border: ${btnBorder}; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px;">
           <i class="fas fa-chevron-down"></i> ${showMoreText} (${displayed}/${total})
         </button>
       `;
@@ -10669,10 +10672,11 @@ if (totalCost > (currentBalance + precision)) {
     if (menu) menu.style.display = 'none';
 
     // Highlight active filter option (including showAll)
+    const isDarkMode = document.documentElement.classList.contains('dark-theme');
     document.querySelectorAll('.tx-filter-option').forEach(opt => {
       if (opt.getAttribute('data-filter') === filter) {
-        opt.style.background = 'var(--primary-light, #e0f2fe)';
-        opt.style.color = '#007AFF';
+        opt.style.background = isDarkMode ? '#3a3a3a' : 'var(--primary-light, #e0f2fe)';
+        opt.style.color = isDarkMode ? '#f5f5f5' : '#60a5fa';
       } else {
         opt.style.background = 'transparent';
         opt.style.color = 'var(--text-primary, inherit)';
@@ -10896,7 +10900,10 @@ if (totalCost > (currentBalance + precision)) {
     }
 
     if (displayed < total) {
-      buttonsHtml += `<button onclick="showMoreFiltered()" style="padding: 10px 20px; background: #007AFF; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px;"><i class="fas fa-chevron-down"></i> ${showMoreText} (${displayed}/${total})</button>`;
+      const isDark = document.documentElement.classList.contains('dark-theme');
+      const btnBg = isDark ? '#3a3a3a' : '#60a5fa';
+      const btnBorder = isDark ? '1px solid #4a4a4a' : 'none';
+      buttonsHtml += `<button onclick="showMoreFiltered()" style="padding: 10px 20px; background: ${btnBg}; color: white; border: ${btnBorder}; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px;"><i class="fas fa-chevron-down"></i> ${showMoreText} (${displayed}/${total})</button>`;
     }
 
     if (displayed > 25 || window.currentTxFilter !== 'all' || window.currentTxSearch) {
