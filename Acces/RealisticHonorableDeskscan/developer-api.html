@@ -1435,6 +1435,40 @@
                 width: 100%;
             }
         }
+
+        /* Footer */
+        .footer {
+            background: var(--footer-bg);
+            color: var(--footer-text);
+            padding: 40px 0 20px;
+            margin-top: 50px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer-link:hover {
+            color: var(--accent-color);
+        }
     </style>
 </head>
 <body>
@@ -3648,5 +3682,19 @@ if data['success']:
             }
         }
     </script>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="about.html" class="footer-link">About</a>
+                <a href="faq.html" class="footer-link">FAQ</a>
+                <a href="developer-api.html" class="footer-link">API</a>
+                <a href="contact.html" class="footer-link">Contact Us</a>
+                <a href="terms-of-service.html" class="footer-link">Terms</a>
+            </div>
+            <p>&copy; 2025 AccessScan. All rights reserved.</p>
+        </div>
+    </footer>
 </body>
 </html>
