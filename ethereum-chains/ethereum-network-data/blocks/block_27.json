@@ -1,0 +1,52 @@
+{
+  "index": 27,
+  "timestamp": 1766341282710,
+  "transactions": [
+    {
+      "fromAddress": "0xcbabdc87205528b398f492e260d535b403166d67",
+      "toAddress": "0x6339953df540967a0a5449825e4ec8ce0f45df1c",
+      "amount": 0.0002,
+      "gasPrice": 0.00002,
+      "gasFee": 0.00002,
+      "timestamp": 1766341281920,
+      "signature": null,
+      "hash": "4097d8f8ae186324a2f90127a34e34366eded9d04a4492da7476312b0ad4cc6b",
+      "txId": "4097d8f8ae186324a2f90127a34e34366eded9d04a4492da7476312b0ad4cc6b",
+      "transactionHash": "4097d8f8ae186324a2f90127a34e34366eded9d04a4492da7476312b0ad4cc6b",
+      "id": "4097d8f8ae186324a2f90127a34e34366eded9d04a4492da7476312b0ad4cc6b",
+      "internal": true,
+      "isExternalSender": false,
+      "isExternalRecipient": false,
+      "isLocalTransaction": true,
+      "mixedTransaction": false,
+      "rpcValidated": true,
+      "nonce": 3,
+      "processed": true,
+      "processedAt": 1766341282629,
+      "balanceValidated": true,
+      "recipientUpdated": true,
+      "recipientBalanceConfirmed": true,
+      "balanceUpdated": true
+    },
+    {
+      "fromAddress": null,
+      "toAddress": "0x0000000000000000000000000000000000000001",
+      "amount": 0.25,
+      "gasPrice": 1766341282710,
+      "gasFee": 1766341282710,
+      "timestamp": 1766341282710,
+      "signature": null,
+      "hash": "a5c0349f5fd6a48ca15d4cd140bb852fa7e48e787e779bc4d211f96eeea20262",
+      "txId": "a5c0349f5fd6a48ca15d4cd140bb852fa7e48e787e779bc4d211f96eeea20262",
+      "transactionHash": "a5c0349f5fd6a48ca15d4cd140bb852fa7e48e787e779bc4d211f96eeea20262",
+      "id": "a5c0349f5fd6a48ca15d4cd140bb852fa7e48e787e779bc4d211f96eeea20262"
+    }
+  ],
+  "previousHash": "4e52c9fcf5a112967edd6d6aa727a45112dd3920236d3e4e9e2741773feb5e39",
+  "nonce": 0,
+  "hash": "33af42c93f2a38be46f35e2cb2dfd6223505c3a9b0d864181cf1550370945cdd",
+  "merkleRoot": "fe987f28602128466270ce57bd248e2e37abace8b0f00f0747ba8fc933b104e3",
+  "persistentHash": "ac8617426f4a8c1460da8625df691d74319f9aecff95cb8cdd90c86f8c594155",
+  "savedAt": 1766532113438,
+  "ethereumStyle": true
+}
