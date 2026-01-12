@@ -3929,7 +3929,7 @@
                     timestamp: txData.timestamp,
                     blockNumber: txData.blockNumber || txData.blockIndex,
                     gasUsed: txData.gasUsed || 21000,
-                    gasPrice: txData.gasPrice || 20000000000,
+                    gasPrice: txData.gasPrice || 952380952, // ✅ صحيح: 0.952 Gwei = 0.00002 ACCESS / 21000
                     nonce: txData.nonce || txData.transactionNonce || ((txData.blockIndex || txData.blockNumber || 0) * 2 + 1),
                     transactionIndex: txData.transactionIndex || txData.txIndex || txData.index || 0,
                     status: txData.status || 'success',

@@ -655,8 +655,8 @@ export async function handleNetworkAPI(req, res, pathname, method) {
         'Expires': '0'
       });
       res.end(JSON.stringify({
-        gasPrice: '0x' + Math.floor(gasPrice * 1e18).toString(16), // Format as hex string
-        formatted: gasPrice.toFixed(8) + ' ACCESS'
+        gasPrice: '0x' + Math.floor(gasPrice * 1e18 / 21000).toString(16), // ✅ صحيح: gasPrice per unit
+        formatted: gasPrice.toFixed(8) + ' ACCESS (total fee)'
       }));
       return true;
     }

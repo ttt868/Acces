@@ -431,7 +431,7 @@ class NetworkNode {
             sha3Uncles: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347',
             extraData: '0x',
             uncles: [],
-            baseFeePerGas: '0x3b9aca00'
+            baseFeePerGas: '0x38c42e18' // ✅ سعر غاز صحيح = 952380952 Wei = 0.00002 ACCESS / 21000
           }
         }
       };
@@ -1136,7 +1136,7 @@ class NetworkNode {
       // Create RLP-encoded transaction data
       const fields = [
         txData.nonce || 0,
-        txData.gasPrice || 1000000000,
+        txData.gasPrice || 952380952, // ✅ صحيح: 0.00002 ACCESS / 21000 = 952380952 Wei
         txData.gasLimit || 21000,
         txData.to || '0x',
         txData.value || 0,
@@ -1761,13 +1761,15 @@ class NetworkNode {
               from: txData.from,
               to: txData.to,
               value: txData.value + ' ACCESS',
-              gasPrice: (txData.gasPrice / 1e9) + ' Gwei',
+              gasPrice: '0.952 Gwei', // 🔐 محسوب من 0.00002 ACCESS
               nonce: txData.nonce
             });
 
             // STRICT BALANCE CHECK - MANDATORY FOR ALL TRANSACTIONS
             const senderBalance = this.blockchain.getBalance(txData.from);
-            const gasFeeInAccess = (txData.gasPrice * txData.gasLimit) / 1e18;
+            // 🔐 رسوم الغاز الثابتة = 0.00002 ACCESS (لا تتغير بناءً على ما ترسله المحفظة)
+            const FIXED_GAS_FEE = 0.00002;
+            const gasFeeInAccess = FIXED_GAS_FEE;
             const totalRequired = txData.value + gasFeeInAccess;
 
             console.log(`💰 BALANCE CHECK:`, {
@@ -1907,9 +1909,10 @@ class NetworkNode {
               this.recentTransactionCache = new Map();
             }
             
-            // ✅ FIX: استخدام المتغيرات الصحيحة المعرّفة مسبقاً
-            const txGasFee = (txData.gasPrice * txData.gasLimit) / 1e18;
-            const txGasPrice = txData.gasPrice || 1e9;
+            // 🔐 رسوم الغاز الثابتة = 0.00002 ACCESS
+            const FIXED_GAS_FEE_TX = 0.00002;
+            const txGasFee = FIXED_GAS_FEE_TX;
+            const txGasPrice = FIXED_GAS_FEE_TX;
             
             this.recentTransactionCache.set(txHash, {
               hash: txHash,
@@ -2195,8 +2198,12 @@ class NetworkNode {
           break;
 
         case 'eth_gasPrice':
-          // MetaMask يطلب هذا أحياناً
-          result = '0x3B9ACA00'; // 1 Gwei
+          // 🔐 سعر الغاز المحسوب من رسوم ثابتة 0.00002 ACCESS
+          // gasPrice = 0.00002 ACCESS / 21000 gas = ~952380952 Wei
+          const FIXED_GAS_FEE_NODE = 0.00002;
+          const GAS_LIMIT_STANDARD = 21000;
+          const gasPriceWeiCalculated = Math.floor(FIXED_GAS_FEE_NODE * 1e18 / GAS_LIMIT_STANDARD);
+          result = '0x' + gasPriceWeiCalculated.toString(16); // ~0x38c42e18 = 952380952 Wei
           break;
 
         case 'eth_estimateGas':
@@ -2249,11 +2256,10 @@ class NetworkNode {
               console.warn('Balance sync warning during Use Max:', dbError.message);
             }
 
-            // حساب رسوم الغاز بدقة مثل شبكات العملات المشهورة
-            const gasPriceGwei = 1; // 1 Gwei ثابت (مثل BSC)
-            const gasPriceWei = gasPriceGwei * 1e9;
-            const totalGasCostWei = gasEstimate * gasPriceWei;
-            const exactGasFeeAccess = totalGasCostWei / 1e18; // رسوم الغاز بالضبط
+            // حساب رسوم الغاز - ثابت 0.00002 ACCESS (مثل شبكة Access)
+            const FIXED_GAS_FEE = 0.00002; // 🔒 رسوم غاز ثابتة للشبكة
+            const exactGasFeeAccess = FIXED_GAS_FEE;
+            const gasPriceWei = Math.floor(FIXED_GAS_FEE * 1e18 / gasEstimate); // حساب عكسي للمحافظ
 
             console.log(`💰 USE MAX CALCULATION:`, {
               totalBalance: currentBalance.toFixed(8) + ' ACCESS',
@@ -2337,13 +2343,15 @@ class NetworkNode {
           }
           break;
 
+        case 'wallet_calculateMaxTransfer':
+        case 'eth_maxTransferAmount':
         case 'access_calculateMaxSendable':
         case 'wallet_getMaxSendable':
         case 'eth_getMaxSendable':
         case 'wallet_useMax':
         case 'metamask_useMax':
         case 'trustwallet_useMax':
-          // نظام USE MAX محسّن يعمل مثل MetaMask وTrust Wallet وBinance Smart Chain
+          // 🔥 نظام USE MAX الموحد - يعمل مثل MetaMask وTrust Wallet وBinance Smart Chain
           const senderAddr = params[0] || params?.from || params?.address;
           if (senderAddr) {
             // الحصول على الرصيد الدقيق مع المزامنة
@@ -2366,18 +2374,17 @@ class NetworkNode {
               console.warn('USE MAX: DB sync warning:', dbError.message);
             }
 
-            // حساب رسوم الغاز بدقة (مثل شبكات العملات المشهورة)
+            // حساب رسوم الغاز - ثابت 0.00002 ACCESS
+            const FIXED_GAS_FEE = 0.00002; // 🔒 رسوم غاز ثابتة
+            const exactGasFeeAccess = FIXED_GAS_FEE;
             const gasLimit = 21000;
-            const gasPriceGwei = 1; // 1 Gwei (مثل BSC)
-            const gasPriceWei = gasPriceGwei * 1e9;
-            const totalGasCostWei = gasLimit * gasPriceWei;
-            const exactGasFeeAccess = totalGasCostWei / 1e18; // 0.000021 ACCESS
+            const gasPriceWei = Math.floor(FIXED_GAS_FEE * 1e18 / gasLimit);
 
             console.log(`💰 USE MAX CALCULATION:`, {
               totalBalance: currentBal.toFixed(8) + ' ACCESS',
               gasFee: exactGasFeeAccess.toFixed(8) + ' ACCESS',
               gasLimit: gasLimit,
-              gasPriceGwei: gasPriceGwei
+              fixedGasFee: FIXED_GAS_FEE
             });
 
             // حساب الحد الأقصى (مثل MetaMask تماماً)
@@ -2768,10 +2775,11 @@ class NetworkNode {
 
             // حساب رسوم الغاز بدقة أكبر
             const standardGasLimit = 21000; // الغاز الأساسي للتحويل البسيط
-            const gasPriceInGwei = 1; // 1 Gwei = 1,000,000,000 wei
-            const gasPriceInWei = gasPriceInGwei * 1e9;
+            // ✅ صحيح: 0.00002 ACCESS / 21000 = 952380952 Wei ≈ 0.952 Gwei
+            const FIXED_GAS_FEE = 0.00002; // ACCESS
+            const gasPriceInWei = Math.floor(FIXED_GAS_FEE * 1e18 / standardGasLimit); // 952380952 Wei
             const totalGasCostInWei = standardGasLimit * gasPriceInWei;
-            const totalGasCostInAccess = totalGasCostInWei / 1e18;
+            const totalGasCostInAccess = FIXED_GAS_FEE; // ✅ ثابت = 0.00002 ACCESS
 
             // إضافة هامش أمان صغير (0.5% إضافي)
             const safetyMargin = senderBalance * 0.005;
@@ -2791,7 +2799,7 @@ class NetworkNode {
               maxSendable: finalMaxSendable.toFixed(8) + ' ACCESS',
               maxSendableWei: '0x' + Math.floor(finalMaxSendable * 1e18).toString(16),
               estimatedGasFee: totalGasCostInAccess.toFixed(8) + ' ACCESS',
-              gasPrice: gasPriceInGwei + ' Gwei',
+              gasPrice: (gasPriceInWei / 1e9).toFixed(3) + ' Gwei', // ✅ 0.952 Gwei
               gasLimit: standardGasLimit,
               safetyMargin: safetyMargin.toFixed(8) + ' ACCESS',
               chainId: '0x5968',
@@ -2863,50 +2871,8 @@ class NetworkNode {
           }
           break;
 
-        case 'wallet_calculateMaxTransfer':
-        case 'eth_maxTransferAmount':
-        case 'wallet_useMax':
-          // طلبات خاصة بـ "Use Max" من المحافظ المختلفة
-          const useMaxAddress = params[0] || params?.from || params?.address;
-          if (useMaxAddress) {
-            const currentBalance = this.blockchain.getBalance(useMaxAddress);
-
-            // حساب رسوم الغاز بدقة
-            const gasLimit = 21000;
-            const gasPriceGwei = 1;
-            const gasPriceWei = gasPriceGwei * 1e9;
-            const totalGasCost = gasLimit * gasPriceWei;
-            const gasFeeAccess = totalGasCost / 1e18;
-
-            // حساب الحد الأقصى مع هامش أمان ديناميكي
-            const safetyBuffer = currentBalance > 10 ? 0.00001 : 0.000005;
-            const maxTransferAmount = Math.max(0, currentBalance - gasFeeAccess - safetyBuffer);
-
-            result = {
-              address: useMaxAddress,
-              currentBalance: currentBalance.toFixed(8) + ' ACCESS',
-              maxTransferAmount: maxTransferAmount.toFixed(8) + ' ACCESS',
-              maxTransferAmountWei: '0x' + Math.floor(maxTransferAmount * 1e18).toString(16),
-              estimatedGasFee: gasFeeAccess.toFixed(8) + ' ACCESS',
-              estimatedGasFeeWei: '0x' + totalGasCost.toString(16),
-              gasPrice: gasPriceGwei + ' Gwei',
-              gasLimit: gasLimit,
-              safetyBuffer: safetyBuffer.toFixed(8) + ' ACCESS',
-              canTransferMax: maxTransferAmount > 0,
-              useMaxReady: true,
-              walletCompatibility: {
-                metamask: true,
-                trustWallet: true,
-                coinbaseWallet: true,
-                phantomWallet: true
-              }
-            };
-
-            console.log(`💎 USE MAX calculation for ${useMaxAddress}: ${maxTransferAmount.toFixed(8)} ACCESS ready for transfer`);
-          } else {
-            throw new Error('Address required for Use Max calculation');
-          }
-          break;
+        // ⚠️ wallet_useMax و eth_maxTransferAmount معالجة في القسم العلوي (سطر ~2340)
+        // لتجنب التكرار - تم توحيد كل طلبات USE MAX في مكان واحد
 
         case 'eth_accounts':
           // MetaMask يطلب هذا أحياناً
@@ -2979,17 +2945,17 @@ class NetworkNode {
           break;
 
         case 'eth_feeHistory':
-          // Fee history for MetaMask gas estimation
+          // Fee history for MetaMask gas estimation - محسوب لـ 0.00002 ACCESS
           result = {
-            baseFeePerGas: ['0x3B9ACA00'], // 1 Gwei
+            baseFeePerGas: ['0x38c42e18'], // ✅ سعر غاز صحيح = 952380952 Wei
             gasUsedRatio: [0.5],
-            reward: [['0x77359400']] // 2 Gwei
+            reward: [['0x38c42e18']] // ✅ نفس القيمة = 952380952 Wei
           };
           break;
 
         case 'eth_maxPriorityFeePerGas':
-          // Maximum priority fee per gas
-          result = '0x3B9ACA00'; // 1 Gwei
+          // Maximum priority fee per gas - محسوب لـ 0.00002 ACCESS
+          result = '0x38c42e18'; // ✅ سعر غاز صحيح = 952380952 Wei
           break;
 
         case 'web3_sha3':
@@ -3102,6 +3068,11 @@ class NetworkNode {
               });
             }
             
+            // 🔐 حساب gasPrice الصحيح من رسوم ثابتة 0.00002 ACCESS
+            const FIXED_GAS_FEE_RECEIPT = 0.00002;
+            const GAS_LIMIT_RECEIPT = 21000;
+            const gasPriceWeiReceipt = Math.floor(FIXED_GAS_FEE_RECEIPT * 1e18 / GAS_LIMIT_RECEIPT);
+            
             // ✅ ALWAYS return array, even if empty - prevents Trust Wallet errors
             result = {
               transactionHash: receiptTxHash,
@@ -3112,7 +3083,7 @@ class NetworkNode {
               to: transaction.toAddress || transaction.to || null, // ✅ null if contract creation
               cumulativeGasUsed: '0x5208', // 21000 in hex
               gasUsed: '0x5208', // 21000 in hex
-              effectiveGasPrice: '0x3b9aca00', // 1 Gwei
+              effectiveGasPrice: '0x' + gasPriceWeiReceipt.toString(16), // ✅ صحيح = 0.00002 ACCESS
               contractAddress: null, // ✅ null for regular transfers
               logs: transferLogs, // ✅ ALWAYS an array (never undefined/null) - CRITICAL for Trust Wallet
               logsBloom: '0x' + '0'.repeat(512), // ✅ 256 bytes = 512 hex chars
@@ -3583,8 +3554,9 @@ class NetworkNode {
     try {
       const { pool } = await import('./db.js');
 
-      // حفظ gas_price في ACCESS (قيمة عشرية) بدلاً من wei لتجنب overflow
-      const gasPriceInAccess = parseFloat(transaction.gasPrice || 0.00002);
+      // 🔐 رسوم الغاز الثابتة = 0.00002 ACCESS (لا تتغير)
+      const FIXED_GAS_FEE_ACCESS = 0.00002;
+      const gasPriceInAccess = FIXED_GAS_FEE_ACCESS;
       const txHash = transaction.hash || transaction.txId;
 
       // استخراج التوقيع من المعاملة
@@ -3802,14 +3774,17 @@ class NetworkNode {
       }
       this.lastTransactionTime.set(fromAddress, now);
 
+      // 🔐 سعر الغاز الصحيح = 0.00002 ACCESS / 21000 gas
+      const CORRECT_GAS_PRICE_HEX_TX = '0x38c42e18'; // 952380952 Wei
+
       // معالجة بيانات المعاملة مع التحقق الصارم من العناوين
       const txData = transaction.txId ? transaction : {
         txId: transaction.hash || transaction.txId,
         fromAddress: transaction.from || transaction.fromAddress,
         toAddress: transaction.to || transaction.toAddress,
         amount: transaction.amount || (parseInt(transaction.value || '0x0', 16) / 1e18),
-        gasFee: transaction.gasFee || (parseInt(transaction.gas || '0x5208', 16) / 1e18),
-        gasPrice: transaction.gasPrice || (parseInt(transaction.gasPrice || '0x3B9ACA00', 16) / 1e18),
+        gasFee: transaction.gasFee || 0.00002, // ✅ رسوم غاز ثابتة
+        gasPrice: transaction.gasPrice || (parseInt(transaction.gasPrice || CORRECT_GAS_PRICE_HEX_TX, 16) / 1e18),
         timestamp: transaction.timestamp || Date.now(),
         blockHash: transaction.blockHash,
         blockIndex: transaction.blockNumber ? parseInt(transaction.blockNumber, 16) : null
@@ -3866,8 +3841,8 @@ class NetworkNode {
         from: txData.fromAddress,
         to: txData.toAddress,
         value: '0x' + Math.floor((txData.amount || 0) * 1e18).toString(16),
-        gas: '0x' + Math.floor((txData.gasFee || 0.00002) * 1e18).toString(16),
-        gasPrice: '0x' + Math.floor((txData.gasPrice || 0.00002) * 1e18).toString(16),
+        gas: '0x5208', // 21000 in hex
+        gasPrice: '0x' + Math.floor((txData.gasPrice || 0.00002) * 1e18 / 21000).toString(16), // ✅ صحيح: gasPrice per unit
         nonce: '0x' + Date.now().toString(16),
         blockHash: txData.blockHash,
         blockNumber: txData.blockIndex ? '0x' + txData.blockIndex.toString(16) : null,
@@ -4698,13 +4673,18 @@ class NetworkNode {
       blockInfo = this.blockchain.getBlockByHash(tx.blockHash);
     }
 
+    // 🔐 حساب gasPrice الصحيح من رسوم ثابتة 0.00002 ACCESS
+    const FIXED_GAS_FEE = 0.00002;
+    const GAS_LIMIT = 21000;
+    const gasPriceWei = Math.floor(FIXED_GAS_FEE * 1e18 / GAS_LIMIT);
+
     return {
       hash: tx.txId,
       from: tx.fromAddress,
       to: tx.toAddress,
       value: '0x' + Math.floor(tx.amount * 1e18).toString(16),
-      gas: '0x' + Math.floor(tx.gasFee * 1e18).toString(16),
-      gasPrice: '0x' + Math.floor(tx.gasPrice * 1e18).toString(16),
+      gas: '0x' + GAS_LIMIT.toString(16), // ✅ gasLimit صحيح = 21000
+      gasPrice: '0x' + gasPriceWei.toString(16), // ✅ gasPrice صحيح بـ Wei
       blockNumber: blockInfo ? '0x' + blockInfo.index.toString(16) : null,
       blockHash: tx.blockHash,
       transactionIndex: blockInfo ? '0x0' : null, // قد تحتاج إلى حساب هذا بشكل صحيح
@@ -5691,7 +5671,7 @@ class NetworkNode {
       
       const txData = {
         nonce: parsedNonce,
-        gasPrice: parseInt(decodedTx.gasPrice, 16) || 20000000000, // 20 Gwei
+        gasPrice: parseInt(decodedTx.gasPrice, 16) || 952380952, // ✅ صحيح: 0.00002 ACCESS / 21000
         gasLimit: parseInt(decodedTx.gasLimit, 16) || 21000,
         to: isContractDeployment ? '' : decodedTx.to.toLowerCase(), // ✅ Empty string for contract deployment
         value: parseInt(decodedTx.value, 16) / 1e18 || 0,
@@ -5727,11 +5707,14 @@ class NetworkNode {
       if (!senderAddress) {
         console.log(`⚠️ Signature recovery failed, using fallback methods (not recommended for production)`);
 
+        // 🔐 رسوم الغاز الثابتة
+        const FIXED_GAS_FEE = 0.00002;
+
         // Fallback 1: Try to extract from connected wallets with balance check
         if (!senderAddress) {
           const connectedWallets = Array.from(this.connectedWallets.keys());
           if (connectedWallets.length > 0) {
-            const requiredAmount = txData.value + (txData.gasPrice * txData.gasLimit / 1e18 || 0.00002);
+            const requiredAmount = txData.value + FIXED_GAS_FEE;
 
             // Find wallet with sufficient balance
             for (const wallet of connectedWallets) {
@@ -5753,7 +5736,7 @@ class NetworkNode {
         if (!senderAddress) {
           const connectedWallets = Array.from(this.connectedWallets.keys());
           if (connectedWallets.length > 0) {
-            const requiredAmount = txData.value + (txData.gasPrice * txData.gasLimit || 0.00002);
+            const requiredAmount = txData.value + FIXED_GAS_FEE;
 
             for (const wallet of connectedWallets) {
               const normalizedWallet = wallet.toLowerCase();
@@ -5933,7 +5916,7 @@ class NetworkNode {
       }
 
       // حفظ gas_price في ACCESS (قيمة عشرية) بدلاً من wei لتجنب overflow
-      const gasPriceInAccess = Math.min(parseFloat(transaction.gasPrice || 0.00002), 99999999.99999999);
+      const FIXED_GAS_FEE_ACCESS = 0.00002; const gasPriceInAccess = FIXED_GAS_FEE_ACCESS; // 🔐 رسوم ثابتة
 
       // ✅ UPSERT LOGIC - إنشاء المعاملة إذا لم تكن موجودة، أو تحديثها إذا كانت موجودة
       // هذا يحل مشكلة المعاملات الواردة من المحافظ الخارجية
@@ -6320,7 +6303,7 @@ class NetworkNode {
 
       const decodedTx = {
         nonce: fields[0] || '0x0',
-        gasPrice: fields[1] || '0x4a817c800', // 20 Gwei
+        gasPrice: fields[1] || '0x38d7ea4c', // ✅ صحيح: 952380952 Wei = 0.00002 ACCESS / 21000
         gasLimit: fields[2] || '0x5208', // 21000
         to: fields[3] || '0x', // ✅ CONTRACT DEPLOYMENT: Allow empty 'to' for contract creation
         value: fields[4] || '0x0',
@@ -6379,7 +6362,7 @@ class NetworkNode {
         console.warn('⚠️ No raw RLP fields available, reconstructing (may be inaccurate for contract deployment)');
         txFields = [
           txData.nonce || 0,
-          txData.gasPrice || 20000000000,
+          txData.gasPrice || 952380952, // ✅ صحيح: 0.00002 ACCESS / 21000
           txData.gasLimit || 21000,
           txData.to || '', // ✅ Empty for contract deployment
           Math.floor((txData.value || 0) * 1e18),
@@ -6604,7 +6587,7 @@ class NetworkNode {
       }
 
       // حفظ gas_price في ACCESS (قيمة عشرية) بدلاً من wei لتجنب overflow
-      const gasPriceInAccess = Math.min(parseFloat(transaction.gasPrice || 0.00002), 99999999.99999999);
+      const FIXED_GAS_FEE_ACCESS = 0.00002; const gasPriceInAccess = FIXED_GAS_FEE_ACCESS; // 🔐 رسوم ثابتة
 
       // ✅ UPSERT LOGIC - إنشاء المعاملة إذا لم تكن موجودة، أو تحديثها إذا كانت موجودة
       // هذا يحل مشكلة المعاملات الواردة من المحافظ الخارجية
@@ -6913,7 +6896,7 @@ class NetworkNode {
       }
 
       // حفظ gas_price في ACCESS (قيمة عشرية) بدلاً من wei لتجنب overflow
-      const gasPriceInAccess = Math.min(parseFloat(transaction.gasPrice || 0.00002), 99999999.99999999);
+      const FIXED_GAS_FEE_ACCESS = 0.00002; const gasPriceInAccess = FIXED_GAS_FEE_ACCESS; // 🔐 رسوم ثابتة
 
       // ✅ UPSERT LOGIC - إنشاء المعاملة إذا لم تكن موجودة، أو تحديثها إذا كانت موجودة
       // هذا يحل مشكلة المعاملات الواردة من المحافظ الخارجية
@@ -7222,7 +7205,7 @@ class NetworkNode {
       }
 
       // حفظ gas_price في ACCESS (قيمة عشرية) بدلاً من wei لتجنب overflow
-      const gasPriceInAccess = Math.min(parseFloat(transaction.gasPrice || 0.00002), 99999999.99999999);
+      const FIXED_GAS_FEE_ACCESS = 0.00002; const gasPriceInAccess = FIXED_GAS_FEE_ACCESS; // 🔐 رسوم ثابتة
 
       // ✅ UPSERT LOGIC - إنشاء المعاملة إذا لم تكن موجودة، أو تحديثها إذا كانت موجودة
       // هذا يحل مشكلة المعاملات الواردة من المحافظ الخارجية
@@ -7530,8 +7513,9 @@ class NetworkNode {
         safeNonce = Math.abs(safeNonce);
       }
 
-      // حفظ gas_price في ACCESS (قيمة عشرية) بدلاً من wei لتجنب overflow
-      const gasPriceInAccess = Math.min(parseFloat(transaction.gasPrice || 0.00002), 99999999.99999999);
+      // 🔐 رسوم الغاز الثابتة = 0.00002 ACCESS (لا تتغير)
+      const FIXED_GAS_FEE_ACCESS = 0.00002;
+      const gasPriceInAccess = FIXED_GAS_FEE_ACCESS;
 
       // حفظ المعاملة مع معلومات التصنيف
       await pool.query(`
@@ -7802,7 +7786,7 @@ class NetworkNode {
       }
 
       // حفظ gas_price في ACCESS (قيمة عشرية) بدلاً من wei لتجنب overflow
-      const gasPriceInAccess = Math.min(parseFloat(transaction.gasPrice || 0.00002), 99999999.99999999);
+      const FIXED_GAS_FEE_ACCESS = 0.00002; const gasPriceInAccess = FIXED_GAS_FEE_ACCESS; // 🔐 رسوم ثابتة
 
       // ✅ UPSERT LOGIC - إنشاء المعاملة إذا لم تكن موجودة، أو تحديثها إذا كانت موجودة
       // هذا يحل مشكلة المعاملات الواردة من المحافظ الخارجية

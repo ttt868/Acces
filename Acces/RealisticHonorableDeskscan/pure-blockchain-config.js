@@ -16,7 +16,7 @@ export const PureBlockchainConfig = {
   blockchain: {
     blockConfirmations: 12,       // مثل Ethereum
     gasLimit: 21000,             // مثل Ethereum
-    gasPrice: 20000000000,       // 20 Gwei
+    gasPrice: 952380952,         // ✅ صحيح: 0.00002 ACCESS / 21000 = 0.952 Gwei
     networkId: 22888,            // Access Network
     chainId: '0x5968'           // Access Chain
   },

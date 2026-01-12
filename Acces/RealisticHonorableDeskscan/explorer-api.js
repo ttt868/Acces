@@ -191,7 +191,7 @@ class ExplorerAPI {
           to: row.to_address,
           value: Math.floor((row.amount || 0) * 1e18).toString(),
           gas: '21000',
-          gasPrice: Math.floor(this.blockchain.getGasPrice() * 1e18).toString(),
+          gasPrice: Math.floor(this.blockchain.getGasPrice() * 1e18 / 21000).toString(), // ✅ صحيح: gasPrice per unit
           gasUsed: '21000',
           input: '0x',
           contractAddress: '',

@@ -2313,7 +2313,7 @@
 
             const value = tx.value ? parseInt(tx.value, 16) / 1e18 : 0;
             const gasUsed = tx.gas ? parseInt(tx.gas, 16) : 21000;
-            const gasPrice = tx.gasPrice ? parseInt(tx.gasPrice, 16) : 20000000000;
+            const gasPrice = tx.gasPrice ? parseInt(tx.gasPrice, 16) : 952380952; // ✅ صحيح: 0.952 Gwei
             const blockNumber = tx.blockNumber ? parseInt(tx.blockNumber, 16) : 0;
 
             document.getElementById('txHash').textContent = tx.hash || 'Unknown';

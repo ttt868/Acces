@@ -374,7 +374,7 @@ async function broadcastTransactionLog(transactionData) {
       to: transactionData.to.toLowerCase(),
       value: '0x' + Math.floor(transactionData.amount * 1e18).toString(16),
       gas: '0x5208',
-      gasPrice: '0x' + Math.floor(0.00002 * 1e18).toString(16),
+      gasPrice: '0x' + Math.floor(0.00002 * 1e18 / 21000).toString(16), // ✅ صحيح: 952380952 Wei
       input: '0x',
       blockHash: transactionData.blockHash,
       blockNumber: transactionData.blockNumber,
@@ -3373,7 +3373,7 @@ const server = http.createServer(async (req, res) => {
           to: tx.to_address,
           value: '0x' + Math.floor(parseFloat(tx.amount) * 1e18).toString(16),
           gas: '0x5208',
-          gasPrice: '0x' + Math.floor(parseFloat(tx.gas_fee || 0.00002) * 1e18).toString(16),
+          gasPrice: '0x' + Math.floor(parseFloat(tx.gas_fee || 0.00002) * 1e18 / 21000).toString(16), // ✅ صحيح: gasPrice per unit
           input: '0x',
           blockHash: tx.block_hash,
           blockNumber: '0x' + Math.floor(tx.timestamp / 1000).toString(16),
@@ -3912,7 +3912,7 @@ const server = http.createServer(async (req, res) => {
           to: tx.to_address,
           value: '0x' + Math.floor(parseFloat(tx.amount) * 1e18).toString(16),
           gas: '0x5208',
-          gasPrice: '0x' + Math.floor(parseFloat(tx.gas_fee || 0.00002) * 1e18).toString(16),
+          gasPrice: '0x' + Math.floor(parseFloat(tx.gas_fee || 0.00002) * 1e18 / 21000).toString(16), // ✅ صحيح: gasPrice per unit
           input: '0x',
           blockHash: tx.block_hash,
           blockNumber: '0x' + Math.floor(tx.timestamp / 1000).toString(16),

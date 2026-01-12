@@ -40,14 +40,14 @@
     "nonce": 18
   },
   "0x6339953df540967a0a5449825e4ec8ce0f45df1c": {
-    "nonce": "2",
-    "balance": "1406500000000000000",
+    "nonce": "9",
+    "balance": "855033990000000000",
     "storageRoot": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "codeHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "0x90c423c2a9d3ec691d683fe040e4371d8c0edcda": {
-    "balance": "225336999999999900",
-    "nonce": 12
+    "balance": "316281009999999940",
+    "nonce": 0
   },
   "0x44e434b3f8d638322ed9fc2f24f55ecef8530f88": {
     "balance": "124333939999999980",

@@ -1764,8 +1764,11 @@ class AccessNetwork extends EventEmitter {
     return this.updateBalance(address, newBalance);
   }
 
-  // ✅ ETHEREUM-STYLE: الحصول على nonce من State Trie/LevelDB فقط (بدون قاعدة بيانات)
-  async getNonce(address) {
+  // ✅ ETHEREUM-STYLE NONCE: الحصول على nonce التالي (تماماً مثل Ethereum/BSC)
+  // 📌 eth_getTransactionCount يُرجع: عدد المعاملات المؤكدة + المعلقة من هذا العنوان
+  // 📌 هذا هو الـ nonce التالي الذي يجب استخدامه في المعاملة القادمة
+  // ⚠️ لا نحجز الـ nonce هنا - الحجز يتم فقط عند إرسال المعاملة فعلياً
+  async getNonce(address, reserveNonce = false) {
     if (!address) return 0;
 
     // ⚠️ CRITICAL: توحيد العنوان بصرامة
@@ -1778,55 +1781,44 @@ class AccessNetwork extends EventEmitter {
     }
 
     try {
-      // 📁 STEP 1: قراءة nonce من State Trie (مثل Ethereum تماماً)
-      let stateTrieNonce = 0;
-      if (this.accessStateStorage) {
-        const accountData = await this.accessStateStorage.getAccount(normalizedAddress);
-        if (accountData && accountData.nonce !== undefined) {
-          stateTrieNonce = parseInt(accountData.nonce) || 0;
+      // 📁 STEP 1: قراءة nonce من قاعدة البيانات (عدد المعاملات المؤكدة)
+      let confirmedNonce = 0;
+      
+      // محاولة قراءة من قاعدة البيانات أولاً (الأكثر دقة)
+      try {
+        const { pool } = await import('./db.js');
+        const result = await pool.query(
+          `SELECT COUNT(*) as count FROM transactions 
+           WHERE LOWER(from_address) = $1 
+           AND status IN ('confirmed', 'completed', 'success')`,
+          [normalizedAddress]
+        );
+        if (result.rows[0]) {
+          confirmedNonce = parseInt(result.rows[0].count) || 0;
+        }
+      } catch (dbError) {
+        // Fallback إلى State Trie
+        if (this.accessStateStorage) {
+          const accountData = await this.accessStateStorage.getAccount(normalizedAddress);
+          if (accountData && accountData.nonce !== undefined) {
+            confirmedNonce = parseInt(accountData.nonce) || 0;
+          }
         }
       }
 
-      // 📦 STEP 2: فحص المعاملات المعلقة في الذاكرة
-      let pendingNonce = stateTrieNonce;
-      for (const tx of this.pendingTransactions) {
-        if (tx.fromAddress && tx.fromAddress.toLowerCase() === normalizedAddress) {
-          const txNonce = parseInt(tx.nonce || 0);
-          pendingNonce = Math.max(pendingNonce, txNonce);
-        }
-      }
+      // 📦 STEP 2: لا نحتاج لحساب pendingCount لأن المعاملات تُحفظ فوراً في قاعدة البيانات
+      // المعاملات تُحفظ مباشرة عند الإرسال، لذا confirmedNonce يشملها بالفعل
+      
+      // 🔢 STEP 3: الـ nonce التالي = عدد المعاملات المحفوظة في قاعدة البيانات
+      // هذا هو أسلوب Ethereum الفعلي: nonce = عدد المعاملات المرسلة من هذا العنوان
+      const nextNonce = confirmedNonce;
 
-      // 🔢 STEP 3: حساب الـ nonce التالي
-      let finalNonce = Math.max(stateTrieNonce, pendingNonce);
-
-      // إذا كان هناك معاملات معلقة، استخدم nonce + 1
-      if (pendingNonce > stateTrieNonce) {
-        finalNonce = pendingNonce + 1;
-      } else {
-        // إذا لم يكن هناك معاملات معلقة، استخدم nonce من State Trie
-        finalNonce = stateTrieNonce;
-      }
-
-      // 🔒 STEP 4: التأكد من عدم استخدام nonce مكرر (في الذاكرة فقط)
-      if (!this.usedNonces) {
-        this.usedNonces = new Set();
-      }
-
-      const baseNonceKey = `${normalizedAddress}:`;
-      while (this.usedNonces.has(baseNonceKey + finalNonce)) {
-        finalNonce++;
-      }
-
-      // حفظ nonce المستخدم مؤقتاً في الذاكرة
-      this.usedNonces.add(baseNonceKey + finalNonce);
-
-      return finalNonce;
+      console.log(`🔢 ETHEREUM-STYLE getNonce for ${normalizedAddress.slice(0,10)}...: confirmed=${confirmedNonce}, next=${nextNonce}`);
+      
+      return nextNonce;
 
     } catch (error) {
-      console.error('❌ State Trie nonce lookup failed:', error);
-
-      // Fallback: استخدام nonce = 0 إذا فشل كل شيء
-      console.warn(`⚠️ Using fallback nonce=0 for ${normalizedAddress}`);
+      console.error('❌ Nonce lookup failed:', error);
       return 0;
     }
   }
@@ -2487,6 +2479,7 @@ class AccessNetwork extends EventEmitter {
       const maxAge = 10 * 60 * 1000; // 10 minutes
       let cleanedNonces = 0;
       let cleanedTxTimes = 0;
+      let cleanedSessionNonces = 0;
 
       // Clean old nonces
       if (this.activeNonces) {
@@ -2508,6 +2501,25 @@ class AccessNetwork extends EventEmitter {
         }
       }
 
+      // 🧹 Clean old session nonces (keep only recent ones)
+      if (this.usedNoncesInSession) {
+        for (const [address, nonceSet] of this.usedNoncesInSession.entries()) {
+          // Keep only nonces from the last 100 for each address
+          if (nonceSet.size > 100) {
+            const sortedNonces = Array.from(nonceSet).sort((a, b) => b - a);
+            const keepNonces = new Set(sortedNonces.slice(0, 50));
+            this.usedNoncesInSession.set(address, keepNonces);
+            cleanedSessionNonces += (nonceSet.size - 50);
+          }
+        }
+      }
+      
+      // 🧹 Clean old usedNonces Set (legacy)
+      if (this.usedNonces && this.usedNonces.size > 1000) {
+        this.usedNonces.clear();
+        cleanedNonces += 1000;
+      }
+
       // Keep only recent transaction hashes (last 1000)
       if (this.processedTxHashes && this.processedTxHashes.size > 1000) {
         const hashArray = Array.from(this.processedTxHashes);
@@ -2516,8 +2528,8 @@ class AccessNetwork extends EventEmitter {
         hashArray.slice(-500).forEach(hash => this.processedTxHashes.add(hash));
       }
 
-      if (cleanedNonces > 0 || cleanedTxTimes > 0) {
-        console.log(`🧹 Cleaned protection data: ${cleanedNonces} nonces, ${cleanedTxTimes} tx times`);
+      if (cleanedNonces > 0 || cleanedTxTimes > 0 || cleanedSessionNonces > 0) {
+        console.log(`🧹 Cleaned protection data: ${cleanedNonces} nonces, ${cleanedTxTimes} tx times, ${cleanedSessionNonces} session nonces`);
       }
     } catch (error) {
       console.error('Error cleaning protection data:', error);

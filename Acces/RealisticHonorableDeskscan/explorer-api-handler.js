@@ -309,7 +309,7 @@ async function handleProxyModule(params) {
                     to: row.to_address,
                     value: '0x' + Math.floor(parseFloat(row.amount) * 1e18).toString(16),
                     gas: '0x5208',
-                    gasPrice: '0x' + Math.floor(0.00002 * 1e18).toString(16),
+                    gasPrice: '0x' + Math.floor(0.00002 * 1e18 / 21000).toString(16), // ✅ صحيح: 952380952 Wei
                     nonce: '0x0',
                     blockNumber: '0x' + (row.block_index || 0).toString(16),
                     blockHash: row.block_hash,
@@ -327,7 +327,7 @@ async function handleProxyModule(params) {
                 to: tx.toAddress || tx.to,
                 value: '0x' + Math.floor((tx.amount || tx.value || 0) * 1e18).toString(16),
                 gas: '0x5208',
-                gasPrice: '0x' + Math.floor((tx.gasPrice || 0.00002) * 1e18).toString(16),
+                gasPrice: '0x' + Math.floor((tx.gasPrice || 0.00002) * 1e18 / 21000).toString(16), // ✅ صحيح: gasPrice per unit
                 nonce: '0x' + (tx.nonce || 0).toString(16),
                 blockNumber: '0x' + (tx.blockIndex || 0).toString(16),
                 blockHash: tx.blockHash || '',
@@ -341,8 +341,40 @@ async function handleProxyModule(params) {
 
         case 'access_getTransactionCount':
         case 'eth_getTransactionCount':
-            const txs = await getTransactionsByAddress(address);
-            return '0x' + txs.length.toString(16);
+            // 🔢 ETHEREUM-STYLE: إرجاع nonce التالي غير المستخدم (مثل Ethereum/BSC)
+            try {
+                const normalizedAddr = address.toLowerCase();
+                const network = networkNode.network;
+                
+                // 📊 STEP 1: الحصول على nonce من State Trie
+                let confirmedNonce = 0;
+                if (network.accessStateStorage) {
+                    const accountData = await network.accessStateStorage.getAccount(normalizedAddr);
+                    if (accountData && accountData.nonce !== undefined) {
+                        confirmedNonce = parseInt(accountData.nonce) || 0;
+                    }
+                }
+                
+                // 📦 STEP 2: عد المعاملات المعلقة
+                let pendingCount = 0;
+                for (const tx of network.pendingTransactions || []) {
+                    if (tx.fromAddress && tx.fromAddress.toLowerCase() === normalizedAddr) {
+                        pendingCount++;
+                    }
+                }
+                
+                // 🔢 STEP 3: Nonce النهائي
+                const finalNonce = confirmedNonce + pendingCount;
+                
+                console.log(`🔢 eth_getTransactionCount for ${address}: confirmed=${confirmedNonce}, pending=${pendingCount}, final=${finalNonce}`);
+                return '0x' + finalNonce.toString(16);
+            } catch (nonceError) {
+                console.error('❌ eth_getTransactionCount error:', nonceError);
+                // Fallback: استخدام عدد المعاملات الصادرة
+                const txs = await getTransactionsByAddress(address);
+                const outgoingCount = txs.filter(tx => tx.from_address && tx.from_address.toLowerCase() === address.toLowerCase()).length;
+                return '0x' + outgoingCount.toString(16);
+            }
 
         case 'access_sendRawTransaction':
         case 'eth_sendRawTransaction':
@@ -350,8 +382,9 @@ async function handleProxyModule(params) {
 
         case 'access_gasPrice':
         case 'eth_gasPrice':
+            // ✅ صحيح: gasPrice per unit = 0.00002 ACCESS / 21000 gas
             const gasPrice = networkNode.network.getGasPrice();
-            return '0x' + Math.floor(gasPrice * 1e18).toString(16);
+            return '0x' + Math.floor(gasPrice * 1e18 / 21000).toString(16);
 
         default:
             throw new Error('Invalid action for proxy module: ' + action);
@@ -920,6 +953,8 @@ async function getTransactionsByAddress(address, startblock = 0, endblock = 'lat
 
         const networkNode = getNetworkNode();
         const gasPrice = networkNode ? networkNode.network.getGasPrice() : 0.000000001;
+        // ✅ صحيح: gasPrice per unit = total fee / 21000
+        const gasPricePerUnit = Math.floor(gasPrice * 1e18 / 21000);
 
         const transactions = result.rows.map(row => ({
             blockNumber: row.block_index?.toString() || '0',
@@ -929,7 +964,7 @@ async function getTransactionsByAddress(address, startblock = 0, endblock = 'lat
             to: row.to_address,
             value: Math.floor((row.amount || 0) * 1e18).toString(),
             gas: '21000',
-            gasPrice: Math.floor(gasPrice * 1e18).toString(),
+            gasPrice: gasPricePerUnit.toString(), // ✅ صحيح: gasPrice per unit
             gasUsed: '21000',
             input: '0x',
             contractAddress: '',
@@ -949,7 +984,7 @@ async function getTransactionsByAddress(address, startblock = 0, endblock = 'lat
                 to: tx.toAddress || tx.to,
                 value: Math.floor((tx.amount || tx.value || 0) * 1e18).toString(),
                 gas: '21000',
-                gasPrice: Math.floor(gasPrice * 1e18).toString(),
+                gasPrice: gasPricePerUnit.toString(), // ✅ صحيح: gasPrice per unit
                 gasUsed: '21000',
                 input: '0x',
                 contractAddress: '',
