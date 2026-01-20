@@ -1,0 +1,41 @@
+{
+  "timestamp": 1765089291642,
+  "date": "2025-12-07T06:34:51.642Z",
+  "type": "wallets_only",
+  "wallets": [
+    {
+      "id": 1,
+      "email": "acseoire@gmail.com",
+      "wallet_address": "0x800d3079aaa001a9122e337e17fe34a3fb761e4f",
+      "coins": "0.00000000",
+      "account_created_date": "1764720304308",
+      "permanent_balance": "0.00000000"
+    },
+    {
+      "id": 2,
+      "email": "cooperdb797@gmail.com",
+      "wallet_address": "0xf0f42073db0fb6b87df3c469e96e8245e1a2a3b6",
+      "coins": "0.99894338",
+      "account_created_date": "1764720331475",
+      "permanent_balance": "0.99894338"
+    },
+    {
+      "id": 3,
+      "email": "ikramberan@gmail.com",
+      "wallet_address": "0x22e50012d72e3e0954706bb4199adb4c37c151cc",
+      "coins": "0.61978259",
+      "account_created_date": "1764802012140",
+      "permanent_balance": "0.61978259"
+    },
+    {
+      "id": 4,
+      "email": "bfk8213@gmail.com",
+      "wallet_address": "0xa0c2b8f26788714c54fe835e8326d1e701fd2446",
+      "coins": "0.00000000",
+      "account_created_date": "1764802085242",
+      "permanent_balance": "0.00000000"
+    }
+  ],
+  "total": 4,
+  "totalBalance": 1.61872597
+}

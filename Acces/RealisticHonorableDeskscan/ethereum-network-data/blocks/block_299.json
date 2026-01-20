@@ -1,0 +1,57 @@
+{
+  "index": 299,
+  "timestamp": 1767403123454,
+  "transactions": [
+    {
+      "fromAddress": "0x90c423c2a9d3ec691d683fe040e4371d8c0edcda",
+      "toAddress": "0x6339953df540967a0a5449825e4ec8ce0f45df1c",
+      "amount": 0.01,
+      "gasPrice": 0.000021,
+      "gasFee": 0.000021,
+      "timestamp": 1767138342393,
+      "signature": null,
+      "hash": "882e6487e5df8ea5f0b9ba5e2b3d16c6c3dd7baf83f1e71b46394dabe6a83ac4",
+      "txId": "882e6487e5df8ea5f0b9ba5e2b3d16c6c3dd7baf83f1e71b46394dabe6a83ac4",
+      "transactionHash": "882e6487e5df8ea5f0b9ba5e2b3d16c6c3dd7baf83f1e71b46394dabe6a83ac4",
+      "id": "882e6487e5df8ea5f0b9ba5e2b3d16c6c3dd7baf83f1e71b46394dabe6a83ac4",
+      "internal": true,
+      "processed": true,
+      "balanceUpdated": true
+    },
+    {
+      "fromAddress": null,
+      "toAddress": null,
+      "amount": 0.002,
+      "gasPrice": 0.00002,
+      "gasFee": 0.00002,
+      "timestamp": 1767060345111,
+      "signature": null,
+      "hash": "98327674f174784b603b796ea09ad4a111b7aa7304abcedd6380c30fe3557968",
+      "txId": "98327674f174784b603b796ea09ad4a111b7aa7304abcedd6380c30fe3557968",
+      "transactionHash": "98327674f174784b603b796ea09ad4a111b7aa7304abcedd6380c30fe3557968",
+      "id": "98327674f174784b603b796ea09ad4a111b7aa7304abcedd6380c30fe3557968",
+      "processed": true,
+      "balanceUpdated": true
+    },
+    {
+      "fromAddress": null,
+      "toAddress": "0x0000000000000000000000000000000000000001",
+      "amount": 0.25,
+      "gasPrice": 1767403123454,
+      "gasFee": 1767403123454,
+      "timestamp": 1767403123454,
+      "signature": null,
+      "hash": "8c703571fd69165830bad802e72834d02f52f9fabf12873ec1a30bb90beb9231",
+      "txId": "8c703571fd69165830bad802e72834d02f52f9fabf12873ec1a30bb90beb9231",
+      "transactionHash": "8c703571fd69165830bad802e72834d02f52f9fabf12873ec1a30bb90beb9231",
+      "id": "8c703571fd69165830bad802e72834d02f52f9fabf12873ec1a30bb90beb9231"
+    }
+  ],
+  "previousHash": "67d706e3d9904f744ca81826e8238d5c961b8f9476bcb7b45bb0d83e85bc43c6",
+  "nonce": 0,
+  "hash": "43056cbc88a3d9175ee513228854cd18841856a047984185486cca1d49ea07e2",
+  "merkleRoot": "f9b372011b7a284deff78a384bac0e42edf4db0cca926c0a6a7ecb6230234274",
+  "persistentHash": "fa73b48d990e4b5b8e6cb5b7d410d68cecbddcb6bba16666f5cf901cd3388cec",
+  "savedAt": 1768939303924,
+  "ethereumStyle": true
+}

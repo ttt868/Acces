@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Access Network</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000000;
+            min-height: 100vh;
+            padding: 20px;
+            color: #ffffff;
+            line-height: 1.6;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body.light-mode {
+            background: #f8f9fa;
+            color: #111;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.3rem;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            color: #ffffff;
+        }
+
+        body.light-mode .theme-toggle {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        body.light-mode .theme-toggle:hover {
+            color: #000000;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 15px auto;
+            background: #000000;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid #111;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .container {
+            background: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e9ecef;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 8px 20px 15px 20px;
+        }
+
+        .network-info {
+            background: #000000;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .network-info {
+            background: #f8f9fa;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #444;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .info-item {
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #ffffff;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .info-label {
+            color: #495057;
+        }
+
+        .info-value {
+            font-family: 'Monaco', monospace;
+            font-size: 0.8rem;
+            color: #b0b0b0;
+            max-width: 200px;
+            text-align: right;
+            word-break: break-all;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .info-value {
+            color: #6c757d;
+        }
+
+        .copy-btn {
+            background: #555;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        body.light-mode .copy-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .copy-btn:hover {
+            background: #666;
+            transform: translateY(-1px);
+        }
+
+        body.light-mode .copy-btn:hover {
+            background: #5a6268;
+        }
+
+        .copy-btn.copied {
+            background: #38a169;
+        }
+
+        .wallet-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .wallet-btn {
+            background: linear-gradient(135deg, #3898FF 0%, #1E7AE5 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(56, 152, 255, 0.4);
+        }
+
+        body.light-mode .wallet-btn {
+            background: linear-gradient(135deg, #3898FF 0%, #1E7AE5 100%);
+            color: #ffffff;
+        }
+
+        .wallet-btn:hover {
+            background: linear-gradient(135deg, #4BA3FF 0%, #2B8AF0 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 152, 255, 0.5);
+        }
+
+        .wallet-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(56, 152, 255, 0.4);
+        }
+
+        body.light-mode .wallet-btn:hover {
+            background: linear-gradient(135deg, #4BA3FF 0%, #2B8AF0 100%);
+            box-shadow: 0 6px 20px rgba(56, 152, 255, 0.5);
+        }
+
+        .wallet-icon {
+            font-size: 1.4rem;
+            color: #ffffff;
+        }
+
+        .wallet-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .wallet-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #ffffff;
+        }
+
+        .wallet-desc {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.85);
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .wallet-desc {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .manual-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 20px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+        }
+
+        .manual-btn:hover {
+            background: #495057;
+            transform: translateY(-1px);
+        }
+
+        .manual-instructions {
+            background: #000000;
+            border: 1px solid #667eea;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            display: none;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .manual-instructions {
+            background: #fff8e1;
+            border: 1px solid #ffcc02;
+        }
+
+        .manual-instructions h4 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .manual-instructions h4 {
+            color: #f57c00;
+        }
+
+        .manual-instructions ol {
+            color: #b0b0b0;
+            padding-left: 18px;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .manual-instructions ol {
+            color: #ef6c00;
+        }
+
+        .manual-instructions li {
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .status-message {
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 0 0 10px 0;
+            display: none;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .status-info {
+            background: #000000;
+            border: 1px solid #444;
+            color: #b0b0b0;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .status-info {
+            background: #cce7ff;
+            border: 1px solid #b3d9ff;
+            color: #004085;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid #667eea;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+
+        .back-link:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .theme-icon {
+            font-size: 1rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.85rem;
+            color: #666;
+            background: #0a0a0a;
+            margin-top: 40px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .footer {
+            color: #888;
+            background: #f0f0f0;
+        }
+
+        .copy-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #38a169;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(56, 161, 105, 0.3);
+            z-index: 10000;
+            display: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .copy-notification.show {
+            display: block;
+            animation: fadeInOut 2.5s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            25% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px auto;
+                border-radius: 15px;
+            }
+
+            .content {
+                padding: 25px 20px;
+            }
+
+            .wallet-options {
+                grid-template-columns: 1fr;
+            }
+
+            .info-value {
+                max-width: 150px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="fas fa-moon theme-icon"></i>
+            </button>
+            <div class="title">Access Network</div>
+            <div class="subtitle">Add to your wallet</div>
+        </div>
+
+        <div class="content">
+            <div id="status" class="status-message"></div>
+
+            <div class="network-info">
+                <div class="info-item">
+                    <span class="info-label">Network Name</span>
+                    <div style="display: flex; align-items: center;">
+                        <span class="info-value">Access Network</span>
+                        <button class="copy-btn" onclick="copyToClipboard('Access Network', this)">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">RPC URL</span>
+                    <div style="display: flex; align-items: center;">
+                        <span class="info-value">https://glowing-space-cod-v665jpxrr4grc6p4p-5000.app.github.dev/</span>
+                        <button class="copy-btn" onclick="copyToClipboard('https://glowing-space-cod-v665jpxrr4grc6p4p-5000.app.github.dev/', this)">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Chain ID</span>
+                    <div style="display: flex; align-items: center;">
+                        <span class="info-value">22888</span>
+                        <button class="copy-btn" onclick="copyToClipboard('22888', this)">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Symbol</span>
+                    <div style="display: flex; align-items: center;">
+                        <span class="info-value">ACCESS</span>
+                        <button class="copy-btn" onclick="copyToClipboard('ACCESS', this)">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Explorer</span>
+                    <div style="display: flex; align-items: center;">
+                        <span class="info-value">access-explorer.html</span>
+                        <button class="copy-btn" onclick="copyToClipboard('https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/access-explorer.html', this)">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wallet-options">
+                <div class="wallet-btn" onclick="connectBrowserWallet()">
+                    <div class="wallet-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="wallet-text">
+                        <div class="wallet-name">Connect Wallet</div>
+                        <div class="wallet-desc">MetaMask, Trust Wallet, Coinbase</div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="manual-btn" class="manual-btn" onclick="toggleManualInstructions()">
+                <i class="fas fa-book"></i>
+                Manual Setup Guide
+            </button>
+
+            <div id="manual-instructions" class="manual-instructions">
+                <h4><i class="fas fa-tools"></i> Manual Setup Steps</h4>
+                <ol>
+                    <li>Open your digital wallet app</li>
+                    <li>Go to network settings</li>
+                    <li>Click "Add Custom Network"</li>
+                    <li>Enter the network information shown above</li>
+                    <li>Save settings and switch to Access Network</li>
+                    <li>Done! You're now connected to Access Network</li>
+                </ol>
+            </div>
+
+            <a href="/" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Back to Homepage
+            </a>
+        </div>
+    </div>
+
+    <div class="footer">
+        © 2025 AccessScan. All rights reserved.
+    </div>
+
+    <div id="copyNotification" class="copy-notification">
+        <i class="fas fa-check-circle"></i> Successfully Copied!
+    </div>
+
+    <script>
+        const accessNetwork = {
+            chainId: '0x5968',
+            chainName: 'Access Network',
+            nativeCurrency: {
+                name: 'Access Coin',
+                symbol: 'ACCESS',
+                decimals: 18
+            },
+            rpcUrls: ['https://glowing-space-cod-v665jpxrr4grc6p4p-5000.app.github.dev/'],
+            blockExplorerUrls: ['https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/transaction-details.html?hash='],
+            iconUrls: [
+                'https://gateway.pinata.cloud/ipfs/bafybeicc2meeaucf6s6zljq2xshulfcd7k3zlid3qwg2hrfbnlc2qexvyi',
+                'https://gateway.pinata.cloud/ipfs/bafybeicc2meeaucf6s6zljq2xshulfcd7k3zlid3qwg2hrfbnlc2qexvyi'
+            ]
+        };
+
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML = message;
+            statusEl.className = `status-message status-${type}`;
+            statusEl.style.display = 'block';
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 4000);
+            }
+        }
+
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalContent = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i>';
+                button.classList.add('copied');
+
+                const notification = document.getElementById('copyNotification');
+                notification.classList.add('show');
+
+                setTimeout(() => {
+                    button.innerHTML = originalContent;
+                    button.classList.remove('copied');
+                    notification.classList.remove('show');
+                }, 2000);
+            }).catch(() => {
+                showStatus('Copy failed, please try again', 'error');
+            });
+        }
+
+        async function connectBrowserWallet() {
+            // Check if we're on mobile
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            
+            if (typeof window.ethereum !== 'undefined') {
+                // Desktop browser with wallet extension OR in-app browser
+                showStatus('Connecting to wallet...', 'info');
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [accessNetwork]
+                    });
+
+                    showStatus('✅ Access Network added successfully!', 'success');
+
+                    setTimeout(async () => {
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_switchEthereumChain',
+                                params: [{ chainId: accessNetwork.chainId }]
+                            });
+                            showStatus('✅ Successfully switched to Access Network!', 'success');
+                        } catch (error) {
+                            console.log('Network switch not performed automatically');
+                        }
+                    }, 1000);
+
+                } catch (error) {
+                    console.error('Error adding network:', error);
+                    if (error.code === 4001) {
+                        showStatus('❌ Request rejected by user', 'error');
+                    } else {
+                        showStatus('❌ Failed to add network, try manual method', 'error');
+                    }
+                }
+            } else if (isMobile) {
+                // Mobile browser without wallet - show wallet selection
+                showWalletSelector();
+            } else {
+                // Desktop without wallet extension
+                showStatus('⚠️ No wallet detected. Please install MetaMask extension or use the mobile app.', 'error');
+                showWalletSelector();
+            }
+        }
+
+        function showWalletSelector() {
+            // Get the current page URL for deep linking
+            const currentUrl = encodeURIComponent(window.location.href);
+            
+            // Create modal overlay
+            const modal = document.createElement('div');
+            modal.id = 'wallet-modal';
+            modal.innerHTML = `
+                <div class="wallet-modal-overlay" onclick="closeWalletModal()">
+                    <div class="wallet-modal-content" onclick="event.stopPropagation()">
+                        <div class="wallet-modal-header">
+                            <h3><i class="fas fa-wallet"></i> Select Wallet</h3>
+                            <button class="modal-close" onclick="closeWalletModal()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="wallet-modal-body">
+                            <p class="wallet-modal-desc">Choose your wallet to add Access Network</p>
+                            
+                            <a href="https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}" class="wallet-option" onclick="closeWalletModal()">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" class="wallet-logo">
+                                <div class="wallet-option-info">
+                                    <span class="wallet-option-name">MetaMask</span>
+                                    <span class="wallet-option-desc">Open in MetaMask app</span>
+                                </div>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            
+                            <a href="https://link.trustwallet.com/open_url?coin_id=60&url=${currentUrl}" class="wallet-option" onclick="closeWalletModal()">
+                                <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="Trust Wallet" class="wallet-logo">
+                                <div class="wallet-option-info">
+                                    <span class="wallet-option-name">Trust Wallet</span>
+                                    <span class="wallet-option-desc">Open in Trust Wallet app</span>
+                                </div>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            
+                            <a href="https://go.cb-w.com/dapp?cb_url=${currentUrl}" class="wallet-option" onclick="closeWalletModal()">
+                                <img src="https://altcoinsbox.com/wp-content/uploads/2022/12/coinbase-wallet-logo.png" alt="Coinbase" class="wallet-logo">
+                                <div class="wallet-option-info">
+                                    <span class="wallet-option-name">Coinbase Wallet</span>
+                                    <span class="wallet-option-desc">Open in Coinbase app</span>
+                                </div>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            
+                            <div class="wallet-divider">
+                                <span>or install a wallet</span>
+                            </div>
+                            
+                            <div class="install-options">
+                                <a href="https://metamask.io/download/" target="_blank" class="install-btn">
+                                    <i class="fas fa-download"></i> Install MetaMask
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add modal styles if not already added
+            if (!document.getElementById('wallet-modal-styles')) {
+                const styles = document.createElement('style');
+                styles.id = 'wallet-modal-styles';
+                styles.textContent = `
+                    .wallet-modal-overlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.8);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 9999;
+                        padding: 20px;
+                        animation: fadeIn 0.2s ease;
+                    }
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    .wallet-modal-content {
+                        background: #000000;
+                        border-radius: 20px;
+                        width: 100%;
+                        max-width: 400px;
+                        max-height: 90vh;
+                        overflow-y: auto;
+                        border: 1px solid #111;
+                        animation: slideUp 0.3s ease;
+                    }
+                    body.light-mode .wallet-modal-content {
+                        background: #ffffff;
+                        border: 1px solid #e9ecef;
+                    }
+                    @keyframes slideUp {
+                        from { transform: translateY(20px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                    .wallet-modal-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 20px;
+                        border-bottom: 1px solid #111;
+                    }
+                    body.light-mode .wallet-modal-header {
+                        border-bottom: 1px solid #e9ecef;
+                    }
+                    .wallet-modal-header h3 {
+                        color: #fff;
+                        font-size: 1.1rem;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    }
+                    body.light-mode .wallet-modal-header h3 {
+                        color: #111;
+                    }
+                    .modal-close {
+                        background: transparent;
+                        border: none;
+                        color: #888;
+                        font-size: 1.2rem;
+                        cursor: pointer;
+                        padding: 5px;
+                        transition: color 0.2s;
+                    }
+                    .modal-close:hover {
+                        color: #fff;
+                    }
+                    body.light-mode .modal-close:hover {
+                        color: #111;
+                    }
+                    .wallet-modal-body {
+                        padding: 20px;
+                    }
+                    .wallet-modal-desc {
+                        color: #888;
+                        text-align: center;
+                        margin-bottom: 20px;
+                        font-size: 0.9rem;
+                    }
+                    .wallet-option {
+                        display: flex;
+                        align-items: center;
+                        padding: 15px;
+                        background: #000000;
+                        border-radius: 12px;
+                        margin-bottom: 10px;
+                        text-decoration: none;
+                        color: #fff;
+                        transition: all 0.2s ease;
+                        border: 1px solid transparent;
+                    }
+                    body.light-mode .wallet-option {
+                        background: #f8f9fa;
+                        color: #111;
+                    }
+                    .wallet-option:hover {
+                        background: #111;
+                        border-color: #3898FF;
+                        transform: translateX(5px);
+                    }
+                    body.light-mode .wallet-option:hover {
+                        background: #e9ecef;
+                    }
+                    .wallet-logo {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 10px;
+                        margin-right: 15px;
+                    }
+                    .wallet-option-info {
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    .wallet-option-name {
+                        font-weight: 600;
+                        font-size: 1rem;
+                    }
+                    .wallet-option-desc {
+                        font-size: 0.8rem;
+                        color: #888;
+                    }
+                    .wallet-option i.fa-chevron-right {
+                        color: #888;
+                    }
+                    .wallet-divider {
+                        display: flex;
+                        align-items: center;
+                        margin: 20px 0;
+                        color: #666;
+                        font-size: 0.85rem;
+                    }
+                    .wallet-divider::before,
+                    .wallet-divider::after {
+                        content: '';
+                        flex: 1;
+                        height: 1px;
+                        background: #111;
+                    }
+                    body.light-mode .wallet-divider::before,
+                    body.light-mode .wallet-divider::after {
+                        background: #e9ecef;
+                    }
+                    .wallet-divider span {
+                        padding: 0 15px;
+                    }
+                    .install-options {
+                        text-align: center;
+                    }
+                    .install-btn {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 12px 24px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: #fff;
+                        border-radius: 10px;
+                        text-decoration: none;
+                        font-weight: 500;
+                        transition: all 0.2s ease;
+                    }
+                    .install-btn:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+                    }
+                `;
+                document.head.appendChild(styles);
+            }
+            
+            document.body.appendChild(modal);
+        }
+
+        function closeWalletModal() {
+            const modal = document.getElementById('wallet-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.querySelector('.theme-icon');
+            
+            body.classList.toggle('light-mode');
+            
+            if (body.classList.contains('light-mode')) {
+                themeIcon.className = 'fas fa-sun theme-icon';
+                localStorage.setItem('theme', 'light');
+            } else {
+                themeIcon.className = 'fas fa-moon theme-icon';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        function toggleManualInstructions() {
+            const instructions = document.getElementById('manual-instructions');
+            const button = document.getElementById('manual-btn');
+
+            if (instructions.style.display === 'none' || !instructions.style.display) {
+                instructions.style.display = 'block';
+                button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Instructions';
+                showStatus('Follow the steps below to add the network manually', 'info');
+            } else {
+                instructions.style.display = 'none';
+                button.innerHTML = '<i class="fas fa-book"></i> Manual Setup Guide';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            
+            // الوضع الليلي هو الافتراضي دائماً
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                document.querySelector('.theme-icon').className = 'fas fa-sun theme-icon';
+            } else {
+                // تأكد من إزالة light-mode وحفظ الوضع الليلي
+                document.body.classList.remove('light-mode');
+                document.querySelector('.theme-icon').className = 'fas fa-moon theme-icon';
+                if (!savedTheme) {
+                    localStorage.setItem('theme', 'dark');
+                }
+            }
+            
+            showStatus('Choose your preferred method to add the network', 'info');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service - AccessScan</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .logo-subtitle {
+            font-size: 10px;
+            color: #666;
+            margin-top: -2px;
+        }
+
+        .back-btn {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            color: white;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .hero-logo img {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+        }
+
+        .hero-logo-text {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .hero-logo-subtitle {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: -4px;
+        }
+
+        .hero-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        h1.hero-title {
+            font-size: 18px !important;
+            font-weight: bold !important;
+            margin-bottom: 12px !important;
+        }
+
+        .hero-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* Content Section */
+        .content-section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+        }
+
+        .notice-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: #856404;
+        }
+
+        .notice-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #856404;
+        }
+
+        .terms-content h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 30px 0 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .terms-content h2:first-child {
+            margin-top: 0;
+        }
+
+        .terms-content p {
+            margin-bottom: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .terms-content ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .terms-content li {
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .terms-content strong {
+            color: #333;
+        }
+
+        /* Footer Section */
+        .footer-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: #5a67d8;
+            text-decoration: underline;
+        }
+
+        .copyright {
+            color: #666;
+            font-size: 13px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .hero-section {
+                padding: 30px 20px;
+            }
+
+            .hero-title {
+                font-size: 28px;
+            }
+
+            .content-section {
+                padding: 25px 20px;
+            }
+
+            .footer-links {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header-content {
+                padding: 0 15px;
+            }
+
+            .logo-text {
+                font-size: 20px;
+            }
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Link styling */
+        .content-section a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .content-section a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">A Scan Original</div>
+                </div>
+            </div>
+            <a href="access-explorer.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                Back to Explorer
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <div class="hero-logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                    <div>
+                        <div class="hero-logo-text">accessScan</div>
+                        <div class="hero-logo-subtitle">A Scan Original</div>
+                    </div>
+                </div>
+                <h1 class="hero-title">Terms of Service</h1>
+                <p class="hero-subtitle">Last updated: January 15, 2025</p>
+            </div>
+        </div>
+
+        <!-- Content Section -->
+        <div class="content-section">
+            <div class="notice-box">
+                <div class="notice-title">PLEASE READ THESE TERMS OF SERVICE CAREFULLY.</div>
+                <p>BY ACCESSING OR USING OUR SERVICES, YOU AGREE TO BE BOUND BY THESE TERMS OF SERVICE AND ALL TERMS INCORPORATED BY REFERENCE.</p>
+            </div>
+
+            <div class="terms-content">
+                <p>These Terms of Service and any terms expressly incorporated herein ("Terms") apply to your access to and use of all services (our "Services") provided by AccessScan ("Company," "we," or "us").</p>
+
+                <h2>1. ELIGIBILITY</h2>
+                <p>You represent and warrant that you: (a) are of legal age to form a binding contract; (b) have not previously been suspended or removed from using any of our Services; and (c) have full power and authority to enter into this agreement and in doing so will not violate any other agreement to which you are a party.</p>
+
+                <h2>2. DESCRIPTION OF SERVICES</h2>
+                <p>AccessScan is a network explorer for the Access Network that provides:</p>
+                <ul>
+                    <li>Transaction and block information</li>
+                    <li>Address and wallet details</li>
+                    <li>Network statistics and analytics</li>
+                    <li>API access for developers</li>
+                    <li>Real-time network data</li>
+                </ul>
+
+                <h2>3. USER ACCOUNTS</h2>
+                <p>When you create an account with us, you must provide information that is accurate, complete, and current at all times. You are responsible for safeguarding the password and for all activities that occur under your account.</p>
+
+                <h2>4. ACCEPTABLE USE</h2>
+                <p>You may not use our Services:</p>
+                <ul>
+                    <li>For any unlawful purpose or to solicit others to perform unlawful acts</li>
+                    <li>To violate any international, federal, provincial, or state regulations, rules, laws, or local ordinances</li>
+                    <li>To infringe upon or violate our intellectual property rights or the intellectual property rights of others</li>
+                    <li>To harass, abuse, insult, harm, defame, slander, disparage, intimidate, or discriminate</li>
+                    <li>To submit false or misleading information</li>
+                </ul>
+
+                <h2>5. INTELLECTUAL PROPERTY RIGHTS</h2>
+                <p>The Service and its original content, features, and functionality are and will remain the exclusive property of AccessScan and its licensors. The Service is protected by copyright, trademark, and other laws.</p>
+
+                <h2>6. PRIVACY POLICY</h2>
+                <p>Your privacy is important to us. Please review our Privacy Policy, which also governs your use of the Service, to understand our practices.</p>
+
+                <h2>7. PROHIBITED USES</h2>
+                <p>You may not use our Service:</p>
+                <ul>
+                    <li>For any unlawful purpose or to solicit others to perform unlawful acts</li>
+                    <li>To violate any international, federal, provincial or state regulations, rules, laws, or local ordinances</li>
+                    <li>To infringe upon or violate our intellectual property rights or the intellectual property rights of others</li>
+                    <li>To harass, abuse, insult, harm, defame, slander, disparage, intimidate, or discriminate based on gender, sexual orientation, religion, ethnicity, race, age, national origin, or disability</li>
+                    <li>To submit false or misleading information</li>
+                </ul>
+
+                <h2>8. DISCLAIMER</h2>
+                <p>The information on this website is provided on an "as is" basis. To the fullest extent permitted by law, this Company:</p>
+                <ul>
+                    <li>Excludes all representations and warranties relating to this website and its contents</li>
+                    <li>Excludes all liability for damages arising out of or in connection with your use of this website</li>
+                </ul>
+
+                <h2>9. LIMITATION OF LIABILITY</h2>
+                <p>AccessScan shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses.</p>
+
+                <h2>10. TERMINATION</h2>
+                <p>We may terminate or suspend your account and bar access to the Service immediately, without prior notice or liability, under our sole discretion, for any reason whatsoever and without limitation, including but not limited to a breach of the Terms.</p>
+
+                <h2>11. GOVERNING LAW</h2>
+                <p>These Terms shall be interpreted and governed by the laws of the jurisdiction in which AccessScan operates, without regard to its conflict of law provisions.</p>
+
+                <h2>12. CHANGES TO TERMS</h2>
+                <p>We reserve the right to modify or replace these Terms at any time. If a revision is material, we will provide at least 30 days notice prior to any new terms taking effect.</p>
+
+                <h2>13. CONTACT INFORMATION</h2>
+                <p>If you have any questions about these Terms of Service, please contact us through our support channels or visit our main explorer at <a href="access-explorer.html">AccessScan Explorer</a>.</p>
+            </div>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="footer-section">
+            <div class="footer-links">
+                <a href="access-explorer.html" class="footer-link">Home</a>
+                <a href="privacy-policy-explorer.html" class="footer-link">Privacy Policy</a>
+                <a href="#" class="footer-link">API Documentation</a>
+                <a href="#" class="footer-link">Knowledge Base</a>
+                <a href="#" class="footer-link">Contact Us</a>
+                <a href="#" class="footer-link">Bug Bounty</a>
+            </div>
+            <div class="copyright">
+                AccessScan © 2025 (ACCESS-SCAN) | ⚡ Built by Team AccessScan
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Add subtle animation on scroll
+        window.addEventListener('scroll', function() {
+            const scrolled = window.pageYOffset;
+            const hero = document.querySelector('.hero-section');
+            if (hero) {
+                hero.style.transform = `translateY(${scrolled * 0.2}px)`;
+            }
+        });
+    </script>
+</body>
+</html>

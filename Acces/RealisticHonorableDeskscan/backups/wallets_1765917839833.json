@@ -1,0 +1,57 @@
+{
+  "timestamp": 1765917839833,
+  "date": "2025-12-16T20:43:59.833Z",
+  "type": "wallets_only",
+  "wallets": [
+    {
+      "id": 1,
+      "email": "acseoire@gmail.com",
+      "wallet_address": "0x800d3079aaa001a9122e337e17fe34a3fb761e4f",
+      "coins": "0.00000000",
+      "account_created_date": "1764720304308",
+      "permanent_balance": "0.00000000"
+    },
+    {
+      "id": 2,
+      "email": "cooperdb797@gmail.com",
+      "wallet_address": "0xf0f42073db0fb6b87df3c469e96e8245e1a2a3b6",
+      "coins": "1.07970338",
+      "account_created_date": "1764720331475",
+      "permanent_balance": "1.07970338"
+    },
+    {
+      "id": 3,
+      "email": "ikramberan@gmail.com",
+      "wallet_address": "0x22e50012d72e3e0954706bb4199adb4c37c151cc",
+      "coins": "1.38846259",
+      "account_created_date": "1764802012140",
+      "permanent_balance": "1.38846259"
+    },
+    {
+      "id": 4,
+      "email": "bfk8213@gmail.com",
+      "wallet_address": "0xa0c2b8f26788714c54fe835e8326d1e701fd2446",
+      "coins": "0.00000000",
+      "account_created_date": "1764802085242",
+      "permanent_balance": "0.00000000"
+    },
+    {
+      "id": 5,
+      "email": "xsunmining@gmail.com",
+      "wallet_address": "0x96ac651bd43f9228409831c1c374b9965bf8a195",
+      "coins": "1.25314000",
+      "account_created_date": "1765114030318",
+      "permanent_balance": "1.25314000"
+    },
+    {
+      "id": 6,
+      "email": "amedzen087@gmail.com",
+      "wallet_address": "0x655b209f503a3f2a1d201ee401f09ff72b197279",
+      "coins": "0.00000000",
+      "account_created_date": "1765492045295",
+      "permanent_balance": "0.00000000"
+    }
+  ],
+  "total": 6,
+  "totalBalance": 3.7213059700000004
+}

@@ -1,0 +1,25 @@
+{
+  "timestamp": 1761204687035,
+  "date": "2025-10-23T07:31:27.035Z",
+  "type": "wallets_only",
+  "wallets": [
+    {
+      "id": 1,
+      "email": "teamxsun.app@gmail.com",
+      "wallet_address": "0x8ba2fc7ef8ad4f3666094e2bc869b61a4c0fefac",
+      "coins": "0.30986000",
+      "account_created_date": "1761076523717",
+      "permanent_balance": "0.10994000"
+    },
+    {
+      "id": 2,
+      "email": "xsunmining@gmail.com",
+      "wallet_address": "0x52f9a817aec25c5866d836b7c87291f6a71b32e3",
+      "coins": "0.27968000",
+      "account_created_date": "1761087352924",
+      "permanent_balance": "0.25970000"
+    }
+  ],
+  "total": 2,
+  "totalBalance": 0.58954
+}

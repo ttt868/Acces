@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service - AccessDigital</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style-dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="translations.js"></script>
+</head>
+<body>
+    <script src="translations.js"></script>
+    <script>
+        // Create modal dynamically with JavaScript styling
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalContainer = document.createElement('div');
+            modalContainer.className = 'terms-of-service-modal';
+
+            // Ensure modal appears on top of everything
+            modalContainer.style.position = 'fixed';
+            modalContainer.style.zIndex = '9999';
+            modalContainer.style.top = '0';
+            modalContainer.style.left = '0';
+            modalContainer.style.width = '100%';
+            modalContainer.style.height = '100%';
+            modalContainer.style.backgroundColor = 'rgba(0,0,0,0.7)';
+            modalContainer.style.display = 'flex';
+            modalContainer.style.justifyContent = 'center';
+            modalContainer.style.alignItems = 'center';
+
+            // Check if dark mode is active
+            const isDarkMode = document.documentElement.classList.contains('dark-theme') || 
+                              document.body.classList.contains('dark-theme') ||
+                              localStorage.getItem('theme') === 'dark';
+
+            // Set theme-aware colors
+            const bgColor = isDarkMode ? 'var(--card-background, #000000)' : 'white';
+            const textColor = isDarkMode ? 'var(--text-color, #f5f5f5)' : '#333';
+            const lightTextColor = isDarkMode ? 'var(--light-text, #aaaaaa)' : '#777';
+            const borderColor = isDarkMode ? 'var(--border-color, #3a3a3a)' : '#e1e4e8';
+            const shadowColor = isDarkMode ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)';
+
+            // Create modal content
+            const modalContent = document.createElement('div');
+            modalContent.style.width = '90%';
+            modalContent.style.maxWidth = '600px';
+            modalContent.style.maxHeight = '80vh';
+            modalContent.style.overflowY = 'auto';
+            modalContent.style.backgroundColor = bgColor;
+            modalContent.style.borderRadius = '12px';
+            modalContent.style.padding = '30px';
+            modalContent.style.boxShadow = `0 4px 20px ${shadowColor}`;
+            modalContent.style.color = textColor;
+            modalContent.style.fontFamily = 'Arial, sans-serif';
+            modalContent.style.lineHeight = '1.6';
+
+            // Modal header
+            const header = document.createElement('div');
+            header.style.textAlign = 'center';
+            header.style.marginBottom = '30px';
+            header.style.borderBottom = `1px solid ${borderColor}`;
+            header.style.paddingBottom = '20px';
+
+            const title = document.createElement('h1');
+            title.setAttribute('data-translate', 'Terms of Service');
+            title.textContent = 'Terms of Service';
+            title.style.color = '#4CAF50';
+            title.style.marginBottom = '10px';
+            title.style.fontSize = '24px';
+
+            const notice = document.createElement('p');
+            notice.setAttribute('data-translate', 'Please read these terms carefully before using our platform');
+            notice.textContent = 'Please read these terms carefully before using our platform';
+            notice.style.color = lightTextColor;
+            notice.style.fontStyle = 'italic';
+            notice.style.marginTop = '10px';
+
+            header.appendChild(title);
+            header.appendChild(notice);
+
+            // Create content sections
+            const content = document.createElement('div');
+            content.style.marginTop = '20px';
+
+            const sections = [
+                {
+                    title: '1. Platform Overview',
+                    text: 'AccessDigital is a digital engagement platform operating on the Access Network, a custom blockchain infrastructure. Users can participate in daily activities, earn ACCESS points, explore blockchain technology, and interact with decentralized features. The platform combines community engagement with blockchain education.'
+                },
+                {
+                    title: '2. Understanding ACCESS Points',
+                    text: 'ACCESS points are native digital units of the Access Network blockchain. They function as engagement rewards and utility tokens within our ecosystem. IMPORTANT: ACCESS points are NOT classified as securities, investments, or financial instruments. The platform does not guarantee, imply, or promise any monetary value, market price, or financial return for ACCESS points. Any perceived value is determined solely by organic community activity and is outside the control of AccessDigital.'
+                },
+                {
+                    title: '3. No Investment or Financial Advice',
+                    text: 'AccessDigital is NOT an investment platform, financial service, or money-making opportunity. We do NOT provide financial advice, investment recommendations, or promises of profit. Users should NOT participate with expectations of financial gain. Any decisions regarding ACCESS points are made at the user\'s own discretion and risk. We strongly advise against treating ACCESS points as an investment vehicle.'
+                },
+                {
+                    title: '4. Blockchain Network & Transactions',
+                    text: 'The Access Network is an independent blockchain infrastructure with its own consensus mechanism and transaction processing. All on-chain transactions are immutable and cannot be reversed. Users are solely responsible for verifying recipient addresses before initiating transfers. AccessDigital is not liable for transactions sent to incorrect addresses or losses due to user error.'
+                },
+                {
+                    title: '5. Wallet Integration & External Transfers',
+                    text: 'The platform offers optional Web3 wallet connectivity for users who wish to interact with the Access Network through external wallets (MetaMask, Trust Wallet, etc.). This feature allows users to manage their ACCESS points using familiar blockchain tools. External wallet integration is provided as a convenience feature and does not imply any financial utility or value guarantee for ACCESS points.'
+                },
+                {
+                    title: '6. Activity & Rewards System',
+                    text: 'Users can earn ACCESS points through daily activities, processing sessions, and community participation. The reward rates, distribution mechanisms, and activity requirements may change at any time without prior notice. Accumulated points are subject to platform terms and may be adjusted for system integrity, abuse prevention, or technical requirements.'
+                },
+                {
+                    title: '7. Referral Program',
+                    text: 'The referral system rewards users with ACCESS points for successful community invitations. Referral bonuses are platform rewards with no guaranteed external value. Abuse of the referral system, including fake accounts or fraudulent referrals, will result in immediate account termination and forfeiture of all accumulated points.'
+                },
+                {
+                    title: '8. Network Explorer (AccessScan)',
+                    text: 'AccessScan provides transparency by displaying blockchain data including transactions, blocks, and account information. The explorer is an informational tool showing network activity. Historical data accuracy is maintained to the best of our technical ability but is not guaranteed for third-party reliance or financial decisions.'
+                },
+                {
+                    title: '9. Platform Purpose & Vision',
+                    text: 'AccessDigital aims to create an engaging community platform where users can learn about blockchain technology, participate in decentralized systems, and earn engagement rewards. Our focus is on building a sustainable ecosystem based on user participation, education, and community value—not financial speculation.'
+                },
+                {
+                    title: '10. Risk Acknowledgment',
+                    text: 'By using this platform, you acknowledge: (a) Blockchain technology involves inherent technical risks; (b) ACCESS points have no guaranteed value outside the platform ecosystem; (c) You are not participating for investment purposes; (d) Past reward distributions do not guarantee future distributions; (e) The platform may modify or discontinue features at any time.'
+                },
+                {
+                    title: '11. User Responsibilities',
+                    text: 'Users must: (a) Secure their account credentials and private keys; (b) Verify all transaction details before confirmation; (c) Not attempt to manipulate, exploit, or abuse platform features; (d) Comply with applicable laws in their jurisdiction; (e) Not misrepresent the platform as a financial service or investment opportunity to others.'
+                },
+                {
+                    title: '12. Prohibited Activities',
+                    text: 'Users may NOT: (a) Create multiple accounts or use automated systems; (b) Exploit bugs or vulnerabilities for unfair advantage; (c) Engage in any form of market manipulation; (d) Use the platform for money laundering or illegal activities; (e) Promote the platform as an investment or money-making scheme; (f) Harass other community members.'
+                },
+                {
+                    title: '13. Service Modifications',
+                    text: 'AccessDigital reserves the right to modify, suspend, or discontinue any platform features, reward mechanisms, or services at any time. This includes adjustments to point distributions, activity requirements, and network parameters. Continued use after changes constitutes acceptance of modified terms.'
+                },
+                {
+                    title: '14. Limitation of Liability',
+                    text: 'AccessDigital, its operators, and affiliates shall NOT be liable for: (a) Loss of ACCESS points due to user error, security breaches, or technical issues; (b) Any perceived financial loss related to ACCESS point value; (c) Third-party actions or external market conditions; (d) Service interruptions or data loss; (e) Decisions made based on platform information.'
+                },
+                {
+                    title: '15. Account Termination',
+                    text: 'We reserve the right to suspend or terminate accounts that violate these terms, engage in suspicious activity, or pose risks to platform integrity. Upon termination, accumulated ACCESS points may be forfeited. Users may request account deletion through profile settings, resulting in permanent removal of all associated data.'
+                },
+                {
+                    title: '16. Intellectual Property',
+                    text: 'All platform content, branding, code, and designs are proprietary to AccessDigital. Users may not copy, modify, or distribute platform materials without explicit written permission. The Access Network protocol and AccessScan explorer are part of our intellectual property portfolio.'
+                },
+                {
+                    title: '17. Dispute Resolution',
+                    text: 'Any disputes arising from platform use shall be resolved through good-faith negotiation. Users agree that ACCESS points have no predetermined monetary value for dispute calculation purposes. AccessDigital decisions regarding account status and point balances are final within the platform ecosystem.'
+                },
+                {
+                    title: '18. Regulatory Compliance',
+                    text: 'Users are responsible for understanding and complying with laws applicable in their jurisdiction regarding digital assets and blockchain platforms. AccessDigital does not provide tax, legal, or regulatory advice. Features may be restricted in certain regions based on regulatory requirements.'
+                },
+                {
+                    title: '19. Updates to Terms',
+                    text: 'These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.'
+                },
+                {
+                    title: 'Acceptance Statement',
+                    text: 'By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.'
+                }
+            ];
+
+            sections.forEach(section => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.style.marginBottom = '20px';
+
+                const sectionTitle = document.createElement('h3');
+                sectionTitle.setAttribute('data-translate', section.title);
+                sectionTitle.textContent = section.title;
+                sectionTitle.style.color = '#4CAF50';
+                sectionTitle.style.borderBottom = `1px solid ${borderColor}`;
+                sectionTitle.style.paddingBottom = '5px';
+                sectionTitle.style.marginBottom = '10px';
+
+                const sectionText = document.createElement('p');
+                sectionText.setAttribute('data-translate', section.text);
+                sectionText.textContent = section.text;
+                sectionText.style.marginBottom = '15px';
+
+                sectionDiv.appendChild(sectionTitle);
+                sectionDiv.appendChild(sectionText);
+                content.appendChild(sectionDiv);
+            });
+
+            // Footer with back button
+            const footer = document.createElement('div');
+            footer.style.marginTop = '30px';
+            footer.style.textAlign = 'center';
+
+            const backButton = document.createElement('a');
+            backButton.href = 'index.html';
+            backButton.style.display = 'inline-block';
+            backButton.style.padding = '10px 20px';
+            backButton.style.backgroundColor = '#4CAF50';
+            backButton.style.color = 'white';
+            backButton.style.textDecoration = 'none';
+            backButton.style.borderRadius = '5px';
+            backButton.style.transition = 'background-color 0.3s';
+
+            const backIcon = document.createElement('i');
+            backIcon.className = 'fas fa-arrow-left';
+            backIcon.style.marginRight = '8px';
+
+            const backText = document.createElement('span');
+            backText.setAttribute('data-translate', 'Back to Home');
+            backText.textContent = 'Back to Home';
+
+            backButton.appendChild(backIcon);
+            backButton.appendChild(backText);
+            footer.appendChild(backButton);
+
+            // Hover effect for back button
+            backButton.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#367c39';
+            });
+            backButton.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '#4CAF50';
+            });
+
+            // Assemble modal
+            modalContent.appendChild(header);
+            modalContent.appendChild(content);
+            modalContent.appendChild(footer);
+            modalContainer.appendChild(modalContent);
+
+            // Add to body
+            document.body.appendChild(modalContainer);
+
+            // Initialize translator and apply translations
+            const translator = new Translator();
+            if (typeof Translator !== 'undefined') {
+                // Get saved language or default to English
+                const savedLanguage = localStorage.getItem('preferredLanguage') || 'en';
+                translator.setLanguage(savedLanguage);
+
+                // Translate all elements with data-translate
+                const elementsToTranslate = modalContainer.querySelectorAll('[data-translate]');
+                elementsToTranslate.forEach(element => {
+                    const key = element.getAttribute('data-translate');
+                    if (key) {
+                        const translatedText = translator.translate(key);
+                        element.textContent = translatedText;
+                    }
+                });
+
+                // Apply saved theme
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                if (savedTheme === 'dark') {
+                    document.body.classList.add('dark-theme');
+                    document.documentElement.classList.add('dark-theme');
+                }
+            }
+        });
+
+        // Translator class
+        class Translator {
+            constructor() {
+                this.language = 'en';
+                this.translations = window.translations || {};
+            }
+
+            setLanguage(lang) {
+                this.language = lang;
+            }
+
+            translate(key) {
+                if (this.translations[this.language] && this.translations[this.language][key]) {
+                    return this.translations[this.language][key];
+                }
+                return key; // Return the key if translation not found
+            }
+        }
+    </script>
+</body>
+</html>

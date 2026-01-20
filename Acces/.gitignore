@@ -1,0 +1,70 @@
+# =============================================
+# 🔒 ACCESS Network Security - .gitignore
+# =============================================
+
+# 🚨 CRITICAL: Environment files with secrets
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+
+# Database
+*.sqlite
+*.db
+*.sql.backup
+
+# Private Keys
+*.pem
+*.key
+private-keys/
+wallet-keys/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Blockchain data (optional - comment if you want to keep)
+# blockchain-enterprise-data/
+# network-leveldb/
+# access-network-data/
+
+# Backups with sensitive data
+backups/*.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Cache
+.cache/
+*.cache
+
+# Sensitive configs
+*-secret.json
+*-private.json
+credentials.json
+service-account.json
+
+# Pending transactions (contains private data)
+pending-transactions.json

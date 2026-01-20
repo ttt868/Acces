@@ -1,0 +1,125 @@
+modules = ["nodejs-18", "postgresql-16"]
+
+[nix]
+channel = "stable-25_05"
+
+[deployment]
+run = ["sh", "-c", "cd RealisticHonorableDeskscan && node server.js"]
+deploymentTarget = "cloudrun"
+ignorePorts = false
+build = ["sh", "-c", "npm install"]
+
+[languages]
+[languages.javascript]
+pattern = "**/{*.js,*.jsx,*.ts,*.tsx,*.json}"
+[languages.javascript.languageServer]
+start = "typescript-language-server --stdio"
+
+[packager]
+language = "nodejs"
+  [packager.features]
+  packageSearch = true
+  guessImports = true
+  enabledForHosting = true
+
+[unitTest]
+language = "nodejs"
+
+[debugger]
+support = true
+  [debugger.interactive]
+  transport = "localhost:0"
+  startCommand = [ "dap-node" ]
+    [debugger.interactive.initializeMessage]
+    command = "initialize"
+    type = "request"
+      [debugger.interactive.initializeMessage.arguments]
+      clientID = "replit"
+      clientName = "replit.com"
+      columnsStartAt1 = true
+      linesStartAt1 = true
+      locale = "en-us"
+      pathFormat = "path"
+      supportsInvalidatedEvent = true
+      supportsProgressReporting = true
+      supportsRunInTerminalRequest = true
+      supportsVariablePaging = true
+      supportsVariableType = true
+    [debugger.interactive.launchMessage]
+    command = "launch"
+    type = "request"
+      [debugger.interactive.launchMessage.arguments]
+      args = []
+      console = "externalTerminal"
+      cwd = "."
+      environment = []
+      pauseForSourceMap = false
+      program = "./start.js"
+      request = "launch"
+      sourceMaps = true
+      stopOnEntry = false
+      type = "pwa-node"
+
+[env]
+XDG_CONFIG_HOME = "/home/runner/.config"
+PATH = "/home/runner/$REPL_SLUG/.config/npm/node_global/bin:/home/runner/$REPL_SLUG/node_modules/.bin"
+npm_config_prefix = "/home/runner/$REPL_SLUG/.config/npm/node_global"
+
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix", ".config", "package.json", "package-lock.json"]
+
+[extension]
+isExcludedFromWorkspace = false
+
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+[[ports]]
+localPort = 5000
+externalPort = 5000
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[workflows]
+runButton = "Server"
+
+[[workflows.workflow]]
+name = "Server"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd Acces/RealisticHonorableDeskscan && PORT=3000 BLOCKCHAIN_PORT=5000 node server.js"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow]]
+name = "Server"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd Acces/RealisticHonorableDeskscan && PORT=3000 BLOCKCHAIN_PORT=5000 node server.js"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[agent]
+expertMode = true
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BNj9ssedNiYUBqmqwJndFQHPZKBEWuFmtZYX9HBm0VdOgFWltE6jbgyIN1wfgSO-i_zoMq4Dmr7VBw3aQpx7cVI"
+VAPID_PRIVATE_KEY = "cld4QfvBnKEksVSTcwKjDGghxLif3_QYBogorlrVBjk"
+VAPID_SUBJECT = "mailto:admin@access-network.com"
+GOOGLE_CLIENT_ID = "586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com"
+

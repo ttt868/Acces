@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.trycloudflare.hierarchy_deemed_motherboard_alpine.twa",
+      "sha256_cert_fingerprints": ["3A:DF:B7:AB:9D:F1:C0:00:39:46:4F:BA:3A:1C:9F:96:24:6A:E6:80:71:7E:FD:FF:35:77:C8:CB:1D:B3:F0:1D"]
+    }
+  }
+]

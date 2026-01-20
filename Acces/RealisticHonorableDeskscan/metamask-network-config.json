@@ -1,0 +1,48 @@
+
+{
+  "networkName": "Access Network",
+  "chainId": "0x5968",
+  "networkId": "22888",
+  "rpcUrls": [
+    "https://glowing-space-cod-v665jpxrr4grc6p4p-5000.app.github.dev/"
+  ],
+  "blockExplorerUrls": [
+    "https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/access-explorer.html#`"
+  ],
+  "nativeCurrency": {
+    "name": "Access Coin",
+    "symbol": "ACCESS",
+    "decimals": 18
+  },
+  "iconUrls": [
+    "https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/logo.png"
+  ],
+  "description": "Access Network - Decentralized Digital Currency Platform",
+  "features": {
+    "EIP155": true,
+    "EIP1559": false,
+    "chainType": "EVM"
+  },
+  "troubleshooting": {
+    "commonIssues": [
+      {
+        "issue": "Balance not showing",
+        "solution": "Switch to another network and back to Access Network"
+      },
+      {
+        "issue": "Transactions not appearing",
+        "solution": "Wait 30-60 seconds for network sync"
+      },
+      {
+        "issue": "Network not connecting",
+        "solution": "Check RPC URL and Chain ID are correct"
+      }
+    ],
+    "supportedWallets": [
+      "MetaMask",
+      "Trust Wallet",
+      "Coinbase Wallet",
+      "WalletConnect compatible wallets"
+    ]
+  }
+}

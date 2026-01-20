@@ -1,0 +1,56 @@
+
+{
+  "migration": {
+    "currentDatabase": {
+      "type": "postgresql",
+      "connectionString": "env:DATABASE_URL",
+      "description": "Current Replit PostgreSQL database"
+    },
+    "targetDatabase": {
+      "type": "postgresql", 
+      "connectionString": "postgresql://username:password@host:port/database",
+      "description": "Target database for migration"
+    },
+    "tables": [
+      {
+        "name": "users",
+        "critical": true,
+        "description": "User accounts and profiles"
+      },
+      {
+        "name": "transactions", 
+        "critical": true,
+        "description": "Cryptocurrency transactions"
+      },
+      {
+        "name": "mining_history",
+        "critical": true,
+        "description": "Mining rewards history"
+      },
+      {
+        "name": "referrals",
+        "critical": false,
+        "description": "User referral relationships"
+      },
+      {
+        "name": "user_wallets",
+        "critical": true,
+        "description": "User wallet addresses"
+      },
+      {
+        "name": "wallet_balances",
+        "critical": true,
+        "description": "Wallet balance tracking"
+      }
+    ],
+    "migrationSteps": [
+      "1. Export current database schema and data",
+      "2. Set up new database infrastructure", 
+      "3. Create tables in new database",
+      "4. Import data with validation",
+      "5. Update environment variables",
+      "6. Test application with new database",
+      "7. Switch traffic to new database"
+    ]
+  }
+}

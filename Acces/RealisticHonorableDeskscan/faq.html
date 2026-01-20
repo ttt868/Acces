@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="no">
+    <meta name="apple-mobile-web-app-capable" content="no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>FAQ - AccessScan</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        // ✅ Apply theme IMMEDIATELY before page renders (prevents white flash)
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-code: #f6f8fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6c757d;
+            --border-color: #e1e8ed;
+            --accent-color: #0969da;
+            --accent-purple: #8b5cf6;
+            --accent-blue: #4da6ff;
+            --footer-bg: #f8f9fa;
+            --footer-text: #333;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-code: #1c2128;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+            --accent-color: #58a6ff;
+            --accent-purple: #8b95ff;
+            --accent-blue: #4da6ff;
+            --footer-bg: #161b22;
+            --footer-text: #e6edf3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 0 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: -2px;
+        }
+
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            border: none;
+            background: none;
+            position: relative;
+            right: 10px;
+        }
+
+        .menu-toggle span {
+            width: 20px;
+            height: 2px;
+            background: var(--text-primary);
+            margin: 2px 0;
+            transition: 0.3s;
+        }
+
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sign-in-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+        }
+
+        .sign-in-btn:hover {
+            color: var(--accent-purple);
+        }
+
+        /* Dropdown styles */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 220px;
+            z-index: 1000;
+            padding: 8px 0;
+        }
+
+        .dropdown.active .dropdown-menu {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* تعديل موضع قائمة More لتظهر في الوسط */
+        .dropdown:last-child .dropdown-menu {
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        .dropdown:last-child.active .dropdown-menu {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 10px 16px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-purple);
+        }
+
+        .dropdown-item.disabled-btn {
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .dropdown-item-wrapper {
+            display: block;
+            position: relative;
+        }
+
+        .mobile-nav-item-wrapper {
+            display: block;
+            position: relative;
+        }
+
+        /* Coming Soon Tooltip */
+        .coming-soon-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background: #000000;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 10001;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .coming-soon-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #000000;
+        }
+
+        .coming-soon-tooltip.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-12px);
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 0;
+            align-items: center;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+        }
+
+        .nav-item.active {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+            font-weight: 500;
+        }
+
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 25px 20px 40px;
+        }
+
+        /* FAQ Accordion */
+        .faq-category {
+            margin-bottom: 30px;
+        }
+
+        .faq-category-title {
+            font-size: 20px;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent-purple);
+        }
+
+        .faq-item {
+            background: var(--bg-primary);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: background 0.3s ease;
+        }
+
+        .faq-question:hover {
+            background: var(--bg-secondary);
+        }
+
+        .faq-question i {
+            color: var(--accent-purple);
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+        }
+
+        .faq-answer-content {
+            padding: 0 20px 20px 20px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .faq-answer-content code {
+            background: var(--bg-code);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: var(--accent-purple);
+        }
+
+        .faq-answer-content a {
+            color: var(--accent-purple);
+            text-decoration: none;
+        }
+
+        .faq-answer-content a:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--footer-bg);
+            color: var(--footer-text);
+            padding: 40px 0 20px;
+            margin-top: 50px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer-link:hover {
+            color: var(--accent-color);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px;
+            height: 100vh;
+            height: 100dvh; /* Use dynamic viewport height for better mobile support */
+            background: var(--bg-primary);
+            box-shadow: 2px 0 20px rgba(0,0,0,0.2);
+            z-index: 9998;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+
+        .mobile-menu.active {
+            left: 0;
+        }
+
+        .mobile-menu-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mobile-menu-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .mobile-menu-content {
+            padding: 20px 0;
+        }
+
+        /* Mobile User Section Styles */
+        .mobile-user-section {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: -20px -20px 0 -20px;
+        }
+
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .mobile-user-details {
+            flex: 1;
+            min-width: 0;
+            padding-left: 8px;
+        }
+
+        .mobile-user-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 2px;
+            color: white;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mobile-user-email {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mobile-user-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .mobile-user-actions .mobile-nav-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 15px;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            border-bottom: none;
+            transition: background 0.3s ease;
+        }
+
+        .mobile-user-actions .mobile-nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-user-actions .mobile-nav-item i {
+            margin-right: 8px;
+            width: 16px;
+        }
+
+        .mobile-signin-section {
+            padding: 0 0 10px 0;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 15px 0;
+        }
+
+        .mobile-nav-section {
+            padding: 10px 20px 5px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mobile-nav-item {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: 1px solid var(--bg-secondary);
+        }
+
+        .mobile-nav-item:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-purple);
+        }
+
+        .mobile-nav-item.disabled-btn {
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .mobile-nav-item-wrapper {
+            display: block;
+        }
+
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9997;
+        }
+
+        .mobile-menu-overlay.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex;
+            }
+
+            .nav-content {
+                display: none;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+
+            .page-header h1 {
+                font-size: 24px;
+            }
+
+            .faq-question {
+                font-size: 14px;
+            }
+
+            .sign-in-btn.user-logged-in {
+                display: none !important;
+            }
+        }
+
+        /* Search Section */
+        .search-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px 30px;
+        }
+
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .page-title {
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 600;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 20px 0;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0px 20px 0;
+            text-align: center;
+        }
+
+        .search-box {
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .search-btn {
+            background: var(--accent-purple);
+            border: none;
+            padding: 15px 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-btn:hover {
+            background: #7c3aed;
+        }
+
+        /* Authentication Modal */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .auth-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .auth-header {
+            padding: 30px 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .auth-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .auth-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .auth-form {
+            padding: 30px;
+        }
+
+        .google-btn {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .google-btn:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-1px);
+        }
+
+        .auth-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-close:hover {
+            background: var(--bg-secondary);
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .success-message {
+            color: #28a745;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Custom checkbox */
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 0;
+            color: var(--text-primary);
+        }
+
+        .checkbox-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkmark {
+            height: 16px;
+            width: 16px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            margin-right: 8px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-container:hover input ~ .checkmark {
+            border-color: #1e88e5;
+        }
+
+        .checkbox-container input:checked ~ .checkmark {
+            background-color: #1e88e5;
+            border-color: #1e88e5;
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            left: 4px;
+            top: 1px;
+            width: 4px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .checkbox-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">A Scan Original</div>
+                </div>
+            </div>
+
+            <div class="right-section">
+                <a href="#" class="sign-in-btn" onclick="showAuthModal()" style="display: none;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                </a>
+                <button class="menu-toggle" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="access-explorer.html" class="nav-item">Home</a>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Network ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="transactions.html" class="dropdown-item">Transactions</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Pending Transactions 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Contract Internal Transactions 🚫</a>
+                    </div>
+                    <a href="blocks.html" class="dropdown-item">View Blocks</a>
+                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Verified Contracts 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Validators ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Validators Leaderboard 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Validator Stats 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Tokens ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Top Tokens (AEP-20) 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Token Transfers (AEP-20) 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">NFTs ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Top NFTs 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Latest Trades 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Latest Transfers 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Latest Mints 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Resources ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Developers ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Input Data Decoder 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Unit Converter 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">CSV Export 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Account Balance Checker 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">More ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
+                    </div>
+                    <a href="gastracker.html" class="dropdown-item">Gas Tracker</a>
+                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Verify Contract 🚫</a>
+                    </div>
+                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <a href="#" class="dropdown-item" onclick="event.preventDefault(); toggleTheme();" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="desktop-theme-text">Light Mode</span>
+                        <span id="desktop-theme-icon">☀️</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">A Scan Original</div>
+                </div>
+            </div>
+            <button class="mobile-menu-close" onclick="toggleMobileMenu()">×</button>
+        </div>
+
+        <div class="mobile-menu-content">
+            <!-- User Profile Section for Mobile (Only shown when logged in) -->
+            <div class="mobile-user-section" id="mobileUserSection" style="display: none;">
+                <div class="mobile-user-info">
+                    <div class="mobile-user-details">
+                        <div class="mobile-user-name" id="mobileUserName">User Name</div>
+                        <div class="mobile-user-email" id="mobileUserEmail">user@example.com</div>
+                    </div>
+                </div>
+                <div class="mobile-user-actions">
+                    <a href="#" class="mobile-nav-item" onclick="showUserProfile()">
+                        <i class="fas fa-user"></i> My Profile
+                    </a>
+                    <a href="#" class="mobile-nav-item" onclick="logoutExplorer()">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+                <div class="mobile-menu-divider"></div>
+            </div>
+
+            <!-- Sign In Section for Mobile (Only shown when not logged in) -->
+            <div class="mobile-signin-section" id="mobileSigninSection">
+                <a href="#" class="mobile-nav-item" onclick="showAuthModal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                </a>
+                <div class="mobile-menu-divider"></div>
+            </div>
+
+            <a href="access-explorer.html" class="mobile-nav-item">Home</a>
+
+            <div class="mobile-nav-section">Network</div>
+            <a href="transactions.html" class="mobile-nav-item">Transactions</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Pending Transactions 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Contract Internal Transactions 🚫</a>
+            </div>
+            <a href="blocks.html" class="mobile-nav-item">View Blocks</a>
+            <a href="top-accounts.html" class="mobile-nav-item">Top Accounts</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Verified Contracts 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Validators</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Validators Leaderboard 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Validator Stats 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Tokens</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Top Tokens (AEP-20) 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Token Transfers (AEP-20) 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">NFTs</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Top NFTs 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Latest Trades 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Latest Transfers 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Latest Mints 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Resources</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Developers</div>
+            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Input Data Decoder 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Unit Converter 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">CSV Export 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Account Balance Checker 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">More</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
+            </div>
+            <a href="gastracker.html" class="mobile-nav-item">Gas Tracker</a>
+            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Verify Contract 🚫</a>
+            </div>
+
+            <!-- Dark Mode Toggle Button -->
+            <div style="padding: 20px; margin-top: auto; border-top: 1px solid var(--border-color);">
+                <button onclick="toggleTheme()" style="width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-primary); font-weight: 500; transition: all 0.2s;">
+                    <span id="mobile-theme-icon" style="font-size: 18px;">☀️</span>
+                    <span id="mobile-theme-text">Light Mode</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search by Address / Txn Hash / Block">
+                <button class="search-btn" onclick="performSearch()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="10" cy="10" r="7" stroke="white" stroke-width="2.5" fill="none"/>
+                        <line x1="16" y1="16" x2="21" y2="21" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Page Title -->
+    <h1 class="page-title">Frequently Asked Questions ❓</h1>
+    <p class="page-subtitle">Find answers to common questions about Access Network and AccessScan</p>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- General Questions -->
+        <div class="faq-category">
+            <h2 class="faq-category-title">🌐 General Questions</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    What is Access Network?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Access Network is a high-performance blockchain designed for speed, security, and scalability. 
+                        It supports decentralized applications (dApps), smart contracts, and digital assets with 
+                        minimal transaction fees and near-instant confirmations.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    What is AccessScan?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        AccessScan is the official block explorer for Access Network. It allows you to search and 
+                        explore transactions, blocks, addresses, and smart contracts on the network in real-time.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    What is the Chain ID for Access Network?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        The Chain ID for Access Network is <code>22888</code> (or <code>0x5968</code> in hexadecimal).
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallet Questions -->
+        <div class="faq-category">
+            <h2 class="faq-category-title">💳 Wallet & Connections</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    How do I add Access Network to MetaMask?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        To add Access Network to MetaMask:<br><br>
+                        1. Open MetaMask and click on the network dropdown<br>
+                        2. Click "Add Network" or "Add a network manually"<br>
+                        3. Enter the following details:<br>
+                        &nbsp;&nbsp;• Network Name: <code>Access Network</code><br>
+                        &nbsp;&nbsp;• RPC URL: Your network's RPC endpoint<br>
+                        &nbsp;&nbsp;• Chain ID: <code>22888</code><br>
+                        &nbsp;&nbsp;• Currency Symbol: <code>ACCESS</code><br>
+                        &nbsp;&nbsp;• Block Explorer: AccessScan URL<br>
+                        4. Click "Save"
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    Is Access Network compatible with Trust Wallet?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Yes! Access Network is fully EVM-compatible, which means it works with Trust Wallet, 
+                        MetaMask, and other Ethereum-compatible wallets. Simply add the network using the 
+                        custom network option in your wallet.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction Questions -->
+        <div class="faq-category">
+            <h2 class="faq-category-title">📄 Transactions</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    Why is my transaction pending?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Transactions may appear pending due to:<br><br>
+                        • Low gas price - Try increasing the gas price<br>
+                        • Network congestion - Wait for the network to process<br>
+                        • Nonce issues - Check if previous transactions are confirmed<br><br>
+                        <strong>Note:</strong> AccessScan is a block explorer and cannot expedite, cancel, or 
+                        replace transactions. Please contact your wallet provider for transaction assistance.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    How fast are transactions on Access Network?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Access Network features ~3 second block times, providing near-instant transaction 
+                        confirmations. Most transactions are confirmed within 1-2 blocks.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    What are the transaction fees on Access Network?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Access Network offers very low transaction fees. The exact fee depends on the 
+                        gas price and gas used by your transaction. Check the 
+                        <a href="gastracker.html">Gas Tracker</a> for current gas prices.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Developer Questions -->
+        <div class="faq-category">
+            <h2 class="faq-category-title">👨‍💻 Developer Resources</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    Does Access Network have an API?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Yes! AccessScan provides a comprehensive API for developers. You can access 
+                        transaction data, block information, address balances, and more. 
+                        Visit our <a href="developer-api.html">API Documentation</a> for details.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    Is Access Network EVM compatible?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Yes! Access Network is fully EVM (Ethereum Virtual Machine) compatible. 
+                        This means you can deploy Solidity smart contracts, use Web3.js/Ethers.js libraries, 
+                        and port existing Ethereum dApps with minimal modifications.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Questions -->
+        <div class="faq-category">
+            <h2 class="faq-category-title">🆘 Support</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    How can I contact support?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        You can reach us through:<br><br>
+                        • <a href="contact.html">Contact Form</a> on our website<br>
+                        • <a href="https://t.me/+YnQtDWLlQxk5YTU8" target="_blank">Telegram Community</a><br>
+                        • <a href="https://x.com/Access_Chain" target="_blank" style="display: inline-flex; align-items: center; gap: 4px;">Twitter / <svg width="14" height="14" viewBox="0 0 24 24" fill="#000000" style="vertical-align: middle;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><br><br>
+                        Please note that we can only assist with issues directly related to AccessScan 
+                        block explorer services.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    I lost my private keys. Can you help?
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        <strong>⚠️ Important:</strong> AccessScan is a block explorer only. We do NOT have 
+                        access to private keys, passwords, or wallet funds. We cannot recover lost keys 
+                        or restore wallet access.<br><br>
+                        Please contact your wallet provider (MetaMask, Trust Wallet, etc.) for wallet-related issues.
+                        <br><br>
+                        <strong>🔒 Security Warning:</strong> We will NEVER ask for your private keys or 
+                        seed phrases. Never share these with anyone!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Google Sign In Modal -->
+    <div class="auth-modal" id="authModal" onclick="if(event.target === this) hideAuthModal()">
+        <div class="auth-container">
+            <button class="auth-close" onclick="hideAuthModal()">×</button>
+
+            <div class="auth-header">
+                <div class="auth-title">Sign In to AccessScan</div>
+                <div class="auth-subtitle">Access the network explorer with your Google account</div>
+            </div>
+
+            <div class="auth-form">
+                <button type="button" class="google-btn" onclick="triggerGoogleSignIn()">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continue with Google
+                </button>
+
+                <!-- Terms and Unsubscribe Checkboxes -->
+                <div class="form-group" style="margin-top: 25px;">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="termsCheckbox" required>
+                        <span class="checkmark"></span>
+                        I agree to the <a href="terms-of-service.html" target="_blank" style="color: var(--accent-purple);">Terms of Service</a>.
+                    </label>
+                </div>
+
+                <div id="authMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="about.html" class="footer-link">About</a>
+                <a href="faq.html" class="footer-link">FAQ</a>
+                <a href="developer-api.html" class="footer-link">API</a>
+                <a href="contact.html" class="footer-link">Contact Us</a>
+                <a href="terms-of-service.html" class="footer-link">Terms</a>
+            </div>
+            <p>&copy; 2025 AccessScan. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Global variables for authentication
+        let explorerSessionToken = null;
+        let currentExplorerUser = null;
+        let GOOGLE_CLIENT_ID = null;
+
+        // Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeUI(newTheme);
+        }
+
+        function updateThemeUI(theme) {
+            const mobileIcon = document.getElementById('mobile-theme-icon');
+            const mobileText = document.getElementById('mobile-theme-text');
+            const desktopIcon = document.getElementById('desktop-theme-icon');
+            const desktopText = document.getElementById('desktop-theme-text');
+
+            if (theme === 'dark') {
+                if (mobileIcon) mobileIcon.textContent = '🌙';
+                if (mobileText) mobileText.textContent = 'Dark Mode';
+                if (desktopIcon) desktopIcon.textContent = '🌙';
+                if (desktopText) desktopText.textContent = 'Dark Mode';
+            } else {
+                if (mobileIcon) mobileIcon.textContent = '☀️';
+                if (mobileText) mobileText.textContent = 'Light Mode';
+                if (desktopIcon) desktopIcon.textContent = '☀️';
+                if (desktopText) desktopText.textContent = 'Light Mode';
+            }
+        }
+
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.querySelector('.mobile-menu-overlay');
+            const body = document.body;
+
+            const isActive = menu.classList.contains('active');
+
+            if (isActive) {
+                menu.classList.remove('active');
+                overlay.classList.remove('active');
+                body.classList.remove('mobile-menu-open');
+                const scrollY = body.style.top;
+                body.style.position = '';
+                body.style.top = '';
+                body.style.width = '';
+                body.style.height = '';
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            } else {
+                const scrollY = window.scrollY;
+                body.style.position = 'fixed';
+                body.style.top = `-${scrollY}px`;
+                body.style.width = '100%';
+                body.style.height = '100%';
+                body.classList.add('mobile-menu-open');
+                menu.classList.add('active');
+                overlay.classList.add('active');
+            }
+        }
+
+        // Dropdown Toggle
+        function toggleDropdown(element, event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const dropdown = element.closest('.dropdown');
+            const isActive = dropdown.classList.contains('active');
+
+            document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('active'));
+
+            if (!isActive) {
+                dropdown.classList.add('active');
+            }
+        }
+
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('active'));
+            }
+        });
+
+        function showComingSoon(event, element) {
+            event.preventDefault();
+            event.stopPropagation();
+            alert('🚧 This feature is coming soon!');
+        }
+
+        // Search function - Smart detection like access-explorer.html
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                return;
+            }
+
+            // Clean the query - remove 0x prefix if present
+            let cleanQuery = query;
+            if (cleanQuery.startsWith('0x')) {
+                cleanQuery = cleanQuery.substring(2);
+            }
+
+            // Detect search type based on length and pattern
+            if (!isNaN(query) && query.length < 40) {
+                // Block number (pure digits, not too long)
+                window.location.href = `block-details.html?number=${query}`;
+            } else if (cleanQuery.length === 64 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
+                // Transaction hash (64 hex chars)
+                window.location.href = `transaction-details.html?hash=${cleanQuery}`;
+            } else if (cleanQuery.length === 40 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
+                // Ethereum address (40 hex chars)
+                window.location.href = `address-details.html?address=0x${cleanQuery}`;
+            } else if (cleanQuery.length >= 6 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
+                // Partial hash - try as transaction
+                window.location.href = `transaction-details.html?hash=${cleanQuery}`;
+            } else {
+                alert('Invalid search query. Please enter a valid block number, transaction hash, or address.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        performSearch();
+                    }
+                });
+            }
+        });
+
+        // FAQ Toggle
+        function toggleFAQ(element) {
+            const faqItem = element.parentElement;
+            faqItem.classList.toggle('active');
+        }
+
+        // Load Google Client ID
+        async function loadGoogleClientId() {
+            try {
+                const response = await fetch('/api/oauth-config');
+                const data = await response.json();
+                if (data.success && data.clientId) {
+                    GOOGLE_CLIENT_ID = data.clientId;
+                    console.log('✅ Google OAuth configured securely');
+                }
+            } catch (error) {
+                console.error('Error loading Google Client ID:', error);
+            }
+        }
+
+        function generateNonce() {
+            const array = new Uint8Array(16);
+            crypto.getRandomValues(array);
+            return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function triggerGoogleSignIn() {
+            const termsCheckbox = document.getElementById('termsCheckbox');
+            if (!termsCheckbox.checked) {
+                showAuthMessage('Please agree to the Terms of Service');
+                return;
+            }
+
+            if (!GOOGLE_CLIENT_ID) {
+                await loadGoogleClientId();
+            }
+
+            if (!GOOGLE_CLIENT_ID) {
+                showAuthMessage('Google sign in is not available at the moment');
+                return;
+            }
+
+            const nonce = generateNonce();
+            sessionStorage.setItem('googleAuthNonce', nonce);
+            sessionStorage.setItem('googleAuthInProgress', 'true');
+
+            const redirectUri = window.location.origin + window.location.pathname;
+            const scope = 'openid email profile';
+            const responseType = 'id_token token';
+
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
+                `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+                `&response_type=${encodeURIComponent(responseType)}` +
+                `&scope=${encodeURIComponent(scope)}` +
+                `&nonce=${encodeURIComponent(nonce)}` +
+                `&prompt=select_account`;
+
+            window.location.href = authUrl;
+        }
+
+        async function handleOAuthCallback() {
+            const hash = window.location.hash;
+            if (!hash || hash.length <= 1) return;
+
+            const authInProgress = sessionStorage.getItem('googleAuthInProgress');
+            if (!authInProgress) return;
+
+            console.log('🔍 Processing OAuth callback...');
+            sessionStorage.removeItem('googleAuthInProgress');
+
+            try {
+                const params = new URLSearchParams(hash.substring(1));
+                const idToken = params.get('id_token');
+
+                if (!idToken) {
+                    throw new Error('No ID token received');
+                }
+
+                const base64Url = idToken.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+
+                const userInfo = JSON.parse(jsonPayload);
+
+                const savedNonce = sessionStorage.getItem('googleAuthNonce');
+                if (savedNonce && userInfo.nonce !== savedNonce) {
+                    throw new Error('Nonce mismatch');
+                }
+                sessionStorage.removeItem('googleAuthNonce');
+
+                const userData = {
+                    email: userInfo.email,
+                    name: userInfo.name,
+                    picture: userInfo.picture,
+                    sub: userInfo.sub
+                };
+
+                try {
+                    await fetch('/api/auth/explorer-google', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: userData.email,
+                            name: userData.name,
+                            googleId: userData.sub,
+                            picture: userData.picture
+                        })
+                    });
+                } catch (dbError) {
+                    console.error('Error saving user:', dbError);
+                }
+
+                saveExplorerSession(idToken, userData);
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                showAuthMessage('Successfully signed in with Google!', 'success');
+                setTimeout(() => {
+                    hideAuthModal();
+                }, 1500);
+
+            } catch (error) {
+                console.error('OAuth error:', error);
+                showAuthMessage('Sign in failed. Please try again.');
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        }
+
+        function loadExplorerSession() {
+            const sessionData = localStorage.getItem('explorerGoogleSession');
+            if (sessionData) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    const now = Date.now();
+                    const sessionAge = now - (session.timestamp || 0);
+                    const maxAge = 30 * 24 * 60 * 60 * 1000;
+
+                    if (sessionAge < maxAge && session.token && session.user) {
+                        explorerSessionToken = session.token;
+                        currentExplorerUser = session.user;
+                        updateExplorerAuthUI();
+                        return true;
+                    } else {
+                        clearExplorerSession();
+                    }
+                } catch (error) {
+                    clearExplorerSession();
+                }
+            }
+            return false;
+        }
+
+        function saveExplorerSession(token, user) {
+            explorerSessionToken = token;
+            currentExplorerUser = user;
+
+            const sessionData = {
+                token: token,
+                user: user,
+                timestamp: Date.now(),
+                loginMethod: 'google',
+                lastActivity: Date.now()
+            };
+
+            localStorage.setItem('explorerGoogleSession', JSON.stringify(sessionData));
+            sessionStorage.setItem('explorerGoogleBackup', JSON.stringify(sessionData));
+
+            updateExplorerAuthUI();
+        }
+
+        function clearExplorerSession() {
+            explorerSessionToken = null;
+            currentExplorerUser = null;
+            localStorage.removeItem('explorerGoogleSession');
+            sessionStorage.removeItem('explorerGoogleBackup');
+            updateExplorerAuthUI();
+        }
+
+        function updateExplorerAuthUI() {
+            const signInBtn = document.querySelector('.sign-in-btn');
+            const mobileUserSection = document.getElementById('mobileUserSection');
+            const mobileSigninSection = document.getElementById('mobileSigninSection');
+            const mobileUserName = document.getElementById('mobileUserName');
+            const mobileUserEmail = document.getElementById('mobileUserEmail');
+
+            if (currentExplorerUser) {
+                const displayName = currentExplorerUser.name || 'User';
+                const userEmail = currentExplorerUser.email || '';
+
+                signInBtn.className = 'sign-in-btn user-logged-in';
+                signInBtn.style.display = 'flex';
+                signInBtn.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                        <span style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${displayName}</span>
+                        <button onclick="logoutExplorer()" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px; cursor: pointer;">Logout</button>
+                    </div>
+                `;
+
+                if (mobileUserSection && mobileSigninSection) {
+                    mobileUserSection.style.display = 'block';
+                    mobileSigninSection.style.display = 'none';
+                    if (mobileUserName) mobileUserName.textContent = displayName;
+                    if (mobileUserEmail) mobileUserEmail.textContent = userEmail;
+                }
+            } else {
+                signInBtn.className = 'sign-in-btn';
+                signInBtn.style.display = 'flex';
+                signInBtn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                `;
+
+                if (mobileUserSection && mobileSigninSection) {
+                    mobileUserSection.style.display = 'none';
+                    mobileSigninSection.style.display = 'block';
+                }
+            }
+        }
+
+        function showUserProfile() {
+            alert('Profile page will be implemented soon');
+            toggleMobileMenu();
+        }
+
+        function logoutExplorer() {
+            clearExplorerSession();
+
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu && mobileMenu.classList.contains('active')) {
+                toggleMobileMenu();
+            }
+
+            setTimeout(() => {
+                showAuthMessage('Successfully signed out.', 'success');
+            }, 500);
+        }
+
+        function showAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function hideAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+            clearAuthMessages();
+        }
+
+        function clearAuthMessages() {
+            document.getElementById('authMessage').innerHTML = '';
+        }
+
+        function showAuthMessage(message, type = 'error') {
+            const messageDiv = document.getElementById('authMessage');
+            messageDiv.innerHTML = `<div class="${type}-message">${message}</div>`;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeUI(savedTheme);
+
+            // Load Google Client ID first
+            await loadGoogleClientId();
+
+            // Handle OAuth callback first
+            await handleOAuthCallback();
+
+            // Load existing session
+            const sessionRestored = loadExplorerSession();
+
+            // If no session was restored, try backup
+            if (!sessionRestored) {
+                const backupSession = sessionStorage.getItem('explorerGoogleBackup');
+                if (backupSession) {
+                    try {
+                        const session = JSON.parse(backupSession);
+                        if (session.token && session.user) {
+                            explorerSessionToken = session.token;
+                            currentExplorerUser = session.user;
+                            saveExplorerSession(session.token, session.user);
+                            console.log('🔄 Session restored from backup');
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Could not restore backup session:', error);
+                    }
+                }
+            }
+
+            // Always update UI at the end
+            updateExplorerAuthUI();
+        });
+
+        // Show "Coming Soon" tooltip for disabled buttons
+        function showComingSoon(event, element) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Remove any existing tooltips
+            const existingTooltips = document.querySelectorAll('.coming-soon-tooltip');
+            existingTooltips.forEach(t => t.remove());
+
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'coming-soon-tooltip';
+            tooltip.textContent = 'Coming Soon - Under Development';
+
+            // Get wrapper element
+            const wrapper = element.closest('.dropdown-item-wrapper') || element.closest('.mobile-nav-item-wrapper');
+            if (wrapper) {
+                wrapper.style.position = 'relative';
+                wrapper.appendChild(tooltip);
+
+                // Show tooltip
+                setTimeout(() => tooltip.classList.add('show'), 10);
+
+                // Hide after 2 seconds
+                setTimeout(() => {
+                    tooltip.classList.remove('show');
+                    setTimeout(() => tooltip.remove(), 300);
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>

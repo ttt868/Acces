@@ -1,0 +1,447 @@
+/* =====================================================
+   MIDNIGHT THEME - PURE BLACK AMOLED
+   ===================================================== */
+
+/* ===== BODY & PAGES BACKGROUND ===== */
+html.midnight-theme,
+body.midnight-theme {
+  background-color: #0a0a0a !important;
+}
+
+.midnight-theme .main-content,
+.midnight-theme .page-content {
+  background: #0a0a0a !important;
+}
+
+/* ===== DASHBOARD HEADER ===== */
+.midnight-theme #dashboard-page .dashboard-header {
+  background: #000000 !important;
+}
+
+/* ===== BALANCE COLORS ===== */
+.midnight-theme .balance-value,
+.midnight-theme #user-coins {
+  color: #ffffff !important;
+}
+
+/* ===== ACTIVITY TIMER / العداد - إصلاح الخلفية البيضاء ===== */
+.midnight-theme .dashboard-activity-timer {
+  background: #000000 !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.midnight-theme .dashboard-activity-timer:hover {
+  background: #0a0a0a !important;
+  border: none !important;
+}
+
+/* ===== COUNTDOWN NUMBERS - أرقام العداد بيضاء ===== */
+.midnight-theme .dashboard-countdown,
+.midnight-theme .dashboard-countdown span,
+.midnight-theme .countdown-number,
+.midnight-theme .timer-digits {
+  color: #ffffff !important;
+  background: none !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.midnight-theme .dashboard-timer-title,
+.midnight-theme .dashboard-timer-status {
+  color: #e0e0e0 !important;
+}
+
+/* ===== START & REFERRALS BUTTONS - الأزرار الأساسية تبقى زرقاء ===== */
+.midnight-theme .toggle-activity-btn,
+.midnight-theme .primary-button,
+.midnight-theme .primary-action-buttons button,
+.midnight-theme [class*="primary-btn"] {
+  background: linear-gradient(135deg, #6ba5e7 0%, #4a90e2 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.midnight-theme .toggle-activity-btn:hover,
+.midnight-theme .primary-button:hover {
+  background: linear-gradient(135deg, #5a95d7 0%, #3a80d2 100%) !important;
+}
+
+/* ===== SECONDARY BUTTONS (أسفل) - خلفية سوداء ===== */
+.midnight-theme .secondary-button {
+  background: #000000 !important;
+  border: none !important;
+  backdrop-filter: none !important;
+  color: #ffffff !important;
+}
+
+.midnight-theme .secondary-button:hover {
+  background: #0f0f0f !important;
+  border: none !important;
+}
+
+.midnight-theme .secondary-button i,
+.midnight-theme .secondary-button span {
+  color: #ffffff !important;
+}
+
+/* ===== NETWORK SELECTOR / ACCESS CHAIN ===== */
+.midnight-theme .network-selector {
+  background: #000000 !important;
+  border: none !important;
+}
+
+.midnight-theme .network-name,
+.midnight-theme .network-selector span {
+  color: #ffffff !important;
+}
+
+.midnight-theme .network-dropdown {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.midnight-theme .network-option {
+  color: #ffffff !important;
+  background: #000000 !important;
+}
+
+.midnight-theme .network-option:hover {
+  background: #1a1a1a !important;
+}
+
+/* ===== LANGUAGE MODAL - نافذة اللغة ===== */
+.midnight-theme .language-option {
+  background: #0a0a0a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+.midnight-theme .language-option:hover {
+  background: #151515 !important;
+  border-color: rgba(107, 165, 231, 0.4) !important;
+}
+
+/* اللغة المختارة - لون خلفية داكن بدلاً من أبيض */
+.midnight-theme .language-option.selected {
+  background: rgba(107, 165, 231, 0.15) !important;
+  border-color: #6ba5e7 !important;
+  box-shadow: 0 0 0 2px rgba(107, 165, 231, 0.2) !important;
+}
+
+.midnight-theme .language-option.selected span,
+.midnight-theme .language-option.selected .language-name {
+  color: #ffffff !important;
+}
+
+/* ===== ALL MODALS - جميع النوافذ ===== */
+.midnight-theme .modal-content {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.midnight-theme #themeModal .modal-content,
+.midnight-theme #languageModal .modal-content,
+.midnight-theme #signOutModal .modal-content {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Sign Out Modal - Yes button red */
+.midnight-theme #signOutModal button[onclick="handleSignOut(true)"] {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.midnight-theme #signOutModal button[onclick="handleSignOut(true)"]:hover {
+  background-color: #c82333 !important;
+}
+
+/* Theme modal options */
+.midnight-theme #themeModal .theme-option {
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: #0a0a0a !important;
+}
+
+.midnight-theme #themeModal .theme-option:hover {
+  background: #151515 !important;
+  border-color: rgba(107, 165, 231, 0.3) !important;
+}
+
+.midnight-theme #themeModal .theme-option div[style*="font-weight: bold"] {
+  color: #ffffff !important;
+}
+
+.midnight-theme #themeModal .theme-option div[style*="font-size: 12px"] {
+  color: #999999 !important;
+}
+
+/* ===== NOTIFICATIONS / TOASTS ===== */
+.midnight-theme .toast,
+.midnight-theme [class*="toast"],
+.midnight-theme .notification {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+}
+
+/* ===== CARDS ===== */
+.midnight-theme .card,
+.midnight-theme .stat-card {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ===== SIDEBAR ===== */
+.midnight-theme .sidebar {
+  background: #000000 !important;
+}
+
+/* ===== REFERRAL MODAL ===== */
+.midnight-theme .referral-copy-content {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* ===== GENERAL TEXT ===== */
+.midnight-theme h1,
+.midnight-theme h2,
+.midnight-theme h3 {
+  color: #ffffff !important;
+}
+
+/* ===== CLOCK FACE IN TIMER ===== */
+.midnight-theme .clock-face {
+  background: radial-gradient(circle, #1a1a1a 0%, #0a0a0a 100%) !important;
+}
+
+/* ===== QUICK ACTION BUTTONS (4 buttons under timer) ===== */
+.midnight-theme .quick-action-btn,
+.midnight-theme .action-button,
+.midnight-theme .dashboard-quick-actions button,
+.midnight-theme [class*="quick-action"],
+.midnight-theme .action-buttons button {
+  background: #000000 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+
+.midnight-theme .quick-action-btn:hover,
+.midnight-theme .action-button:hover,
+.midnight-theme .dashboard-quick-actions button:hover {
+  background: #0f0f0f !important;
+  border: none !important;
+}
+
+/* ===== ACCESS CHAIN DROPDOWN ===== */
+.midnight-theme .chain-selector,
+.midnight-theme .network-dropdown-content,
+.midnight-theme [class*="chain-dropdown"],
+.midnight-theme .dropdown-menu {
+  background: #000000 !important;
+  border: none !important;
+}
+
+/* ===== TASKS / MISSIONS PAGE ===== */
+.midnight-theme .ms-container {
+  background-color: #0a0a0a !important;
+}
+
+.midnight-theme .ms-header {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.midnight-theme .ms-item,
+.midnight-theme .ms-mission-item,
+.midnight-theme .task-card,
+.midnight-theme .mission-card {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.midnight-theme .ms-item:hover,
+.midnight-theme .task-card:hover {
+  background: #0a0a0a !important;
+  border-color: rgba(107, 165, 231, 0.3) !important;
+}
+
+.midnight-theme .ms-title,
+.midnight-theme .ms-info h4,
+.midnight-theme .task-title {
+  color: #ffffff !important;
+}
+
+.midnight-theme .ms-desc,
+.midnight-theme .ms-info p,
+.midnight-theme .task-description {
+  color: #aaaaaa !important;
+}
+
+.midnight-theme .ms-section-title {
+  color: #ffffff !important;
+}
+
+/* ===== DELETE ACCOUNT MODAL ===== */
+.midnight-theme #deleteAccountModal .modal-content,
+.midnight-theme #deleteWarningModal .modal-content,
+.midnight-theme #deleteFinalModal .modal-content {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.midnight-theme #deleteAccountModal h3,
+.midnight-theme #deleteWarningModal h3,
+.midnight-theme #deleteFinalModal h3 {
+  color: #dc3545 !important;
+}
+
+.midnight-theme .delete-question-text,
+.midnight-theme .delete-final-text {
+  color: #ffffff !important;
+}
+
+.midnight-theme .delete-warning-box,
+.midnight-theme .delete-warning-box-2 {
+  background: rgba(255, 193, 7, 0.1) !important;
+  border-color: rgba(255, 193, 7, 0.3) !important;
+}
+
+.midnight-theme .delete-warning-box p,
+.midnight-theme .delete-warning-box-2 p,
+.midnight-theme .delete-warning-box-2 ul,
+.midnight-theme .delete-warning-box-2 li {
+  color: #ffc107 !important;
+}
+
+/* Select dropdown in delete modal */
+.midnight-theme .delete-reason-select,
+.midnight-theme #deleteReasonSelect {
+  background: #0a0a0a !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.midnight-theme .delete-reason-select option,
+.midnight-theme #deleteReasonSelect option {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+.midnight-theme .delete-reason-textarea,
+.midnight-theme #otherReasonText {
+  background: #0a0a0a !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+/* ===== PROFILE THEME BUTTONS TEXT ===== */
+.midnight-theme .theme-btn span,
+.midnight-theme .theme-btn-text,
+.midnight-theme .theme-option-text,
+.midnight-theme .theme-selector span,
+.midnight-theme .theme-toggle span,
+.midnight-theme [class*="theme-btn"] span,
+.midnight-theme .theme-selector-btn span {
+  color: #ffffff !important;
+}
+
+.midnight-theme .theme-btn i,
+.midnight-theme .theme-toggle i {
+  color: #ffffff !important;
+}
+
+/* Theme name labels in profile */
+.midnight-theme .theme-name,
+.midnight-theme .theme-label {
+  color: #ffffff !important;
+}
+/* ===== ALL SELECTS IN PROFILE ===== */
+.midnight-theme .modern-select,
+.midnight-theme #night-mode-select,
+.midnight-theme #profile-language {
+  background: #0a0a0a !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+.midnight-theme .modern-select option,
+.midnight-theme #night-mode-select option,
+.midnight-theme #profile-language option {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* ===== COMMUNITY/NETWORK PAGE ===== */
+.midnight-theme .community-container,
+.midnight-theme #network-page {
+  background: #0a0a0a !important;
+}
+
+.midnight-theme .account-card,
+.midnight-theme .community-wallet,
+.midnight-theme .network-card {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.midnight-theme .community-header h2,
+.midnight-theme .network-title-container h2 {
+  color: #ffffff !important;
+}
+
+.midnight-theme .chain-description {
+  color: #aaaaaa !important;
+}
+
+/* ===== ALL PAGE BACKGROUNDS ===== */
+.midnight-theme .page-content,
+.midnight-theme #tasks-page,
+.midnight-theme #profile-page,
+.midnight-theme #network-page,
+.midnight-theme #wallet-page,
+.midnight-theme #referrals-page {
+  background: #0a0a0a !important;
+}
+
+/* ===== SETTINGS ITEMS IN PROFILE ===== */
+.midnight-theme .settings-section {
+  background: #000000 !important;
+}
+
+.midnight-theme .settings-grid {
+  background: #000000 !important;
+}
+
+.midnight-theme .setting-item {
+  background: #000000 !important;
+  border: none !important;
+}
+
+.midnight-theme .setting-item:hover {
+  background: #0a0a0a !important;
+}
+
+.midnight-theme .setting-content h4,
+.midnight-theme .section-title {
+  color: #ffffff !important;
+}
+
+.midnight-theme .setting-description {
+  color: #888888 !important;
+}
+
+/* ===== STATS CARDS IN PROFILE ===== */
+.midnight-theme .stats-grid .stat-card {
+  background: #000000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.midnight-theme .stat-card h3 {
+  color: #cccccc !important;
+}
+
+.midnight-theme .stat-value {
+  color: #ffffff !important;
+}

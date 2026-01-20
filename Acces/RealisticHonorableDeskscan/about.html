@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="no">
+    <meta name="apple-mobile-web-app-capable" content="no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>About - AccessScan</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        // ✅ Apply theme IMMEDIATELY before page renders (prevents white flash)
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-code: #f6f8fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6c757d;
+            --border-color: #e1e8ed;
+            --accent-color: #0969da;
+            --accent-purple: #8b5cf6;
+            --accent-blue: #4da6ff;
+            --footer-bg: #f8f9fa;
+            --footer-text: #333;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-code: #1c2128;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+            --accent-color: #58a6ff;
+            --accent-purple: #8b95ff;
+            --accent-blue: #4da6ff;
+            --footer-bg: #161b22;
+            --footer-text: #e6edf3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 0 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: -2px;
+        }
+
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            border: none;
+            background: none;
+            position: relative;
+            right: 10px;
+        }
+
+        .menu-toggle span {
+            width: 20px;
+            height: 2px;
+            background: var(--text-primary);
+            margin: 2px 0;
+            transition: 0.3s;
+        }
+
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sign-in-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+        }
+
+        .sign-in-btn:hover {
+            color: var(--accent-purple);
+        }
+
+        /* Dropdown styles */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 220px;
+            z-index: 1000;
+            padding: 8px 0;
+        }
+
+        .dropdown.active .dropdown-menu {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* تعديل موضع قائمة More لتظهر في الوسط */
+        .dropdown:last-child .dropdown-menu {
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        .dropdown:last-child.active .dropdown-menu {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 10px 16px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-purple);
+        }
+
+        .dropdown-item.disabled-btn {
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .dropdown-item-wrapper {
+            display: block;
+            position: relative;
+        }
+
+        .mobile-nav-item-wrapper {
+            display: block;
+            position: relative;
+        }
+
+        /* Coming Soon Tooltip */
+        .coming-soon-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background: #000000;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 10001;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .coming-soon-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #000000;
+        }
+
+        .coming-soon-tooltip.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-12px);
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 0;
+            align-items: center;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+        }
+
+        .nav-item.active {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+            font-weight: 500;
+        }
+
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 15px 20px 40px;
+        }
+
+        .content-card {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        .content-card h2 {
+            font-size: 24px;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .content-card p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            font-size: 15px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .feature-item {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .feature-item i {
+            font-size: 32px;
+            color: var(--accent-purple);
+            margin-bottom: 15px;
+        }
+
+        .feature-item h3 {
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .feature-item p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .network-info {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-top: 20px;
+        }
+
+        .network-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .network-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .network-info-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .network-info-value {
+            color: var(--text-primary);
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        /* Social Media Buttons - Same style as index.html */
+        .social-media-controls {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .social-media-btn {
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+            position: relative;
+            overflow: visible;
+        }
+
+        .x-btn {
+            background: #000000 !important;
+        }
+
+        .x-btn svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .x-btn svg path {
+            fill: #ffffff !important;
+        }
+
+        .x-btn:hover {
+            background: linear-gradient(135deg, #000000, #14171a) !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+            transform: translateY(-3px);
+        }
+
+        .telegram-btn {
+            background: #0088cc !important;
+            width: 50px;
+            height: 50px;
+            min-width: 50px;
+            min-height: 50px;
+            max-width: 50px;
+            max-height: 50px;
+            overflow: hidden;
+        }
+
+        .telegram-btn svg {
+            width: 56px;
+            height: 56px;
+        }
+
+        .telegram-btn:hover {
+            background: #006699 !important;
+            box-shadow: 0 8px 20px rgba(0, 136, 204, 0.35);
+            transform: translateY(-3px);
+        }
+
+        .social-media-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--footer-bg);
+            color: var(--footer-text);
+            padding: 40px 0 20px;
+            margin-top: 50px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer-link:hover {
+            color: var(--accent-color);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px;
+            height: 100vh;
+            height: 100dvh; /* Use dynamic viewport height for better mobile support */
+            background: var(--bg-primary);
+            box-shadow: 2px 0 20px rgba(0,0,0,0.2);
+            z-index: 9998;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+
+        .mobile-menu.active {
+            left: 0;
+        }
+
+        .mobile-menu-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mobile-menu-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .mobile-menu-content {
+            padding: 20px 0;
+        }
+
+        /* Mobile User Section Styles */
+        .mobile-user-section {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: -20px -20px 0 -20px;
+        }
+
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .mobile-user-details {
+            flex: 1;
+            min-width: 0;
+            padding-left: 8px;
+        }
+
+        .mobile-user-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 2px;
+            color: white;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mobile-user-email {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mobile-user-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .mobile-user-actions .mobile-nav-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 15px;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            border-bottom: none;
+            transition: background 0.3s ease;
+        }
+
+        .mobile-user-actions .mobile-nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-user-actions .mobile-nav-item i {
+            margin-right: 8px;
+            width: 16px;
+        }
+
+        .mobile-signin-section {
+            padding: 0 0 10px 0;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 15px 0;
+        }
+
+        .mobile-nav-section {
+            padding: 10px 20px 5px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mobile-nav-item {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: 1px solid var(--bg-secondary);
+        }
+
+        .mobile-nav-item:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-purple);
+        }
+
+        .mobile-nav-item.disabled-btn {
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .mobile-nav-item-wrapper {
+            display: block;
+        }
+
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9997;
+        }
+
+        .mobile-menu-overlay.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex;
+            }
+
+            .nav-content {
+                display: none;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+
+            .content-card {
+                padding: 25px;
+            }
+
+            .page-header h1 {
+                font-size: 24px;
+            }
+
+            .social-links {
+                flex-direction: column;
+            }
+
+            .sign-in-btn.user-logged-in {
+                display: none !important;
+            }
+        }
+
+        /* Search Section */
+        .search-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px 30px;
+        }
+
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .page-title {
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 600;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 20px 0;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .search-box {
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .search-btn {
+            background: var(--accent-purple);
+            border: none;
+            padding: 15px 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-btn:hover {
+            background: #7c3aed;
+        }
+
+        /* Authentication Modal */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .auth-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .auth-header {
+            padding: 30px 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .auth-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .auth-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .auth-form {
+            padding: 30px;
+        }
+
+        .google-btn {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .google-btn:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-1px);
+        }
+
+        .auth-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-close:hover {
+            background: var(--bg-secondary);
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .success-message {
+            color: #28a745;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Custom checkbox */
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 0;
+            color: var(--text-primary);
+        }
+
+        .checkbox-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkmark {
+            height: 16px;
+            width: 16px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            margin-right: 8px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-container:hover input ~ .checkmark {
+            border-color: #1e88e5;
+        }
+
+        .checkbox-container input:checked ~ .checkmark {
+            background-color: #1e88e5;
+            border-color: #1e88e5;
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            left: 4px;
+            top: 1px;
+            width: 4px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .checkbox-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">A Scan Original</div>
+                </div>
+            </div>
+
+            <div class="right-section">
+                <a href="#" class="sign-in-btn" id="signInBtn" style="display: none;" onclick="showAuthModal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                </a>
+                <button class="menu-toggle" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="access-explorer.html" class="nav-item">Home</a>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Network ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="transactions.html" class="dropdown-item">Transactions</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Pending Transactions 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Contract Internal Transactions 🚫</a>
+                    </div>
+                    <a href="blocks.html" class="dropdown-item">View Blocks</a>
+                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Verified Contracts 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Validators ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Validators Leaderboard 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Validator Stats 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Tokens ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Top Tokens (AEP-20) 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Token Transfers (AEP-20) 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">NFTs ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Top NFTs 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Latest Trades 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Latest Transfers 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Latest Mints 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Resources ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Developers ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Input Data Decoder 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Unit Converter 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">CSV Export 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Account Balance Checker 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">More ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
+                    </div>
+                    <a href="gastracker.html" class="dropdown-item">Gas Tracker</a>
+                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Verify Contract 🚫</a>
+                    </div>
+                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <a href="#" class="dropdown-item" onclick="event.preventDefault(); toggleTheme();" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="desktop-theme-text">Light Mode</span>
+                        <span id="desktop-theme-icon">☀️</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">A Scan Original</div>
+                </div>
+            </div>
+            <button class="mobile-menu-close" onclick="toggleMobileMenu()">×</button>
+        </div>
+        <div class="mobile-menu-content">
+            <!-- User Profile Section for Mobile (Only shown when logged in) -->
+            <div class="mobile-user-section" id="mobileUserSection" style="display: none;">
+                <div class="mobile-user-info">
+                    <div class="mobile-user-details">
+                        <div class="mobile-user-name" id="mobileUserName">User Name</div>
+                        <div class="mobile-user-email" id="mobileUserEmail">user@example.com</div>
+                    </div>
+                </div>
+                <div class="mobile-user-actions">
+                    <a href="#" class="mobile-nav-item" onclick="showUserProfile()">
+                        <i class="fas fa-user"></i> My Profile
+                    </a>
+                    <a href="#" class="mobile-nav-item" onclick="logoutExplorer()">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+                <div class="mobile-menu-divider"></div>
+            </div>
+
+            <!-- Sign In Section for Mobile (Only shown when not logged in) -->
+            <div class="mobile-signin-section" id="mobileSigninSection">
+                <a href="#" class="mobile-nav-item" onclick="showAuthModal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                </a>
+                <div class="mobile-menu-divider"></div>
+            </div>
+
+            <a href="access-explorer.html" class="mobile-nav-item">Home</a>
+
+            <div class="mobile-nav-section">Network</div>
+            <a href="transactions.html" class="mobile-nav-item">Transactions</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Pending Transactions 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Contract Internal Transactions 🚫</a>
+            </div>
+            <a href="blocks.html" class="mobile-nav-item">View Blocks</a>
+            <a href="top-accounts.html" class="mobile-nav-item">Top Accounts</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Verified Contracts 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Validators</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Validators Leaderboard 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Validator Stats 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Tokens</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Top Tokens (AEP-20) 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Token Transfers (AEP-20) 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">NFTs</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Top NFTs 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Latest Trades 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Latest Transfers 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Latest Mints 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Resources</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Developers</div>
+            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Input Data Decoder 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Unit Converter 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">CSV Export 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Account Balance Checker 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">More</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
+            </div>
+            <a href="gastracker.html" class="mobile-nav-item">Gas Tracker</a>
+            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Verify Contract 🚫</a>
+            </div>
+
+            <!-- Dark Mode Toggle Button -->
+            <div style="padding: 20px; margin-top: auto; border-top: 1px solid var(--border-color);">
+                <button onclick="toggleTheme()" style="width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-primary); font-weight: 500; transition: all 0.2s;">
+                    <span id="mobile-theme-icon" style="font-size: 18px;">☀️</span>
+                    <span id="mobile-theme-text">Light Mode</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search by Address / Txn Hash / Block" onkeypress="if(event.key==='Enter') performSearch()">
+                <button class="search-btn" onclick="performSearch()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="10" cy="10" r="7" stroke="white" stroke-width="2.5" fill="none"/>
+                        <line x1="16" y1="16" x2="21" y2="21" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Page Title -->
+    <h1 class="page-title">About Access Network 🌐</h1>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- What is Access Network -->
+        <div class="content-card">
+            <h2>🔗 What is Access Network?</h2>
+            <p>
+                Access Network is a high-performance blockchain designed for speed, security, and scalability. 
+                Built to support decentralized applications (dApps), smart contracts, and digital assets with 
+                minimal transaction fees and near-instant confirmations.
+            </p>
+            <p>
+                Our network uses advanced consensus mechanisms to ensure maximum throughput while maintaining 
+                the highest levels of security and decentralization.
+            </p>
+        </div>
+
+        <!-- Network Information -->
+        <div class="content-card">
+            <h2>📊 Network Information</h2>
+            <div class="network-info">
+                <div class="network-info-row">
+                    <span class="network-info-label">Network Name</span>
+                    <span class="network-info-value">Access Network</span>
+                </div>
+                <div class="network-info-row">
+                    <span class="network-info-label">Chain ID</span>
+                    <span class="network-info-value">22888 (0x5968)</span>
+                </div>
+                <div class="network-info-row">
+                    <span class="network-info-label">Currency Symbol</span>
+                    <span class="network-info-value">ACCESS</span>
+                </div>
+                <div class="network-info-row">
+                    <span class="network-info-label">Block Time</span>
+                    <span class="network-info-value">~3 seconds</span>
+                </div>
+                <div class="network-info-row">
+                    <span class="network-info-label">Consensus</span>
+                    <span class="network-info-value">Proof of Stake (PoS)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Features -->
+        <div class="content-card">
+            <h2>⚡ Key Features</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <i class="fas fa-bolt"></i>
+                    <h3>Fast Transactions</h3>
+                    <p>Near-instant confirmations with ~3 second block times</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-coins"></i>
+                    <h3>Low Fees</h3>
+                    <p>Minimal gas fees for all transactions</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Secure</h3>
+                    <p>Enterprise-grade security with 5 protection layers</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-code"></i>
+                    <h3>EVM Compatible</h3>
+                    <p>Full compatibility with Ethereum tools and dApps</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- About AccessScan -->
+        <div class="content-card">
+            <h2>🔍 About AccessScan</h2>
+            <p>
+                AccessScan is the official block explorer for Access Network. It provides a user-friendly 
+                interface to explore blocks, transactions, addresses, and smart contracts on the network.
+            </p>
+            <p>
+                Features include real-time transaction tracking, detailed address analytics, gas price 
+                monitoring, and comprehensive API access for developers.
+            </p>
+        </div>
+
+        <!-- Connect With Us -->
+        <div class="content-card">
+            <h2>Connect With Us</h2>
+            <p>Follow us on social media to stay updated with the latest news and developments.</p>
+            <div class="contact-links" style="margin-top: 15px;">
+                • <a href="https://t.me/+YnQtDWLlQxk5YTU8" target="_blank" style="color: var(--accent-purple);">Telegram Community</a><br>
+                • <a href="https://x.com/Access_Chain" target="_blank" style="color: var(--accent-purple); display: inline-flex; align-items: center; gap: 4px;">Twitter / <svg width="14" height="14" viewBox="0 0 24 24" fill="#000000" style="vertical-align: middle;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Google Sign In Modal -->
+    <div class="auth-modal" id="authModal" onclick="if(event.target === this) hideAuthModal()">
+        <div class="auth-container">
+            <button class="auth-close" onclick="hideAuthModal()">×</button>
+
+            <div class="auth-header">
+                <div class="auth-title">Sign In to AccessScan</div>
+                <div class="auth-subtitle">Access the network explorer with your Google account</div>
+            </div>
+
+            <div class="auth-form">
+                <button type="button" class="google-btn" onclick="triggerGoogleSignIn()">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continue with Google
+                </button>
+
+                <!-- Terms and Unsubscribe Checkboxes -->
+                <div class="form-group" style="margin-top: 25px;">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="termsCheckbox" required>
+                        <span class="checkmark"></span>
+                        I agree to the <a href="terms-of-service.html" target="_blank" style="color: var(--accent-purple);">Terms of Service</a>.
+                    </label>
+                </div>
+
+                <div id="authMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="about.html" class="footer-link">About</a>
+                <a href="faq.html" class="footer-link">FAQ</a>
+                <a href="developer-api.html" class="footer-link">API</a>
+                <a href="contact.html" class="footer-link">Contact Us</a>
+                <a href="terms-of-service.html" class="footer-link">Terms</a>
+            </div>
+            <p>&copy; 2025 AccessScan. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // ============================================
+        // EXPLORER SESSION MANAGEMENT
+        // ============================================
+        
+        // نظام تسجيل الدخول الموحد - Redirect Mode (نفس transactions.html)
+        let currentExplorerUser = null;
+        let explorerSessionToken = null;
+
+        // Google Client ID - loaded securely from server
+        let GOOGLE_CLIENT_ID = null;
+
+        // Load Google Client ID from secure server endpoint
+        async function loadGoogleClientId() {
+            try {
+                const response = await fetch('/api/oauth-config');
+                const data = await response.json();
+                if (data.success && data.clientId) {
+                    GOOGLE_CLIENT_ID = data.clientId;
+                    console.log('✅ Google OAuth configured securely');
+                } else {
+                    console.error('Failed to load Google Client ID:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading Google Client ID:', error);
+            }
+        }
+
+        // Show Auth Modal
+        function showAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+            document.getElementById('authMessage').innerHTML = '';
+        }
+
+        // Hide Auth Modal
+        function hideAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+            document.getElementById('authMessage').innerHTML = '';
+        }
+
+        // Show auth message
+        function showAuthMessage(message, type = 'error') {
+            const messageDiv = document.getElementById('authMessage');
+            messageDiv.innerHTML = `<div class="${type}-message">${message}</div>`;
+        }
+
+        // Trigger Google Sign In using redirect
+        function triggerGoogleSignIn() {
+            if (!GOOGLE_CLIENT_ID) {
+                showAuthMessage('Google authentication not configured. Please try again.');
+                return;
+            }
+
+            const termsCheckbox = document.getElementById('termsCheckbox');
+            if (!termsCheckbox.checked) {
+                showAuthMessage('Please accept the Terms of Service first.');
+                return;
+            }
+
+            sessionStorage.setItem('googleAuthInProgress', 'true');
+
+            const redirectUri = window.location.origin + window.location.pathname;
+            const scope = 'openid email profile';
+            const responseType = 'token id_token';
+            const nonce = generateNonce();
+
+            sessionStorage.setItem('googleAuthNonce', nonce);
+
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
+                `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+                `&response_type=${encodeURIComponent(responseType)}` +
+                `&scope=${encodeURIComponent(scope)}` +
+                `&nonce=${encodeURIComponent(nonce)}`;
+
+            console.log('🔐 Redirecting to Google Sign-In...');
+            window.location.href = authUrl;
+        }
+
+        function generateNonce() {
+            return Math.random().toString(36).substring(2) + Date.now().toString(36);
+        }
+
+        // Parse JWT token
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        }
+
+        // Handle Google OAuth callback
+        async function handleGoogleCallback() {
+            try {
+                console.log('🔄 Processing Google OAuth callback...');
+                
+                const hash = window.location.hash;
+                if (!hash || !hash.includes('id_token=')) {
+                    console.warn('No id_token in hash');
+                    sessionStorage.removeItem('googleAuthInProgress');
+                    return;
+                }
+
+                sessionStorage.removeItem('googleAuthInProgress');
+
+                const params = new URLSearchParams(hash.substring(1));
+                const idToken = params.get('id_token');
+                
+                if (!idToken) {
+                    throw new Error('No id_token received');
+                }
+
+                const userInfo = parseJwt(idToken);
+                console.log('✅ Parsed user info:', userInfo);
+
+                const savedNonce = sessionStorage.getItem('googleAuthNonce');
+                if (savedNonce && userInfo.nonce !== savedNonce) {
+                    throw new Error('Nonce mismatch - possible security issue');
+                }
+                sessionStorage.removeItem('googleAuthNonce');
+
+                const userData = {
+                    email: userInfo.email,
+                    name: userInfo.name,
+                    picture: userInfo.picture,
+                    sub: userInfo.sub
+                };
+
+                // Save user to database
+                try {
+                    const response = await fetch('/api/auth/explorer-google', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: userData.email,
+                            name: userData.name,
+                            googleId: userData.sub,
+                            picture: userData.picture
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log('✅ User saved to database:', data.user.email);
+                    }
+                } catch (dbError) {
+                    console.error('❌ Error saving user to database:', dbError);
+                }
+
+                saveExplorerSession(idToken, userData);
+
+                console.log('✅ Google sign in successful:', userData.name);
+
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                hideAuthModal();
+
+                showAuthMessage('Successfully signed in with Google!', 'success');
+                setTimeout(() => {
+                    hideAuthModal();
+                }, 1500);
+
+            } catch (error) {
+                console.error('❌ Error processing OAuth callback:', error);
+                showAuthMessage('Sign in failed. Please try again.');
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                sessionStorage.removeItem('googleAuthInProgress');
+            }
+        }
+
+        // Load session from localStorage with validation
+        function loadExplorerSession() {
+            const sessionData = localStorage.getItem('explorerGoogleSession');
+            if (sessionData) {
+                try {
+                    const session = JSON.parse(sessionData);
+
+                    // Check if session is still valid (not expired)
+                    const now = Date.now();
+                    const sessionAge = now - (session.timestamp || 0);
+                    const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+                    if (sessionAge < maxAge && session.token && session.user) {
+                        explorerSessionToken = session.token;
+                        currentExplorerUser = session.user;
+                        updateExplorerAuthUI();
+                        console.log('✅ Explorer session restored:', session.user.name);
+                        return true;
+                    } else {
+                        console.log('⚠️ Explorer session expired, clearing...');
+                        clearExplorerSession();
+                    }
+                } catch (error) {
+                    console.error('❌ Error loading explorer session:', error);
+                    clearExplorerSession();
+                }
+            }
+            return false;
+        }
+
+        // Save session to localStorage with enhanced data
+        function saveExplorerSession(token, user) {
+            explorerSessionToken = token;
+            currentExplorerUser = user;
+
+            const sessionData = {
+                token: token,
+                user: user,
+                timestamp: Date.now(),
+                loginMethod: 'google',
+                userAgent: navigator.userAgent,
+                lastActivity: Date.now()
+            };
+
+            localStorage.setItem('explorerGoogleSession', JSON.stringify(sessionData));
+            sessionStorage.setItem('explorerGoogleBackup', JSON.stringify(sessionData));
+
+            updateExplorerAuthUI();
+            console.log('💾 Explorer session saved for:', user.name);
+        }
+
+        // Clear session completely
+        function clearExplorerSession() {
+            explorerSessionToken = null;
+            currentExplorerUser = null;
+            localStorage.removeItem('explorerGoogleSession');
+            sessionStorage.removeItem('explorerGoogleBackup');
+
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                google.accounts.id.disableAutoSelect();
+            }
+
+            updateExplorerAuthUI();
+            console.log('🗑️ Explorer session cleared completely');
+        }
+
+        // Update UI based on auth state
+        function updateExplorerAuthUI() {
+            const signInBtn = document.getElementById('signInBtn');
+            const mobileUserSection = document.getElementById('mobileUserSection');
+            const mobileSigninSection = document.getElementById('mobileSigninSection');
+            const mobileUserName = document.getElementById('mobileUserName');
+            const mobileUserEmail = document.getElementById('mobileUserEmail');
+
+            if (currentExplorerUser) {
+                const displayName = currentExplorerUser.name || 'User';
+                const userEmail = currentExplorerUser.email || '';
+
+                // Desktop version - show user info with logout button
+                if (signInBtn) {
+                    signInBtn.className = 'sign-in-btn user-logged-in';
+                    signInBtn.style.display = 'flex';
+                    signInBtn.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                            <span style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${displayName}</span>
+                            <button onclick="logoutExplorer()" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px; cursor: pointer;">Logout</button>
+                        </div>
+                    `;
+                }
+
+                // Mobile version - show user section in sidebar
+                if (mobileUserSection && mobileSigninSection) {
+                    mobileUserSection.style.display = 'block';
+                    mobileSigninSection.style.display = 'none';
+                    if (mobileUserName) mobileUserName.textContent = displayName;
+                    if (mobileUserEmail) mobileUserEmail.textContent = userEmail;
+                }
+            } else {
+                // Desktop version - show sign in button
+                if (signInBtn) {
+                    signInBtn.className = 'sign-in-btn';
+                    signInBtn.style.display = 'flex';
+                    signInBtn.innerHTML = `
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                            <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Sign In
+                    `;
+                }
+
+                // Mobile version - show sign in section
+                if (mobileUserSection && mobileSigninSection) {
+                    mobileUserSection.style.display = 'none';
+                    mobileSigninSection.style.display = 'block';
+                }
+            }
+        }
+
+        // ============================================
+        // DROPDOWN MENU FUNCTIONS
+        // ============================================
+        function toggleDropdown(element, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const dropdown = element.closest('.dropdown');
+            // Close other dropdowns
+            document.querySelectorAll('.dropdown.active').forEach(d => {
+                if (d !== dropdown) d.classList.remove('active');
+            });
+            dropdown.classList.toggle('active');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown.active').forEach(d => {
+                    d.classList.remove('active');
+                });
+            }
+        });
+
+        // Show "Coming Soon" tooltip for disabled buttons
+        function showComingSoon(event, element) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Remove any existing tooltips
+            const existingTooltips = document.querySelectorAll('.coming-soon-tooltip');
+            existingTooltips.forEach(t => t.remove());
+
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'coming-soon-tooltip';
+            tooltip.textContent = 'Coming Soon - Under Development';
+
+            // Get wrapper element
+            const wrapper = element.closest('.dropdown-item-wrapper') || element.closest('.mobile-nav-item-wrapper');
+            if (wrapper) {
+                wrapper.style.position = 'relative';
+                wrapper.appendChild(tooltip);
+
+                // Show tooltip
+                setTimeout(() => tooltip.classList.add('show'), 10);
+
+                // Hide after 2 seconds
+                setTimeout(() => {
+                    tooltip.classList.remove('show');
+                    setTimeout(() => tooltip.remove(), 300);
+                }, 2000);
+            }
+        }
+
+        // Show user profile
+        function showUserProfile() {
+            alert('Profile page will be implemented soon');
+            toggleMobileMenu();
+        }
+
+        // Logout function
+        function logoutExplorer() {
+            clearExplorerSession();
+
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu && mobileMenu.classList.contains('active')) {
+                toggleMobileMenu();
+            }
+
+            setTimeout(() => {
+                showAuthMessage('Successfully signed out.', 'success');
+            }, 500);
+        }
+
+        // ============================================
+        // SEARCH FUNCTION - Smart detection like access-explorer.html
+        // ============================================
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                return;
+            }
+
+            // Clean the query - remove 0x prefix if present
+            let cleanQuery = query;
+            if (cleanQuery.startsWith('0x')) {
+                cleanQuery = cleanQuery.substring(2);
+            }
+
+            // Detect search type based on length and pattern
+            if (!isNaN(query) && query.length < 40) {
+                // Block number (pure digits, not too long)
+                window.location.href = `block-details.html?number=${query}`;
+            } else if (cleanQuery.length === 64 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
+                // Transaction hash (64 hex chars)
+                window.location.href = `transaction-details.html?hash=${cleanQuery}`;
+            } else if (cleanQuery.length === 40 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
+                // Ethereum address (40 hex chars)
+                window.location.href = `address-details.html?address=0x${cleanQuery}`;
+            } else if (cleanQuery.length >= 6 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
+                // Partial hash - try as transaction
+                window.location.href = `transaction-details.html?hash=${cleanQuery}`;
+            } else {
+                alert('Invalid search query. Please enter a valid block number, transaction hash, or address.');
+            }
+        }
+
+        // ============================================
+        // THEME FUNCTIONS
+        // ============================================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeUI(newTheme);
+        }
+
+        function updateThemeUI(theme) {
+            const mobileIcon = document.getElementById('mobile-theme-icon');
+            const mobileText = document.getElementById('mobile-theme-text');
+            if (mobileIcon && mobileText) {
+                if (theme === 'dark') {
+                    mobileIcon.textContent = '🌙';
+                    mobileText.textContent = 'Dark Mode';
+                } else {
+                    mobileIcon.textContent = '☀️';
+                    mobileText.textContent = 'Light Mode';
+                }
+            }
+        }
+
+        // ============================================
+        // MOBILE MENU FUNCTIONS
+        // ============================================
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.querySelector('.mobile-menu-overlay');
+            menu.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeUI(savedTheme);
+
+            // Load Google Client ID first
+            await loadGoogleClientId();
+
+            // Handle OAuth callback first (if coming back from Google)
+            await handleGoogleCallback();
+
+            // Load existing session
+            const sessionRestored = loadExplorerSession();
+
+            // If no session was restored, try backup
+            if (!sessionRestored) {
+                const backupSession = sessionStorage.getItem('explorerGoogleBackup');
+                if (backupSession) {
+                    try {
+                        const session = JSON.parse(backupSession);
+                        if (session.token && session.user) {
+                            explorerSessionToken = session.token;
+                            currentExplorerUser = session.user;
+                            saveExplorerSession(session.token, session.user);
+                            console.log('🔄 Session restored from backup');
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Could not restore backup session:', error);
+                    }
+                }
+            }
+
+            // Always update UI at the end
+            updateExplorerAuthUI();
+        });
+    </script>
+</body>
+</html>
