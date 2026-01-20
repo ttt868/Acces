@@ -108,6 +108,7 @@ class ServerSideProcessingSync {
   /**
    * ✅ استرداد الجلسات المنتهية عند بدء تشغيل السيرفر
    * هذا يضمن حفظ المكافآت للجلسات التي انتهت أثناء توقف السيرفر
+   * 🛡️ FIXED: يحسب الإحالات النشطة + ad boost بشكل صحيح
    */
   async recoverExpiredSessions() {
     if (this.startupRecoveryDone) {
@@ -120,19 +121,21 @@ class ServerSideProcessingSync {
       const nowSec = Math.floor(Date.now() / 1000);
       const processingDuration = 24 * 60 * 60; // 24 hours
 
-      // البحث عن الجلسات التي:
-      // 1. processing_active = 1 (لا تزال مُعلّمة كنشطة)
-      // 2. لكن وقتها انتهى بالفعل
+      // البحث عن الجلسات المنتهية مع عدد الإحالات النشطة
       const expiredSessions = await pool.query(
-        `SELECT id, name, processing_start_time_seconds, accumulatedReward,
-                COALESCE(session_locked_boost, processing_boost_multiplier, 1.0) as locked_boost,
-                COALESCE(completed_processing_reward, 0) as completed_processing_reward,
-                COALESCE(ad_boost_active, false) as ad_boost_active
-         FROM users 
-         WHERE processing_active = 1 
-         AND processing_start_time_seconds IS NOT NULL 
-         AND processing_start_time_seconds > 0
-         AND (${nowSec} - processing_start_time_seconds) >= ${processingDuration}`
+        `SELECT u.id, u.name, u.processing_start_time_seconds, u.accumulatedReward,
+                COALESCE(u.session_locked_boost, u.processing_boost_multiplier, 1.0) as locked_boost,
+                COALESCE(u.completed_processing_reward, 0) as completed_processing_reward,
+                COALESCE(u.ad_boost_active, false) as ad_boost_active,
+                (SELECT COUNT(*) FROM referrals r 
+                 JOIN users ref ON r.referee_id = ref.id 
+                 WHERE r.referrer_id = u.id 
+                 AND (ref.processing_active = 1 OR ref.is_active = 1)) as active_referral_count
+         FROM users u
+         WHERE u.processing_active = 1 
+         AND u.processing_start_time_seconds IS NOT NULL 
+         AND u.processing_start_time_seconds > 0
+         AND (${nowSec} - u.processing_start_time_seconds) >= ${processingDuration}`
       );
 
       if (expiredSessions.rows.length === 0) {
@@ -143,6 +146,9 @@ class ServerSideProcessingSync {
 
       console.log(`[SERVER STARTUP] 🔍 تم العثور على ${expiredSessions.rows.length} جلسة منتهية تحتاج معالجة`);
 
+      // استيراد computeHashrateMultiplier
+      const { computeHashrateMultiplier } = await import('./db.js');
+
       let successCount = 0;
       let errorCount = 0;
 
@@ -150,15 +156,9 @@ class ServerSideProcessingSync {
         try {
           const userId = session.id;
           const userName = session.name || `User ${userId}`;
-          const startTimeSec = parseInt(session.processing_start_time_seconds);
-          let boostMultiplier = parseFloat(session.locked_boost || 1.0);
           const existingCompleted = parseFloat(session.completed_processing_reward || 0);
           const adBoostActive = session.ad_boost_active === true;
-
-          // ✅ CRITICAL: إذا كان الـ ad boost نشط، أضفه للـ multiplier
-          if (adBoostActive) {
-            boostMultiplier += 0.12; // +12% للـ ad boost
-          }
+          const activeReferralCount = parseInt(session.active_referral_count) || 0;
 
           // إذا كانت المكافأة المكتملة موجودة بالفعل، لا نحتاج لحسابها مرة أخرى
           if (existingCompleted > 0) {
@@ -173,11 +173,15 @@ class ServerSideProcessingSync {
             continue;
           }
 
+          // 🛡️ FIXED: حساب المضاعف الصحيح من الإحالات + ad boost
+          const boostCalc = computeHashrateMultiplier(activeReferralCount, adBoostActive);
+          const boostMultiplier = boostCalc.multiplier;
+
           // حساب المكافأة النهائية (الجلسة انتهت = 100%)
           const baseReward = 0.25;
           const finalReward = roundReward(baseReward * boostMultiplier);
 
-          console.log(`[RECOVERY] User ${userId} (${userName}): حساب المكافأة النهائية ${finalReward.toFixed(8)} ACCESS (boost: ${boostMultiplier.toFixed(2)}x, adBoost: ${adBoostActive})`);
+          console.log(`[RECOVERY] User ${userId} (${userName}): المكافأة ${finalReward.toFixed(8)} ACCESS (boost: ${boostMultiplier.toFixed(2)}x, referrals: ${activeReferralCount}, adBoost: ${adBoostActive})`);
 
           // حفظ المكافأة المكتملة في قاعدة البيانات
           await pool.query(
@@ -242,21 +246,26 @@ class ServerSideProcessingSync {
   /**
    * ✅ معالجة الجلسات المنتهية (processing_active = 1 لكن وقتها انتهى)
    * تُستدعى في كل فحص دوري لضمان عدم تفويت أي جلسة
+   * 🛡️ FIXED: يحسب الإحالات النشطة + ad boost بشكل صحيح
    */
   async processExpiredSessions(nowSec, processingDuration) {
     try {
-      // البحث عن الجلسات المنتهية
+      // البحث عن الجلسات المنتهية مع عدد الإحالات النشطة
       const expiredSessions = await Promise.race([
         pool.query(
-          `SELECT id, name, processing_start_time_seconds, accumulatedReward,
-                  COALESCE(session_locked_boost, processing_boost_multiplier, 1.0) as locked_boost,
-                  COALESCE(completed_processing_reward, 0) as completed_processing_reward,
-                  COALESCE(ad_boost_active, false) as ad_boost_active
-           FROM users 
-           WHERE processing_active = 1 
-           AND processing_start_time_seconds IS NOT NULL 
-           AND processing_start_time_seconds > 0
-           AND (${nowSec} - processing_start_time_seconds) >= ${processingDuration}
+          `SELECT u.id, u.name, u.processing_start_time_seconds, u.accumulatedReward,
+                  COALESCE(u.session_locked_boost, u.processing_boost_multiplier, 1.0) as locked_boost,
+                  COALESCE(u.completed_processing_reward, 0) as completed_processing_reward,
+                  COALESCE(u.ad_boost_active, false) as ad_boost_active,
+                  (SELECT COUNT(*) FROM referrals r 
+                   JOIN users ref ON r.referee_id = ref.id 
+                   WHERE r.referrer_id = u.id 
+                   AND (ref.processing_active = 1 OR ref.is_active = 1)) as active_referral_count
+           FROM users u
+           WHERE u.processing_active = 1 
+           AND u.processing_start_time_seconds IS NOT NULL 
+           AND u.processing_start_time_seconds > 0
+           AND (${nowSec} - u.processing_start_time_seconds) >= ${processingDuration}
            LIMIT 20`
         ),
         new Promise((_, reject) => 
@@ -270,17 +279,15 @@ class ServerSideProcessingSync {
 
       console.log(`[PERIODIC CHECK] 🔄 معالجة ${expiredSessions.rows.length} جلسة منتهية...`);
 
+      // استيراد computeHashrateMultiplier
+      const { computeHashrateMultiplier } = await import('./db.js');
+
       for (const session of expiredSessions.rows) {
         try {
           const userId = session.id;
           const existingCompleted = parseFloat(session.completed_processing_reward || 0);
-          let boostMultiplier = parseFloat(session.locked_boost || 1.0);
           const adBoostActive = session.ad_boost_active === true;
-
-          // ✅ CRITICAL: إذا كان الـ ad boost نشط، أضفه للـ multiplier
-          if (adBoostActive) {
-            boostMultiplier += 0.12; // +12% للـ ad boost
-          }
+          const activeReferralCount = parseInt(session.active_referral_count) || 0;
 
           // إذا كانت المكافأة موجودة بالفعل، فقط نوقف الجلسة
           if (existingCompleted > 0) {
@@ -290,6 +297,10 @@ class ServerSideProcessingSync {
             );
             continue;
           }
+
+          // 🛡️ FIXED: حساب المضاعف الصحيح من الإحالات + ad boost
+          const boostCalc = computeHashrateMultiplier(activeReferralCount, adBoostActive);
+          const boostMultiplier = boostCalc.multiplier;
 
           // حساب المكافأة النهائية
           const baseReward = 0.25;
@@ -312,7 +323,7 @@ class ServerSideProcessingSync {
             [userId]
           ).catch(() => {});
 
-          console.log(`[PERIODIC] ✅ User ${userId}: حفظ ${finalReward.toFixed(8)} ACCESS`);
+          console.log(`[PERIODIC] ✅ User ${userId}: حفظ ${finalReward.toFixed(8)} ACCESS (referrals: ${activeReferralCount}, adBoost: ${adBoostActive})`);
 
         } catch (sessionError) {
           console.error(`[PERIODIC] Error processing expired session ${session.id}:`, sessionError.message);
