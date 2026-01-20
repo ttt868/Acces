@@ -2168,22 +2168,28 @@ const server = http.createServer(async (req, res) => {
           );
           taskCompleted = txResult.rows.length > 0;
         } else if (missionId === 'invite_friend') {
-          // Check if user got a new referral (any time, not just today)
-          // First check referrals table
+          // Check if user got a new referral TODAY (daily mission)
+          // First check referrals table for referrals created today
           const referralResult = await client.query(
-            `SELECT * FROM referrals WHERE referrer_id = $1`,
-            [userId]
+            `SELECT id FROM referrals 
+             WHERE referrer_id = $1 
+             AND created_at >= $2
+             LIMIT 1`,
+            [userId, today]
           );
           
           if (referralResult.rows.length > 0) {
             taskCompleted = true;
           } else {
-            // Fallback: check users table for referred_by matching user's referral code
+            // Fallback: check users table for users referred today
             const userResult = await client.query('SELECT referral_code FROM users WHERE id = $1', [userId]);
             if (userResult.rows[0] && userResult.rows[0].referral_code) {
               const referredUsers = await client.query(
-                `SELECT id FROM users WHERE referred_by = $1`,
-                [userResult.rows[0].referral_code]
+                `SELECT id FROM users 
+                 WHERE referred_by = $1 
+                 AND created_at >= $2
+                 LIMIT 1`,
+                [userResult.rows[0].referral_code, today]
               );
               taskCompleted = referredUsers.rows.length > 0;
             }

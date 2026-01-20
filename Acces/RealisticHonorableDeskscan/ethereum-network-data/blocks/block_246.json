@@ -112,11 +112,11 @@
       "id": "a3b7a3fb3467573e2c2dc686147ab043b9ea9c987e540400a7ac0ca91076aef5"
     }
   ],
-  "previousHash": "890f29c00e5823ababcb49f05ee424019592a7b6dee654f6c04a8228ba9aa2c5",
+  "previousHash": "43aaf554600166d239f4a82f984d0deb0109d28154d716b72041663f122930f8",
   "nonce": 0,
-  "hash": "7ee43d0e3df931212adbd49156affa81f83fd3ccf41863f9a90b72b3b26b83fe",
+  "hash": "cc5352bfbaeee3a75c9f8f2650b2301ba1c2be4bd5664b49ea84036bd8d42632",
   "merkleRoot": "eecced3449fdd254f7921cb405b55b69406965ece88be7161f280848cf6cf1c9",
-  "persistentHash": "b7ea1ce1544c23254cd1dcd8205c7f19e3646c20e04b4cb20c3b391868e0ad3d",
-  "savedAt": 1768950627304,
+  "persistentHash": "4edd9f6b53bb07aacb5b6cdf13a696465c08b775c4d52eabf8d20d99f87f14a6",
+  "savedAt": 1768952114935,
   "ethereumStyle": true
 }
