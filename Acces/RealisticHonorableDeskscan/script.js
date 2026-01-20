@@ -5786,6 +5786,15 @@ function startGradualAccumulation() {
             window.boostCheckInterval = null;
           }
 
+          // ✅ CRITICAL: عرض القيمة النهائية الكاملة قبل التنظيف
+          const accumulatedCoinsEl = document.getElementById('accumulated-coins');
+          if (accumulatedCoinsEl && window.localBoostData) {
+            const baseReward = 0.25;
+            const finalReward = baseReward * (window.localBoostData.multiplier || 1.0);
+            accumulatedCoinsEl.textContent = formatNumberSmart(finalReward);
+            console.log('✅ Final accumulated reward displayed:', finalReward);
+          }
+
           // Update UI
           countdownTimer.textContent = '00:00:00';
           processingStatus.textContent = 'Processing completed!';

@@ -1,4 +1,4 @@
-import { pool } from './db.js';
+import { pool, computeHashrateMultiplier } from './db.js';
 import { initializeActivityCountdownTables, startProcessingCountdown, getProcessingCountdownStatus, completeProcessingCountdown } from './activity_countdown_system.js';
 
 /**
@@ -106,12 +106,13 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
         return true;
       }
 
-      // Get current user data including completed_processing_reward, boost AND ad_boost
+      // Get current user data including completed_processing_reward, boost AND ad_boost AND referrals
       const userResult = await pool.query(
-        `SELECT coins, accumulatedReward, completed_processing_reward,
-                COALESCE(session_locked_boost, processing_boost_multiplier, 1.0) as locked_boost,
-                COALESCE(ad_boost_active, false) as ad_boost_active
-         FROM users WHERE id = $1`,
+        `SELECT u.coins, u.accumulatedReward, u.completed_processing_reward,
+                COALESCE(u.session_locked_boost, u.processing_boost_multiplier, 1.0) as locked_boost,
+                COALESCE(u.ad_boost_active, false) as ad_boost_active,
+                COALESCE((SELECT COUNT(*) FROM referrals WHERE referrer_id = u.id AND is_active = true), 0) as active_referral_count
+         FROM users u WHERE u.id = $1`,
         [userId]
       );
 
@@ -124,15 +125,14 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
       const currentBalance = parseFloat(userResult.rows[0].coins || 0);
       const storedAccumulated = parseFloat(userResult.rows[0].accumulatedreward || 0);
       const completedReward = parseFloat(userResult.rows[0].completed_processing_reward || 0);
-      let boostMultiplier = parseFloat(userResult.rows[0].locked_boost || 1.0);
       const adBoostActive = userResult.rows[0].ad_boost_active === true;
-
-      // ✅ CRITICAL: إذا كان الـ ad boost نشط، أضفه للـ multiplier
-      // (لأن session_locked_boost يُحسب عند بدء الجلسة بدون ad boost)
-      if (adBoostActive) {
-        boostMultiplier += 0.12; // +12% للـ ad boost
-        console.log(`[COMPLETE] User ${userId}: Adding ad boost +0.12 to multiplier = ${boostMultiplier.toFixed(2)}x`);
-      }
+      const activeReferralCount = parseInt(userResult.rows[0].active_referral_count || 0);
+      
+      // ✅ CRITICAL: حساب المضاعف بشكل صحيح باستخدام computeHashrateMultiplier
+      // هذا يضمن احتساب جميع الإحالات + ad boost
+      const boostCalc = computeHashrateMultiplier(activeReferralCount, adBoostActive);
+      const boostMultiplier = boostCalc.multiplier;
+      console.log(`[COMPLETE] User ${userId}: ${activeReferralCount} referrals, ad_boost=${adBoostActive}, multiplier=${boostMultiplier.toFixed(2)}x`);
 
       // ✅ CRITICAL: حساب المكافأة النهائية الكاملة مع الـ boost
       const baseReward = 0.25;
