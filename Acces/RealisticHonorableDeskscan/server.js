@@ -2169,19 +2169,21 @@ const server = http.createServer(async (req, res) => {
           taskCompleted = txResult.rows.length > 0;
         } else if (missionId === 'invite_friend') {
           // Check if user got a new referral TODAY (daily mission)
-          // First check referrals table for referrals created today
+          // referrals table uses 'date' column (bigint timestamp), not 'created_at'
+          const todayTimestamp = today.getTime();
           const referralResult = await client.query(
             `SELECT id FROM referrals 
              WHERE referrer_id = $1 
-             AND created_at >= $2
+             AND date >= $2
              LIMIT 1`,
-            [userId, today]
+            [userId, todayTimestamp]
           );
           
           if (referralResult.rows.length > 0) {
             taskCompleted = true;
           } else {
             // Fallback: check users table for users referred today
+            // users table has 'created_at' column
             const userResult = await client.query('SELECT referral_code FROM users WHERE id = $1', [userId]);
             if (userResult.rows[0] && userResult.rows[0].referral_code) {
               const referredUsers = await client.query(
