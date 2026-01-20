@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return Math.round(number * Math.pow(10, decimals)) / Math.pow(10, decimals);
   }
 
-  // Format numbers: 1000 → 1,000 | 1 → 1 | 0.5 → 0.50 | 1.5 → 1.50
+  // Format numbers: 1000 → 1,000 | 1 → 1 | 0.5 → 0.50 | 2.1 → 2.10
   function formatNumberSmart(number) {
     if (typeof number !== 'number') {
       number = parseFloat(number) || 0;
@@ -209,12 +209,15 @@ document.addEventListener('DOMContentLoaded', function() {
       return number.toLocaleString('en-US');
     }
     
-    // Has decimals - format with max 8 decimals, remove trailing zeros, but keep min 2
+    // Has decimals - format with max 8 decimals
     let formatted = parseFloat(number.toFixed(8)).toString();
     
     const parts = formatted.split('.');
-    // Ensure at least 2 decimal places for fractional numbers
-    if (parts[1] && parts[1].length < 2) {
+    
+    // Ensure at least 2 decimal places for ALL fractional numbers
+    if (!parts[1]) {
+      parts[1] = '00';
+    } else if (parts[1].length < 2) {
       parts[1] = parts[1].padEnd(2, '0');
     }
     
