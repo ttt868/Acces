@@ -14642,34 +14642,7 @@ function createLeaderboardItem(rank, user) {
   return item;
 }
 
-// Helper function to format numbers (if not already defined)
-if (typeof formatNumberSmart === 'undefined') {
-  function formatNumberSmart(number) {
-    if (typeof number !== 'number') {
-      number = parseFloat(number) || 0;
-    }
-    
-    if (Number.isInteger(number)) {
-      return number.toLocaleString('en-US');
-    }
-    
-    let formatted = number.toFixed(8);
-    formatted = formatted.replace(/\.?0+$/, '');
-    
-    if (formatted.endsWith('.')) {
-      formatted = formatted.slice(0, -1);
-    }
-    
-    if (!formatted || formatted === '') {
-      return '0';
-    }
-    
-    const parts = formatted.split('.');
-    parts[0] = parseInt(parts[0]).toLocaleString('en-US');
-    
-    return parts.join('.');
-  }
-}
+// Helper function formatNumberSmart is defined at line 202 - no need to redefine here
 
 // Navigate to address details page with the wallet address
 function viewDashboardAddress() {
