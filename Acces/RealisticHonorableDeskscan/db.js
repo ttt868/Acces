@@ -2072,6 +2072,7 @@ async function checkAdBoostEligibility(userId) {
 /**
  * Grant ad boost to user after completing ad
  * UPDATED: Boost is linked to current mining session
+ * 🛡️ FIXED: Now updates session_locked_boost to include ad boost!
  */
 async function grantAdBoost(userId, transactionId, ipAddress, userAgent) {
   const client = await pool.connect();
@@ -2091,12 +2092,17 @@ async function grantAdBoost(userId, transactionId, ipAddress, userAgent) {
       throw new Error('الإعلان مُسجل مسبقاً');
     }
 
-    // Get user data
+    // Get user data including current boost and referrals
     const userResult = await client.query(
-      `SELECT processing_active, processing_start_time_seconds, 
-              ad_boost_active, ad_boost_session_start,
-              accumulatedreward, accumulated_processing_reward
-       FROM users WHERE id = $1`,
+      `SELECT u.processing_active, u.processing_start_time_seconds, 
+              u.ad_boost_active, u.ad_boost_session_start,
+              u.accumulatedreward, u.accumulated_processing_reward,
+              u.session_locked_boost,
+              (SELECT COUNT(*) FROM referrals r 
+               JOIN users ref ON r.referee_id = ref.id 
+               WHERE r.referrer_id = u.id 
+               AND (ref.processing_active = 1 OR ref.is_active = 1)) as active_referral_count
+       FROM users u WHERE u.id = $1`,
       [userId]
     );
 
@@ -2108,6 +2114,8 @@ async function grantAdBoost(userId, transactionId, ipAddress, userAgent) {
     const currentSessionStart = parseInt(user.processing_start_time_seconds) || 0;
     const adBoostSessionStart = parseInt(user.ad_boost_session_start) || 0;
     const isProcessingActive = user.processing_active === 1;
+    const activeReferralCount = parseInt(user.active_referral_count) || 0;
+    const currentLockedBoost = parseFloat(user.session_locked_boost) || 1.0;
 
     // Prevent duplicate boost for SAME session
     if (user.ad_boost_active && currentSessionStart === adBoostSessionStart && isProcessingActive) {
@@ -2121,29 +2129,34 @@ async function grantAdBoost(userId, transactionId, ipAddress, userAgent) {
       [userId, true, now, currentSessionStart, transactionId, ipAddress, userAgent]
     );
 
-    // ✅ CORRECT: Ad Boost only activates hashrate increase (like referrals)
-    // NO instant reward - reward accumulates gradually through mining session
-    console.log(`✅ [AD BOOST] Activating hashrate boost for user ${userId} (no instant reward)`);
+    // 🛡️ FIXED: Calculate NEW session_locked_boost including ad boost
+    // Ad boost = 3 virtual referrals = 1.2 MH/s
+    const boostCalc = computeHashrateMultiplier(activeReferralCount, true); // true = ad boost active
+    const newLockedBoost = boostCalc.multiplier;
 
-    // Update database - ONLY activate boost flag (no balance change)
+    console.log(`✅ [AD BOOST] User ${userId}: Updating session_locked_boost from ${currentLockedBoost.toFixed(2)}x to ${newLockedBoost.toFixed(2)}x`);
+
+    // Update database - activate boost flag AND update session_locked_boost
     await client.query(
       `UPDATE users 
        SET ad_boost_active = TRUE,
            ad_boost_granted_at = $1,
            ad_boost_session_start = $2,
-           last_ad_watch_timestamp = $1
-       WHERE id = $3`,
-      [now, isProcessingActive ? currentSessionStart : now, userId]
+           last_ad_watch_timestamp = $1,
+           session_locked_boost = $3
+       WHERE id = $4`,
+      [now, isProcessingActive ? currentSessionStart : now, newLockedBoost, userId]
     );
 
     await client.query('COMMIT');
 
-    console.log(`✅ [AD BOOST] Granted to user ${userId}: +1.2 MH/s hashrate boost (gradual reward)`);
+    console.log(`✅ [AD BOOST] Granted to user ${userId}: +1.2 MH/s hashrate boost (multiplier: ${newLockedBoost.toFixed(2)}x)`);
 
     return {
       success: true,
       boostActive: isProcessingActive,
       boostValue: 1.2,
+      newMultiplier: newLockedBoost,
       message: `تم! تعزيز +1.2 MH/s (3 إحالات افتراضية) - المكافأة تتراكم تدريجيًا`
     };
 

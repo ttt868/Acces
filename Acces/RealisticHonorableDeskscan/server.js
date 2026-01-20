@@ -150,6 +150,317 @@ function calculateAccumulatedReward(startTimeSec, boostMultiplier = 1.0) {
   return Math.round((0.25 * boostMultiplier * (elapsedSec / processingDuration)) * 100000000) / 100000000;
 }
 
+// ============================================================================
+// 🛡️ نظام حماية الجلسات الكامل - يحفظ ويستعيد الإحالات النشطة + Ad Boost
+// ============================================================================
+
+/**
+ * حفظ جميع الجلسات النشطة مع حساب المكافآت الكاملة (base + referrals + boost)
+ * يُستدعى عند إيقاف السيرفر (SIGTERM/SIGINT)
+ */
+async function saveAllActiveSessionsOnShutdown() {
+  console.log('🛡️ [SHUTDOWN PROTECTION] Saving all active sessions...');
+  
+  try {
+    // جلب جميع المستخدمين الذين لديهم جلسات نشطة
+    const activeSessionsResult = await pool.query(`
+      SELECT 
+        u.id as user_id,
+        u.processing_start_time_seconds,
+        u.processing_end_time,
+        u.session_locked_boost,
+        u.ad_boost_active,
+        u.accumulatedreward,
+        u.accumulated_processing_reward,
+        u.completed_processing_reward
+      FROM users u
+      WHERE u.processing_active = 1 
+        AND u.processing_start_time_seconds > 0
+    `);
+    
+    if (activeSessionsResult.rows.length === 0) {
+      console.log('✅ [SHUTDOWN] No active sessions to save');
+      return { saved: 0 };
+    }
+    
+    console.log(`📊 [SHUTDOWN] Found ${activeSessionsResult.rows.length} active sessions to protect`);
+    
+    const nowSec = Math.floor(Date.now() / 1000);
+    const processingDuration = 24 * 60 * 60;
+    let savedCount = 0;
+    
+    for (const session of activeSessionsResult.rows) {
+      try {
+        const userId = session.user_id;
+        const startTimeSec = parseInt(session.processing_start_time_seconds) || 0;
+        // session_locked_boost يحتوي على boost كامل (base + referrals + ad boost)
+        const sessionLockedBoost = parseFloat(session.session_locked_boost) || 1.0;
+        
+        if (startTimeSec <= 0) continue;
+        
+        // حساب المكافأة المتراكمة الكاملة باستخدام المضاعف المثبت
+        const elapsedSec = nowSec - startTimeSec;
+        const baseReward = 0.25;
+        const boostedReward = baseReward * sessionLockedBoost;
+        const rewardProgress = Math.min(1, Math.max(0, elapsedSec / processingDuration));
+        const fullAccumulatedReward = Math.round((boostedReward * rewardProgress) * 100000000) / 100000000;
+        
+        // حفظ المكافأة الكاملة (مع الإحالات والـ boost)
+        await pool.query(`
+          UPDATE users 
+          SET accumulatedreward = GREATEST(COALESCE(accumulatedreward, 0), $1),
+              accumulated_processing_reward = GREATEST(COALESCE(accumulated_processing_reward, 0), $1),
+              completed_processing_reward = GREATEST(COALESCE(completed_processing_reward, 0), $1)
+          WHERE id = $2
+        `, [fullAccumulatedReward, userId]);
+        
+        console.log(`✅ [SHUTDOWN] User ${userId}: Saved ${fullAccumulatedReward.toFixed(8)} ACCESS (boost: ${sessionLockedBoost.toFixed(2)}x)`);
+        savedCount++;
+        
+      } catch (userError) {
+        console.error(`❌ [SHUTDOWN] Error saving user ${session.user_id}:`, userError.message);
+      }
+    }
+    
+    console.log(`🛡️ [SHUTDOWN COMPLETE] Protected ${savedCount}/${activeSessionsResult.rows.length} sessions`);
+    return { saved: savedCount, total: activeSessionsResult.rows.length };
+    
+  } catch (error) {
+    console.error('❌ [SHUTDOWN] Critical error saving sessions:', error.message);
+    return { saved: 0, error: error.message };
+  }
+}
+
+/**
+ * استعادة وحماية الجلسات عند بدء السيرفر
+ * يعيد حساب المكافآت للجلسات التي كانت نشطة أثناء إيقاف السيرفر
+ * 🛡️ FIXED: يصلح session_locked_boost للمستخدمين مع ad_boost
+ */
+async function recoverActiveSessionsOnStartup() {
+  console.log('🔄 [STARTUP RECOVERY] Checking for sessions that need recovery...');
+  
+  try {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const processingDuration = 24 * 60 * 60;
+    
+    // جلب الجلسات التي كانت نشطة ولم تنتهِ بعد (مع معلومات الإحالات)
+    const sessionsToRecover = await pool.query(`
+      SELECT 
+        u.id as user_id,
+        u.processing_start_time_seconds,
+        u.processing_end_time,
+        u.session_locked_boost,
+        u.ad_boost_active,
+        u.accumulatedreward,
+        u.accumulated_processing_reward,
+        u.coins,
+        (SELECT COUNT(*) FROM referrals r 
+         JOIN users ref ON r.referee_id = ref.id 
+         WHERE r.referrer_id = u.id 
+         AND (ref.processing_active = 1 OR ref.is_active = 1)) as active_referral_count
+      FROM users u
+      WHERE u.processing_active = 1 
+        AND u.processing_start_time_seconds > 0
+        AND (u.processing_start_time_seconds + ${processingDuration}) > ${nowSec}
+    `);
+    
+    if (sessionsToRecover.rows.length === 0) {
+      console.log('✅ [STARTUP] No sessions need recovery');
+      
+      // تحقق من الجلسات المنتهية التي تحتاج نقل مكافأة
+      await finalizeCompletedSessions();
+      return { recovered: 0 };
+    }
+    
+    console.log(`📊 [STARTUP] Found ${sessionsToRecover.rows.length} sessions to verify`);
+    
+    // استيراد computeHashrateMultiplier
+    const { computeHashrateMultiplier } = await import('./db.js');
+    
+    let recoveredCount = 0;
+    
+    for (const session of sessionsToRecover.rows) {
+      try {
+        const userId = session.user_id;
+        const startTimeSec = parseInt(session.processing_start_time_seconds) || 0;
+        let sessionLockedBoost = parseFloat(session.session_locked_boost) || 1.0;
+        const storedAccumulated = parseFloat(session.accumulatedreward) || 0;
+        const adBoostActive = session.ad_boost_active || false;
+        const activeReferralCount = parseInt(session.active_referral_count) || 0;
+        
+        // 🛡️ FIX: إذا كان ad_boost نشط ولكن session_locked_boost = 1.0، أعد حسابه!
+        if ((adBoostActive || activeReferralCount > 0) && sessionLockedBoost <= 1.0) {
+          const boostCalc = computeHashrateMultiplier(activeReferralCount, adBoostActive);
+          sessionLockedBoost = boostCalc.multiplier;
+          
+          // تحديث session_locked_boost في قاعدة البيانات
+          await pool.query(
+            `UPDATE users SET session_locked_boost = $1 WHERE id = $2`,
+            [sessionLockedBoost, userId]
+          );
+          
+          console.log(`🔧 [BOOST FIX] User ${userId}: Fixed session_locked_boost to ${sessionLockedBoost.toFixed(2)}x (ad_boost: ${adBoostActive}, referrals: ${activeReferralCount})`);
+        }
+        
+        // حساب المكافأة الحقيقية حتى الآن
+        const elapsedSec = nowSec - startTimeSec;
+        const baseReward = 0.25;
+        const boostedReward = baseReward * sessionLockedBoost;
+        const rewardProgress = Math.min(1, Math.max(0, elapsedSec / processingDuration));
+        const calculatedReward = Math.round((boostedReward * rewardProgress) * 100000000) / 100000000;
+        
+        // إذا كانت المكافأة المحسوبة أكبر من المحفوظة، حدّث
+        if (calculatedReward > storedAccumulated) {
+          await pool.query(`
+            UPDATE users 
+            SET accumulatedreward = $1,
+                accumulated_processing_reward = $1
+            WHERE id = $2
+          `, [calculatedReward, userId]);
+          
+          console.log(`🔄 [RECOVERY] User ${userId}: Updated ${storedAccumulated.toFixed(8)} → ${calculatedReward.toFixed(8)} ACCESS`);
+          recoveredCount++;
+        }
+        
+      } catch (userError) {
+        console.error(`❌ [RECOVERY] Error recovering user ${session.user_id}:`, userError.message);
+      }
+    }
+    
+    // معالجة الجلسات المنتهية
+    await finalizeCompletedSessions();
+    
+    console.log(`🔄 [STARTUP COMPLETE] Recovered ${recoveredCount} sessions`);
+    return { recovered: recoveredCount };
+    
+  } catch (error) {
+    console.error('❌ [STARTUP] Error in recovery:', error.message);
+    return { recovered: 0, error: error.message };
+  }
+}
+
+/**
+ * معالجة الجلسات المنتهية - نقل المكافأة إلى الرصيد
+ */
+async function finalizeCompletedSessions() {
+  console.log('🏁 [FINALIZE] Checking completed sessions...');
+  
+  try {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const processingDuration = 24 * 60 * 60;
+    
+    // جلسات انتهت ولديها مكافأة للنقل
+    const completedSessions = await pool.query(`
+      SELECT 
+        u.id as user_id,
+        u.processing_start_time_seconds,
+        u.session_locked_boost,
+        u.accumulatedreward,
+        u.accumulated_processing_reward,
+        u.completed_processing_reward,
+        u.coins
+      FROM users u
+      WHERE u.processing_active = 1 
+        AND u.processing_start_time_seconds > 0
+        AND (u.processing_start_time_seconds + ${processingDuration}) <= ${nowSec}
+    `);
+    
+    if (completedSessions.rows.length === 0) {
+      console.log('✅ [FINALIZE] No completed sessions pending');
+      return { finalized: 0 };
+    }
+    
+    console.log(`📊 [FINALIZE] Found ${completedSessions.rows.length} completed sessions to finalize`);
+    
+    let finalizedCount = 0;
+    
+    for (const session of completedSessions.rows) {
+      try {
+        const userId = session.user_id;
+        const sessionLockedBoost = parseFloat(session.session_locked_boost) || 1.0;
+        const currentCoins = parseFloat(session.coins) || 0;
+        
+        // المكافأة الكاملة = 0.25 × المضاعف
+        const fullReward = Math.round((0.25 * sessionLockedBoost) * 100000000) / 100000000;
+        const newBalance = Math.round((currentCoins + fullReward) * 100000000) / 100000000;
+        
+        // نقل المكافأة للرصيد وإنهاء الجلسة
+        await pool.query(`
+          UPDATE users 
+          SET coins = $1,
+              processing_active = 0,
+              accumulatedreward = 0,
+              accumulated_processing_reward = 0,
+              completed_processing_reward = 0,
+              session_locked_boost = 1.0
+          WHERE id = $2
+        `, [newBalance, userId]);
+        
+        console.log(`🏁 [FINALIZE] User ${userId}: +${fullReward.toFixed(8)} ACCESS → Balance: ${newBalance.toFixed(8)}`);
+        finalizedCount++;
+        
+      } catch (userError) {
+        console.error(`❌ [FINALIZE] Error finalizing user ${session.user_id}:`, userError.message);
+      }
+    }
+    
+    console.log(`🏁 [FINALIZE COMPLETE] Finalized ${finalizedCount} sessions`);
+    return { finalized: finalizedCount };
+    
+  } catch (error) {
+    console.error('❌ [FINALIZE] Error:', error.message);
+    return { finalized: 0, error: error.message };
+  }
+}
+
+// ============================================================================
+// 🛡️ معالجات إيقاف السيرفر الآمنة (SIGTERM, SIGINT)
+// ============================================================================
+
+let isShuttingDown = false;
+
+async function gracefulShutdown(signal) {
+  if (isShuttingDown) {
+    console.log('⚠️ Already shutting down...');
+    return;
+  }
+  
+  isShuttingDown = true;
+  console.log(`\n🛑 [${signal}] Graceful shutdown initiated...`);
+  
+  try {
+    // حفظ جميع الجلسات النشطة
+    const saveResult = await saveAllActiveSessionsOnShutdown();
+    console.log(`🛡️ Sessions saved: ${saveResult.saved || 0}`);
+    
+    // إغلاق pool قاعدة البيانات بأمان
+    await pool.end();
+    console.log('✅ Database pool closed');
+    
+  } catch (error) {
+    console.error('❌ Error during shutdown:', error.message);
+  }
+  
+  console.log('👋 Server shutdown complete');
+  process.exit(0);
+}
+
+// تسجيل معالجات الإيقاف
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGHUP', () => gracefulShutdown('SIGHUP'));
+
+// استعادة الجلسات عند بدء السيرفر (بعد تهيئة DB)
+setTimeout(async () => {
+  try {
+    await recoverActiveSessionsOnStartup();
+  } catch (error) {
+    console.error('❌ [STARTUP] Recovery failed:', error.message);
+  }
+}, 5000); // انتظار 5 ثوانٍ للتأكد من جاهزية DB
+
+// ============================================================================
+
 
 // تهيئة نظام التخزين الدائم المتقدم
 import PermanentStorageOnly from './permanent-storage-only.js';
@@ -6923,7 +7234,38 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         
-        const rewardValue = parseFloat(finalAccumulated);
+        // 🛡️ الحصول على session_locked_boost للتحقق من القيمة الصحيحة
+        const userResult = await pool.query(
+          `SELECT processing_start_time_seconds, session_locked_boost FROM users WHERE id = $1`,
+          [userId]
+        );
+        
+        const clientRewardValue = parseFloat(finalAccumulated);
+        let rewardValue = clientRewardValue;
+        
+        // 🛡️ إذا كان هناك session_locked_boost، تحقق من أن المكافأة صحيحة
+        if (userResult.rows.length > 0) {
+          const sessionLockedBoost = parseFloat(userResult.rows[0].session_locked_boost) || 1.0;
+          const startTimeSec = parseInt(userResult.rows[0].processing_start_time_seconds) || 0;
+          
+          if (startTimeSec > 0 && sessionLockedBoost > 1.0) {
+            // حساب المكافأة الصحيحة من السيرفر
+            const nowSec = Math.floor(Date.now() / 1000);
+            const processingDuration = 24 * 60 * 60;
+            const elapsedSec = nowSec - startTimeSec;
+            const baseReward = 0.25;
+            const boostedReward = baseReward * sessionLockedBoost;
+            const rewardProgress = Math.min(1, Math.max(0, elapsedSec / processingDuration));
+            const serverCalculatedReward = Math.round((boostedReward * rewardProgress) * 100000000) / 100000000;
+            
+            // استخدم القيمة الأعلى (من العميل أو السيرفر)
+            rewardValue = Math.max(clientRewardValue, serverCalculatedReward);
+            
+            if (serverCalculatedReward > clientRewardValue) {
+              console.log(`🛡️ [BOOST PROTECTION] User ${userId}: Client sent ${clientRewardValue.toFixed(8)}, server calculated ${serverCalculatedReward.toFixed(8)} (boost: ${sessionLockedBoost.toFixed(2)}x)`);
+            }
+          }
+        }
         
         // ✅ تحديث القيمة النهائية + إيقاف الجلسة + تنظيف "Collecting..."
         await pool.query(
@@ -6968,7 +7310,33 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         
-        const accumulatedValue = parseFloat(accumulated);
+        // 🛡️ حساب المكافأة الصحيحة من السيرفر (مع الإحالات والـ boost)
+        const userResult = await pool.query(
+          `SELECT processing_start_time_seconds, session_locked_boost FROM users WHERE id = $1 AND processing_active = 1`,
+          [userId]
+        );
+        
+        const clientAccumulatedValue = parseFloat(accumulated);
+        let accumulatedValue = clientAccumulatedValue;
+        
+        // 🛡️ إذا كان هناك session_locked_boost، احسب القيمة الصحيحة
+        if (userResult.rows.length > 0) {
+          const sessionLockedBoost = parseFloat(userResult.rows[0].session_locked_boost) || 1.0;
+          const startTimeSec = parseInt(userResult.rows[0].processing_start_time_seconds) || 0;
+          
+          if (startTimeSec > 0) {
+            const nowSec = Math.floor(Date.now() / 1000);
+            const processingDuration = 24 * 60 * 60;
+            const elapsedSec = nowSec - startTimeSec;
+            const baseReward = 0.25;
+            const boostedReward = baseReward * sessionLockedBoost;
+            const rewardProgress = Math.min(1, Math.max(0, elapsedSec / processingDuration));
+            const serverCalculatedReward = Math.round((boostedReward * rewardProgress) * 100000000) / 100000000;
+            
+            // استخدم القيمة الأعلى
+            accumulatedValue = Math.max(clientAccumulatedValue, serverCalculatedReward);
+          }
+        }
         
         // تحديث الرصيد المتراكم فقط إذا كان أكبر من القيمة المحفوظة
         await pool.query(
