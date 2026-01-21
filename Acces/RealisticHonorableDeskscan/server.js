@@ -1484,21 +1484,83 @@ const server = http.createServer(async (req, res) => {
         });
         return;
       } else if (req.method === 'GET') {
-        // معلومات الشبكة للـ GET requests
-        const networkInfo = {
-          jsonrpc: '2.0',
-          result: {
+        // معلومات الشبكة الكاملة للـ GET requests (مثل المنفذ 5000 القديم)
+        try {
+          const network = networkNode.network || networkNode.blockchain;
+          const stats = networkNode.getStats ? networkNode.getStats() : {};
+          
+          // حساب العرض المتداول
+          let circulatingSupply = 0;
+          try {
+            circulatingSupply = network.calculateCirculatingSupply ? await network.calculateCirculatingSupply() : 0;
+          } catch (e) {
+            circulatingSupply = 0;
+          }
+
+          // معلومات الشبكة الكاملة
+          const fullNetworkInfo = {
+            // معلومات أساسية
             chainId: '0x5968',
             networkId: '22888',
             chainName: 'Access Network',
-            nativeCurrency: { name: 'Access Coin', symbol: 'ACCESS', decimals: 18 },
+            nativeCurrency: {
+              name: 'Access Coin',
+              symbol: 'ACCESS',
+              decimals: 18
+            },
+            
+            // روابط
             rpcUrls: [req.headers.host ? `https://${req.headers.host}/rpc` : '/rpc'],
-            blockExplorerUrls: [req.headers.host ? `https://${req.headers.host}/access-explorer.html` : '/access-explorer.html']
-          },
-          id: 1
-        };
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(networkInfo));
+            blockExplorerUrls: [req.headers.host ? `https://${req.headers.host}/access-explorer.html` : '/access-explorer.html'],
+            
+            // حالة الشبكة
+            status: 'active',
+            isRunning: true,
+            
+            // معلومات البلوكتشين
+            blockHeight: network.chain ? network.chain.length - 1 : 0,
+            latestBlockHash: network.chain && network.chain.length > 0 ? network.chain[network.chain.length - 1].hash : '0x0',
+            difficulty: network.difficulty || 4,
+            
+            // المعاملات
+            pendingTransactions: network.pendingTransactions ? network.pendingTransactions.length : 0,
+            totalTransactions: stats.totalTransactions || 0,
+            
+            // الاقتصاد
+            circulatingSupply: circulatingSupply,
+            maxSupply: 25000000,
+            processingReward: network.processingReward || 0.25,
+            gasPrice: network.getGasPrice ? network.getGasPrice() : '0x38c42e18',
+            gasFee: '0.00002 ACCESS',
+            
+            // الميزات
+            features: ['EIP155', 'EIP1559', 'AEP20', 'Smart Contracts'],
+            tokenStandard: 'AEP-20',
+            consensus: 'PoSA (Proof of Staked Authority)',
+            
+            // إحصائيات الأداء
+            ...stats,
+            
+            // الوقت
+            timestamp: Date.now(),
+            serverTime: new Date().toISOString()
+          };
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(fullNetworkInfo, null, 2));
+        } catch (infoError) {
+          console.error('Error getting full network info:', infoError);
+          // Fallback للمعلومات الأساسية
+          const basicInfo = {
+            chainId: '0x5968',
+            networkId: '22888',
+            chainName: 'Access Network',
+            status: 'active',
+            error: infoError.message
+          };
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(basicInfo, null, 2));
+        }
         return;
       }
     } catch (error) {
