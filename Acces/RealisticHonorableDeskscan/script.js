@@ -8091,7 +8091,7 @@ function initializeGoogleSignIn() {
 
     // Always display the actual user coins from database in the wallet balance
     if (walletBalance && currentUser.coins !== undefined) {
-      walletBalance.textContent = parseFloat(currentUser.coins).toLocaleString();
+      walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
     }
 
     // Ensure QR code container exists and is properly styled
@@ -8187,7 +8187,7 @@ function initializeGoogleSignIn() {
           walletAddress.textContent = wallet.publicAddress;
         }
         if (walletBalance) {
-          walletBalance.textContent = parseFloat(currentUser.coins).toLocaleString();
+          walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
         }
 
         // Store in current user object
@@ -8293,7 +8293,7 @@ function initializeGoogleSignIn() {
         }, 2000);
       }
       if (walletBalance) {
-        walletBalance.textContent = parseFloat(currentUser.coins).toLocaleString();
+        walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
       }
 
       // Store in current user object
@@ -9613,7 +9613,7 @@ window.copyAccountAddress = function() {
             }
 
             if (walletBalance) {
-              walletBalance.textContent = parseFloat(importedWallet.balance).toLocaleString();
+              walletBalance.textContent = formatNumberSmart(parseFloat(importedWallet.balance));
             }
 
             // Update main UI coins display if available
@@ -9674,7 +9674,7 @@ window.copyAccountAddress = function() {
             }
 
             if (walletBalance) {
-              walletBalance.textContent = parseFloat(importedWallet.balance).toLocaleString();
+              walletBalance.textContent = formatNumberSmart(parseFloat(importedWallet.balance));
             }
 
             // Update transaction list
@@ -10199,17 +10199,17 @@ if (totalCost > (currentBalance + precision)) {
 
             const walletBalanceElement = document.getElementById('wallet-balance');
             if (walletBalanceElement) {
-              walletBalanceElement.textContent = serverBalance.toLocaleString();
+              walletBalanceElement.textContent = formatNumberSmart(serverBalance);
             }
 
             const userCoinsElement = document.getElementById('user-coins');
             if (userCoinsElement) {
-              userCoinsElement.textContent = serverBalance.toFixed(8);
+              userCoinsElement.textContent = formatNumberSmart(serverBalance);
             }
 
             const profileCoinsElement = document.getElementById('profile-coins');
             if (profileCoinsElement) {
-              profileCoinsElement.textContent = serverBalance.toFixed(8);
+              profileCoinsElement.textContent = formatNumberSmart(serverBalance);
             }
 
             saveUserSession(currentUser);
@@ -11355,7 +11355,7 @@ if (totalCost > (currentBalance + precision)) {
       // Update UI to display database balance
       const walletBalance = document.getElementById('wallet-balance');
       if (walletBalance) {
-        walletBalance.textContent = parseFloat(currentUser.coins).toLocaleString();
+        walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
       }
 
       // If wallet exists, ensure its balance matches database
@@ -11521,14 +11521,24 @@ if (totalCost > (currentBalance + precision)) {
         return trimmed;
       }
 
-      // For numbers 1 and above, remove trailing zeros normally
-      const formatted = fixed.replace(/\.?0+$/, '');
+      // For numbers 1 and above, ensure at least 2 decimal places
+      let formatted = fixed.replace(/0+$/, ''); // Remove trailing zeros first
+      
+      // Ensure at least 2 decimal places
+      const parts = formatted.split('.');
+      if (parts.length === 1) {
+        parts.push('00'); // No decimal part, add .00
+      } else if (parts[1].length === 0) {
+        parts[1] = '00'; // Empty decimal part
+      } else if (parts[1].length === 1) {
+        parts[1] = parts[1] + '0'; // Only 1 decimal digit, add 0
+      }
+      formatted = parts.join('.');
       
       // Add thousand separators for numbers >= 1000
       if (num >= 1000) {
-        const parts = formatted.split('.');
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        return parts.join('.');
+        const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return intPart + '.' + parts[1];
       }
       
       return formatted;
@@ -12098,7 +12108,7 @@ if (totalCost > (currentBalance + precision)) {
         // Update the referral earnings display
         const referralEarningsElement = document.querySelector('.bonus-value');
         if (referralEarningsElement) {
-          referralEarningsElement.textContent = totalReferralEarnings.toLocaleString();
+          referralEarningsElement.textContent = formatNumberSmart(totalReferralEarnings);
         }
 
         console.log('Displaying referrals:', referrals);
