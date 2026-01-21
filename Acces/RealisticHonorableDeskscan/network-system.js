@@ -2111,80 +2111,78 @@ class AccessNetwork extends EventEmitter {
     const totalSupply = this.getTotalSupply(); // Always 25 million
     const circulatingSupply = await this.calculateCirculatingSupply();
 
-    // جمع إحصائيات الأنظمة المتطورة
-    const enhancedStats = {
+    // جمع إحصائيات الأنظمة
+    const systemStats = {
       consensus: this.enhancedConsensus ? this.enhancedConsensus.getConsensusStats() : null,
       network: this.distributedNetwork ? this.distributedNetwork.getDistributedNetworkStats() : null,
       processing: this.parallelProcessing ? this.parallelProcessing.getParallelProcessingStats() : null,
       security: this.advancedSecurity ? this.advancedSecurity.getSecurityStats() : null
     };
 
+    // ✅ معلومات مناسبة لـ Chain List والمحافظ
     return {
-      // المعلومات الأساسية
+      // المعلومات الأساسية المطلوبة للمحافظ و Chain List
       chainId: this.hexChainId,
       networkId: this.networkId.toString(),
-      blockHeight: this.chain.length - 1,
-      difficulty: this.difficulty,
-      hashRate: this.stats.hashRate || 0,
-      peers: this.peers.size,
-      pendingTransactions: this.pendingTransactions.length,
-      totalSupply: totalSupply,
-      circulatingSupply: circulatingSupply,
-      processingReward: this.processingReward,
-      maxSupply: 25000000,
-      gasPrice: this.gasPrice,
-      baseGasFee: this.baseGasFee,
-      gasPriceAdjustable: this.gasPriceAdjustable,
-      isOnline: true,
-      version: '2.0.0-enhanced',
-
-      // المعلومات المتطورة
-      enhanced: {
-        blockTime: this.advancedMetrics.averageBlockTime + 's (3x faster than BSC)',
-        throughput: this.advancedMetrics.totalThroughput.toFixed(0) + ' tx/s (25x higher than BSC)',
-        security: this.advancedMetrics.securityLevel + ' (superior to BSC)',
-        distribution: 'Global nodes (vs BSC centralized)',
-        consensus: 'Enhanced PoSA (vs BSC standard)',
-
-        // مقارنة مع BSC
-        superiority: {
-          vs_BSC: {
-            speed: (this.advancedMetrics.totalThroughput / 2000).toFixed(1) + 'x faster',
-            blockTime: (3 / this.advancedMetrics.averageBlockTime).toFixed(1) + 'x faster',
-            security: 'Enhanced vs Standard',
-            distribution: 'Global vs Centralized',
-            consensus: 'Advanced vs Basic'
-          },
-          vs_Ethereum: {
-            speed: (this.advancedMetrics.totalThroughput / 15).toFixed(0) + 'x faster',
-            blockTime: (15 / this.advancedMetrics.averageBlockTime).toFixed(0) + 'x faster',
-            fees: '1000x lower',
-            energy: '99% less consumption'
-          }
-        }
-      },
-
-      // إحصائيات الأنظمة المتطورة
-      systems: enhancedStats,
-
-      // معلومات التوافق
-      chainName: 'Access Network Enhanced',
+      chainName: 'Access Network',
+      shortName: 'access',
+      chain: 'ACCESS',
+      
+      // العملة الأصلية
       nativeCurrency: {
         name: 'Access Coin',
         symbol: 'ACCESS',
         decimals: 18
       },
-      rpcUrls: [`https://glowing-space-cod-v665jpxrr4grc6p4p-5000.app.github.dev/`],
-
-      // ميزات فريدة
-      features: {
-        'enhanced-consensus': 'Proof of Stake Authority Enhanced',
-        'distributed-network': 'Global node distribution',
-        'parallel-processing': 'Multi-threaded transaction processing',
-        'advanced-security': '5-layer protection system',
-        'real-time-monitoring': '24/7 performance tracking',
-        'automatic-optimization': 'AI-powered network optimization'
-      }
+      
+      // معلومات البلوكتشين
+      blockHeight: this.chain.length - 1,
+      difficulty: this.difficulty,
+      hashRate: this.stats.hashRate || 0,
+      peers: this.peers.size,
+      pendingTransactions: this.pendingTransactions.length,
+      
+      // الاقتصاد
+      totalSupply: totalSupply,
+      circulatingSupply: circulatingSupply,
+      maxSupply: 25000000,
+      processingReward: this.processingReward,
+      gasPrice: this.gasPrice,
+      baseGasFee: this.baseGasFee,
+      
+      // الحالة
+      isOnline: true,
+      status: 'active',
+      version: '2.0.0',
+      
+      // مواصفات الشبكة
+      networkSpecs: {
+        blockTime: this.advancedMetrics.averageBlockTime + 's',
+        throughput: this.advancedMetrics.totalThroughput.toFixed(0) + ' tx/s',
+        securityLevel: this.advancedMetrics.securityLevel,
+        consensusAlgorithm: 'PoSA (Proof of Staked Authority)',
+        tokenStandard: 'AEP-20'
+      },
+      
+      // الميزات
+      features: [
+        'EIP155',
+        'EIP1559', 
+        'Smart Contracts',
+        'AEP-20 Tokens',
+        'NFT Support'
+      ],
+      
+      // إحصائيات الأنظمة
+      systems: systemStats,
+      
+      // معلومات إضافية للمحافظ
+      explorers: [],
+      faucets: [],
+      infoURL: 'https://access.network',
+      
+      // slip44 للمحافظ
+      slip44: 22888
     };
   }
 

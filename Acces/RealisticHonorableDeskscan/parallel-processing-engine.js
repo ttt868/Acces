@@ -725,10 +725,10 @@ class ParallelProcessingEngine extends EventEmitter {
         averageUtilization: this.performance.shardUtilization.toFixed(1) + '%'
       },
 
-      comparison: {
-        vs_BSC: `Access ${this.performance.throughput.toFixed(0)} tx/s vs BSC 2,000 tx/s (${(this.performance.throughput / 2000).toFixed(1)}x faster)`,
-        vs_Ethereum: `Access ${this.performance.latency.toFixed(2)}ms vs Ethereum 15,000ms (${(15000 / this.performance.latency).toFixed(0)}x faster)`,
-        vs_Others: 'Access combines best parallel processing with sharding and intelligent load distribution'
+      specs: {
+        throughput: this.performance.throughput.toFixed(0) + ' tx/s',
+        latency: this.performance.latency.toFixed(2) + 'ms',
+        features: 'Parallel processing with sharding and intelligent load distribution'
       }
     };
   }

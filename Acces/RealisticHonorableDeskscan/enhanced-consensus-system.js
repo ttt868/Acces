@@ -482,22 +482,20 @@ class EnhancedConsensusSystem extends EventEmitter {
 
     return {
       consensusAlgorithm: this.consensusAlgorithm,
-      blockTime: this.blockTime + 's (faster than BSC)',
+      blockTime: this.blockTime + 's',
       totalValidators: this.validators.size,
       activeValidators: activeValidators.length,
       maxValidators: this.maxValidators,
       totalStake: totalStake.toFixed(2) + ' ACCESS',
       averageUptime: (activeValidators.reduce((sum, v) => sum + v.uptime, 0) / activeValidators.length).toFixed(2) + '%',
-      networkSecurity: 'Enhanced (stronger than BSC)',
+      networkSecurity: 'Enhanced',
 
-      // مقارنة مع BSC
-      comparison: {
-        vs_BSC: {
-          blockTime: 'Access 1s vs BSC 3s (3x faster)',
-          validators: 'Access flexible vs BSC fixed 21',
-          rewards: 'Access merit-based vs BSC fixed',
-          security: 'Access enhanced vs BSC standard'
-        }
+      // مواصفات الإجماع
+      specs: {
+        blockTime: this.blockTime + 's',
+        validators: 'Flexible',
+        rewards: 'Merit-based',
+        security: 'Enhanced'
       },
 
       topValidators: activeValidators

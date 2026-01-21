@@ -861,43 +861,12 @@ class NetworkNode {
       return;
     }
 
-    // بدء خادم HTTP للـ RPC على منفذ منفصل (5000)
-    this.server = http.createServer((req, res) => {
-      this.handleRPCRequest(req, res);
-    });
+    // ✅ RPC يتم التعامل معه من خلال /rpc في server.js
+    // لا حاجة لسيرفر منفصل على المنفذ 5000
+    // المحافظ تتصل عبر /rpc endpoint في server.js
     
-    // ✅ TRUST WALLET FIX: Increase server timeouts to prevent "socket time expired"
-    this.server.keepAliveTimeout = 120000; // 2 minutes
-    this.server.headersTimeout = 125000; // slightly more than keepAliveTimeout
-    this.server.timeout = 0; // Disable request timeout (Trust Wallet needs this)
-
-    // بدء خادم WebSocket للاشتراكات
-    this.wss = new WebSocketServer({ server: this.server });
-    this.wss.on('connection', (ws) => {
-      // ✅ TRUST WALLET FIX: Set longer ping interval
-      ws.isAlive = true;
-      ws.on('pong', () => { ws.isAlive = true; });
-      this.handleWebSocketConnection(ws);
-    });
-    
-    // ✅ TRUST WALLET FIX: Ping all WebSocket clients periodically
-    const pingInterval = setInterval(() => {
-      this.wss.clients.forEach((ws) => {
-        if (ws.isAlive === false) {
-          return ws.terminate();
-        }
-        ws.isAlive = false;
-        ws.ping();
-      });
-    }, 30000); // Every 30 seconds
-    
-    this.wss.on('close', () => {
-      clearInterval(pingInterval);
-    });
-
-    this.server.listen(this.port, '0.0.0.0', () => {
-      this.isRunning = true;
-    });
+    this.isRunning = true;
+    console.log('🚀 Access Network Node started (RPC via /rpc endpoint)');
 
     // بدء التعدين التلقائي
     this.startAutoProcessing();
@@ -1481,7 +1450,7 @@ class NetworkNode {
               symbol: 'ACCESS',
               decimals: 18
             },
-            rpcUrls: [`https://glowing-space-cod-v665jpxrr4grc6p4p-5000.app.github.dev/`],
+            rpcUrls: [`https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/rpc`],
             blockExplorerUrls: [`https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/access-explorer.html#`],
             // بيانات إضافية لـ MetaMask
             ensAddress: null,
@@ -2479,7 +2448,7 @@ class NetworkNode {
               symbol: 'ACCESS',
               decimals: 18
             },
-            rpcUrls: [`https://glowing-space-cod-v665jpxrr4grc6p4p-5000.app.github.dev/`],
+            rpcUrls: [`https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/rpc`],
             blockExplorerUrls: [`https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/access-explorer.html#`]
           };
           break;

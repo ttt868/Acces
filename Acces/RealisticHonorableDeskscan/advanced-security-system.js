@@ -905,10 +905,10 @@ class AdvancedSecuritySystem extends EventEmitter {
         backup: 'automated secure'
       },
 
-      comparison: {
-        vs_BSC: 'Access has 5-layer security vs BSC basic protection',
-        vs_Ethereum: 'Access has real-time threat detection vs Ethereum reactive',
-        vs_Others: 'Access combines all security best practices with enhanced features'
+      features: {
+        layers: '5-layer security protection',
+        detection: 'Real-time threat detection',
+        practices: 'Security best practices with enhanced features'
       },
 
       threats: {

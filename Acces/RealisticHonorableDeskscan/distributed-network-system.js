@@ -584,20 +584,17 @@ class DistributedNetworkSystem extends EventEmitter {
         networkHealth: Array.from(this.networkNodes.values()).reduce((sum, n) => sum + n.healthScore, 0) / this.networkNodes.size
       },
 
-      comparison: {
-        vs_BSC: {
-          nodes: `Access ${this.networkNodes.size} vs BSC 21 (${(this.networkNodes.size / 21 * 100).toFixed(0)}% more)`,
-          regions: `Access ${Object.keys(this.regions).length} vs BSC 1 (global distribution)`,
-          redundancy: `Access ${this.redundancyLevel}x vs BSC 1x (${this.redundancyLevel}x more reliable)`,
-          failover: 'Access automatic vs BSC manual'
-        }
+      specs: {
+        nodes: this.networkNodes.size,
+        regions: Object.keys(this.regions).length,
+        redundancy: this.redundancyLevel + 'x',
+        failover: 'Automatic'
       }
     };
 
     console.log('📋 Network Report Generated:');
     console.log(`   🌐 ${report.network.activeNodes}/${report.network.totalNodes} nodes active`);
     console.log(`   🎯 ${report.performance.networkHealth.toFixed(1)}% average health`);
-    console.log(`   ⚡ Stronger than BSC: ${this.networkNodes.size} vs 21 nodes`);
 
     this.emit('networkReport', report);
     return report;
@@ -606,7 +603,7 @@ class DistributedNetworkSystem extends EventEmitter {
   // احصائيات الشبكة الموزعة
   getDistributedNetworkStats() {
     return {
-      networkType: 'Distributed Enhanced (stronger than BSC)',
+      networkType: 'Distributed Enhanced',
       protocol: this.networkProtocol,
       totalNodes: this.networkNodes.size,
       maxPeers: this.maxPeers,
@@ -629,10 +626,11 @@ class DistributedNetworkSystem extends EventEmitter {
         optimization: 'AI-powered routing'
       },
 
-      superiority: {
-        vs_BSC: 'Access has geographic distribution, BSC is centralized',
-        vs_Ethereum: 'Access has better load balancing and faster failover',
-        vs_Others: 'Access combines best features with enhanced redundancy'
+      features: {
+        distribution: 'Geographic distribution',
+        loadBalancing: 'Advanced load balancing',
+        failover: 'Fast failover',
+        redundancy: 'Enhanced redundancy'
       }
     };
   }
