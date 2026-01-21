@@ -42,7 +42,7 @@ async function checkSyncStatus() {
       console.log(`\n🌐 معلومات الشبكة:`);
       console.log(`   - Chain ID: ${networkInfo.chainId}`);
       console.log(`   - Network ID: ${networkInfo.networkId}`);
-      console.log(`   - RPC Endpoint: http://localhost:5000`);
+      console.log(`   - RPC Endpoint: /rpc (same port as main server)`);
       console.log(`   - عدد الكتل: ${networkInfo.blockHeight + 1}`);
       
       return {

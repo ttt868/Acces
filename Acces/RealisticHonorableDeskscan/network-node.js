@@ -96,10 +96,9 @@ class NetworkLogger {
 const networkLogger = new NetworkLogger();
 
 class NetworkNode {
-  constructor(port = 5000) {
+  constructor() {
     this.blockchain = new AccessNetwork();
     this.network = this.blockchain;
-    this.port = port;
     this.isRunning = false;
     this.processors = new Map();
     this.subscriptions = new Map();
@@ -1476,7 +1475,7 @@ class NetworkNode {
           responseData = {
             ...networkInfo,
             ...stats,
-            endpoint: `${req.headers.host || 'localhost:5000'}`,
+            endpoint: `${req.headers.host || 'localhost:3000'}/rpc`,
             status: 'active',
             chainId: '0x5968', // Chain ID الصحيح
             blockHeight: this.blockchain.chain.length - 1,

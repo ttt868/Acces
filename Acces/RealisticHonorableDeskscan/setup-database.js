@@ -117,7 +117,7 @@ async function main() {
   console.log(`   URL: ${url.substring(0, 50)}...`);
   console.log('\n🚀 Next steps:\n');
   console.log('1. Run: node test-db-setup.js');
-  console.log('2. Run: PORT=3000 BLOCKCHAIN_PORT=5000 node server.js\n');
+  console.log('2. Run: node server.js\n');
 
   rl.close();
 }

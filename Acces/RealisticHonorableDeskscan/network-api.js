@@ -38,9 +38,8 @@ export async function initializeNetwork() {
 
   try {
     isInitializing = true;
-    // البلوكتشين يعمل على منفذ 5000 منفصل عن الموقع الرئيسي (3000)
-    const BLOCKCHAIN_PORT = process.env.BLOCKCHAIN_PORT || 5000;
-    networkNode = new NetworkNode(BLOCKCHAIN_PORT);
+    // البلوكتشين يعمل عبر /rpc endpoint في server.js
+    networkNode = new NetworkNode();
     networkNode.start();
 
     // ✅ Initialize Smart Contract Engine AFTER NetworkNode started

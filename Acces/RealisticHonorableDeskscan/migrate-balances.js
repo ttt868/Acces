@@ -2,7 +2,7 @@
 // سكريبت ترحيل الأرصدة الموجودة إلى البلوك تشين
 async function migrateBalances() {
   try {
-    const response = await fetch('http://localhost:5000', {
+    const response = await fetch('http://localhost:3000/rpc', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -28,7 +28,7 @@ async function migrateBalances() {
     }
 
     // التحقق من المعروض المحدث
-    const networkResponse = await fetch('http://localhost:5000');
+    const networkResponse = await fetch('http://localhost:3000/rpc');
     const networkInfo = await networkResponse.json();
     
     console.log('\n📈 Updated Network Info:');

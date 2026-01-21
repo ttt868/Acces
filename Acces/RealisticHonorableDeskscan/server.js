@@ -1517,7 +1517,7 @@ const server = http.createServer(async (req, res) => {
             totalBlocks: stats.totalBlocks || 0,
             activeNodes: stats.activeNodes || 0,
             lastUpdate: stats.lastUpdate || Date.now(),
-            rpcPort: stats.rpcPort || '5000',
+            rpcPort: stats.rpcPort || 'same as main',
             
             // حالة الشبكة
             isRunning: true,
@@ -5718,7 +5718,7 @@ const server = http.createServer(async (req, res) => {
               circulatingSupply: networkInfo.circulatingSupply,
               gasPrice: networkInfo.gasPrice,
               isOnline: true,
-              rpcEndpoint: `http://localhost:${BLOCKCHAIN_PORT}`,
+              rpcEndpoint: '/rpc',
               explorerUrl: `${req.headers.host}/blockchain-explorer`
             },
             stats: {
@@ -6253,7 +6253,7 @@ const server = http.createServer(async (req, res) => {
                 id: 'access',
                 name: 'Access Network',
                 symbol: 'ACCESS',
-                rpcUrl: `http://localhost:${BLOCKCHAIN_PORT}`,
+                rpcUrl: '/rpc',
                 gasPrice: '0.00002',
                 chainId: 'access-mainnet-1',
                 explorerUrl: `${req.headers.host}/blockchain-explorer`,
@@ -9138,8 +9138,7 @@ const server = http.createServer(async (req, res) => {
 // Define fallback ports - FIXED to avoid conflicts
 const FALLBACK_PORTS = [3000, 8080, 30001, 30002, 30003];
 
-// Secondary port for network RPC (accessible externally) - FIXED different port
-const BLOCKCHAIN_PORT = parseInt(process.env.BLOCKCHAIN_PORT) || 5000;
+// RPC is now handled via /rpc endpoint on the main port
 
 // Log deployment mode and environment
 if (process.env.NODE_ENV === 'production') {
