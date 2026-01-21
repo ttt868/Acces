@@ -3,7 +3,7 @@ console.log('🔗 Starting External Wallet Test Script');
 
 // Test configuration
 const TEST_CONFIG = {
-  rpcUrl: 'https://1cc9135a-3ebc-402c-aff5-4380b0bd6bcb-00-3pdmmadfncvlr.riker.replit.dev:5000',
+  rpcUrl: 'http://localhost:3000/rpc',
   chainId: '0x5968', // 22888 in hex
   networkId: '22888',
   networkName: 'Access Network',

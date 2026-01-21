@@ -187,7 +187,7 @@ lsof -i :5000    # تحقق من المنفذ 5000
 
 ```
 🔵 Frontend:      http://localhost:3000
-🔷 Blockchain RPC: http://localhost:5000
+🔷 Blockchain RPC: http://localhost:3000/rpc
 ```
 
 ---

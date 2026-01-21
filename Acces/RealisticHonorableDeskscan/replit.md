@@ -38,7 +38,7 @@ Network Details:
 Chain ID: 22888
 Network ID: 22888
 Native Currency: ACCESS token (18 decimals)
-RPC endpoint on port 5000
+RPC endpoint on /rpc (same port as main server)
 Block Archiving (OPTIMIZED 2024-10-15):
 Automatic archiving of old blocks (keeps 30 days)
 Runs cleanup every 24 hours
@@ -188,7 +188,7 @@ pg (v8.16.0): PostgreSQL client
 dotenv (v16.5.0): Environment variable management
 node-fetch (v2.7.0): HTTP client for Node.js
 Network Configuration
-RPC Endpoint: Custom implementation on port 5000
+RPC Endpoint: Custom implementation on /rpc endpoint
 WebSocket: Real-time updates and wallet connections
 Block Explorer: Custom Etherscan-compatible API
 Chainlist Integration: Network metadata for wallet addition

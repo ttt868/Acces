@@ -18,7 +18,7 @@ async function checkBlockchainStatus() {
     
     // 2. فحص البلوك تشين
     try {
-      const response = await fetch('http://localhost:5000', {
+      const response = await fetch('http://localhost:3000/rpc', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
