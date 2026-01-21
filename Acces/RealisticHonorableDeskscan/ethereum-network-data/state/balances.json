@@ -40,7 +40,7 @@
     "0x410b3e6d8bddbb80cfbb2816c26b6ee90210b390": 0.15,
     "0xc3dd98d61d1f023ce66b5502d7082bee1bd30089": 999.6099399999999,
     "0xbe8ccc83bc50f2e23bbcd4c73a2675a4f7a2fcb9": 0.15,
-    "0xe661a822d1269fd4028a8076694c8011e26381f3": 0.80943947,
+    "0xe661a822d1269fd4028a8076694c8011e26381f3": 0.79941947,
     "0xf9c0c3af426ad89d388072aae349d85b98aa5871": 0.15,
     "0x851cbdabeaa40ed4568dcc7e7c6a830b72d7406a": 0.4,
     "0xc62d460815a751bfa08ba8a2444cac1c729c1169": 0.90725481,
@@ -58,7 +58,7 @@
   "reservedBalances": {},
   "metadata": {
     "totalAccounts": 54,
-    "lastSaved": 1768954124262,
+    "lastSaved": 1768955734317,
     "totalSupply": 25000000
   }
 }

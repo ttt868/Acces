@@ -1439,6 +1439,80 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // 🚀 RPC ENDPOINT - للمحافظ الخارجية (Trust Wallet, MetaMask, etc.)
+  if (pathname === '/rpc' || pathname === '/rpc/') {
+    try {
+      const { getNetworkNode } = await import('./network-api.js');
+      const networkNode = getNetworkNode();
+      
+      if (!networkNode) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          jsonrpc: '2.0',
+          error: { code: -32603, message: 'Network node not initialized' },
+          id: null
+        }));
+        return;
+      }
+
+      // إعداد headers خاصة بـ RPC
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0, private');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '-1');
+      res.setHeader('ETag', `"${Date.now()}-${Math.random().toString(36)}"`);
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Keep-Alive', 'timeout=120');
+
+      if (req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const request = JSON.parse(body);
+            const response = await networkNode.processRPCCall(request);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(response));
+          } catch (error) {
+            console.error('RPC Error:', error);
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+              jsonrpc: '2.0',
+              error: { code: -32600, message: 'Invalid Request' },
+              id: null
+            }));
+          }
+        });
+        return;
+      } else if (req.method === 'GET') {
+        // معلومات الشبكة للـ GET requests
+        const networkInfo = {
+          jsonrpc: '2.0',
+          result: {
+            chainId: '0x5968',
+            networkId: '22888',
+            chainName: 'Access Network',
+            nativeCurrency: { name: 'Access Coin', symbol: 'ACCESS', decimals: 18 },
+            rpcUrls: [req.headers.host ? `https://${req.headers.host}/rpc` : '/rpc'],
+            blockExplorerUrls: [req.headers.host ? `https://${req.headers.host}/access-explorer.html` : '/access-explorer.html']
+          },
+          id: 1
+        };
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(networkInfo));
+        return;
+      }
+    } catch (error) {
+      console.error('RPC endpoint error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        jsonrpc: '2.0',
+        error: { code: -32603, message: 'Internal error' },
+        id: null
+      }));
+      return;
+    }
+  }
+
   // Serve assetlinks.json for TWA verification
   if (pathname === '/.well-known/assetlinks.json' && req.method === 'GET') {
     try {
