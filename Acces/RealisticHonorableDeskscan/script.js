@@ -4788,65 +4788,10 @@ processingButton.addEventListener('click', async function() {
     }
   }
 
-  // 🔒 CRITICAL SECURITY: التحقق من السيرفر دائماً قبل بدء جلسة جديدة
-  // هذا يمنع بدء جلسة مزدوجة حتى لو لم يتم تحميل البيانات بعد
-  const serverVerified = processingButton.getAttribute('data-server-verified');
-  
-  // ✅ للمستخدمين الجدد أو الذين تم التحقق منهم - السماح بالمتابعة
-  if (serverVerified === 'new-user' || serverVerified === 'true') {
-    console.log('✅ User verified, proceeding with start...');
-    // Continue to start processing
-  }
-  // 🔒 إذا لم يتم التحقق من السيرفر بعد (false أو null) - تحقق أولاً
-  else if (!serverVerified || serverVerified === 'false') {
-    console.log('🔒 SECURITY: Button clicked before server verification - checking now...');
-    processingButton.classList.add('disabled');
-    processingStatus.textContent = 'Verifying...';
-    
-    try {
-      const checkResponse = await fetchWithTimeout(`/api/processing/countdown/status/${currentUser.id}`, {}, 10000);
-      if (checkResponse.ok) {
-        const checkData = await checkResponse.json();
-        if (checkData.processing_active === 1 && checkData.remaining_seconds > 0) {
-          console.log(`🔒 BLOCKED: Active session found (${checkData.remaining_seconds}s remaining)`);
-          showNotification(translator.translate('You already have an active processing session'), 'warning');
-          
-          // Update local state and show countdown
-          const serverEndTime = Date.now() + (checkData.remaining_seconds * 1000);
-          currentUser.processing_active = 1;
-          currentUser.processing_end_time = serverEndTime;
-          saveUserSession(currentUser);
-          
-          processingStatus.textContent = 'Processing in progress...';
-          processingButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + translator.translate('Activity...');
-          processingAnimation.style.display = 'block';
-          startCountdown(checkData.remaining_seconds * 1000, Date.now() - ((86400 - checkData.remaining_seconds) * 1000), serverEndTime);
-          if (!window.accumulationInterval) {
-            startGradualAccumulation();
-          }
-          return;
-        } else {
-          // No active session - mark as verified and continue
-          processingButton.setAttribute('data-server-verified', 'true');
-        }
-      } else {
-        // فشل الاتصال - نستمر على أي حال (السيرفر سيتحقق عند /start)
-        console.log('⚠️ Server check failed, but proceeding anyway');
-        processingButton.setAttribute('data-server-verified', 'true');
-      }
-    } catch (error) {
-      console.error('Pre-start verification failed:', error);
-      // فشل الاتصال - نستمر على أي حال (السيرفر سيتحقق عند /start)
-      console.log('⚠️ Connection error, but proceeding anyway');
-      processingButton.setAttribute('data-server-verified', 'true');
-    }
-  }
-  // 🔒 SECURITY: إذا كان الزر بحالة "Retry" - نحاول البدء مباشرة
-  else if (serverVerified === 'retry') {
-    console.log('🔄 Retry: Proceeding directly to start...');
-    processingButton.setAttribute('data-server-verified', 'true');
-    // Continue to start - السيرفر سيتحقق ويمنع إذا لزم الأمر
-  }
+  // ✅ الحماية موجودة في السيرفر (/api/processing/countdown/start)
+  // السيرفر سيمنع أي محاولة لبدء جلسة مزدوجة (409 Conflict)
+  // لذلك لا حاجة للتحقق المسبق هنا - نستمر مباشرة للبدء السلس
+  console.log('✅ Proceeding to start processing (server will validate)...');
 
   // ============================================
   // 🎬 عرض الإعلان أولاً قبل بدء النشاط (مستقل عن Boost)
@@ -4926,7 +4871,7 @@ processingButton.addEventListener('click', async function() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: currentUser.id })
-    }, 20000);
+    }, 10000); // تقليل الـ timeout لـ 10 ثواني
 
     console.log(`[SCRIPT] Processing start response status: ${response.status}`);
 
@@ -4978,7 +4923,55 @@ processingButton.addEventListener('click', async function() {
 
     if (data.success) {
       // ✅ السيرفر وافق على بدء جلسة جديدة
-      // الآن يمكننا تحويل المكافأة السابقة إن وجدت
+      
+      // ✅ تحديث الرصيد من السيرفر دائماً
+      if (data.new_balance !== undefined) {
+        console.log(`💰 Updating balance from server: ${data.new_balance}`);
+        
+        // تحديث الرصيد في الذاكرة
+        currentUser.coins = data.new_balance;
+        saveUserSession(currentUser);
+        
+        // ✅ تحديث جميع عناصر الرصيد في الواجهة فوراً
+        const formattedBalance = formatNumberSmart(data.new_balance);
+        
+        // تحديث العناصر بالـ ID مباشرة
+        const userCoinsElements = document.querySelectorAll('#user-coins');
+        userCoinsElements.forEach(el => { if (el) el.textContent = formattedBalance; });
+        
+        const profileCoins = document.getElementById('profile-coins');
+        if (profileCoins) profileCoins.textContent = formattedBalance;
+        
+        const dashboardBalance = document.getElementById('dashboard-balance');
+        if (dashboardBalance) dashboardBalance.textContent = formattedBalance;
+        
+        const walletBalance = document.getElementById('wallet-balance');
+        if (walletBalance) walletBalance.textContent = formattedBalance;
+        
+        // تحديث أي عناصر أخرى بالـ class
+        document.querySelectorAll('.points-value, .balance-amount, [data-balance]').forEach(el => {
+          if (el) el.textContent = formattedBalance;
+        });
+        
+        console.log(`✅ Balance UI updated to: ${formattedBalance}`);
+        
+        // ✅ إطلاق حدث تحديث الرصيد للأنظمة الأخرى
+        window.dispatchEvent(new CustomEvent('balanceUpdated', {
+          detail: { 
+            newBalance: data.new_balance, 
+            formattedBalance: formattedBalance,
+            rewardAmount: data.reward_transferred || 0
+          }
+        }));
+        
+        // ✅ إظهار إشعار بنقل المكافأة إذا تم نقل رصيد
+        if (data.reward_transferred > 0) {
+          showNotification(
+            `+${formatNumberSmart(data.reward_transferred)} ${translator.translate('Points added to your balance!')}`, 
+            'success'
+          );
+        }
+      }
       
       // Reset all processing completion flags
       currentUser.processing_completed = false;
@@ -5012,7 +5005,11 @@ processingButton.addEventListener('click', async function() {
       startGradualAccumulation();
 
       window.processingSessionStarting = false;
-      showNotification(translator.translate('Point processing started successfully!'), 'success');
+      
+      // إشعار بدء النشاط (فقط إذا لم يكن هناك نقل مكافأة)
+      if (!data.reward_transferred || data.reward_transferred <= 0) {
+        showNotification(translator.translate('Point processing started successfully!'), 'success');
+      }
       
       console.log(`✅ Processing session started successfully`);
     } else {
@@ -5540,6 +5537,10 @@ function startGradualAccumulation() {
 
               // Show notification
               showNotification(`Processing completed! ${formatNumberSmart(finalReward)} Points accumulated. Click "Start Activity" to claim!`, 'success');
+              
+              // ✅ السماح بالبدء السلس من أول ضغطة
+              processingButton.setAttribute('data-server-verified', 'true');
+              window.processingSessionStarting = false;
             }
           }
         } catch (saveError) {
@@ -5807,6 +5808,8 @@ function startGradualAccumulation() {
           updateButtonSafely('fas fa-play', 'Start Activity');
           processingButton.classList.remove('disabled');
           processingButton.disabled = false; // ✅ تفعيل الزر فوراً
+          processingButton.setAttribute('data-server-verified', 'true'); // ✅ السماح بالبدء السلس
+          window.processingSessionStarting = false; // ✅ إعادة تعيين العلم
           if (processingAnimation) processingAnimation.style.display = 'none';
 
           // Mark as completed

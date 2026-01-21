@@ -1439,7 +1439,21 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // 🌐 DYNAMIC NETWORK CONFIG API - يولّد الروابط ديناميكياً حسب الدومين
+  // � HEALTH CHECK - فحص صحة السيرفر (لا يُخزَّن في Cache)
+  if (pathname === '/api/health') {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      status: 'ok', 
+      timestamp: Date.now(),
+      server: 'Access Network' 
+    }));
+    return;
+  }
+
+  // �🌐 DYNAMIC NETWORK CONFIG API - يولّد الروابط ديناميكياً حسب الدومين
   if (pathname === '/api/network/config' || pathname === '/api/chainlist') {
     const baseUrl = req.headers.host ? `https://${req.headers.host}` : '';
     const dynamicConfig = {
@@ -1516,15 +1530,18 @@ const server = http.createServer(async (req, res) => {
         });
         return;
       } else if (req.method === 'GET') {
-        // معلومات الشبكة الكاملة للـ GET requests - نفس المنفذ 5000 تماماً
+        // معلومات الشبكة الكاملة للـ GET requests - روابط ديناميكية
         try {
           const network = networkNode.network || networkNode.blockchain;
           const stats = networkNode.getStats ? networkNode.getStats() : {};
           
-          // استخدام getNetworkInfo الكاملة مثل المنفذ 5000
+          // تحديد الرابط الديناميكي من الطلب
+          const baseUrl = req.headers.host ? `https://${req.headers.host}` : '';
+          
+          // استخدام getNetworkInfo مع الرابط الديناميكي
           let networkInfo = {};
           if (network && typeof network.getNetworkInfo === 'function') {
-            networkInfo = await network.getNetworkInfo();
+            networkInfo = await network.getNetworkInfo(baseUrl);
           }
           
           // حساب العرض المتداول
@@ -7922,8 +7939,7 @@ const server = http.createServer(async (req, res) => {
           const startTimeSec = parseInt(user.processing_start_time_seconds) || 0;
           const processingActive = parseInt(user.processing_active) || 0;
           
-          console.log(`🔒 [DB CHECK] User ${userId}: processing_active=${processingActive}, end_time=${endTimeMs}, now=${nowMs}, start_time_sec=${startTimeSec}`);
-          console.log(`🔒 [DB CHECK] Is end_time > now? ${endTimeMs > nowMs} (${endTimeMs} > ${nowMs})`);
+          console.log(`🔒 [DB CHECK] User ${userId}: processing_active=${processingActive}, end_time=${endTimeMs}`);
           
           // 🔒 فحص 1: هل processing_end_time في المستقبل؟
           if (endTimeMs > nowMs) {
@@ -7975,15 +7991,44 @@ const server = http.createServer(async (req, res) => {
           
           console.log(`✅ [APPROVED] User ${userId} - starting new session (end_time will be ${endTime * 1000})`);
           
-          // ✅ جميع الفحوصات نجحت - بدء الجلسة
+          // ✅ أولاً: جلب الرصيد المتراكم من الجلسة السابقة لنقله
+          const accumulatedResult = await pool.query(
+            'SELECT coins, COALESCE(completed_processing_reward, 0) as accumulated, COALESCE(accumulatedReward, 0) as accumulated_alt FROM users WHERE id = $1',
+            [userId]
+          );
+          
+          let currentBalance = parseFloat(accumulatedResult.rows[0]?.coins || 0);
+          const accumulated = parseFloat(accumulatedResult.rows[0]?.accumulated || 0);
+          const accumulatedAlt = parseFloat(accumulatedResult.rows[0]?.accumulated_alt || 0);
+          const rewardToTransfer = Math.max(accumulated, accumulatedAlt);
+          let newBalance = currentBalance;
+          let rewardTransferred = 0;
+          
+          // ✅ نقل المكافأة المتراكمة للرصيد الأساسي
+          if (rewardToTransfer > 0.0001) {
+            newBalance = parseFloat((currentBalance + rewardToTransfer).toFixed(8));
+            rewardTransferred = rewardToTransfer;
+            console.log(`💰 [TRANSFER] User ${userId}: ${rewardToTransfer.toFixed(8)} accumulated reward → balance (${currentBalance.toFixed(8)} → ${newBalance.toFixed(8)})`);
+            
+            // Add to processing history
+            await pool.query(
+              'INSERT INTO processing_history (user_id, amount, timestamp, user_name, date) VALUES ($1, $2, $3, $4, $5)',
+              [userId, rewardToTransfer, now * 1000, 'Completed', new Date(now * 1000).toISOString()]
+            );
+          }
+          
+          // ✅ بدء الجلسة الجديدة وتحديث الرصيد وإزالة المتراكم
           await pool.query(
             `UPDATE users 
              SET processing_active = 1,
                  processing_start_time_seconds = $1,
                  processing_start_time = $2,
-                 processing_end_time = $3
-             WHERE id = $4`,
-            [now, now * 1000, endTime * 1000, userId]
+                 processing_end_time = $3,
+                 coins = $4,
+                 completed_processing_reward = 0,
+                 accumulatedReward = 0
+             WHERE id = $5`,
+            [now, now * 1000, endTime * 1000, newBalance, userId]
           );
           
           // Add "Collecting..." entry to processing history
@@ -7993,7 +8038,7 @@ const server = http.createServer(async (req, res) => {
           );
           
           await pool.query('COMMIT');
-          console.log(`✅ Processing session started for user ${userId}`);
+          console.log(`✅ Processing session started for user ${userId}, balance: ${newBalance.toFixed(8)}`);
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
@@ -8001,7 +8046,11 @@ const server = http.createServer(async (req, res) => {
             processing_active: 1,
             remaining_seconds: processingDuration,
             start_time: now,
-            end_time: endTime
+            end_time: endTime,
+            // ✅ إرسال الرصيد الجديد للواجهة
+            reward_transferred: rewardTransferred,
+            new_balance: newBalance,
+            old_balance: currentBalance
           }));
           return;
           

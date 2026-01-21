@@ -2107,7 +2107,8 @@ class AccessNetwork extends EventEmitter {
   }
 
   // واجهة برمجة التطبيقات للشبكة المتطورة
-  async getNetworkInfo() {
+  // واجهة برمجة التطبيقات للشبكة - مع دعم الروابط الديناميكية
+  async getNetworkInfo(baseUrl = '') {
     const totalSupply = this.getTotalSupply(); // Always 25 million
     const circulatingSupply = await this.calculateCirculatingSupply();
 
@@ -2119,7 +2120,7 @@ class AccessNetwork extends EventEmitter {
       security: this.advancedSecurity ? this.advancedSecurity.getSecurityStats() : null
     };
 
-    // ✅ معلومات مناسبة لـ Chain List والمحافظ
+    // ✅ معلومات مناسبة لـ Chain List والمحافظ - روابط ديناميكية
     return {
       // المعلومات الأساسية المطلوبة للمحافظ و Chain List
       chainId: this.hexChainId,
@@ -2134,6 +2135,15 @@ class AccessNetwork extends EventEmitter {
         symbol: 'ACCESS',
         decimals: 18
       },
+      
+      // روابط ديناميكية - تتأقلم مع أي دومين
+      rpc: baseUrl ? [baseUrl + '/rpc'] : [],
+      explorers: baseUrl ? [{
+        name: 'Access Network Explorer',
+        url: baseUrl + '/access-explorer.html',
+        standard: 'EIP3091'
+      }] : [],
+      infoURL: baseUrl || 'https://access.network',
       
       // معلومات البلوكتشين
       blockHeight: this.chain.length - 1,
@@ -2176,10 +2186,8 @@ class AccessNetwork extends EventEmitter {
       // إحصائيات الأنظمة
       systems: systemStats,
       
-      // معلومات إضافية للمحافظ
-      explorers: [],
+      // معلومات إضافية
       faucets: [],
-      infoURL: 'https://access.network',
       
       // slip44 للمحافظ
       slip44: 22888
