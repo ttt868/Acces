@@ -1484,10 +1484,16 @@ const server = http.createServer(async (req, res) => {
         });
         return;
       } else if (req.method === 'GET') {
-        // معلومات الشبكة الكاملة للـ GET requests (مثل المنفذ 5000 القديم)
+        // معلومات الشبكة الكاملة للـ GET requests - نفس المنفذ 5000 تماماً
         try {
           const network = networkNode.network || networkNode.blockchain;
           const stats = networkNode.getStats ? networkNode.getStats() : {};
+          
+          // استخدام getNetworkInfo الكاملة مثل المنفذ 5000
+          let networkInfo = {};
+          if (network && typeof network.getNetworkInfo === 'function') {
+            networkInfo = await network.getNetworkInfo();
+          }
           
           // حساب العرض المتداول
           let circulatingSupply = 0;
@@ -1497,57 +1503,37 @@ const server = http.createServer(async (req, res) => {
             circulatingSupply = 0;
           }
 
-          // معلومات الشبكة الكاملة
+          // دمج كل المعلومات - نفس المنفذ 5000 تماماً
           const fullNetworkInfo = {
-            // معلومات أساسية
-            chainId: '0x5968',
-            networkId: '22888',
-            chainName: 'Access Network',
-            nativeCurrency: {
-              name: 'Access Coin',
-              symbol: 'ACCESS',
-              decimals: 18
-            },
+            // معلومات من getNetworkInfo
+            ...networkInfo,
             
-            // روابط
+            // تحديث الروابط لتناسب /rpc
             rpcUrls: [req.headers.host ? `https://${req.headers.host}/rpc` : '/rpc'],
             blockExplorerUrls: [req.headers.host ? `https://${req.headers.host}/access-explorer.html` : '/access-explorer.html'],
             
+            // إحصائيات إضافية
+            totalTransactions: stats.totalTransactions || networkInfo.totalTransactions || 0,
+            totalBlocks: stats.totalBlocks || 0,
+            activeNodes: stats.activeNodes || 0,
+            lastUpdate: stats.lastUpdate || Date.now(),
+            rpcPort: stats.rpcPort || '5000',
+            
             // حالة الشبكة
-            status: 'active',
             isRunning: true,
+            activeSubscriptions: stats.activeSubscriptions || 0,
+            uptime: stats.uptime || 0,
+            connectedWalletsCount: stats.connectedWalletsCount || 0,
             
-            // معلومات البلوكتشين
-            blockHeight: network.chain ? network.chain.length - 1 : 0,
-            latestBlockHash: network.chain && network.chain.length > 0 ? network.chain[network.chain.length - 1].hash : '0x0',
-            difficulty: network.difficulty || 4,
+            // تحديث العرض المتداول
+            circulatingSupply: circulatingSupply || networkInfo.circulatingSupply || 0,
             
-            // المعاملات
-            pendingTransactions: network.pendingTransactions ? network.pendingTransactions.length : 0,
-            totalTransactions: stats.totalTransactions || 0,
-            
-            // الاقتصاد
-            circulatingSupply: circulatingSupply,
-            maxSupply: 25000000,
-            processingReward: network.processingReward || 0.25,
-            gasPrice: network.getGasPrice ? network.getGasPrice() : '0x38c42e18',
-            gasFee: '0.00002 ACCESS',
-            
-            // الميزات
-            features: ['EIP155', 'EIP1559', 'AEP20', 'Smart Contracts'],
-            tokenStandard: 'AEP-20',
-            consensus: 'PoSA (Proof of Staked Authority)',
-            
-            // إحصائيات الأداء
-            ...stats,
-            
-            // الوقت
-            timestamp: Date.now(),
-            serverTime: new Date().toISOString()
+            // endpoint
+            endpoint: req.headers.host ? `${req.headers.host}/rpc` : 'localhost:3000/rpc'
           };
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(fullNetworkInfo, null, 2));
+          res.end(JSON.stringify(fullNetworkInfo));
         } catch (infoError) {
           console.error('Error getting full network info:', infoError);
           // Fallback للمعلومات الأساسية
