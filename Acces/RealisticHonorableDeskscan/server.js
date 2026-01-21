@@ -1439,6 +1439,38 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // 🌐 DYNAMIC NETWORK CONFIG API - يولّد الروابط ديناميكياً حسب الدومين
+  if (pathname === '/api/network/config' || pathname === '/api/chainlist') {
+    const baseUrl = req.headers.host ? `https://${req.headers.host}` : '';
+    const dynamicConfig = {
+      name: 'Access Network',
+      chain: 'ACCESS',
+      chainId: 22888,
+      shortName: 'access',
+      networkId: 22888,
+      slip44: 22888,
+      nativeCurrency: {
+        name: 'Access Coin',
+        symbol: 'ACCESS',
+        decimals: 18
+      },
+      rpc: [baseUrl + '/rpc'],
+      faucets: [],
+      infoURL: baseUrl,
+      explorers: [
+        {
+          name: 'Access Network Explorer',
+          url: baseUrl + '/access-explorer.html',
+          standard: 'EIP3091'
+        }
+      ],
+      icon: 'https://gateway.pinata.cloud/ipfs/bafybeicc2meeaucf6s6zljq2xshulfcd7k3zlid3qwg2hrfbnlc2qexvyi'
+    };
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(dynamicConfig, null, 2));
+    return;
+  }
+
   // 🚀 RPC ENDPOINT - للمحافظ الخارجية (Trust Wallet, MetaMask, etc.)
   if (pathname === '/rpc' || pathname === '/rpc/') {
     try {

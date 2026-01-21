@@ -3113,12 +3113,14 @@ Access-Network is a digital rewards platform combining innovation, community fea
 
     <script>
       // Access Network configuration for wallet connection
+      // روابط ديناميكية تتأقلم مع أي دومين
+      const currentOrigin = window.location.origin;
       const accessNetworkConfig = {
-        chainId: '0x2328',
+        chainId: '0x5968',
         chainName: 'Access Network',
         nativeCurrency: { name: 'ACCESS', symbol: 'ACCESS', decimals: 18 },
-        rpcUrls: ['https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/rpc'],
-        blockExplorerUrls: ['https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/transaction-details.html?hash=']
+        rpcUrls: [currentOrigin + '/rpc'],
+        blockExplorerUrls: [currentOrigin + '/transaction-details.html?hash=']
       };
 
       function openWalletConnectModal() {

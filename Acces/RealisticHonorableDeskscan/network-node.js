@@ -1440,6 +1440,8 @@ class NetworkNode {
 
         if (isWalletRequest) {
           // استجابة محسنة للمحافظ مع بيانات التحقق MetaMask
+          // روابط ديناميكية تتأقلم مع أي دومين
+          const baseUrl = req.headers.host ? `https://${req.headers.host}` : '';
           const networkConfig = {
             chainId: '0x5968', // Chain ID فريد - القيمة الصحيحة
             networkId: '22888', // Network ID الصحيح
@@ -1449,8 +1451,8 @@ class NetworkNode {
               symbol: 'ACCESS',
               decimals: 18
             },
-            rpcUrls: [`https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/rpc`],
-            blockExplorerUrls: [`https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/access-explorer.html#`],
+            rpcUrls: [baseUrl + '/rpc'],
+            blockExplorerUrls: [baseUrl + '/access-explorer.html#'],
             // بيانات إضافية لـ MetaMask
             ensAddress: null,
             features: ['EIP155', 'EIP1559', 'AEP20'],
@@ -2438,6 +2440,8 @@ class NetworkNode {
           break;
 
         case 'access_getNetworkInfo':
+          // روابط ديناميكية
+          const dynamicBaseUrl = this.currentRequestHost ? `https://${this.currentRequestHost}` : '';
           result = {
             chainId: '0x5968', // القيمة الصحيحة
             networkId: '22888', // القيمة الصحيحة
@@ -2447,8 +2451,8 @@ class NetworkNode {
               symbol: 'ACCESS',
               decimals: 18
             },
-            rpcUrls: [`https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/rpc`],
-            blockExplorerUrls: [`https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/access-explorer.html#`]
+            rpcUrls: [dynamicBaseUrl + '/rpc'],
+            blockExplorerUrls: [dynamicBaseUrl + '/access-explorer.html#']
           };
           break;
 
