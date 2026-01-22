@@ -1532,6 +1532,12 @@
   font-size: 14px;
 }
 
+/* ✅ تحريك محتوى زر Start قليلاً لليسار */
+.start-activity-btn span,
+.start-activity-btn i {
+  transform: translateX(-1px);
+}
+
 /* ✅ عكس ترتيب الأيقونة في اللغة العربية - الأيقونة قبل النص */
 html[lang="ar"] .action-button,
 html[dir="rtl"] .action-button,

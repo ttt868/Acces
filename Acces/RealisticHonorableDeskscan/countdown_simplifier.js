@@ -111,7 +111,7 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
         `SELECT u.coins, u.accumulatedReward, u.completed_processing_reward,
                 COALESCE(u.session_locked_boost, u.processing_boost_multiplier, 1.0) as locked_boost,
                 COALESCE(u.ad_boost_active, false) as ad_boost_active,
-                COALESCE((SELECT COUNT(*) FROM referrals WHERE referrer_id = u.id AND is_active = true), 0) as active_referral_count
+                COALESCE((SELECT COUNT(*) FROM referrals WHERE referrer_id = u.id AND is_active = 1), 0) as active_referral_count
          FROM users u WHERE u.id = $1`,
         [userId]
       );

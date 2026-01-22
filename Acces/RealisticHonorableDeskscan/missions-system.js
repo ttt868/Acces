@@ -89,14 +89,14 @@
       reward: 0.02,
       url: 'https://x.com/Access_Chain',
       type: 'social',
-      verifyDelay: 15000 // 15 seconds minimum
+      verifyDelay: 20000 // 20 seconds minimum for proper verification
     },
     join_telegram: {
       id: 'join_telegram', 
       reward: 0.02,
       url: 'https://t.me/+YnQtDWLlQxk5YTU8',
       type: 'social',
-      verifyDelay: 15000
+      verifyDelay: 20000 // 20 seconds minimum
     },
     complete_activity: {
       id: 'complete_activity',

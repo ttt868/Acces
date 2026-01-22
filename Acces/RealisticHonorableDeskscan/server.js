@@ -2008,12 +2008,20 @@ const server = http.createServer(async (req, res) => {
         // Check for PERSONAL cycle reset (not global midnight)
         const cycleStart = missions.mission_cycle_start ? parseInt(missions.mission_cycle_start) : null;
         let needsReset = false;
+        let shouldResetStreak = false;
         
         if (cycleStart) {
           const cycleEnd = cycleStart + CYCLE_DURATION;
           if (nowMs >= cycleEnd) {
             // Personal cycle expired - reset daily missions
             needsReset = true;
+            
+            // ✅ FIX: إذا مر أكثر من 48 ساعة (يومين)، أعد تعيين الـ streak
+            // لأن المستخدم فوّت يوماً كاملاً
+            const twoDays = 2 * CYCLE_DURATION;
+            if (nowMs >= cycleStart + twoDays) {
+              shouldResetStreak = true;
+            }
           }
         }
         
@@ -2030,11 +2038,20 @@ const server = http.createServer(async (req, res) => {
             }
           });
           
-          // Reset missions and clear cycle (user starts new cycle on next mission)
-          await pool.query(
-            `UPDATE user_missions SET daily_claimed = false, completed_missions = $1, bonus_claimed = false, mission_cycle_start = NULL
-             WHERE user_id = $2`, [JSON.stringify(savedPermanent), userId]
-          );
+          // ✅ FIX: إعادة تعيين الـ streak إذا فات أكثر من يوم
+          if (shouldResetStreak) {
+            await pool.query(
+              `UPDATE user_missions SET daily_claimed = false, completed_missions = $1, bonus_claimed = false, mission_cycle_start = NULL, streak = 0
+               WHERE user_id = $2`, [JSON.stringify(savedPermanent), userId]
+            );
+            missions.streak = 0;
+          } else {
+            await pool.query(
+              `UPDATE user_missions SET daily_claimed = false, completed_missions = $1, bonus_claimed = false, mission_cycle_start = NULL
+               WHERE user_id = $2`, [JSON.stringify(savedPermanent), userId]
+            );
+          }
+          
           missions.daily_claimed = false;
           missions.completed_missions = savedPermanent;
           missions.bonus_claimed = false;
@@ -2106,19 +2123,29 @@ const server = http.createServer(async (req, res) => {
         }
 
         // Calculate streak and reward
+        // ✅ FIX: استخدام الدورة الشخصية (24 ساعة) بدلاً من التاريخ
         let newStreak = missions.streak;
         const today = new Date();
-        const lastClaim = missions.last_claim_date ? new Date(missions.last_claim_date) : null;
+        const nowMs = Date.now();
+        const lastCycleStart = missions.mission_cycle_start ? parseInt(missions.mission_cycle_start) : null;
+        const CYCLE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
         
-        if (!lastClaim) {
+        if (!lastCycleStart) {
+          // أول مرة - ابدأ streak من 1
           newStreak = 1;
         } else {
-          const yesterday = new Date(today);
-          yesterday.setDate(yesterday.getDate() - 1);
+          // تحقق من الوقت منذ آخر دورة
+          const timeSinceLastCycle = nowMs - lastCycleStart;
           
-          if (lastClaim.toDateString() === yesterday.toDateString()) {
+          if (timeSinceLastCycle < CYCLE_DURATION) {
+            // لا يزال في نفس الدورة - هذا لا يجب أن يحدث لأن daily_claimed = false
+            // لكن للأمان، حافظ على الـ streak
+            newStreak = missions.streak;
+          } else if (timeSinceLastCycle < CYCLE_DURATION * 2) {
+            // في الدورة التالية (24-48 ساعة) - زيادة الـ streak
             newStreak = Math.min(missions.streak + 1, 7);
           } else {
+            // فات أكثر من يومين - إعادة الـ streak إلى 1
             newStreak = 1;
           }
         }
@@ -2130,38 +2157,15 @@ const server = http.createServer(async (req, res) => {
         // Update user coins
         await pool.query('UPDATE users SET coins = coins + $1 WHERE id = $2', [reward, userId]);
 
-        // Check if cycle needs to start (first mission of the cycle)
-        const cycleCheck = await pool.query(
-          'SELECT mission_cycle_start FROM user_missions WHERE user_id = $1',
-          [userId]
+        // ✅ FIX: دائماً ابدأ دورة جديدة عند claim-daily
+        // لأن هذا هو بداية يوم جديد للمستخدم
+        await pool.query(
+          `UPDATE user_missions SET streak = $1, last_claim_date = $2, daily_claimed = true, mission_cycle_start = $3
+           WHERE user_id = $4`, [newStreak, today.toISOString(), nowMs, userId]
         );
-        const existingCycle = cycleCheck.rows[0]?.mission_cycle_start;
-        const nowMs = Date.now();
-        
-        // Start cycle if not started, or 24 hours passed
-        let shouldStartNewCycle = !existingCycle;
-        if (existingCycle) {
-          const cycleMs = parseInt(existingCycle);
-          if (nowMs - cycleMs >= 24 * 60 * 60 * 1000) {
-            shouldStartNewCycle = true;
-          }
-        }
-
-        // Update missions with cycle start if needed
-        if (shouldStartNewCycle) {
-          await pool.query(
-            `UPDATE user_missions SET streak = $1, last_claim_date = $2, daily_claimed = true, mission_cycle_start = $3
-             WHERE user_id = $4`, [newStreak, today.toISOString(), nowMs, userId]
-          );
-        } else {
-          await pool.query(
-            `UPDATE user_missions SET streak = $1, last_claim_date = $2, daily_claimed = true 
-             WHERE user_id = $3`, [newStreak, today.toISOString(), userId]
-          );
-        }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, streak: newStreak, reward, cycleStarted: shouldStartNewCycle }));
+        res.end(JSON.stringify({ success: true, streak: newStreak, reward, cycleStarted: true }));
         return;
       } catch (error) {
         console.error('Error claiming daily:', error);
@@ -2209,14 +2213,62 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // === SECURITY CHECK 2: Minimum time check (15 seconds) ===
-        if (verificationTime < 14000) {
+        // === SECURITY CHECK 2: Minimum time check (20 seconds for better verification) ===
+        if (verificationTime < 19000) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Please complete the task first' }));
+          res.end(JSON.stringify({ error: 'Please complete the task first and wait' }));
           return;
         }
 
-        // === SECURITY CHECK 3: Create table for tracking used usernames ===
+        // === SECURITY CHECK 3: Verify username exists on platform ===
+        const platform = missionId === 'follow_twitter' ? 'twitter' : 'telegram';
+        
+        // For Twitter/X - verify the profile exists
+        if (platform === 'twitter') {
+          try {
+            const profileUrl = `https://x.com/${usernameWithoutAt}`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            
+            const profileCheck = await fetch(profileUrl, {
+              method: 'HEAD',
+              signal: controller.signal,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+              }
+            });
+            clearTimeout(timeoutId);
+            
+            // If profile doesn't exist, X returns 404
+            if (profileCheck.status === 404) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'X/Twitter username not found. Please enter a valid username.' }));
+              return;
+            }
+          } catch (fetchError) {
+            // If fetch fails, continue with other checks (don't block)
+            console.log('Twitter profile check failed, continuing:', fetchError.message);
+          }
+        }
+        
+        // For Telegram - verify username format is valid for Telegram
+        if (platform === 'telegram') {
+          // Telegram usernames must be 5-32 characters
+          if (usernameWithoutAt.length < 5 || usernameWithoutAt.length > 32) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Telegram username must be 5-32 characters' }));
+            return;
+          }
+          
+          // Telegram usernames cannot start with a number
+          if (/^[0-9]/.test(usernameWithoutAt)) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Telegram username cannot start with a number' }));
+            return;
+          }
+        }
+
+        // === SECURITY CHECK 4: Create table for tracking used usernames ===
         await pool.query(`
           CREATE TABLE IF NOT EXISTS social_usernames (
             id SERIAL PRIMARY KEY,
@@ -2229,8 +2281,7 @@ const server = http.createServer(async (req, res) => {
           )
         `);
 
-        // === SECURITY CHECK 4: Check if username already used by another user ===
-        const platform = missionId === 'follow_twitter' ? 'twitter' : 'telegram';
+        // === SECURITY CHECK 5: Check if username already used by another user ===
         const existingUsername = await pool.query(
           'SELECT user_id FROM social_usernames WHERE platform = $1 AND username = $2',
           [platform, cleanUsername]
@@ -7741,11 +7792,24 @@ const server = http.createServer(async (req, res) => {
           // Calculate reward based on elapsed time (SERVER-SIDE ONLY)
           const processingDuration = 24 * 60 * 60; // 24 hours in seconds
           const elapsedSec = nowSec - startTimeSec;
-          const progressPercentage = Math.min(1, elapsedSec / processingDuration);
           const baseReward = 0.25;
           const boostedReward = baseReward * boostMultiplier;
-          // تقريب المكافأة لتجنب الأرقام العشرية الطويلة
-          serverCalculatedReward = Math.round((boostedReward * progressPercentage) * 100000000) / 100000000;
+          
+          // ✅ FIX: حساب المكافأة بناءً على الوقت المنقضي
+          // عند الوصول للثانية الأخيرة نعطي القيمة الكاملة
+          if (elapsedSec >= processingDuration) {
+            serverCalculatedReward = boostedReward;
+          } else {
+            const progressPercentage = elapsedSec / processingDuration;
+            // تقريب المكافأة لتجنب الأرقام العشرية الطويلة
+            serverCalculatedReward = Math.round((boostedReward * progressPercentage) * 100000000) / 100000000;
+            
+            // ✅ FIX: إذا كانت القيمة قريبة جداً من المكافأة الكاملة (99.99% أو أكثر)، اعرض القيمة الكاملة
+            // هذا يحل مشكلة عرض 0.24999... بدلاً من 0.25 في آخر ثانية
+            if (serverCalculatedReward >= boostedReward * 0.9999) {
+              serverCalculatedReward = boostedReward;
+            }
+          }
           
           // ✅ NO UPDATE HERE - Client calculates locally, server just returns calculated value
           // Database is only updated when session COMPLETES (in countdown_simplifier.js)

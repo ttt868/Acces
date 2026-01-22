@@ -4851,12 +4851,29 @@ processingButton.addEventListener('click', async function() {
     window.lastProcessingButtonClick = Date.now();
     console.log('PROCESSING BUTTON CLICKED - Starting processing session');
 
-    // STEP 1: Check for any accumulated rewards from previous session and transfer them
-    const currentAccumulated = parseFloat(currentUser.processing_accumulated || currentUser.accumulatedReward || 0);
-    console.log(`[SCRIPT LINE 442] Processing button clicked - checking accumulated rewards: ${currentAccumulated.toFixed(8)}`);
+    // STEP 1: جلب الرصيد المتراكم من السيرفر مباشرة (لا نعتمد على القيمة المحلية)
+    let currentAccumulated = 0;
+    try {
+      const accResponse = await fetchWithTimeout(`/api/processing/accumulated/${currentUser.id}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      }, 10000);
+      
+      if (accResponse.ok) {
+        const accData = await accResponse.json();
+        if (accData.success) {
+          currentAccumulated = parseFloat(accData.accumulatedReward || 0);
+        }
+      }
+    } catch (e) {
+      // إذا فشل جلب من السيرفر، استخدم القيمة المحلية
+      currentAccumulated = parseFloat(currentUser.processing_accumulated || currentUser.accumulatedReward || 0);
+    }
+    
+    console.log(`[SCRIPT] Processing button clicked - accumulated rewards from server: ${currentAccumulated}`);
     
     if (currentAccumulated > 0) {
-      console.log(`[SCRIPT LINE 445] Found accumulated reward from previous session: ${currentAccumulated.toFixed(8)} - transferring to balance`);
+      console.log(`[SCRIPT] Found accumulated reward: ${currentAccumulated} - transferring to balance`);
       
       try {
         const completeResponse = await fetchWithTimeout('/api/processing/countdown/complete', {
@@ -5094,11 +5111,11 @@ processingButton.addEventListener('click', async function() {
       if (currentAccumulated > 0) {
         // تأخير 2 ثانية بعد رسالة نقل الرصيد
         setTimeout(() => {
-          showNotification(translator.translate('New processing session started!'), 'success');
+          showNotification(translator.translate('Point processing started successfully!'), 'success');
         }, 2000);
       } else {
         // لا يوجد نقل مكافأة - إظهار رسالة بدء الجلسة مباشرة
-        showNotification(translator.translate('New processing session started!'), 'success');
+        showNotification(translator.translate('Point processing started successfully!'), 'success');
       }
       
       console.log(`✅ Processing session started successfully`);
@@ -5230,7 +5247,8 @@ function startGradualAccumulation() {
     
     let calculatedAccumulated;
     
-    // إذا مر 24 ساعة أو أكثر، أعطِ القيمة الكاملة
+    // ✅ FIX: إذا مر 24 ساعة أو أكثر، أعطِ القيمة الكاملة
+    // عند الوصول للثانية الأخيرة (00:00:00) نعرض القيمة الكاملة
     if (safeElapsedSec >= processingDuration) {
       calculatedAccumulated = boostedReward; // 100% من المكافأة
     }
@@ -5239,6 +5257,12 @@ function startGradualAccumulation() {
       calculatedAccumulated = rewardPerSecond * safeElapsedSec;
       // تقريب لـ 8 أماكن عشرية
       calculatedAccumulated = Math.round(calculatedAccumulated * 100000000) / 100000000;
+      
+      // ✅ FIX: إذا كانت القيمة قريبة جداً من المكافأة الكاملة (99.99% أو أكثر)، اعرض القيمة الكاملة
+      // هذا يحل مشكلة عرض 0.24999... بدلاً من 0.25 في آخر ثانية
+      if (calculatedAccumulated >= boostedReward * 0.9999) {
+        calculatedAccumulated = boostedReward;
+      }
     }
     
     // 🔒 CRITICAL: منع التراجع في القيمة نهائياً
@@ -5898,13 +5922,46 @@ function startGradualAccumulation() {
             window.boostCheckInterval = null;
           }
 
+          // ✅ CRITICAL: حساب القيمة النهائية الكاملة
+          const baseReward = 0.25;
+          const finalReward = baseReward * (window.localBoostData?.multiplier || 1.0);
+          
           // ✅ CRITICAL: عرض القيمة النهائية الكاملة قبل التنظيف
           const accumulatedCoinsEl = document.getElementById('accumulated-coins');
-          if (accumulatedCoinsEl && window.localBoostData) {
-            const baseReward = 0.25;
-            const finalReward = baseReward * (window.localBoostData.multiplier || 1.0);
+          if (accumulatedCoinsEl) {
             accumulatedCoinsEl.textContent = formatNumberSmart(finalReward);
             console.log('✅ Final accumulated reward displayed:', finalReward);
+          }
+
+          // ✅ CRITICAL FIX: حفظ المكافأة المكتملة على السيرفر فوراً
+          // هذا يضمن أن المكافأة محفوظة قبل أن يضغط المستخدم على زر Start Activity
+          if (currentUser && currentUser.id) {
+            (async () => {
+              try {
+                console.log(`✅ Saving completed reward to server: ${finalReward}`);
+                const saveResponse = await fetch('/api/processing/save-completed', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ 
+                    userId: currentUser.id,
+                    completedReward: finalReward
+                  })
+                });
+                
+                if (saveResponse.ok) {
+                  const saveData = await saveResponse.json();
+                  console.log(`✅ Completed reward saved to server:`, saveData);
+                  
+                  // حفظ في الذاكرة المحلية أيضاً
+                  currentUser.processing_accumulated = finalReward;
+                  currentUser.accumulatedReward = finalReward;
+                } else {
+                  console.error('❌ Failed to save completed reward to server');
+                }
+              } catch (saveError) {
+                console.error('❌ Error saving completed reward:', saveError);
+              }
+            })();
           }
 
           // Update UI
