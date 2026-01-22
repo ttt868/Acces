@@ -322,6 +322,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: body,
     icon: '/access-logo-1ipfs.png',
+    badge: '/access-store-96.png',
     vibrate: [200, 100, 200],
     tag: data.tag || 'access-notification',
     requireInteraction: true,

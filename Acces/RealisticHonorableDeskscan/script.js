@@ -4851,8 +4851,66 @@ processingButton.addEventListener('click', async function() {
     window.lastProcessingButtonClick = Date.now();
     console.log('PROCESSING BUTTON CLICKED - Starting processing session');
 
-    // 🔒 CRITICAL: التحقق من السيرفر أولاً قبل أي شيء آخر
-    // لا نستدعي /complete إلا بعد التأكد من أنه لا توجد جلسة نشطة
+    // STEP 1: Check for any accumulated rewards from previous session and transfer them
+    const currentAccumulated = parseFloat(currentUser.processing_accumulated || currentUser.accumulatedReward || 0);
+    console.log(`[SCRIPT LINE 442] Processing button clicked - checking accumulated rewards: ${currentAccumulated.toFixed(8)}`);
+    
+    if (currentAccumulated > 0) {
+      console.log(`[SCRIPT LINE 445] Found accumulated reward from previous session: ${currentAccumulated.toFixed(8)} - transferring to balance`);
+      
+      try {
+        const completeResponse = await fetchWithTimeout('/api/processing/countdown/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            userId: currentUser.id,
+            finalReward: currentAccumulated
+          })
+        }, 20000);
+        
+        console.log(`[SCRIPT LINE 455] Complete response status: ${completeResponse.status}`);
+        
+        if (completeResponse.ok) {
+          const completeData = await completeResponse.json();
+          console.log(`[SCRIPT LINE 459] Complete data received:`, completeData);
+          
+          if (completeData.success) {
+            // Update balance immediately in UI
+            const newBalance = completeData.new_balance;
+            console.log(`[SCRIPT LINE 464] Updating balance from ${currentUser.coins} to ${newBalance}`);
+            
+            updateUserCoins(newBalance);
+            currentUser.coins = newBalance;
+            
+            // Update specific balance elements immediately
+            const userCoinsElement = document.getElementById('user-coins');
+            if (userCoinsElement) {
+              userCoinsElement.textContent = formatNumberSmart(newBalance);
+              console.log(`[SCRIPT LINE 474] Updated user-coins element to: ${formatNumberSmart(newBalance)}`);
+            }
+            
+            const profileCoinsElement = document.getElementById('profile-coins');
+            if (profileCoinsElement) {
+              profileCoinsElement.textContent = formatNumberSmart(newBalance);
+              console.log(`[SCRIPT LINE 479] Updated profile-coins element to: ${formatNumberSmart(newBalance)}`);
+            }
+            
+            // Clear accumulated values
+            currentUser.processing_accumulated = 0;
+            currentUser.accumulatedReward = 0;
+            
+            console.log(`[SCRIPT LINE 485] Successfully transferred ${formatNumberSmart(completeData.reward_amount)} to balance. New balance: ${formatNumberSmart(newBalance)}`);
+            
+            // Show notification about the transfer
+            showNotification(`${translator.translate('Previous processing reward of')} ${formatNumberSmart(completeData.reward_amount)} ${translator.translate('Points has been added to your balance!')}`, 'success');
+          }
+        }
+      } catch (transferError) {
+        console.error(`[SCRIPT LINE 492] Error transferring previous accumulated reward:`, transferError);
+      }
+    } else {
+      console.log(`[SCRIPT LINE 495] No accumulated rewards to transfer - proceeding with new processing session`);
+    }
     
     // Reset all timers before starting new processing session
     if (activityInterval) {
@@ -4889,7 +4947,7 @@ processingButton.addEventListener('click', async function() {
     updateButtonSafely('fas fa-spinner fa-spin', translator.translate('Starting...'));
     processingButton.classList.add('disabled');
 
-    // STEP 1: إرسال طلب بدء الجلسة للسيرفر أولاً
+    // STEP 2: إرسال طلب بدء الجلسة للسيرفر
     console.log(`[SCRIPT] Sending start request to server for user ${currentUser.id}`);
     
     const response = await fetchWithTimeout('/api/processing/countdown/start', {
@@ -4997,14 +5055,6 @@ processingButton.addEventListener('click', async function() {
             rewardAmount: data.reward_transferred || 0
           }
         }));
-        
-        // ✅ إظهار إشعار بنقل المكافأة إذا تم نقل رصيد
-        if (data.reward_transferred > 0) {
-          showNotification(
-            `+${formatNumberSmart(data.reward_transferred)} ${translator.translate('Points added to your balance!')}`, 
-            'success'
-          );
-        }
       }
       
       // Reset all processing completion flags
@@ -5040,15 +5090,15 @@ processingButton.addEventListener('click', async function() {
 
       window.processingSessionStarting = false;
       
-      // ✅ إشعار بدء النشاط مع تأخير احترافي إذا تم نقل مكافأة
-      if (data.reward_transferred > 0) {
-        // تأخير 2 ثانية بين رسالة نقل الرصيد ورسالة بدء الجلسة
+      // ✅ إشعار بدء النشاط - تأخير إذا تم نقل مكافأة سابقة
+      if (currentAccumulated > 0) {
+        // تأخير 2 ثانية بعد رسالة نقل الرصيد
         setTimeout(() => {
           showNotification(translator.translate('New processing session started!'), 'success');
         }, 2000);
       } else {
-        // لا يوجد نقل مكافأة - إظهار رسالة البدء مباشرة
-        showNotification(translator.translate('Point processing started successfully!'), 'success');
+        // لا يوجد نقل مكافأة - إظهار رسالة بدء الجلسة مباشرة
+        showNotification(translator.translate('New processing session started!'), 'success');
       }
       
       console.log(`✅ Processing session started successfully`);
