@@ -5257,12 +5257,6 @@ function startGradualAccumulation() {
       calculatedAccumulated = rewardPerSecond * safeElapsedSec;
       // تقريب لـ 8 أماكن عشرية
       calculatedAccumulated = Math.round(calculatedAccumulated * 100000000) / 100000000;
-      
-      // ✅ FIX: إذا كانت القيمة قريبة جداً من المكافأة الكاملة (99.99% أو أكثر)، اعرض القيمة الكاملة
-      // هذا يحل مشكلة عرض 0.24999... بدلاً من 0.25 في آخر ثانية
-      if (calculatedAccumulated >= boostedReward * 0.9999) {
-        calculatedAccumulated = boostedReward;
-      }
     }
     
     // 🔒 CRITICAL: منع التراجع في القيمة نهائياً

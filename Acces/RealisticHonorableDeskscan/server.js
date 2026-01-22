@@ -7796,23 +7796,25 @@ const server = http.createServer(async (req, res) => {
           const boostedReward = baseReward * boostMultiplier;
           
           // ✅ FIX: حساب المكافأة بناءً على الوقت المنقضي
-          // عند الوصول للثانية الأخيرة نعطي القيمة الكاملة
           if (elapsedSec >= processingDuration) {
             serverCalculatedReward = boostedReward;
           } else {
             const progressPercentage = elapsedSec / processingDuration;
             // تقريب المكافأة لتجنب الأرقام العشرية الطويلة
             serverCalculatedReward = Math.round((boostedReward * progressPercentage) * 100000000) / 100000000;
-            
-            // ✅ FIX: إذا كانت القيمة قريبة جداً من المكافأة الكاملة (99.99% أو أكثر)، اعرض القيمة الكاملة
-            // هذا يحل مشكلة عرض 0.24999... بدلاً من 0.25 في آخر ثانية
-            if (serverCalculatedReward >= boostedReward * 0.9999) {
-              serverCalculatedReward = boostedReward;
-            }
           }
           
-          // ✅ NO UPDATE HERE - Client calculates locally, server just returns calculated value
-          // Database is only updated when session COMPLETES (in countdown_simplifier.js)
+          // ✅ FIX: تصحيح المبلغ في قاعدة البيانات إذا كان ناقصاً
+          // إذا كانت القيمة المحسوبة أكبر من المحفوظة، نحدث قاعدة البيانات
+          if (serverCalculatedReward > storedAccumulated) {
+            pool.query(
+              `UPDATE users 
+               SET accumulatedReward = $1,
+                   processing_accumulated = $1
+               WHERE id = $2`,
+              [serverCalculatedReward, userId]
+            ).catch(() => {}); // Silent update
+          }
           
           
         } else {
