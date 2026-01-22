@@ -918,15 +918,7 @@ export const serverSideProcessingSync = new ServerSideProcessingSync();
 // Auto-start when module is imported
 serverSideProcessingSync.start();
 
-// Graceful shutdown on process termination
-process.on('SIGINT', () => {
-  console.log('[SERVER-SIDE PROCESSING] Shutting down...');
-  serverSideProcessingSync.stop();
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  console.log('[SERVER-SIDE PROCESSING] Shutting down...');
-  serverSideProcessingSync.stop();
-  process.exit(0);
-});
+// ⚠️ ملاحظة مهمة: لا نضع process.exit() هنا!
+// المعالج الرئيسي للـ shutdown موجود في server.js فقط
+// هذا يمنع التعارض بين معالجات متعددة
+// سيتم استدعاء serverSideProcessingSync.stop() من server.js عند الإغلاق

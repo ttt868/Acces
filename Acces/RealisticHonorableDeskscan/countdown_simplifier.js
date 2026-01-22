@@ -245,7 +245,65 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
     }
 
     const now = Math.floor(Date.now() / 1000);
+    const nowMs = Date.now();
     const processingDuration = 24 * 60 * 60; // 24 hours in seconds
+
+    // 🔒 CRITICAL: فحص الجلسة النشطة أولاً قبل أي شيء
+    try {
+      const activeCheck = await pool.query(
+        `SELECT processing_active, processing_end_time, processing_start_time_seconds 
+         FROM users WHERE id = $1`,
+        [userId]
+      );
+      
+      if (activeCheck.rows.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'User not found' }));
+        return true;
+      }
+      
+      const user = activeCheck.rows[0];
+      const endTimeMs = parseInt(user.processing_end_time) || 0;
+      const startTimeSec = parseInt(user.processing_start_time_seconds) || 0;
+      
+      // 🔒 فحص 1: هل processing_end_time في المستقبل؟
+      if (endTimeMs > nowMs) {
+        const remainingSec = Math.floor((endTimeMs - nowMs) / 1000);
+        console.log(`🔒 [SIMPLIFIER] BLOCKED: User ${userId} - active session (${remainingSec}s remaining)`);
+        res.writeHead(409, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          success: false, 
+          error: 'لديك جلسة نشطة بالفعل',
+          error_en: 'You already have an active processing session',
+          remaining_seconds: remainingSec,
+          already_processing: true
+        }));
+        return true;
+      }
+      
+      // 🔒 فحص 2: هل بدأت جلسة ولم تنتهِ؟
+      if (startTimeSec > 0) {
+        const endTimeSec = startTimeSec + processingDuration;
+        if (now < endTimeSec) {
+          const remainingSec = endTimeSec - now;
+          console.log(`🔒 [SIMPLIFIER] BLOCKED: User ${userId} - session still active (${remainingSec}s remaining)`);
+          res.writeHead(409, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            success: false, 
+            error: 'لديك جلسة نشطة بالفعل',
+            error_en: 'You already have an active processing session',
+            remaining_seconds: remainingSec,
+            already_processing: true
+          }));
+          return true;
+        }
+      }
+    } catch (checkError) {
+      console.error('🔒 [SIMPLIFIER] Error checking active session:', checkError);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Server error' }));
+      return true;
+    }
 
     // ✅ SILENT RETRY: Try up to 3 times internally, user sees nothing
     let lastError = null;

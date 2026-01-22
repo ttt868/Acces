@@ -11,52 +11,27 @@ class OfflineDetector {
   initialize() {
     console.log('Initializing Simple Offline Detection System');
 
-    // 🏥 Check server health immediately on page load
-    this.checkConnection();
+    // ✅ فقط تحقق من حالة الإنترنت (navigator.onLine) - ليس السيرفر
+    if (!navigator.onLine) {
+      this.handleOffline();
+    }
 
-    // Listen for browser events but verify with real connection check
-    window.addEventListener('online', () => {
-      // Don't trust navigator.onLine alone - verify with real request
-      this.checkConnection();
-    });
+    // Listen for browser events
+    window.addEventListener('online', () => this.handleOnline());
     window.addEventListener('offline', () => this.handleOffline());
 
     // Make checkConnection globally available for manual retry button
     window.checkConnection = () => this.checkConnection();
-    
-    // 🔄 Check server health periodically (every 30 seconds)
-    setInterval(() => {
-      this.checkConnection();
-    }, 30000);
   }
 
   async checkConnection() {
-    try {
-      // 🏥 Test server health with /api/health (never cached)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-      
-      const response = await fetch(window.location.origin + '/api/health?' + Date.now(), {
-        method: 'GET',
-        cache: 'no-store',
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.status === 'ok') {
-          if (!this.isOnline) {
-            this.handleOnline();
-          }
-          return true;
-        }
+    // ✅ فقط تحقق من الإنترنت - ليس السيرفر
+    if (navigator.onLine) {
+      if (!this.isOnline) {
+        this.handleOnline();
       }
-      throw new Error('Server not reachable');
-    } catch (error) {
-      // Server health check failed - show offline page
-      console.log('🔴 Server health check failed:', error.message);
+      return true;
+    } else {
       if (this.isOnline) {
         this.handleOffline();
       }

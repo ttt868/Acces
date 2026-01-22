@@ -12,6 +12,65 @@ import { getGlobalAccessStateStorage } from './access-state-storage.js';
 import webpush from 'web-push';
 import { startReEngagementScheduler } from './re-engagement-notifications.js';
 
+// ============================================================================
+// 🛡️ NEVER DIE PROTECTION - السيرفر لا يسقط أبداً!
+// ============================================================================
+let serverCrashCount = 0;
+const MAX_ERRORS_PER_MINUTE = 100;
+let errorCountThisMinute = 0;
+
+// Reset error count every minute
+setInterval(() => {
+  if (errorCountThisMinute > 0) {
+    console.log(`[PROTECTION] Errors this minute: ${errorCountThisMinute}`);
+  }
+  errorCountThisMinute = 0;
+}, 60000);
+
+// 🛡️ حماية من الأخطاء غير المتوقعة - لا تُسقط السيرفر!
+process.on('uncaughtException', (error) => {
+  serverCrashCount++;
+  errorCountThisMinute++;
+  
+  // Log only if not too many errors
+  if (errorCountThisMinute <= 10) {
+    console.error(`❌ [CAUGHT] Uncaught Exception #${serverCrashCount}:`, error.message);
+  }
+  
+  // إذا كانت الأخطاء كثيرة جداً، شيء خاطئ بشكل كبير
+  if (errorCountThisMinute > MAX_ERRORS_PER_MINUTE) {
+    console.error('⚠️ Too many errors! But server continues...');
+  }
+  
+  // 🛡️ لا نستدعي process.exit() - السيرفر يستمر!
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  errorCountThisMinute++;
+  
+  // Log only if not too many errors
+  if (errorCountThisMinute <= 10) {
+    console.error('❌ [CAUGHT] Unhandled Rejection:', reason);
+  }
+  
+  // 🛡️ لا نستدعي process.exit() - السيرفر يستمر!
+});
+
+// 🧹 Memory cleanup كل 5 دقائق
+setInterval(() => {
+  if (global.gc) {
+    global.gc();
+  }
+  // تنظيف الذاكرة
+  const memUsage = process.memoryUsage();
+  const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
+  if (heapUsedMB > 400) {
+    console.log(`🧹 High memory: ${heapUsedMB}MB - cleaning up...`);
+  }
+}, 5 * 60 * 1000);
+
+// ============================================================================
+
 // 🏗️ Enterprise Distributed Infrastructure - للتوسع لملايين المستخدمين
 import enterpriseInfra from './enterprise-infrastructure.js';
 
@@ -418,6 +477,7 @@ async function finalizeCompletedSessions() {
 // ============================================================================
 
 let isShuttingDown = false;
+let shutdownTimeout = null;
 
 async function gracefulShutdown(signal) {
   if (isShuttingDown) {
@@ -428,12 +488,38 @@ async function gracefulShutdown(signal) {
   isShuttingDown = true;
   console.log(`\n🛑 [${signal}] Graceful shutdown initiated...`);
   
+  // ⏰ حد أقصى للإغلاق 30 ثانية
+  shutdownTimeout = setTimeout(() => {
+    console.log('⏰ Shutdown timeout - forcing exit');
+    process.exit(1);
+  }, 30000);
+  
   try {
-    // حفظ جميع الجلسات النشطة
+    // 1️⃣ إيقاف Server-Side Processing Sync
+    try {
+      const { serverSideProcessingSync } = await import('./server_side_activity_sync.js');
+      console.log('[SHUTDOWN] Stopping server-side processing sync...');
+      serverSideProcessingSync.stop();
+    } catch (e) {
+      // silent - module may not be loaded
+    }
+    
+    // 2️⃣ حفظ بيانات الشبكة (blockchain)
+    try {
+      if (global.accessNode && global.accessNode.network) {
+        console.log('[SHUTDOWN] Saving blockchain data...');
+        await global.accessNode.network.saveChain();
+        await global.accessNode.network.saveMempool();
+      }
+    } catch (e) {
+      console.log('[SHUTDOWN] Blockchain save skipped:', e.message);
+    }
+    
+    // 3️⃣ حفظ جميع الجلسات النشطة
     const saveResult = await saveAllActiveSessionsOnShutdown();
     console.log(`🛡️ Sessions saved: ${saveResult.saved || 0}`);
     
-    // إغلاق pool قاعدة البيانات بأمان
+    // 4️⃣ إغلاق pool قاعدة البيانات بأمان
     await pool.end();
     console.log('✅ Database pool closed');
     
@@ -441,14 +527,17 @@ async function gracefulShutdown(signal) {
     console.error('❌ Error during shutdown:', error.message);
   }
   
+  clearTimeout(shutdownTimeout);
   console.log('👋 Server shutdown complete');
   process.exit(0);
 }
 
-// تسجيل معالجات الإيقاف
+// تسجيل معالجات الإيقاف - مركزي في server.js فقط
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('SIGHUP', () => gracefulShutdown('SIGHUP'));
+
+// ⚠️ ملاحظة: معالجات uncaughtException و unhandledRejection في بداية الملف
 
 // استعادة الجلسات عند بدء السيرفر (بعد تهيئة DB)
 setTimeout(async () => {

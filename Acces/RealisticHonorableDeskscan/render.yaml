@@ -1,0 +1,29 @@
+# Render Blueprint - Auto-restart & Always Online Configuration
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: access-server
+    env: node
+    region: oregon  # أو اختر المنطقة الأقرب لمستخدميك
+    plan: free      # أو starter للمدفوع
+    
+    # Build Configuration
+    buildCommand: npm install
+    startCommand: node server.js
+    
+    # Health Check - يتحقق كل 30 ثانية
+    healthCheckPath: /health
+    
+    # Environment Variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+    
+    # Auto-Deploy from GitHub
+    autoDeploy: true
+    
+    # Branch to deploy
+    branch: main

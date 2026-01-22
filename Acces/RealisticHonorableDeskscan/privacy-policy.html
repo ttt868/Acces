@@ -33,6 +33,10 @@
             const isDarkMode = document.documentElement.classList.contains('dark-theme') || 
                               document.body.classList.contains('dark-theme') ||
                               localStorage.getItem('theme') === 'dark';
+            
+            // Check language for RTL
+            const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+            const isArabic = currentLang === 'ar';
 
             // Set theme-aware colors
             const bgColor = isDarkMode ? 'var(--card-background, #000000)' : 'white';
@@ -54,6 +58,8 @@
             modalContent.style.color = textColor;
             modalContent.style.fontFamily = 'Arial, sans-serif';
             modalContent.style.lineHeight = '1.6';
+            modalContent.style.direction = isArabic ? 'rtl' : 'ltr';
+            modalContent.style.textAlign = isArabic ? 'right' : 'left';
 
             // Modal header
             const header = document.createElement('div');
@@ -173,6 +179,12 @@
                 sectionDiv.appendChild(sectionText);
                 content.appendChild(sectionDiv);
             });
+
+            // Add Contact Email section
+            const contactEmailText = document.createElement('p');
+            contactEmailText.style.marginTop = '20px';
+            contactEmailText.innerHTML = '<strong data-translate="Contact Email:">Contact Email:</strong> <a href="mailto:x@gmail.com" style="color: #2196F3; text-decoration: none;">x@gmail.com</a>';
+            content.appendChild(contactEmailText);
 
             // Footer with back button
             const footer = document.createElement('div');

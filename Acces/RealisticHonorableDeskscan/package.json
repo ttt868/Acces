@@ -5,7 +5,13 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "never-die": "node never-die-system.js",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop access-server",
+    "pm2:restart": "pm2 restart access-server",
+    "pm2:logs": "pm2 logs access-server",
+    "pm2:status": "pm2 status"
   },
   "type": "module",
   "dependencies": {

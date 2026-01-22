@@ -465,20 +465,9 @@ class AccessNetwork extends EventEmitter {
       }
     }, 900000); // كل 15 دقيقة (تقليل استهلاك DB)
 
-    // حفظ فوري عند إيقاف البرنامج
-    process.on('SIGINT', async () => {
-      await this.saveChain();
-      // ❌ لا نحفظ saveState() - الأرصدة محفوظة بالفعل
-      await this.saveMempool();
-      process.exit(0);
-    });
-
-    process.on('SIGTERM', async () => {
-      await this.saveChain();
-      // ❌ لا نحفظ saveState() - الأرصدة محفوظة بالفعل
-      await this.saveMempool();
-      process.exit(0);
-    });
+    // ⚠️ ملاحظة: لا نضيف process.exit() هنا!
+    // المعالج الرئيسي للـ shutdown موجود في server.js فقط
+    // سيتم استدعاء saveChain() و saveMempool() من server.js gracefulShutdown()
   }
 
   // إنشاء كتلة البداية

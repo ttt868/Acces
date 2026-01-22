@@ -130,6 +130,7 @@ window.translations = {
 
   "Note:": "Note:",
   "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "Points are platform-specific digital rewards and are not intended as financial instruments or investments.",
+  "Contact Email:": "Contact Email:",
 
   "I have read and accept the Privacy Policy and Terms of Service": "I have read and accept the Privacy Policy and Terms of Service",
   "Decline": "Decline",
@@ -552,6 +553,7 @@ window.translations = {
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "Nous nous réservons le droit de modifier les fonctionnalités, les conditions ou les politiques de la plateforme avec un préavis raisonnable aux utilisateurs. L'utilisation continue de la plateforme constitue une acceptation de toute mise à jour de ces conditions.",
 
 "Note:": "Remarque :",
+"Contact Email:": "Email de contact :",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "Les Points sont des récompenses numériques spécifiques à la plateforme et ne sont pas destinés à être des instruments financiers ou des investissements.",
 
 "I have read and accept the Privacy Policy and Terms of Service": "J'ai lu et j'accepte la politique de confidentialité et les conditions d'utilisation",
@@ -1243,6 +1245,7 @@ processingTransaction: "Traitement de la transaction en cours...",
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "Nos reservamos el derecho de modificar las funciones, términos o políticas de la plataforma con un aviso razonable a los usuarios. El uso continuo de la plataforma constituye aceptación de cualquier actualización de estos términos.",
 
 "Note:": "Nota:",
+"Contact Email:": "Correo de contacto:",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "Los Puntos son recompensas digitales específicas de la plataforma y no están destinados a ser instrumentos financieros o inversiones.",
 
 "I have read and accept the Privacy Policy and Terms of Service": "He leído y acepto la Política de privacidad y los Términos de servicio",
@@ -2037,6 +2040,7 @@ processingTransaction: "Elaborazione della transazione in corso...",
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "Ci riserviamo il diritto di modificare le funzionalità della piattaforma, i termini o le politiche con un preavviso ragionevole agli utenti. L’uso continuato della piattaforma costituisce accettazione di eventuali aggiornamenti di questi termini.",
 
 "Note:": "Nota:",
+"Contact Email:": "Email di contatto:",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "I Punti sono ricompense digitali specifiche della piattaforma e non sono destinati a essere strumenti finanziari o investimenti.",
 
 "I have read and accept the Privacy Policy and Terms of Service": "Ho letto e accetto l’Informativa sulla privacy e i Termini di servizio",
@@ -2701,6 +2705,7 @@ processingTransaction: "İşlem işleniyor...",
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "Platform özelliklerini, şartlarını veya politikalarını kullanıcıya makul bir bildirimle değiştirme hakkımız saklıdır. Platformun sürekli kullanımı, bu şartlardaki güncellemelerin kabulü anlamına gelir.",
 
 "Note:": "Not:",
+"Contact Email:": "İletişim E-postası:",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "Puanlar, platforma özgü dijital ödüllerdir ve finansal araç veya yatırım amacıyla kullanılmaz.",
 
 "I have read and accept the Privacy Policy and Terms of Service": "Gizlilik Politikası ve Hizmet Şartlarını okudum ve kabul ediyorum",
@@ -3236,6 +3241,7 @@ processingTransaction: "İşlem işleniyor...",
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "हम उपयोगकर्ताओं को उचित नोटिस के साथ प्लेटफ़ॉर्म सुविधाओं, शर्तों या नीतियों को संशोधित करने का अधिकार सुरक्षित रखते हैं। प्लेटफ़ॉर्म का निरंतर उपयोग इन शर्तों में किसी भी अपडेट की स्वीकृति के रूप में माना जाएगा।",
 
 "Note:": "नोट:",
+"Contact Email:": "संपर्क ईमेल:",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "पॉइंट्स प्लेटफ़ॉर्म-विशिष्ट डिजिटल पुरस्कार हैं और इन्हें वित्तीय उपकरण या निवेश के रूप में इस्तेमाल करने का उद्देश्य नहीं है।",
 
 "I have read and accept the Privacy Policy and Terms of Service": "मैंने गोपनीयता नीति और सेवा की शर्तें पढ़ ली हैं और स्वीकार करता हूँ",
@@ -3904,6 +3910,7 @@ processingTransaction: "İşlem işleniyor...",
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "我们保留在合理通知用户的情况下修改平台功能、条款或政策的权利。继续使用平台即表示接受这些条款的任何更新。",
 
 "Note:": "注意：",
+"Contact Email:": "联系邮箱：",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "积分是特定平台的数字奖励，不作为金融工具或投资。",
 
 "I have read and accept the Privacy Policy and Terms of Service": "我已阅读并接受隐私政策与服务条款",
@@ -4694,6 +4701,7 @@ processingTransaction: "İşlem işleniyor...",
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "当社は、ユーザーへの合理的な通知の下で、プラットフォーム機能、利用規約、またはポリシーを変更する権利を留保します。プラットフォームを継続して使用することにより、これらの条件の更新を受け入れたものとみなされます。",
 
 "Note:": "注意：",
+"Contact Email:": "連絡先メール：",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "ポイントはプラットフォーム専用のデジタル報酬であり、金融商品や投資を意図したものではありません。",
 
 "I have read and accept the Privacy Policy and Terms of Service": "プライバシーポリシーと利用規約を読み、同意しました",
@@ -5359,6 +5367,7 @@ processingTransaction: "İşlem işleniyor...",
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "우리는 사용자에게 합리적인 공지를 통해 플랫폼 기능, 조건 또는 정책을 수정할 권리를 보유합니다. 플랫폼을 계속 사용하면 이러한 조건의 업데이트를 수락한 것으로 간주됩니다.",
 
 "Note:": "참고:",
+"Contact Email:": "연락 이메일:",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "포인트는 플랫폼 전용 디지털 보상이며, 금융 상품이나 투자 수단이 아닙니다.",
 
 "I have read and accept the Privacy Policy and Terms of Service": "개인정보 보호정책 및 서비스 약관을 읽고 동의합니다",
@@ -6028,6 +6037,7 @@ processingTransaction: "İşlem işleniyor...",
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "Reservamo-nos o direito de modificar recursos, termos ou políticas da plataforma com aviso razoável aos usuários. O uso contínuo da plataforma constitui aceitação de quaisquer atualizações desses termos.",
 
 "Note:": "Nota:",
+"Contact Email:": "Email de contato:",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "Os Pontos são recompensas digitais específicas da plataforma e não se destinam a serem instrumentos financeiros ou investimentos.",
 
 "I have read and accept the Privacy Policy and Terms of Service": "Li e aceito a Política de Privacidade e os Termos de Serviço",
@@ -6686,6 +6696,7 @@ insufficientBalance: "Недостаточно средств для этой т
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "Мы оставляем за собой право изменять функции платформы, условия или политики с разумным уведомлением пользователей. Продолжение использования платформы означает согласие с любыми обновлениями этих условий.",
 
 "Note:": "Примечание:",
+"Contact Email:": "Электронная почта для связи:",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "Баллы являются цифровыми наградами, специфичными для платформы, и не предназначены для использования в качестве финансовых инструментов или инвестиций.",
 
 "I have read and accept the Privacy Policy and Terms of Service": "Я прочитал и принимаю Политику конфиденциальности и Условия использования",
@@ -7238,6 +7249,7 @@ insufficientBalance: "Недостаточно средств для этой т
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "Wir behalten uns das Recht vor, Plattformfunktionen, Bedingungen oder Richtlinien mit angemessener Benachrichtigung der Nutzer zu ändern. Die fortgesetzte Nutzung der Plattform gilt als Akzeptanz dieser Aktualisierungen.",
 
 "Note:": "Hinweis:",
+"Contact Email:": "Kontakt-E-Mail:",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "Punkte sind plattformspezifische digitale Belohnungen und nicht als Finanzinstrumente oder Investitionen gedacht.",
 
 "I have read and accept the Privacy Policy and Terms of Service": "Ich habe die Datenschutzrichtlinie und Nutzungsbedingungen gelesen und akzeptiere sie",
@@ -7892,7 +7904,7 @@ insufficientBalance: "Недостаточно средств для этой т
     
     // Privacy Policy
     "Privacy Policy & Terms of Service": "سياسة الخصوصية وشروط الخدمة",
-    "1. Introduction": "المقدمة .1",
+    "1. Introduction": ".1 المقدمة",
     "Welcome to AccessoireDigital. Before proceeding, please review and accept our Privacy Policy and Terms of Service.": "مرحباً بك في أكسسوار الرقمية. قبل المتابعة، يرجى مراجعة وقبول سياسة الخصوصية وشروط الخدمة الخاصة بنا.",
     "2. Platform Services": "2. خدمات المنصة",
     "AccessoireDigital is a comprehensive digital assets platform offering cloud processing services, digital account management, and secure transaction processing. Users can earn Points through our 24-hour processing cycles and participate in our referral program.": "أكسسوار الرقمية هي منصة أصول رقمية شاملة تقدم خدمات المعالجة السحابية وإدارة الحسابات الرقمية ومعالجة المعاملات الآمنة. يمكن للمستخدمين كسب النقاط من خلال دورات المعالجة لمدة 24 ساعة والمشاركة في برنامج الإحالة.",
@@ -7929,8 +7941,9 @@ insufficientBalance: "Недостаточно средств для этой т
     "12. Platform Modifications": "12. تعديلات المنصة",
     "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "نحتفظ بالحق في تعديل ميزات المنصة أو الشروط أو السياسات مع إشعار معقول للمستخدمين. يشكل الاستخدام المستمر للمنصة قبولاً لأي تحديثات على هذه الشروط.",
 
-    "Note:": ":ملحوظة",
+    "Note:": "ملاحظة:",
     "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "النقاط هي مكافآت رقمية خاصة بالمنصة، وليست أدوات مالية أو استثمارية",
+    "Contact Email:": "البريد الإلكتروني للتواصل:",
    
 
     
@@ -8768,6 +8781,7 @@ insufficientBalance: "Недостаточно средств для этой т
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "Kami berhak untuk memodifikasi fitur platform, ketentuan, atau kebijakan dengan pemberitahuan yang wajar kepada pengguna. Penggunaan platform yang berkelanjutan berarti penerimaan terhadap pembaruan ketentuan ini.",
 
 "Note:": "Catatan:",
+"Contact Email:": "Email Kontak:",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "Poin adalah hadiah digital spesifik platform dan tidak dimaksudkan sebagai instrumen keuangan atau investasi.",
 
 "I have read and accept the Privacy Policy and Terms of Service": "Saya telah membaca dan menerima Kebijakan Privasi & Syarat Layanan",
@@ -9457,6 +9471,7 @@ insufficientBalance: "Недостаточно средств для этой т
 "We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.": "Zastrzegamy sobie prawo do modyfikowania funkcji platformy, warunków lub zasad z odpowiednim powiadomieniem użytkowników. Kontynuowanie korzystania z platformy oznacza akceptację wszelkich aktualizacji tych warunków.",
 
 "Note:": "Uwaga:",
+"Contact Email:": "E-mail kontaktowy:",
 "Points are platform-specific digital rewards and are not intended as financial instruments or investments.": "Punkty są cyfrowymi nagrodami specyficznymi dla platformy i nie są instrumentami finansowymi ani inwestycjami.",
 
 "I have read and accept the Privacy Policy and Terms of Service": "Przeczytałem i akceptuję Politykę Prywatności oraz Warunki Świadczenia Usług",

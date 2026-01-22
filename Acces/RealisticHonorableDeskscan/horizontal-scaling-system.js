@@ -595,6 +595,7 @@ class DistributedLockManager {
 // =============================================
 // 5️⃣ Graceful Shutdown Manager
 // إدارة الإيقاف السلس
+// ⚠️ ملاحظة: لا نسجل signal handlers هنا - المعالج الرئيسي في server.js
 // =============================================
 
 class GracefulShutdownManager {
@@ -603,28 +604,15 @@ class GracefulShutdownManager {
     this.handlers = [];
     this.isShuttingDown = false;
     
-    this.setupSignalHandlers();
+    // ⚠️ لا نسجل signal handlers هنا لمنع التعارض مع server.js
+    // this.setupSignalHandlers(); // DISABLED
   }
   
+  // ⚠️ معطل - المعالجات الرئيسية في server.js فقط
   setupSignalHandlers() {
-    const signals = ['SIGTERM', 'SIGINT', 'SIGUSR2'];
-    
-    signals.forEach(signal => {
-      process.on(signal, async () => {
-        console.log(`\n📛 Received ${signal}, starting graceful shutdown...`);
-        await this.shutdown();
-      });
-    });
-    
-    process.on('uncaughtException', async (error) => {
-      console.error('❌ Uncaught Exception:', error);
-      await this.shutdown(1);
-    });
-    
-    process.on('unhandledRejection', async (reason) => {
-      console.error('❌ Unhandled Rejection:', reason);
-      await this.shutdown(1);
-    });
+    // لا نسجل أي معالجات هنا
+    // كل معالجات SIGTERM/SIGINT/uncaughtException في server.js
+    console.log('[SCALING] Signal handlers disabled - using server.js handlers');
   }
   
   // تسجيل handler للإيقاف

@@ -4605,13 +4605,13 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       // 🔒 لكن نتحقق من السيرفر فقط إذا كان لدينا userId
       
       if (!currentUser || !currentUser.id) {
-        // مستخدم جديد - تفعيل الزر مباشرة بدون تحقق من السيرفر
-        console.log('✅ New user (no ID yet), enabling button directly');
-        processingStatus.textContent = 'Processing available';
-        updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
-        processingButton.classList.remove('disabled');
-        processingButton.disabled = false;
-        processingButton.setAttribute('data-server-verified', 'new-user');
+        // 🔒 مستخدم جديد بدون ID - الزر يبقى مغلقاً حتى يتم إنشاء المستخدم
+        console.log('🔒 No user ID yet, button stays disabled');
+        processingStatus.textContent = 'Loading...';
+        updateButtonSafely('fas fa-spinner fa-spin', translator.translate('Loading...'));
+        processingButton.classList.add('disabled');
+        processingButton.disabled = true;
+        processingButton.setAttribute('data-server-verified', 'false');
       } else {
         // مستخدم موجود - نتحقق من السيرفر
         processingStatus.textContent = 'Checking status...';
@@ -4652,22 +4652,22 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
               processingButton.setAttribute('data-server-verified', 'true');
             }
           } else {
-            // خطأ في الاتصال - تفعيل الزر على أي حال (المستخدم موجود)
-            console.log('⚠️ SERVER CHECK: Failed to verify, enabling button anyway');
-            processingStatus.textContent = 'Processing available';
-            updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
-            processingButton.classList.remove('disabled');
-            processingButton.disabled = false;
-            processingButton.setAttribute('data-server-verified', 'true');
+            // 🔒 خطأ في الاتصال - الزر يبقى مغلقاً
+            console.log('🔒 SERVER CHECK: Failed to verify, button stays disabled');
+            processingStatus.textContent = 'Connection error';
+            updateButtonSafely('fas fa-exclamation-triangle', translator.translate('Retry'));
+            processingButton.classList.add('disabled');
+            processingButton.disabled = true;
+            processingButton.setAttribute('data-server-verified', 'false');
           }
         } catch (error) {
-          console.error('⚠️ SERVER CHECK ERROR:', error);
-          // خطأ في الاتصال - تفعيل الزر على أي حال
-          processingStatus.textContent = 'Processing available';
-          updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
-          processingButton.classList.remove('disabled');
-          processingButton.disabled = false;
-          processingButton.setAttribute('data-server-verified', 'true');
+          console.error('🔒 SERVER CHECK ERROR:', error);
+          // 🔒 خطأ في الاتصال - الزر يبقى مغلقاً
+          processingStatus.textContent = 'Connection error';
+          updateButtonSafely('fas fa-exclamation-triangle', translator.translate('Retry'));
+          processingButton.classList.add('disabled');
+          processingButton.disabled = true;
+          processingButton.setAttribute('data-server-verified', 'false');
         }
       }
       if (countdownTimer) countdownTimer.textContent = '24:00:00';
@@ -4715,6 +4715,13 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
    // Processing button click handler - Enhanced with seamless reward transfer
 processingButton.addEventListener('click', async function() {
+  // ✅ تنظيف العلم إذا مر أكثر من 30 ثانية (حماية من التعليق)
+  const timeSinceLastStart = Date.now() - (window.processingSessionStartTimestamp || 0);
+  if (window.processingSessionStarting && timeSinceLastStart > 30000) {
+    console.log('⚠️ Clearing stuck processingSessionStarting flag (>30s)');
+    window.processingSessionStarting = false;
+  }
+  
   // منع الضغط المتكرر أثناء بدء الجلسة
   if (window.processingSessionStarting) {
     console.log('Processing session already starting, ignoring click');
@@ -4759,31 +4766,30 @@ processingButton.addEventListener('click', async function() {
               processingButton.disabled = false;
               // ✅ المستخدم جاهز الآن - نستمر مع بقية الكود
             } else {
-              processingButton.innerHTML = originalText;
-              processingButton.classList.remove('disabled');
-              processingButton.disabled = false;
-              showNotification(translator.translate('Please try again'), 'error');
+              // 🔒 فشل إنشاء المستخدم - الزر يبقى مغلقاً
+              processingButton.classList.add('disabled');
+              processingButton.disabled = true;
               return;
             }
           } catch (createErr) {
             console.error('Failed to create user:', createErr);
-            processingButton.innerHTML = originalText;
-            processingButton.classList.remove('disabled');
-            processingButton.disabled = false;
-            showNotification(translator.translate('Please check your internet connection'), 'error');
+            // 🔒 خطأ - الزر يبقى مغلقاً
+            processingButton.classList.add('disabled');
+            processingButton.disabled = true;
             return;
           }
         }
       } catch (e) {
         console.error('Failed to load user data:', e);
-        processingButton.innerHTML = originalText;
-        processingButton.classList.remove('disabled');
-        processingButton.disabled = false;
-        showNotification(translator.translate('Please check your internet connection'), 'error');
+        // 🔒 خطأ - الزر يبقى مغلقاً
+        processingButton.classList.add('disabled');
+        processingButton.disabled = true;
         return;
       }
     } else {
-      showNotification(translator.translate('Please login first'), 'error');
+      // 🔒 لا يوجد بريد - الزر يبقى مغلقاً
+      processingButton.classList.add('disabled');
+      processingButton.disabled = true;
       return;
     }
   }
@@ -4793,21 +4799,40 @@ processingButton.addEventListener('click', async function() {
   // لذلك لا حاجة للتحقق المسبق هنا - نستمر مباشرة للبدء السلس
   console.log('✅ Proceeding to start processing (server will validate)...');
 
-  // ============================================
-  // 🎬 عرض الإعلان أولاً قبل بدء النشاط (مستقل عن Boost)
-  // ============================================
-  if (window.canShowActivityAd && window.canShowActivityAd()) {
-    console.log('📺 عرض إعلان Activity قبل بدء النشاط...');
-    window.showActivityAd();
-    // الإعلان يمكن تخطيه - لا ينتظر إكتماله
-  }
-
-  // Set flag to prevent duplicate starts
+  // Set flag to prevent duplicate starts + timestamp للتنظيف التلقائي
   window.processingSessionStarting = true;
+  window.processingSessionStartTimestamp = Date.now();
   
   // Disable button immediately to prevent double clicks
   processingButton.classList.add('disabled');
+  processingButton.disabled = true; // ✅ إضافة disabled للتأكد
   const originalButtonHTML = processingButton.innerHTML;
+
+  // ============================================
+  // 🎬 عرض الإعلان أولاً قبل بدء النشاط (مستقل عن Boost)
+  // ============================================
+  let adWasShown = false;
+  if (window.canShowActivityAd && window.canShowActivityAd()) {
+    console.log('📺 عرض إعلان Activity قبل بدء النشاط...');
+    adWasShown = true;
+    
+    // 🔄 انتظار إغلاق الإعلان قبل إظهار الرسائل
+    await new Promise((resolve) => {
+      const adShown = window.showActivityAd(() => {
+        console.log('📺 تم إغلاق الإعلان - callback executed');
+        resolve();
+      });
+      
+      // إذا لم يُعرض الإعلان، نستمر مباشرة
+      if (!adShown) {
+        console.log('📺 الإعلان لم يُعرض - متابعة');
+        resolve();
+      }
+      
+      // timeout احتياطي 30 ثانية
+      setTimeout(resolve, 30000);
+    });
+  }
 
   try {
     // Define formatSecondsToTime function here to ensure it's available when needed
@@ -4899,23 +4924,32 @@ processingButton.addEventListener('click', async function() {
         }
       }
       
+      // 🔒 الزر يبقى مغلقاً لأن هناك جلسة نشطة
+      processingButton.classList.add('disabled');
+      processingButton.disabled = true;
       window.processingSessionStarting = false;
       return;
     }
 
     // 🔒 SECURITY: Handle 429 Too Many Requests - rapid start attempt
     if (response.status === 429) {
-      const tooManyData = await response.json();
-      console.log(`🔒 BLOCKED BY SERVER: Too many attempts, wait ${tooManyData.wait_seconds}s`);
-      showNotification(translator.translate('Please wait before trying again'), 'warning');
+      console.log(`🔒 BLOCKED BY SERVER: Too many attempts`);
+      
+      // 🔒 الزر يبقى مغلقاً
+      processingButton.classList.add('disabled');
+      processingButton.disabled = true;
       window.processingSessionStarting = false;
       return;
     }
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.log(`[SCRIPT] Processing start failed: ${errorText}`);
-      throw new Error(`Server returned status: ${response.status}`);
+      console.log(`[SCRIPT] Processing start failed: ${response.status}`);
+      
+      // 🔒 خطأ - الزر يبقى مغلقاً
+      processingButton.classList.add('disabled');
+      processingButton.disabled = true;
+      window.processingSessionStarting = false;
+      return;
     }
 
     const data = await response.json();
@@ -5006,8 +5040,14 @@ processingButton.addEventListener('click', async function() {
 
       window.processingSessionStarting = false;
       
-      // إشعار بدء النشاط (فقط إذا لم يكن هناك نقل مكافأة)
-      if (!data.reward_transferred || data.reward_transferred <= 0) {
+      // ✅ إشعار بدء النشاط مع تأخير احترافي إذا تم نقل مكافأة
+      if (data.reward_transferred > 0) {
+        // تأخير 2 ثانية بين رسالة نقل الرصيد ورسالة بدء الجلسة
+        setTimeout(() => {
+          showNotification(translator.translate('New processing session started!'), 'success');
+        }, 2000);
+      } else {
+        // لا يوجد نقل مكافأة - إظهار رسالة البدء مباشرة
         showNotification(translator.translate('Point processing started successfully!'), 'success');
       }
       
@@ -5018,23 +5058,21 @@ processingButton.addEventListener('click', async function() {
       showNotification(data.error || 'Failed to start processing', 'error');
       processingStatus.textContent = 'Processing available';
       updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
+      // ✅ السيرفر رفض لكن أكد أنه لا توجد جلسة - يمكن فتح الزر
       processingButton.classList.remove('disabled');
       processingButton.disabled = false;
       processingAnimation.style.display = 'none';
       window.processingSessionStarting = false;
     }
   } catch (error) {
-    console.error('Error during processing:', error);
-    // Show user-friendly error message
-    const errorMsg = error.message || 'Processing failed. Please try again.';
-    processingStatus.textContent = errorMsg;
-    updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
-
-    processingButton.classList.remove('disabled');
-    processingButton.disabled = false;
+    console.error('❌ Error during processing (connection/timeout):', error);
+    
+    // 🔒 الزر يبقى مغلقاً - لمنع بدء جلسة مزدوجة
+    processingButton.classList.add('disabled');
+    processingButton.disabled = true;
     processingAnimation.style.display = 'none';
-
-    // Clear the starting flag on error
+    
+    // Clear the starting flag
     window.processingSessionStarting = false;
   }
 });
@@ -5537,6 +5575,23 @@ function startGradualAccumulation() {
 
               // Show notification
               showNotification(`Processing completed! ${formatNumberSmart(finalReward)} Points accumulated. Click "Start Activity" to claim!`, 'success');
+              
+              // ✅ فتح الزر فوراً عند انتهاء الجلسة
+              processingButton.classList.remove('disabled');
+              processingButton.disabled = false;
+              processingButton.textContent = '';
+              const playIcon = document.createElement('i');
+              playIcon.className = 'fas fa-play';
+              processingButton.appendChild(playIcon);
+              processingButton.appendChild(document.createTextNode(' ' + translator.translate('Start Activity')));
+              
+              // تحديث حالة النشاط
+              if (processingStatus) {
+                processingStatus.textContent = 'Processing available';
+              }
+              if (processingAnimation) {
+                processingAnimation.style.display = 'none';
+              }
               
               // ✅ السماح بالبدء السلس من أول ضغطة
               processingButton.setAttribute('data-server-verified', 'true');
@@ -6287,6 +6342,20 @@ function startGradualAccumulation() {
             currentUser.processing_active = 0;
             currentUser.processing_completed = true;
             saveUserSession(currentUser);
+            
+            // ✅ فتح الزر عند انتهاء الجلسة
+            const processingButton = document.getElementById('toggle-activity');
+            const processingStatus = document.getElementById('activity-status');
+            const processingAnimation = document.getElementById('activity-animation');
+            if (processingButton) {
+              processingButton.classList.remove('disabled');
+              processingButton.disabled = false;
+              processingButton.innerHTML = '<i class="fas fa-play"></i> ' + (window.translator ? window.translator.translate('Start Activity') : 'Start Activity');
+              processingButton.setAttribute('data-server-verified', 'true');
+            }
+            if (processingStatus) processingStatus.textContent = 'Processing available';
+            if (processingAnimation) processingAnimation.style.display = 'none';
+            window.processingSessionStarting = false;
             
             // ✅ Also cleanup from database
             try {
@@ -7960,8 +8029,9 @@ function initializeGoogleSignIn() {
         }
         
         if (result === 'timeout') {
-          console.log('⚠️ User check timeout, proceeding with login');
-          continueWithLogin(currentUser, referralCode);
+          console.log('⚠️ User check timeout, showing privacy policy for safety');
+          // عند timeout، نعرض شروط الخصوصية للأمان
+          showPrivacyPolicyModal(currentUser, referralCode);
         } else if (!result) {
           // New user - show privacy policy
           showPrivacyPolicyModal(currentUser, referralCode);
@@ -7978,8 +8048,8 @@ function initializeGoogleSignIn() {
           googleBtn.disabled = false;
           googleBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> <span data-translate-key="Sign in with Google">Sign in with Google</span>';
         }
-        // If error, assume user exists and continue
-        continueWithLogin(currentUser, referralCode);
+        // عند الخطأ، نعرض شروط الخصوصية للأمان
+        showPrivacyPolicyModal(currentUser, referralCode);
       });
 
     } catch (error) {
@@ -11599,56 +11669,62 @@ if (totalCost > (currentBalance + precision)) {
     const shadowColor = isDarkMode ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)';
 
     // Create modal content with theme-aware styles
+    const isArabic = translator.getCurrentLanguage() === 'ar';
     modalContainer.innerHTML = `
-      <div class="privacy-policy-content" style="width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; background-color: ${bgColor}; color: ${textColor}; border-radius: 8px; padding: 20px; box-shadow: 0 4px 10px ${shadowColor}; border: 1px solid ${borderColor};">
+      <div class="privacy-policy-content" style="width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; background-color: ${bgColor}; color: ${textColor}; border-radius: 8px; padding: 20px; box-shadow: 0 4px 10px ${shadowColor}; border: 1px solid ${borderColor}; direction: ${isArabic ? 'rtl' : 'ltr'}; text-align: ${isArabic ? 'right' : 'left'};">
         <h2 style="text-align: center; margin-bottom:20px; color: ${textColor};" data-translate-key="Privacy Policy & Terms of Service">${translator.translate('Privacy Policy & Terms of Service')}</h2>
         <div class="privacy-policy-text" style="margin-bottom: 20px;">
-          <h3 style="color: ${textColor};" data-translate-key="1. Introduction">${translator.translate('1. Introduction')}</h3>
+          <h3 style="color: #4CAF50;" data-translate-key="1. Introduction">${translator.translate('1. Introduction')}</h3>
           <p style="color: ${textColor};" data-translate-key="Welcome to AccessoireDigital. Before proceeding, please review and accept our Privacy Policy and Terms of Service.">${translator.translate('Welcome to AccessoireDigital. Before proceeding, please review and accept our Privacy Policy and Terms of Service.')}</p>
 
-          <h3 style="color: ${textColor};" data-translate-key="2. Platform Services">${translator.translate('2. Platform Services')}</h3>
+          <h3 style="color: #4CAF50;" data-translate-key="2. Platform Services">${translator.translate('2. Platform Services')}</h3>
           <p style="color: ${textColor};" data-translate-key="AccessoireDigital is a comprehensive digital assets platform offering cloud processing services, digital account management, and secure transaction processing. Users can earn Points through our 24-hour processing cycles and participate in our referral program.">${translator.translate('AccessoireDigital is a comprehensive digital assets platform offering cloud processing services, digital account management, and secure transaction processing. Users can earn Points through our 24-hour processing cycles and participate in our referral program.')}</p>
 
 
-          <h3 style="color: ${textColor};" data-translate-key="3. Platform Purpose">${translator.translate('3. Platform Purpose')}</h3>
+          <h3 style="color: #4CAF50;" data-translate-key="3. Platform Purpose">${translator.translate('3. Platform Purpose')}</h3>
           <p style="color: ${textColor};" data-translate-key="Access-Network is a digital engagement platform that rewards active participation through a secure distributed point system. Points are earned through daily activities, referrals, and community interaction. These digital assets can be transferred between users and stored in personal wallets for future use within the ecosystem.">${translator.translate('Access-Network is a digital engagement platform that rewards active participation through a secure distributed point system. Points are earned through daily activities, referrals, and community interaction. These digital assets can be transferred between users and stored in personal wallets for future use within the ecosystem.')}</p>
 
           
 
-          <h3 style="color: ${textColor};" data-translate-key="4. Account & Transaction System">${translator.translate('4. Account & Transaction System')}</h3>
+          <h3 style="color: #4CAF50;" data-translate-key="4. Account & Transaction System">${translator.translate('4. Account & Transaction System')}</h3>
           <p style="color: ${textColor};" data-translate-key="Each user receives a unique digital account address for sending and receiving Points. All transactions are recorded on our secure digital network with full transparency and immutable transaction history.">${translator.translate('Each user receives a unique digital account address for sending and receiving Points. All transactions are recorded on our secure digital network with full transparency and immutable transaction history.')}</p>
 
         
 
-          <h3 style="color: ${textColor};" data-translate-key="5. Processing & Rewards System">${translator.translate('5. Processing & Rewards System')}</h3>
+          <h3 style="color: #4CAF50;" data-translate-key="5. Processing & Rewards System">${translator.translate('5. Processing & Rewards System')}</h3>
           <p style="color: ${textColor};" data-translate-key="Users can participate in cloud processing to earn Points every 24 hours. Processing rewards are distributed based on activity and referral bonuses. All earnings are automatically credited to your account balance upon completion of processing cycles.">${translator.translate('Users can participate in cloud processing to earn Points every 24 hours. Processing rewards are distributed based on activity and referral bonuses. All earnings are automatically credited to your account balance upon completion of processing cycles.')}</p>
 
-          <h3 style="color: ${textColor};" data-translate-key="6. Referral Program">${translator.translate('6. Referral Program')}</h3>
+          <h3 style="color: #4CAF50;" data-translate-key="6. Referral Program">${translator.translate('6. Referral Program')}</h3>
           <p style="color: ${textColor};" data-translate-key="Users can invite others using their unique referral code. Successful referrals earn bonuses for both the referrer and new user. All referral rewards are processed automatically and added to account balances.">${translator.translate('Users can invite others using their unique referral code. Successful referrals earn bonuses for both the referrer and new user. All referral rewards are processed automatically and added to account balances.')}</p>
 
-          <h3 style="color: ${textColor};" data-translate-key="7. Transaction Fees & Policies">${translator.translate('7. Transaction Fees & Policies')}</h3>
+          <h3 style="color: #4CAF50;" data-translate-key="7. Transaction Fees & Policies">${translator.translate('7. Transaction Fees & Policies')}</h3>
           <p style="color: ${textColor};" data-translate-key="All transactions include a minimal network fee of 0.00002 Points to maintain network security. Minimum transaction amounts and daily limits may apply to ensure system stability and security.">${translator.translate('All transactions include a minimal network fee of 0.00002 Points to maintain network security. Minimum transaction amounts and daily limits may apply to ensure system stability and security.')}</p>
 
-          <h3 style="color: ${textColor};" data-translate-key="8. Data Collection & Security">${translator.translate('8. Data Collection & Security')}</h3>
+          <h3 style="color: #4CAF50;" data-translate-key="8. Data Collection & Security">${translator.translate('8. Data Collection & Security')}</h3>
           <p style="color: ${textColor};" data-translate-key="We collect essential information including your Google account details (name, email, profile picture) for authentication purposes only. YOUR DATA IS COMPLETELY PRIVATE: We do NOT share, sell, or distribute your personal information to any third parties under any circumstances. All user data and private keys are encrypted using industry-standard AES-256 security protocols and stored securely in our protected databases. Your information is used exclusively for platform functionality and your account security.">${translator.translate('We collect essential information including your Google account details (name, email, profile picture) for authentication purposes only. YOUR DATA IS COMPLETELY PRIVATE: We do NOT share, sell, or distribute your personal information to any third parties under any circumstances. All user data and private keys are encrypted using industry-standard AES-256 security protocols and stored securely in our protected databases. Your information is used exclusively for platform functionality and your account security.')}</p>
 
-          <h3 style="color: ${textColor};" data-translate-key="9. Privacy & Data Usage">${translator.translate('9. Privacy & Data Usage')}</h3>
+          <h3 style="color: #4CAF50;" data-translate-key="9. Privacy & Data Usage">${translator.translate('9. Privacy & Data Usage')}</h3>
           <p style="color: ${textColor};" data-translate-key="Your personal information is used solely for platform functionality, security, and user experience enhancement. We do not share your data with third parties without explicit consent, except as required by applicable laws.">${translator.translate('Your personal information is used solely for platform functionality, security, and user experience enhancement. We do not share your data with third parties without explicit consent, except as required by applicable laws.')}</p>
 
-          <h3 style="color: ${textColor};" data-translate-key="10. User Responsibilities">${translator.translate('10. User Responsibilities')}</h3>
+          <h3 style="color: #4CAF50;" data-translate-key="10. User Responsibilities">${translator.translate('10. User Responsibilities')}</h3>
           <p style="color: ${textColor};" data-translate-key="Users are responsible for securing their account credentials and private keys. AccessoireDigital is not liable for losses due to user negligence, unauthorized access, or failure to follow security guidelines.">${translator.translate('Users are responsible for securing their account credentials and private keys. AccessoireDigital is not liable for losses due to user negligence, unauthorized access, or failure to follow security guidelines.')}</p>
 
-          <h3 style="color: ${textColor};" data-translate-key="11. Account Deletion & Data Removal">${translator.translate('11. Account Deletion & Data Removal')}</h3>
+          <h3 style="color: #4CAF50;" data-translate-key="11. Account Deletion & Data Removal">${translator.translate('11. Account Deletion & Data Removal')}</h3>
           <p style="color: ${textColor};" Users have the right to permanently delete their account at any time through the profile settings. When you delete your account: (1) All personal data including email, name, and profile information will be permanently removed. (2) All your Points balance will be lost forever and cannot be recovered. (3) Your referral code and all referral relationships will be permanently deleted. (4) All transaction history and activity records will be completely erased. (5) Your wallet and private keys will be permanently deleted. (6) This action is IRREVERSIBLE and CANNOT be undone. Once your account is deleted, there is no way to restore your data, Points, or any information associated with your account. We do not retain any backup copies of deleted accounts.">${translator.translate('Users have the right to permanently delete their account at any time through the profile settings. When you delete your account: (1) All personal data including email, name, and profile information will be permanently removed. (2) All your Points balance will be lost forever and cannot be recovered. (3) Your referral code and all referral relationships will be permanently deleted. (4) All transaction history and activity records will be completely erased. (5) Your wallet and private keys will be permanently deleted. (6) This action is IRREVERSIBLE and CANNOT be undone. Once your account is deleted, there is no way to restore your data, Points, or any information associated with your account. We do not retain any backup copies of deleted accounts.')}</p>
 
-          <h3 style="color: ${textColor};" data-translate-key="12. Platform Modifications">${translator.translate('12. Platform Modifications')}</h3>
+          <h3 style="color: #4CAF50;" data-translate-key="12. Platform Modifications">${translator.translate('12. Platform Modifications')}</h3>
           <p style="color: ${textColor};" data-translate-key="We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.">${translator.translate('We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.')}</p>
 
-         <h3 style="color: ${textColor};" data-translate-key="Note:">
+         <h3 style="color: #4CAF50;" data-translate-key="Note:">
   ${translator.translate('Note:')}
 </h3>
 <p style="color: ${textColor};" data-translate-key="Points are platform-specific digital rewards and are not intended as financial instruments or investments.">
   ${translator.translate('Points are platform-specific digital rewards and are not intended as financial instruments or investments.')}
+</p>
+
+<p style="color: ${textColor}; margin-top: 20px; direction: ${translator.getCurrentLanguage() === 'ar' ? 'rtl' : 'ltr'};">
+  <strong data-translate-key="Contact Email:">${translator.translate('Contact Email:')}</strong> 
+  <a href="mailto:x@gmail.com" style="color: #2196F3; text-decoration: none;">x@gmail.com</a>
 </p>
 </div>
 

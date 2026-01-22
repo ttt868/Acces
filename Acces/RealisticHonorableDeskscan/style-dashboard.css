@@ -20,7 +20,7 @@
 /* Leaderboard - صفحة عادية مباشرة */
 #leaderboard-page.page-content {
   max-width: 1200px;
-  margin: ;
+  
   padding: 5px;
   box-sizing: border-box;
 }
@@ -277,7 +277,7 @@
     align-items: center;
     gap: 8px;
     flex: 1;
-    text-align: ;
+    
   }
 
   .network-logo {
@@ -1515,6 +1515,7 @@
   visibility: visible;
   box-shadow: none;
   flex: 1;
+  
 
 }
 
@@ -1529,6 +1530,14 @@
 
 .action-button i {
   font-size: 14px;
+}
+
+/* ✅ عكس ترتيب الأيقونة في اللغة العربية - الأيقونة قبل النص */
+html[lang="ar"] .action-button,
+html[dir="rtl"] .action-button,
+.arabic .action-button,
+[data-lang="ar"] .action-button {
+  flex-direction: row-reverse;
 }
 
 /* Dark theme action buttons */
@@ -1648,7 +1657,6 @@
     flex-direction: row;
     justify-content: space-between;
     width: 100%;
-    mrgin-right: px !important;
   }
 
 
@@ -1784,7 +1792,7 @@ font-size: 1rem !important;
       align-items: left !important;
       margin-bottom: 20px !important;
        position: relative; 
-      top: ;
+      
      
      
     }
@@ -1804,9 +1812,7 @@ font-size: 1rem !important;
        
      }
 
-    .dark-theme .balance-showcase {
-     
-    }
+    
 
     .balance-amount-container {
       display: flex;
@@ -2227,7 +2233,7 @@ visibility: visible;
       margin-top:   0% !important;
       right: 50px !important;
       z-index: 998;
-      display: ;
+      
       flex-direction: column;
       gap: 16px;
       padding: 8px 0px;
