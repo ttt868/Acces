@@ -4864,7 +4864,7 @@ processingButton.addEventListener('click', async function() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             userId: currentUser.id,
-            finalReward: currentAccumulated
+            amount: currentAccumulated
           })
         }, 20000);
         

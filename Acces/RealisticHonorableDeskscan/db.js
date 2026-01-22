@@ -1805,6 +1805,82 @@ async function getAccumulatedReward(userId) {
   }
 }
 
+// Complete processing and transfer accumulated reward to permanent balance
+async function completeProcessing(userId, amount) {
+  try {
+    console.log(`[completeProcessing] Starting for userId: ${userId}, amount: ${amount}`);
+    
+    // Start a transaction for consistency
+    await pool.query('BEGIN');
+    
+    // Get current user data
+    const userResult = await pool.query(
+      'SELECT id, coins, "accumulatedReward", processing_accumulated FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (userResult.rows.length === 0) {
+      await pool.query('ROLLBACK');
+      return { success: false, error: 'User not found' };
+    }
+    
+    const user = userResult.rows[0];
+    const currentCoins = parseFloat(user.coins || 0);
+    
+    // Use provided amount or get from database
+    let rewardToTransfer = parseFloat(amount || 0);
+    if (rewardToTransfer <= 0) {
+      rewardToTransfer = parseFloat(user.accumulatedReward || user.processing_accumulated || 0);
+    }
+    
+    console.log(`[completeProcessing] Current coins: ${currentCoins}, Reward to transfer: ${rewardToTransfer}`);
+    
+    if (rewardToTransfer <= 0) {
+      await pool.query('ROLLBACK');
+      return { 
+        success: false, 
+        error: 'No accumulated reward to transfer',
+        new_balance: currentCoins,
+        reward_amount: 0
+      };
+    }
+    
+    // Calculate new balance
+    const newBalance = currentCoins + rewardToTransfer;
+    
+    // Update user: add reward to coins and reset accumulated values
+    await pool.query(
+      `UPDATE users SET 
+        coins = $1,
+        "accumulatedReward" = 0,
+        processing_accumulated = 0,
+        current_processing_reward = 0,
+        processing_active = 0,
+        processing_end_time = NULL,
+        processing_start_time = NULL,
+        processing_start_time_seconds = NULL
+      WHERE id = $2`,
+      [newBalance, userId]
+    );
+    
+    // Commit transaction
+    await pool.query('COMMIT');
+    
+    console.log(`[completeProcessing] Successfully transferred ${rewardToTransfer} to balance. New balance: ${newBalance}`);
+    
+    return {
+      success: true,
+      new_balance: newBalance,
+      reward_amount: rewardToTransfer,
+      previous_balance: currentCoins
+    };
+    
+  } catch (error) {
+    await pool.query('ROLLBACK');
+    console.error('[completeProcessing] Error:', error);
+    return { success: false, error: error.message };
+  }
+}
 
 
 async function saveProcessingHistory(userId, amount, timestamp, userName) {
@@ -2275,6 +2351,7 @@ const exports = {
   startProcessing,
   updateAccumulatedReward,
   getAccumulatedReward,
+  completeProcessing,
   getNextNonce,
   getBlockchainTransactions,
   saveTransactionWithConsistentHash,
@@ -2310,6 +2387,7 @@ export {
   startProcessing,
   updateAccumulatedReward,
   getAccumulatedReward,
+  completeProcessing,
   getNextNonce,
   getPersistentNonce,
   saveNonceUsage,

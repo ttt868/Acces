@@ -482,7 +482,7 @@
                 <div class="info-item">
                     <span class="info-label">RPC URL</span>
                     <div style="display: flex; align-items: center;">
-                        <span class="info-value">/rpc</span>
+                        <span class="info-value" id="rpc-url-display"></span>
                         <button class="copy-btn" onclick="copyToClipboard(window.location.origin + '/rpc', this)">
                             <i class="fas fa-copy"></i>
                         </button>
@@ -512,7 +512,7 @@
                 <div class="info-item">
                     <span class="info-label">Explorer</span>
                     <div style="display: flex; align-items: center;">
-                        <span class="info-value">access-explorer.html</span>
+                        <span class="info-value" id="explorer-url-display"></span>
                         <button class="copy-btn" onclick="copyToClipboard(window.location.origin + '/access-explorer.html', this)">
                             <i class="fas fa-copy"></i>
                         </button>
@@ -948,6 +948,16 @@
                 if (!savedTheme) {
                     localStorage.setItem('theme', 'dark');
                 }
+            }
+            
+            // Set dynamic URLs
+            const rpcUrlDisplay = document.getElementById('rpc-url-display');
+            const explorerUrlDisplay = document.getElementById('explorer-url-display');
+            if (rpcUrlDisplay) {
+                rpcUrlDisplay.textContent = window.location.origin + '/rpc';
+            }
+            if (explorerUrlDisplay) {
+                explorerUrlDisplay.textContent = window.location.origin + '/access-explorer.html';
             }
             
             showStatus('Choose your preferred method to add the network', 'info');
