@@ -15,6 +15,7 @@
         "/^node --check /workspaces/Acces/Acces/RealisticHonorableDeskscan/translations\\.js && echo \"OK\" \\|\\| echo \"ERROR\"$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "tar": true
     }
 }

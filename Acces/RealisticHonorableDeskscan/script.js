@@ -5302,9 +5302,9 @@ function startGradualAccumulation() {
   window.accumulationInterval = setInterval(calculateAndDisplayLocally, 1000);
   console.log('✅ Local accumulation interval started (every 1 second)');
 
-  // 🚀 Fetch boost data every 3 MINUTES
-  window.boostCheckInterval = setInterval(fetchBoostData, 180000);
-  console.log('✅ Boost check interval started (every 3 minutes)');
+  // 🚀 Fetch boost data every 10 MINUTES (optimized for lower server load)
+  window.boostCheckInterval = setInterval(fetchBoostData, 600000);
+  console.log('✅ Boost check interval started (every 10 minutes)');
 
   // ✅ CRITICAL: إرسال دوري خفيف للسيرفر لحفظ الرصيد المتراكم (كل 5 دقائق)
   // هذا يضمن عدم فقدان الرصيد إذا أُغلقت الصفحة فجأة
@@ -5713,8 +5713,8 @@ function startGradualAccumulation() {
 
     // Initialize relay check
     checkRelayStatus();
-    // Check relay status every minute
-    setInterval(checkRelayStatus, 60000);
+    // Check relay status every 5 minutes (optimized for lower server load)
+    setInterval(checkRelayStatus, 300000);
 
 
 
