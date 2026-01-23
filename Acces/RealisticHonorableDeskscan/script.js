@@ -8118,9 +8118,9 @@ function initializeGoogleSignIn() {
         googleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
       }
       
-      // استخدام Promise مع timeout مناسب (8 ثواني) - Render قد يحتاج وقت للـ cold start
+      // استخدام Promise مع timeout قصير جداً (1.5 ثانية)
       const checkPromise = checkIfUserExists(currentUser.email);
-      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve('timeout'), 8000));
+      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve('timeout'), 1500));
       
       Promise.race([checkPromise, timeoutPromise]).then(result => {
         // إعادة زر Google لحالته الأصلية
