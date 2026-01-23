@@ -7919,12 +7919,16 @@ const server = http.createServer(async (req, res) => {
         
         // Save completed reward in database WITHOUT transferring to balance
         // Also clean up "Collecting..." entries from history
+        // ✅ FIX: تصفير processing_end_time و processing_start_time_seconds للسماح ببدء جلسة جديدة
         await pool.query('BEGIN');
         
         try {
           await pool.query(
             `UPDATE users SET 
              processing_active = 0,
+             processing_end_time = 0,
+             processing_start_time_seconds = 0,
+             processing_start_time = NULL,
              completed_processing_reward = $1::numeric(10,8),
              accumulatedReward = $1::numeric(10,8)
              WHERE id = $2`,

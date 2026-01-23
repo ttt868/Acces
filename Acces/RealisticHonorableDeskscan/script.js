@@ -11825,7 +11825,7 @@ if (totalCost > (currentBalance + precision)) {
 
 <p style="color: ${textColor}; margin-top: 20px; direction: ${translator.getCurrentLanguage() === 'ar' ? 'rtl' : 'ltr'};">
   <strong data-translate-key="Contact Email:">${translator.translate('Contact Email:')}</strong> 
-  <a href="mailto:x@gmail.com" style="color: #2196F3; text-decoration: none;">x@gmail.com</a>
+  <a href="mailto:support@accesschain.org" style="color: #2196F3; text-decoration: none;">support@accesschain.org</a>
 </p>
 </div>
 
