@@ -68,3 +68,4 @@ service-account.json
 
 # Pending transactions (contains private data)
 pending-transactions.json
+.env

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار الإشعارات - Access Network</title>
+    <style>
+        * { font-family: system-ui, -apple-system, sans-serif; }
+        body { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { color: #00d4aa; text-align: center; }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            margin: 15px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary { background: linear-gradient(135deg, #00d4aa, #00a884); color: #fff; }
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 8px 25px rgba(0,212,170,0.4); }
+        .btn-secondary { background: #333; color: #fff; }
+        .log {
+            background: #111;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry { padding: 5px 0; border-bottom: 1px solid #222; }
+        .success { color: #00d4aa; }
+        .error { color: #ff6b6b; }
+        .info { color: #6bb3ff; }
+        .status-box {
+            background: #222;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+        }
+        .status-value { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 اختبار الإشعارات</h1>
+        
+        <div class="status-box">
+            <div class="status-item">
+                <span>حالة الإذن:</span>
+                <span id="permission-status" class="status-value">جاري الفحص...</span>
+            </div>
+            <div class="status-item">
+                <span>Service Worker:</span>
+                <span id="sw-status" class="status-value">جاري الفحص...</span>
+            </div>
+            <div class="status-item">
+                <span>اشتراك Push:</span>
+                <span id="push-status" class="status-value">جاري الفحص...</span>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" onclick="requestPermission()">
+            1️⃣ طلب إذن الإشعارات
+        </button>
+        
+        <button class="btn btn-primary" onclick="registerServiceWorker()">
+            2️⃣ تسجيل Service Worker
+        </button>
+        
+        <button class="btn btn-primary" onclick="subscribePush()">
+            3️⃣ الاشتراك في Push
+        </button>
+        
+        <button class="btn btn-secondary" onclick="sendTestNotification()">
+            📤 إرسال إشعار تجريبي
+        </button>
+        
+        <button class="btn btn-secondary" onclick="checkStatus()">
+            🔄 تحديث الحالة
+        </button>
+        
+        <div class="log" id="log">
+            <div class="log-entry info">🚀 جاهز للاختبار...</div>
+        </div>
+    </div>
+
+    <script>
+        const VAPID_PUBLIC_KEY = 'BM_rReowAfVGz12iV2a-p3J8_pkQJLXUty6ZP56PBxdIjDdh6IEG1Awk36Hgxv2opxDz2zwzVjjSOKiydFWAEKI';
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.insertBefore(entry, logDiv.firstChild);
+        }
+        
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+        
+        async function checkStatus() {
+            // Check permission
+            const permEl = document.getElementById('permission-status');
+            if ('Notification' in window) {
+                permEl.textContent = Notification.permission;
+                permEl.style.color = Notification.permission === 'granted' ? '#00d4aa' : '#ff6b6b';
+            } else {
+                permEl.textContent = 'غير مدعوم';
+                permEl.style.color = '#ff6b6b';
+            }
+            
+            // Check SW
+            const swEl = document.getElementById('sw-status');
+            if ('serviceWorker' in navigator) {
+                const reg = await navigator.serviceWorker.getRegistration();
+                if (reg) {
+                    swEl.textContent = 'مسجل ✓';
+                    swEl.style.color = '#00d4aa';
+                } else {
+                    swEl.textContent = 'غير مسجل';
+                    swEl.style.color = '#ff6b6b';
+                }
+            } else {
+                swEl.textContent = 'غير مدعوم';
+                swEl.style.color = '#ff6b6b';
+            }
+            
+            // Check Push subscription
+            const pushEl = document.getElementById('push-status');
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.getSubscription();
+                if (sub) {
+                    pushEl.textContent = 'مشترك ✓';
+                    pushEl.style.color = '#00d4aa';
+                } else {
+                    pushEl.textContent = 'غير مشترك';
+                    pushEl.style.color = '#ff6b6b';
+                }
+            } catch (e) {
+                pushEl.textContent = 'خطأ';
+                pushEl.style.color = '#ff6b6b';
+            }
+            
+            log('تم تحديث الحالة', 'info');
+        }
+        
+        async function requestPermission() {
+            log('جاري طلب الإذن...', 'info');
+            try {
+                const permission = await Notification.requestPermission();
+                log(`نتيجة الإذن: ${permission}`, permission === 'granted' ? 'success' : 'error');
+                checkStatus();
+            } catch (e) {
+                log(`خطأ: ${e.message}`, 'error');
+            }
+        }
+        
+        async function registerServiceWorker() {
+            log('جاري تسجيل Service Worker...', 'info');
+            try {
+                const reg = await navigator.serviceWorker.register('/sw.js');
+                log('تم تسجيل Service Worker بنجاح!', 'success');
+                await navigator.serviceWorker.ready;
+                log('Service Worker جاهز للعمل!', 'success');
+                checkStatus();
+            } catch (e) {
+                log(`خطأ: ${e.message}`, 'error');
+            }
+        }
+        
+        async function subscribePush() {
+            log('جاري الاشتراك في Push...', 'info');
+            try {
+                // Check if service worker is ready
+                log('انتظار Service Worker...', 'info');
+                const reg = await navigator.serviceWorker.ready;
+                log('Service Worker جاهز!', 'success');
+                
+                // Check PushManager
+                if (!reg.pushManager) {
+                    log('PushManager غير متاح!', 'error');
+                    return;
+                }
+                log('PushManager متاح ✓', 'success');
+                
+                // Unsubscribe first
+                const existingSub = await reg.pushManager.getSubscription();
+                if (existingSub) {
+                    await existingSub.unsubscribe();
+                    log('تم إلغاء الاشتراك القديم', 'info');
+                }
+                
+                log('جاري إنشاء اشتراك جديد...', 'info');
+                log('VAPID Key: ' + VAPID_PUBLIC_KEY.substring(0, 20) + '...', 'info');
+                
+                const subscription = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                });
+                
+                log('تم الاشتراك بنجاح! ✓', 'success');
+                log(`Endpoint: ${subscription.endpoint.substring(0, 60)}...`, 'info');
+                
+                // Get userId from localStorage or use 4 for testing
+                const userId = localStorage.getItem('userId') || 4;
+                log(`User ID: ${userId}`, 'info');
+                
+                log('جاري إرسال للسيرفر...', 'info');
+                const response = await fetch('/api/push/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: userId,
+                        subscription: subscription.toJSON()
+                    })
+                });
+                
+                log(`Response status: ${response.status}`, 'info');
+                const result = await response.json();
+                log(`استجابة السيرفر: ${JSON.stringify(result)}`, result.success ? 'success' : 'error');
+                checkStatus();
+            } catch (e) {
+                log(`❌ خطأ: ${e.message}`, 'error');
+                log(`نوع الخطأ: ${e.name}`, 'error');
+                if (e.name === 'NotAllowedError') {
+                    log('⚠️ الإذن مرفوض! اذهب لإعدادات الموقع وفعّل الإشعارات', 'error');
+                } else if (e.name === 'AbortError') {
+                    log('⚠️ تم إلغاء العملية', 'error');
+                }
+                console.error('Full error:', e);
+            }
+        }
+        
+        async function sendTestNotification() {
+            log('جاري إرسال إشعار تجريبي...', 'info');
+            try {
+                const userId = localStorage.getItem('userId') || 4;
+                const response = await fetch('/api/push/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userId })
+                });
+                
+                const result = await response.json();
+                log(`نتيجة الإرسال: ${JSON.stringify(result)}`, result.success ? 'success' : 'error');
+            } catch (e) {
+                log(`خطأ: ${e.message}`, 'error');
+            }
+        }
+        
+        // Check status on load
+        checkStatus();
+    </script>
+</body>
+</html>

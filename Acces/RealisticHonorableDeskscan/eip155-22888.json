@@ -11,14 +11,14 @@
     "decimals": 18
   },
   "rpc": [
-    "https://your-app-name.replit.app"
+    "https://accesschain.org/rpc"
   ],
   "faucets": [],
-  "infoURL": "https://your-app-name.replit.app",
+  "infoURL": "https://accesschain.org",
   "explorers": [
     {
       "name": "Access Network Explorer",
-      "url": "https://your-app-name.replit.app/access-explorer.html",
+      "url": "https://accesschain.org/access-explorer.html",
       "standard": "EIP3091",
       "icon": "access"
     }

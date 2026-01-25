@@ -12,14 +12,14 @@
     "decimals": 18
   },
   "rpc": [
-    "https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/rpc"
+    "https://accesschain.org/rpc"
   ],
   "faucets": [],
-  "infoURL": "https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev",
+  "infoURL": "https://accesschain.org",
   "explorers": [
     {
       "name": "Access Network Explorer",
-      "url": "https://glowing-space-cod-v665jpxrr4grc6p4p-3000.app.github.dev/access-explorer.html",
+      "url": "https://accesschain.org/access-explorer.html",
       "standard": "EIP3091",
       "icon": "access"
     }

@@ -1,0 +1,49 @@
+{
+  "index": 1117,
+  "timestamp": 1769212889745,
+  "transactions": [
+    {
+      "fromAddress": "0x9d2b583e9ab73410c565dc9f90ebefa7d6545108",
+      "toAddress": "0x9a66c897e170b3d43072fb48beb75b72388a697b",
+      "amount": 0.01,
+      "gasPrice": 0.00002,
+      "gasFee": 0.00002,
+      "timestamp": 1769212888664,
+      "signature": null,
+      "hash": "220c9a7a058779c21b3ac7739241a8163009451d668094a3d7cef1e1374455ca",
+      "txId": "220c9a7a058779c21b3ac7739241a8163009451d668094a3d7cef1e1374455ca",
+      "transactionHash": "220c9a7a058779c21b3ac7739241a8163009451d668094a3d7cef1e1374455ca",
+      "id": "220c9a7a058779c21b3ac7739241a8163009451d668094a3d7cef1e1374455ca",
+      "internal": true,
+      "isExternalSender": false,
+      "isExternalRecipient": false,
+      "isLocalTransaction": true,
+      "mixedTransaction": false,
+      "rpcValidated": true,
+      "nonce": 7,
+      "balancesAlreadyUpdated": true,
+      "balanceUpdated": true,
+      "processed": true
+    },
+    {
+      "fromAddress": null,
+      "toAddress": "0x0000000000000000000000000000000000000001",
+      "amount": 0.25,
+      "gasPrice": 1769212889745,
+      "gasFee": 1769212889745,
+      "timestamp": 1769212889745,
+      "signature": null,
+      "hash": "a0510761002dd3e03cd5389c6691f027c283d254c566efa21055d6a50bba4f8f",
+      "txId": "a0510761002dd3e03cd5389c6691f027c283d254c566efa21055d6a50bba4f8f",
+      "transactionHash": "a0510761002dd3e03cd5389c6691f027c283d254c566efa21055d6a50bba4f8f",
+      "id": "a0510761002dd3e03cd5389c6691f027c283d254c566efa21055d6a50bba4f8f"
+    }
+  ],
+  "previousHash": "3aadb74c21f07857c2e682bdd8d3c00265c9fb9d20bdccf2ff3d428c4b42bc7a",
+  "nonce": 0,
+  "hash": "054957ddd1ee9edf1acdd200b3c7bc25d9e863b5ea60642211e2db3867fd0cda",
+  "merkleRoot": "45c6a02b82a65e89ceca369b735f5637d18ba35f1391f766a1a72c78d35bc22f",
+  "persistentHash": "8574ff21b606bac52932eeebbf941089952da0784c2593a6824519eea8396e80",
+  "savedAt": 1769371591404,
+  "ethereumStyle": true
+}

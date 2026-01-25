@@ -854,6 +854,12 @@ body.french .processing-info p {
     padding: 12px 24px;
     font-size: 14px;
   }
+
+  /* تصغير عنوان صفحة Network للهواتف */
+  .community-header h2 {
+    font-size: 1.25rem !important;
+    white-space: nowrap;
+  }
 }
 
 /* AccessoireCrypto Styles */

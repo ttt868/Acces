@@ -38,8 +38,31 @@ window.formatNumberSmart = function(number) {
   return parts.join('.');
 };
 
+// ✅ دالة موحدة لتحديث عرض الرصيد مع مراعاة التشفير
+window.updateBalanceDisplay = function(selector, value) {
+  const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
+  if (!element) return;
+  
+  // التحقق من حالة التشفير
+  const isHidden = localStorage.getItem('balanceHidden') === 'true';
+  
+  if (isHidden) {
+    // الرصيد مشفر - لا تغير النص، BalancePrivacyManager سيتعامل معه
+    element.classList.add('balance-hidden');
+    // حفظ القيمة الجديدة في BalancePrivacyManager
+    if (window.BalancePrivacyManager && window.BalancePrivacyManager.originalValues) {
+      window.BalancePrivacyManager.originalValues.set(selector, formatNumberSmart(value));
+    }
+  } else {
+    // الرصيد ظاهر - حدّث النص
+    element.textContent = formatNumberSmart(value);
+    element.classList.remove('balance-hidden');
+  }
+};
+
 // 🔔 Push Notifications Registration Function
 async function registerPushNotifications(userId) {
+  console.log('🔔 registerPushNotifications called with userId:', userId);
   try {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       console.warn('Push notifications not supported');
@@ -47,10 +70,13 @@ async function registerPushNotifications(userId) {
     }
 
     // Get the service worker registration
+    console.log('🔔 Getting service worker registration...');
     const registration = await navigator.serviceWorker.ready;
+    console.log('🔔 Service worker ready');
 
     // Check if already subscribed
     let subscription = await registration.pushManager.getSubscription();
+    console.log('🔔 Current subscription:', subscription ? 'exists' : 'none');
     
     // ✅ Force unsubscribe old subscription and create new one to fix 410 errors
     if (subscription) {
@@ -65,7 +91,8 @@ async function registerPushNotifications(userId) {
     
     if (!subscription) {
       // Subscribe to push notifications with current VAPID key (Updated Jan 2026)
-      const vapidPublicKey = 'BGhDldIXdMO3-o-cIFcMRL7upoWGawS3h__XWv05xZ76wgY-1l8_qVV0xmM-CSXYDKmcH_3U4j-CB4unC1ZiORE';
+      const vapidPublicKey = 'BM_rReowAfVGz12iV2a-p3J8_pkQJLXUty6ZP56PBxdIjDdh6IEG1Awk36Hgxv2opxDz2zwzVjjSOKiydFWAEKI';
+      console.log('🔔 Subscribing with VAPID key...');
       
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
@@ -76,7 +103,8 @@ async function registerPushNotifications(userId) {
     }
 
     // Send subscription to server
-    await fetch('/api/push/subscribe', {
+    console.log('🔔 Sending subscription to server...');
+    const response = await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -86,6 +114,9 @@ async function registerPushNotifications(userId) {
         subscription: subscription
       })
     });
+    
+    const result = await response.json();
+    console.log('🔔 Server response:', result);
 
     console.log('🔔 Push subscription saved to server');
   } catch (error) {
@@ -140,6 +171,65 @@ function urlBase64ToUint8Array(base64String) {
   }
   return outputArray;
 }
+
+// 🔔 طلب إذن الإشعارات فوراً عند تحميل الصفحة
+(function autoRequestNotificationPermission() {
+  // انتظر 5 ثواني للتأكد من تسجيل الدخول
+  setTimeout(async () => {
+    try {
+      console.log('🔔 [AUTO] Starting push notification setup...');
+      
+      // تحقق من دعم الإشعارات
+      if (!('Notification' in window)) {
+        console.log('🔔 [AUTO] Notifications not supported');
+        return;
+      }
+      
+      if (!('serviceWorker' in navigator)) {
+        console.log('🔔 [AUTO] ServiceWorker not supported');
+        return;
+      }
+      
+      console.log('🔔 [AUTO] Current permission:', Notification.permission);
+      
+      // إذا لم يُسأل من قبل، اطلب الإذن
+      if (Notification.permission === 'default') {
+        console.log('🔔 [AUTO] Requesting notification permission...');
+        const permission = await Notification.requestPermission();
+        console.log('🔔 [AUTO] Permission result:', permission);
+      }
+      
+      // إذا تم منح الإذن، سجل الاشتراك
+      if (Notification.permission === 'granted') {
+        const user = window.currentUser;
+        if (user && user.id) {
+          console.log('🔔 [AUTO] Registering push for user:', user.id);
+          await registerPushNotifications(user.id);
+        } else {
+          console.log('🔔 [AUTO] Permission granted but waiting for user login...');
+          // انتظر المستخدم وحاول مرة أخرى
+          let attempts = 0;
+          const waitForUser = setInterval(async () => {
+            attempts++;
+            const u = window.currentUser;
+            if (u && u.id) {
+              clearInterval(waitForUser);
+              console.log('🔔 [AUTO] User found after', attempts, 'attempts, registering...');
+              await registerPushNotifications(u.id);
+            } else if (attempts >= 30) { // 30 ثانية كحد أقصى
+              clearInterval(waitForUser);
+              console.log('🔔 [AUTO] Gave up waiting for user');
+            }
+          }, 1000);
+        }
+      } else if (Notification.permission === 'denied') {
+        console.log('🔔 [AUTO] Notifications blocked by user');
+      }
+    } catch (e) {
+      console.error('🔔 [AUTO] Error:', e);
+    }
+  }, 5000); // انتظر 5 ثواني
+})();
 
 // AccessRewards main script
 document.addEventListener('DOMContentLoaded', function() {
@@ -1076,19 +1166,26 @@ For more information, visit our platform at: ${window.location.origin}
 
   // Navigation function for dashboard action buttons
   function navigateToPage(pageName) {
-    // Find the navigation link for the specified page
-    const navLink = document.querySelector(`[data-page="${pageName}"]`);
-    if (navLink) {
-      // Trigger the navigation
-      navLink.click();
-    } else {
-      // Fallback: manually trigger page navigation
-      const event = new CustomEvent('navigate', { detail: { page: pageName } });
-      document.dispatchEvent(event);
-      
-      // If that doesn't work, try direct page switching
-      showPage(pageName);
+    // ✅ تحديث الـ active state في الشريط السفلي أولاً
+    const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+    mobileNavItems.forEach(item => {
+      if (item.getAttribute('data-page') === pageName) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+    
+    // إخفاء قائمة more إذا كانت مفتوحة
+    const moreMenu = document.getElementById('more-menu');
+    if (moreMenu) {
+      moreMenu.style.display = 'none';
     }
+    
+    // عرض الصفحة
+    showPage(pageName);
+    
+    console.log('✅ navigateToPage:', pageName);
   }
 
   // Make navigation function globally available
@@ -4492,6 +4589,221 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
   // Initialize processing page
   async function initializeActivityPage() {
+    const processingButton = document.getElementById('toggle-activity');
+    const processingStatus = document.getElementById('activity-status');
+    const countdownTimer = document.getElementById('countdown-timer');
+    const processingAnimation = document.getElementById('activity-animation');
+    const accumulatedCoinsElement = document.getElementById('accumulated-coins');
+
+    // ✅ CRITICAL FIX: تسجيل click handler فوراً - قبل أي return!
+    if (processingButton && !processingButton._clickRegistered) {
+      processingButton._clickRegistered = true;
+      console.log('🎯 REGISTERING CLICK HANDLER');
+      
+      processingButton.onclick = async function() {
+        console.log('🔘 BUTTON CLICKED!');
+        if (!currentUser || !currentUser.id) {
+          showNotification('جاري التحميل...', 'info');
+          return;
+        }
+        
+        const btn = this;
+        btn.classList.add('disabled');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + translator.translate('Processing...');
+        
+        // ✅ دالة بدء النشاط الفعلية
+        async function startActivityNow() {
+          try {
+            const resp = await fetch('/api/processing/countdown/start', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: currentUser.id })
+            });
+            const data = await resp.json();
+            
+            if (resp.ok && data.success) {
+              // يتحقق من كلا الاسمين: reward_transferred (server.js) و previous_reward_transferred (simplifier)
+              const transferredReward = data.reward_transferred || data.previous_reward_transferred || 0;
+              
+              // ✅ أولاً: رسالة بدء النشاط بنجاح
+              showNotification(translator.translate('Point processing started successfully!'), 'success');
+              
+              // ✅ ثانياً: رسالة المكافأة السابقة (بعد ثانية واحدة)
+              if (transferredReward > 0.0001) {
+                setTimeout(() => {
+                  showNotification(`${translator.translate('Previous processing reward of')} ${formatNumberSmart(transferredReward)} ${translator.translate('Points has been added to your balance!')}`, 'success');
+                }, 1500);
+                
+                // تحديث الرصيد في الواجهة
+                if (data.new_balance !== undefined) {
+                  currentUser.coins = data.new_balance;
+                  const balanceElements = document.querySelectorAll('#user-balance, #dashboard-balance, .user-balance, #user-coins');
+                  balanceElements.forEach(el => {
+                    if (el) el.textContent = formatNumberSmart(data.new_balance);
+                  });
+                }
+              }
+              
+              // ✅ تصفير العرض فوراً قبل أي شيء آخر
+              const accumulatedCoinsEl = document.getElementById('accumulated-coins');
+              if (accumulatedCoinsEl) {
+                accumulatedCoinsEl.textContent = formatNumberSmart(0);
+              }
+              
+              // ✅ إعادة تعيين XP/s (hashrate) للقيمة الأساسية 10.0
+              const hashrateValue = document.getElementById('hashrate-value');
+              const dashboardHashrateValue = document.getElementById('dashboard-hashrate-value');
+              if (hashrateValue) {
+                hashrateValue.textContent = '10.0';
+                hashrateValue.removeAttribute('data-ad-boost-active');
+                hashrateValue.removeAttribute('data-ad-boost-value');
+              }
+              if (dashboardHashrateValue) {
+                dashboardHashrateValue.textContent = '10.0';
+                dashboardHashrateValue.removeAttribute('data-ad-boost-active');
+                dashboardHashrateValue.removeAttribute('data-ad-boost-value');
+              }
+              
+              // ✅ مسح بيانات الـ boost القديمة
+              if (window.localBoostData) {
+                window.localBoostData.multiplier = 1.0;
+                window.localBoostData.adBoostActive = false;
+                window.localBoostData.startTimeFixed = false;
+              }
+              
+              // تحديث حالة المستخدم
+              currentUser.processing_active = 1;
+              currentUser.processing_end_time = Date.now() + (data.remaining_seconds * 1000);
+              currentUser.processing_start_time_seconds = Math.floor(Date.now() / 1000);
+              currentUser.processing_accumulated = 0;
+              currentUser.accumulatedReward = 0;
+              saveUserSession(currentUser);
+              
+              // تحديث الزر
+              btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + translator.translate('Activity...');
+              
+              // بدء العد التنازلي والتجميع
+              startCountdown(data.remaining_seconds * 1000);
+              startGradualAccumulation();
+            } else if (resp.status === 409) {
+              showNotification('جلسة نشطة بالفعل', 'info');
+              if (data.remaining_seconds > 0) startCountdown(data.remaining_seconds * 1000);
+            } else {
+              showNotification(data.error || 'خطأ', 'error');
+              btn.classList.remove('disabled');
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-play"></i> ' + translator.translate('Start Activity');
+            }
+          } catch (e) {
+            console.error(e);
+            btn.classList.remove('disabled');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-play"></i> ' + translator.translate('Start Activity');
+          }
+        }
+        
+        // ✅ عرض الإعلان أولاً ثم بدء النشاط
+        console.log('📺 التحقق من حالة الإعلان...');
+        console.log('📺 showActivityAd:', typeof window.showActivityAd);
+        console.log('📺 canShowActivityAd:', typeof window.canShowActivityAd, window.canShowActivityAd ? window.canShowActivityAd() : 'N/A');
+        console.log('📺 activityAdEvent:', !!window.activityAdEvent);
+        
+        if (window.showActivityAd) {
+          console.log('📺 محاولة عرض الإعلان...');
+          const adShown = window.showActivityAd(function() {
+            console.log('📺 الإعلان انتهى - بدء النشاط الآن');
+            startActivityNow();
+          });
+          
+          if (!adShown) {
+            console.log('📺 الإعلان لم يُعرض - بدء النشاط مباشرة');
+            // الـ callback تم تنفيذه بالفعل داخل showActivityAd
+          }
+        } else {
+          console.log('📺 نظام الإعلانات غير متاح - بدء النشاط مباشرة');
+          startActivityNow();
+        }
+      };
+    }
+
+    // ✅ تحديد حالة الجلسة من البيانات المحلية
+    const serverNow = Date.now();
+    const processingEndTime = parseInt(currentUser?.processing_end_time) || 0;
+    const sessionActive = processingEndTime > 0 && serverNow < processingEndTime;
+    
+    console.log('🔍 initializeActivityPage:', {
+      processingEndTime,
+      serverNow,
+      sessionActive,
+      diff: processingEndTime - serverNow
+    });
+
+    // ✅ CRITICAL: فتح الزر فوراً إذا انتهت الجلسة - قبل أي return
+    if (processingButton && !sessionActive) {
+      console.log('🔓 Session ended/inactive - Enabling button IMMEDIATELY');
+      processingButton.classList.remove('disabled');
+      processingButton.disabled = false;
+      processingButton.removeAttribute('disabled');
+      processingButton.style.pointerEvents = 'auto';
+      processingButton.style.opacity = '1';
+      processingButton.setAttribute('data-server-verified', 'true');
+      
+      // تحديث نص الزر
+      processingButton.textContent = '';
+      const icon = document.createElement('i');
+      icon.className = 'fas fa-play';
+      processingButton.appendChild(icon);
+      processingButton.appendChild(document.createTextNode(' ' + translator.translate('Start Activity')));
+      
+      // تحديث الحالة
+      if (processingStatus) {
+        processingStatus.textContent = translator.translate('Processing available');
+      }
+      if (processingAnimation) {
+        processingAnimation.style.display = 'none';
+      }
+      if (countdownTimer) {
+        countdownTimer.textContent = '00:00:00';
+      }
+      
+      // ✅ CRITICAL: جلب وعرض completed_processing_reward من السيرفر
+      if (currentUser && currentUser.id && accumulatedCoinsElement) {
+        (async () => {
+          try {
+            const accResp = await fetch(`/api/processing/accumulated/${currentUser.id}`);
+            if (accResp.ok) {
+              const accData = await accResp.json();
+              // عرض completedReward أو accumulatedReward (أيهما أكبر)
+              const completedReward = parseFloat(accData.completedReward || 0);
+              const accumulatedReward = parseFloat(accData.accumulatedReward || 0);
+              const displayReward = Math.max(completedReward, accumulatedReward);
+              
+              if (displayReward > 0) {
+                accumulatedCoinsElement.textContent = formatNumberSmart(displayReward);
+                console.log('✅ Displaying saved reward:', displayReward);
+                // حفظ في الذاكرة
+                currentUser.processing_accumulated = displayReward;
+                currentUser.accumulatedReward = displayReward;
+              }
+            }
+          } catch (e) {
+            console.warn('Could not fetch completed reward:', e);
+          }
+        })();
+      }
+      
+      // مسح البيانات القديمة (لكن ليس المكافأة!)
+      if (currentUser) {
+        currentUser.processing_active = 0;
+        currentUser.processing_end_time = 0;
+        saveUserSession(currentUser);
+      }
+      
+      // ✅ إذا الجلسة منتهية، لا نحتاج لتهيئة أخرى - الزر جاهز
+      return;
+    }
+
     // If processing interval is already running, don't reinitialize
     // This prevents the counter from resetting when returning to the activity page
     if (activityInterval) {
@@ -4517,13 +4829,6 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       console.log('Quick return to activity page, preserving current timer state');
       return;
     }
-
-
-    const processingButton = document.getElementById('toggle-activity');
-    const processingStatus = document.getElementById('activity-status');
-    const countdownTimer = document.getElementById('countdown-timer');
-    const processingAnimation = document.getElementById('activity-animation');
-    const accumulatedCoinsElement = document.getElementById('accumulated-coins');
 
     // Helper function to update button safely
     const updateButtonSafely = (iconClass, text) => {
@@ -4554,7 +4859,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
         const remainingMs = preloadedData.status.remaining_seconds * 1000;
         const endTime = Date.now() + remainingMs;
         
-        processingStatus.textContent = 'Processing in progress...';
+        processingStatus.textContent = translator.translate('Processing in progress...');
         updateButtonSafely('fas fa-spinner fa-spin', translator.translate('Activity...'));
         processingButton.classList.add('disabled');
         processingButton.disabled = true;
@@ -4569,7 +4874,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
         return;
       } else {
         // لا توجد جلسة نشطة - تفعيل الزر
-        processingStatus.textContent = 'Processing available';
+        processingStatus.textContent = translator.translate('Processing available');
         updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
         processingButton.classList.remove('disabled');
         processingButton.disabled = false;
@@ -4584,14 +4889,14 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     }
 
     // استخدام البيانات المحلية للعرض السريع فقط
-    const serverNow = Date.now();
-    const processingEndTime = parseInt(currentUser.processing_end_time) || 0;
+    const localNow = Date.now();
+    const localEndTime = parseInt(currentUser.processing_end_time) || 0;
     const processingStartTime = parseInt(currentUser.processing_start_time) || 0;
 
-    if (processingEndTime && serverNow < processingEndTime) {
+    if (localEndTime && localNow < localEndTime) {
       // جلسة نشطة محلياً - عرض العد التنازلي
-      const timeLeft = processingEndTime - serverNow;
-      processingStatus.textContent = 'Processing in progress...';
+      const timeLeft = localEndTime - localNow;
+      processingStatus.textContent = translator.translate('Processing in progress...');
       updateButtonSafely('fas fa-spinner fa-spin', translator.translate('Activity...'));
       processingButton.classList.add('disabled');
       processingButton.disabled = true;
@@ -4633,7 +4938,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
               currentUser.processing_end_time = serverEndTime;
               saveUserSession(currentUser);
               
-              processingStatus.textContent = 'Processing in progress...';
+              processingStatus.textContent = translator.translate('Processing in progress...');
               updateButtonSafely('fas fa-spinner fa-spin', translator.translate('Activity...'));
               processingButton.classList.add('disabled');
               processingButton.disabled = true;
@@ -4645,28 +4950,28 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
             } else {
               // ✅ لا توجد جلسة نشطة - يمكن تفعيل الزر
               console.log('✅ SERVER CHECK: No active session, enabling button');
-              processingStatus.textContent = 'Processing available';
+              processingStatus.textContent = translator.translate('Processing available');
               updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
               processingButton.classList.remove('disabled');
               processingButton.disabled = false;
               processingButton.setAttribute('data-server-verified', 'true');
             }
           } else {
-            // 🔒 خطأ في الاتصال - الزر يبقى مغلقاً
-            console.log('🔒 SERVER CHECK: Failed to verify, button stays disabled');
-            processingStatus.textContent = 'Connection error';
-            updateButtonSafely('fas fa-exclamation-triangle', translator.translate('Retry'));
-            processingButton.classList.add('disabled');
-            processingButton.disabled = true;
+            // ✅ خطأ في الاتصال - نفتح الزر لأن السيرفر سيحمي
+            console.log('⚠️ SERVER CHECK: Connection error, enabling button (server will protect)');
+            processingStatus.textContent = translator.translate('Processing available');
+            updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
+            processingButton.classList.remove('disabled');
+            processingButton.disabled = false;
             processingButton.setAttribute('data-server-verified', 'false');
           }
         } catch (error) {
-          console.error('🔒 SERVER CHECK ERROR:', error);
-          // 🔒 خطأ في الاتصال - الزر يبقى مغلقاً
-          processingStatus.textContent = 'Connection error';
-          updateButtonSafely('fas fa-exclamation-triangle', translator.translate('Retry'));
-          processingButton.classList.add('disabled');
-          processingButton.disabled = true;
+          console.error('⚠️ SERVER CHECK ERROR:', error);
+          // ✅ خطأ في الاتصال - نفتح الزر لأن السيرفر سيحمي
+          processingStatus.textContent = translator.translate('Processing available');
+          updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
+          processingButton.classList.remove('disabled');
+          processingButton.disabled = false;
           processingButton.setAttribute('data-server-verified', 'false');
         }
       }
@@ -4712,100 +5017,37 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
    // Track when the processing button was last clicked to differentiate between
    // automatic page loads and manual user interactions
    window.lastProcessingButtonClick = 0;
+   
+   // ✅ DEBUG: Log button state at initialization
+   console.log('🎯 BUTTON INITIALIZED:', {
+     id: processingButton.id,
+     disabled: processingButton.disabled,
+     classList: Array.from(processingButton.classList),
+     html: processingButton.innerHTML.substring(0, 50)
+   });
 
-   // Processing button click handler - Enhanced with seamless reward transfer
-processingButton.addEventListener('click', async function() {
-  // ✅ تنظيف العلم إذا مر أكثر من 30 ثانية (حماية من التعليق)
-  const timeSinceLastStart = Date.now() - (window.processingSessionStartTimestamp || 0);
-  if (window.processingSessionStarting && timeSinceLastStart > 30000) {
-    console.log('⚠️ Clearing stuck processingSessionStarting flag (>30s)');
-    window.processingSessionStarting = false;
-  }
+   // Processing button click handler - Simple and clean
+processingButton.addEventListener('click', async function(e) {
+  console.log('🔘 BUTTON CLICKED!');
   
-  // منع الضغط المتكرر أثناء بدء الجلسة
-  if (window.processingSessionStarting) {
-    console.log('Processing session already starting, ignoring click');
+  // ✅ SIMPLE: فقط تحقق من userId
+  if (!currentUser?.id) {
+    showNotification('Please wait, loading user data...', 'info');
     return;
   }
-
-  // 🔒 CRITICAL: تحقق من وجود userId قبل أي شيء
-  if (!currentUser || !currentUser.id) {
-    console.log('⚠️ No user ID available, trying to load user data...');
-    
-    // حاول إعادة تحميل بيانات المستخدم
-    if (currentUser && currentUser.email) {
-      // إظهار حالة تحميل
-      processingButton.classList.add('disabled');
-      const originalText = processingButton.innerHTML;
-      processingButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + translator.translate('Loading...');
-      
-      try {
-        const userData = await checkIfUserExists(currentUser.email, true); // force refresh
-        if (userData && userData.id) {
-          currentUser = {...currentUser, ...userData};
-          saveUserSession(currentUser);
-          console.log('✅ User data loaded, id:', currentUser.id);
-          processingButton.classList.remove('disabled');
-          processingButton.disabled = false;
-          // ✅ المستخدم جاهز الآن - نستمر مع بقية الكود
-        } else {
-          // المستخدم جديد ولم يُنشأ بعد في قاعدة البيانات
-          console.log('⚠️ New user not yet in database, creating now...');
-          try {
-            const result = await createUser({
-              email: currentUser.email,
-              name: currentUser.name,
-              avatar: currentUser.avatar
-            }, null, null);
-            
-            if (result && result.user && result.user.id) {
-              currentUser = {...currentUser, ...result.user, id: result.user.id};
-              saveUserSession(currentUser);
-              console.log('✅ New user created with ID:', currentUser.id);
-              processingButton.classList.remove('disabled');
-              processingButton.disabled = false;
-              // ✅ المستخدم جاهز الآن - نستمر مع بقية الكود
-            } else {
-              // 🔒 فشل إنشاء المستخدم - الزر يبقى مغلقاً
-              processingButton.classList.add('disabled');
-              processingButton.disabled = true;
-              return;
-            }
-          } catch (createErr) {
-            console.error('Failed to create user:', createErr);
-            // 🔒 خطأ - الزر يبقى مغلقاً
-            processingButton.classList.add('disabled');
-            processingButton.disabled = true;
-            return;
-          }
-        }
-      } catch (e) {
-        console.error('Failed to load user data:', e);
-        // 🔒 خطأ - الزر يبقى مغلقاً
-        processingButton.classList.add('disabled');
-        processingButton.disabled = true;
-        return;
-      }
-    } else {
-      // 🔒 لا يوجد بريد - الزر يبقى مغلقاً
-      processingButton.classList.add('disabled');
-      processingButton.disabled = true;
-      return;
-    }
-  }
+  
+  console.log('✅ Starting activity for user:', currentUser.id);
 
   // ✅ الحماية موجودة في السيرفر (/api/processing/countdown/start)
   // السيرفر سيمنع أي محاولة لبدء جلسة مزدوجة (409 Conflict)
   // لذلك لا حاجة للتحقق المسبق هنا - نستمر مباشرة للبدء السلس
   console.log('✅ Proceeding to start processing (server will validate)...');
 
-  // Set flag to prevent duplicate starts + timestamp للتنظيف التلقائي
-  window.processingSessionStarting = true;
-  window.processingSessionStartTimestamp = Date.now();
+  // ❌ تم إزالة العلم المعقد - السيرفر يحمي من الجلسات المزدوجة
   
   // Disable button immediately to prevent double clicks
   processingButton.classList.add('disabled');
-  processingButton.disabled = true; // ✅ إضافة disabled للتأكد
+  processingButton.disabled = true;
   const originalButtonHTML = processingButton.innerHTML;
 
   // ============================================
@@ -4816,7 +5058,7 @@ processingButton.addEventListener('click', async function() {
     console.log('📺 عرض إعلان Activity قبل بدء النشاط...');
     adWasShown = true;
     
-    // 🔄 انتظار إغلاق الإعلان قبل إظهار الرسائل
+    // 🔄 انتظار إغلاق الإعلان (لا نوقف التدفق لأكثر من 15 ثانية)
     await new Promise((resolve) => {
       const adShown = window.showActivityAd(() => {
         console.log('📺 تم إغلاق الإعلان - callback executed');
@@ -4829,8 +5071,8 @@ processingButton.addEventListener('click', async function() {
         resolve();
       }
       
-      // timeout احتياطي 30 ثانية
-      setTimeout(resolve, 30000);
+      // timeout احتياطي 15 ثانية (كافي للإعلان)
+      setTimeout(resolve, 15000);
     });
   }
 
@@ -4851,83 +5093,10 @@ processingButton.addEventListener('click', async function() {
     window.lastProcessingButtonClick = Date.now();
     console.log('PROCESSING BUTTON CLICKED - Starting processing session');
 
-    // STEP 1: جلب الرصيد المتراكم من السيرفر مباشرة (لا نعتمد على القيمة المحلية)
-    let currentAccumulated = 0;
-    try {
-      const accResponse = await fetchWithTimeout(`/api/processing/accumulated/${currentUser.id}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      }, 10000);
-      
-      if (accResponse.ok) {
-        const accData = await accResponse.json();
-        if (accData.success) {
-          currentAccumulated = parseFloat(accData.accumulatedReward || 0);
-        }
-      }
-    } catch (e) {
-      // إذا فشل جلب من السيرفر، استخدم القيمة المحلية
-      currentAccumulated = parseFloat(currentUser.processing_accumulated || currentUser.accumulatedReward || 0);
-    }
-    
-    console.log(`[SCRIPT] Processing button clicked - accumulated rewards from server: ${currentAccumulated}`);
-    
-    if (currentAccumulated > 0) {
-      console.log(`[SCRIPT] Found accumulated reward: ${currentAccumulated} - transferring to balance`);
-      
-      try {
-        const completeResponse = await fetchWithTimeout('/api/processing/countdown/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            userId: currentUser.id,
-            amount: currentAccumulated
-          })
-        }, 20000);
-        
-        console.log(`[SCRIPT LINE 455] Complete response status: ${completeResponse.status}`);
-        
-        if (completeResponse.ok) {
-          const completeData = await completeResponse.json();
-          console.log(`[SCRIPT LINE 459] Complete data received:`, completeData);
-          
-          if (completeData.success) {
-            // Update balance immediately in UI
-            const newBalance = completeData.new_balance;
-            console.log(`[SCRIPT LINE 464] Updating balance from ${currentUser.coins} to ${newBalance}`);
-            
-            updateUserCoins(newBalance);
-            currentUser.coins = newBalance;
-            
-            // Update specific balance elements immediately
-            const userCoinsElement = document.getElementById('user-coins');
-            if (userCoinsElement) {
-              userCoinsElement.textContent = formatNumberSmart(newBalance);
-              console.log(`[SCRIPT LINE 474] Updated user-coins element to: ${formatNumberSmart(newBalance)}`);
-            }
-            
-            const profileCoinsElement = document.getElementById('profile-coins');
-            if (profileCoinsElement) {
-              profileCoinsElement.textContent = formatNumberSmart(newBalance);
-              console.log(`[SCRIPT LINE 479] Updated profile-coins element to: ${formatNumberSmart(newBalance)}`);
-            }
-            
-            // Clear accumulated values
-            currentUser.processing_accumulated = 0;
-            currentUser.accumulatedReward = 0;
-            
-            console.log(`[SCRIPT LINE 485] Successfully transferred ${formatNumberSmart(completeData.reward_amount)} to balance. New balance: ${formatNumberSmart(newBalance)}`);
-            
-            // Show notification about the transfer
-            showNotification(`${translator.translate('Previous processing reward of')} ${formatNumberSmart(completeData.reward_amount)} ${translator.translate('Points has been added to your balance!')}`, 'success');
-          }
-        }
-      } catch (transferError) {
-        console.error(`[SCRIPT LINE 492] Error transferring previous accumulated reward:`, transferError);
-      }
-    } else {
-      console.log(`[SCRIPT LINE 495] No accumulated rewards to transfer - proceeding with new processing session`);
-    }
+    // ✅ لا نستدعي /complete هنا!
+    // السيرفر في /api/processing/countdown/start ينقل المتراكم تلقائياً
+    // هذا يمنع الإضافة المزدوجة للرصيد
+    console.log('[SCRIPT] Proceeding directly to /start (server handles accumulated transfer)');
     
     // Reset all timers before starting new processing session
     if (activityInterval) {
@@ -4971,7 +5140,7 @@ processingButton.addEventListener('click', async function() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: currentUser.id })
-    }, 10000); // تقليل الـ timeout لـ 10 ثواني
+    }, 10000); // timeout آمن 10 ثواني
 
     console.log(`[SCRIPT] Processing start response status: ${response.status}`);
 
@@ -5002,7 +5171,7 @@ processingButton.addEventListener('click', async function() {
       // 🔒 الزر يبقى مغلقاً لأن هناك جلسة نشطة
       processingButton.classList.add('disabled');
       processingButton.disabled = true;
-      window.processingSessionStarting = false;
+      // window.processingSessionStarting = false; // تم إزالته
       return;
     }
 
@@ -5013,7 +5182,7 @@ processingButton.addEventListener('click', async function() {
       // 🔒 الزر يبقى مغلقاً
       processingButton.classList.add('disabled');
       processingButton.disabled = true;
-      window.processingSessionStarting = false;
+      // window.processingSessionStarting = false; // تم إزالته
       return;
     }
 
@@ -5023,7 +5192,7 @@ processingButton.addEventListener('click', async function() {
       // 🔒 خطأ - الزر يبقى مغلقاً
       processingButton.classList.add('disabled');
       processingButton.disabled = true;
-      window.processingSessionStarting = false;
+      // window.processingSessionStarting = false; // تم إزالته
       return;
     }
 
@@ -5036,6 +5205,12 @@ processingButton.addEventListener('click', async function() {
       // ✅ تحديث الرصيد من السيرفر دائماً
       if (data.new_balance !== undefined) {
         console.log(`💰 Updating balance from server: ${data.new_balance}`);
+        
+        // ✅ إذا تم نقل مكافأة متراكمة، اعرض إشعار
+        if (data.reward_transferred && data.reward_transferred > 0.0001) {
+          console.log(`💰 Server transferred accumulated reward: ${data.reward_transferred}`);
+          showNotification(`${translator.translate('Previous processing reward of')} ${formatNumberSmart(data.reward_transferred)} ${translator.translate('Points has been added to your balance!')}`, 'success');
+        }
         
         // تحديث الرصيد في الذاكرة
         currentUser.coins = data.new_balance;
@@ -5091,7 +5266,7 @@ processingButton.addEventListener('click', async function() {
       saveUserSession(currentUser);
 
       // Update UI
-      processingStatus.textContent = 'Processing in progress...';
+      processingStatus.textContent = translator.translate('Processing in progress...');
       updateButtonSafely('fas fa-spinner fa-spin', translator.translate('Activity...'));
       processingButton.classList.add('disabled');
       processingAnimation.style.display = 'block';
@@ -5101,46 +5276,71 @@ processingButton.addEventListener('click', async function() {
         document.getElementById('accumulated-coins').textContent = formatNumberSmart(0);
       }
 
+      // ✅ إعادة تعيين CP/s (hashrate) بصرياً عند بدء جلسة جديدة
+      const hashrateValue = document.getElementById('hashrate-value');
+      const dashboardHashrateValue = document.getElementById('dashboard-hashrate-value');
+      if (hashrateValue) hashrateValue.textContent = '0.0';
+      if (dashboardHashrateValue) dashboardHashrateValue.textContent = '0.0';
+
       // Start countdown and accumulation
       startCountdown(data.remaining_seconds * 1000);
       startGradualAccumulation();
 
-      window.processingSessionStarting = false;
+      // window.processingSessionStarting = false; // تم إزالته
       
-      // ✅ إشعار بدء النشاط - تأخير إذا تم نقل مكافأة سابقة
-      if (currentAccumulated > 0) {
-        // تأخير 2 ثانية بعد رسالة نقل الرصيد
-        setTimeout(() => {
-          showNotification(translator.translate('Point processing started successfully!'), 'success');
-        }, 2000);
-      } else {
-        // لا يوجد نقل مكافأة - إظهار رسالة بدء الجلسة مباشرة
-        showNotification(translator.translate('Point processing started successfully!'), 'success');
-      }
+      // ✅ إشعار بدء النشاط - فوري بدون تأخير
+      showNotification(translator.translate('Point processing started successfully!'), 'success');
       
       console.log(`✅ Processing session started successfully`);
     } else {
       // Server returned success=false
       console.log(`[SCRIPT] Server rejected start: ${data.error}`);
       showNotification(data.error || 'Failed to start processing', 'error');
-      processingStatus.textContent = 'Processing available';
+      processingStatus.textContent = translator.translate('Processing available');
       updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
       // ✅ السيرفر رفض لكن أكد أنه لا توجد جلسة - يمكن فتح الزر
       processingButton.classList.remove('disabled');
       processingButton.disabled = false;
       processingAnimation.style.display = 'none';
-      window.processingSessionStarting = false;
+      // window.processingSessionStarting = false; // تم إزالته
     }
   } catch (error) {
     console.error('❌ Error during processing (connection/timeout):', error);
     
-    // 🔒 الزر يبقى مغلقاً - لمنع بدء جلسة مزدوجة
-    processingButton.classList.add('disabled');
-    processingButton.disabled = true;
-    processingAnimation.style.display = 'none';
+    // ✅ عند حدوث خطأ - نتحقق من السيرفر لمعرفة الحالة الحقيقية
+    try {
+      const statusCheck = await fetch(`/api/processing/countdown/status/${currentUser.id}`);
+      if (statusCheck.ok) {
+        const statusData = await statusCheck.json();
+        if (statusData.success && statusData.processing_active && statusData.remaining_seconds > 0) {
+          // ✅ هناك جلسة نشطة - نبدأ العد التنازلي
+          console.log('✅ Active session found after error, resuming...');
+          startCountdown(statusData.remaining_seconds * 1000);
+          startGradualAccumulation();
+          processingButton.classList.add('disabled');
+          processingButton.disabled = true;
+        } else {
+          // ✅ لا توجد جلسة نشطة - نفتح الزر
+          console.log('✅ No active session, enabling button');
+          processingButton.classList.remove('disabled');
+          processingButton.disabled = false;
+          processingAnimation.style.display = 'none';
+        }
+      } else {
+        // ✅ خطأ في التحقق - نفتح الزر للمحاولة مرة أخرى
+        processingButton.classList.remove('disabled');
+        processingButton.disabled = false;
+        processingAnimation.style.display = 'none';
+      }
+    } catch (checkError) {
+      // ✅ فشل التحقق - نفتح الزر
+      processingButton.classList.remove('disabled');
+      processingButton.disabled = false;
+      processingAnimation.style.display = 'none';
+    }
     
     // Clear the starting flag
-    window.processingSessionStarting = false;
+    // window.processingSessionStarting = false; // تم إزالته
   }
 });
 
@@ -5270,8 +5470,10 @@ function startGradualAccumulation() {
       accumulatedCoinsElement.textContent = formatNumberSmart(calculatedAccumulated);
     }
 
+    // ✅ تحديث hashrate في Activity و Dashboard معاً
+    const totalHashrate = 10.0 * localBoostData.multiplier;
+    
     if (hashrateElement && hashrateValueElement) {
-      const totalHashrate = 10.0 * localBoostData.multiplier;
       hashrateElement.style.display = 'flex';
       hashrateElement.style.visibility = 'visible';
       hashrateElement.style.opacity = '1';
@@ -5283,6 +5485,19 @@ function startGradualAccumulation() {
       } else {
         hashrateValueElement.removeAttribute('data-ad-boost-active');
         hashrateValueElement.removeAttribute('data-ad-boost-value');
+      }
+    }
+    
+    // ✅ تحديث Dashboard hashrate أيضاً
+    const dashboardHashrateValue = document.getElementById('dashboard-hashrate-value');
+    if (dashboardHashrateValue) {
+      dashboardHashrateValue.textContent = totalHashrate.toFixed(1);
+      if (localBoostData.adBoostActive) {
+        dashboardHashrateValue.setAttribute('data-ad-boost-active', 'true');
+        dashboardHashrateValue.setAttribute('data-ad-boost-value', '1.2');
+      } else {
+        dashboardHashrateValue.removeAttribute('data-ad-boost-active');
+        dashboardHashrateValue.removeAttribute('data-ad-boost-value');
       }
     }
 
@@ -5595,6 +5810,10 @@ function startGradualAccumulation() {
         // ✅ IMMEDIATELY update UI state to show completion (no delay)
         currentUser.processing_active = 0;
         currentUser.processing_completed = true;
+        currentUser.processing_end_time = 0; // ✅ مسح وقت النهاية
+        currentUser.processing_start_time = 0; // ✅ مسح وقت البداية
+        currentUser.processing_remaining_seconds = 0;
+        saveUserSession(currentUser); // ✅ حفظ فوري
         
         // ✅ IMMEDIATELY hide "Collecting..." from UI
         const historyContainer = document.querySelector('.history-container');
@@ -5642,7 +5861,7 @@ function startGradualAccumulation() {
               console.log(`✅ Processing completed - ${formatNumberSmart(finalReward)} saved in accumulated. Will transfer when user starts new activity.`);
 
               // Show notification
-              showNotification(`Processing completed! ${formatNumberSmart(finalReward)} Points accumulated. Click "Start Activity" to claim!`, 'success');
+              showNotification(`${translator.translate('Processing completed!')} ${formatNumberSmart(finalReward)} ${translator.translate('points_accumulated_click_start')}`, 'success');
               
               // ✅ فتح الزر فوراً عند انتهاء الجلسة
               processingButton.classList.remove('disabled');
@@ -5655,7 +5874,7 @@ function startGradualAccumulation() {
               
               // تحديث حالة النشاط
               if (processingStatus) {
-                processingStatus.textContent = 'Processing available';
+                processingStatus.textContent = translator.translate('Processing available');
               }
               if (processingAnimation) {
                 processingAnimation.style.display = 'none';
@@ -5663,7 +5882,8 @@ function startGradualAccumulation() {
               
               // ✅ السماح بالبدء السلس من أول ضغطة
               processingButton.setAttribute('data-server-verified', 'true');
-              window.processingSessionStarting = false;
+              // window.processingSessionStarting = false; // تم إزالته
+              window.processingSessionStartTimestamp = 0; // ✅ مسح timestamp
             }
           }
         } catch (saveError) {
@@ -5685,13 +5905,13 @@ function startGradualAccumulation() {
         processingButton.classList.add('disabled');
         processingButton.disabled = true;
         processingAnimation.style.display = 'block';
-        processingStatus.textContent = 'Processing in progress...';
+        processingStatus.textContent = translator.translate('Processing in progress...');
         startCountdown(currentUser.processing_remaining);
       } else {
         processingButton.classList.remove('disabled');
         processingButton.disabled = false;
         processingAnimation.style.display = 'none';
-        processingStatus.textContent = 'Processing available';
+        processingStatus.textContent = translator.translate('Processing available');
         countdownTimer.textContent = '00:00:00';
       }
     }
@@ -5837,7 +6057,7 @@ function startGradualAccumulation() {
       };
 
       // Show appropriate processing status immediately
-      processingStatus.textContent = 'Processing in progress...';
+      processingStatus.textContent = translator.translate('Processing in progress...');
       processingButton.classList.add('disabled');
       updateButtonSafely('fas fa-spinner fa-spin', translator.translate('Activity...'));
 
@@ -5960,19 +6180,37 @@ function startGradualAccumulation() {
 
           // Update UI
           countdownTimer.textContent = '00:00:00';
-          processingStatus.textContent = 'Processing completed!';
-          updateButtonSafely('fas fa-play', 'Start Activity');
+          processingStatus.textContent = translator.translate('Processing Completed');
+          updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
+          
+          // ✅ تفعيل الزر بعدة طرق للتأكد
           processingButton.classList.remove('disabled');
-          processingButton.disabled = false; // ✅ تفعيل الزر فوراً
-          processingButton.setAttribute('data-server-verified', 'true'); // ✅ السماح بالبدء السلس
-          window.processingSessionStarting = false; // ✅ إعادة تعيين العلم
+          processingButton.disabled = false;
+          processingButton.removeAttribute('disabled');
+          processingButton.style.pointerEvents = 'auto';
+          processingButton.style.opacity = '1';
+          processingButton.setAttribute('data-server-verified', 'true');
+          
+          console.log('🎯 SESSION ENDED - Button enabled:', {
+            disabled: processingButton.disabled,
+            classList: processingButton.classList.contains('disabled'),
+            html: processingButton.innerHTML
+          });
+          
+          // window.processingSessionStarting = false; // تم إزالته
+          window.processingSessionStartTimestamp = 0;
           if (processingAnimation) processingAnimation.style.display = 'none';
+          
+          // ✅ إشعار المستخدم بانتهاء الجلسة
+          showNotification(`${translator.translate('Processing completed!')} ${formatNumberSmart(finalReward)} ${translator.translate('points_ready_to_claim')}`, 'success');
 
           // Mark as completed
           if (currentUser) {
             currentUser.processing_active = 0;
             currentUser.processing_completed = true;
             currentUser.processing_remaining_seconds = 0;
+            currentUser.processing_end_time = 0; // ✅ مسح وقت النهاية
+            currentUser.processing_start_time = 0; // ✅ مسح وقت البداية
             saveUserSession(currentUser);
           }
 
@@ -6454,9 +6692,9 @@ function startGradualAccumulation() {
               processingButton.innerHTML = '<i class="fas fa-play"></i> ' + (window.translator ? window.translator.translate('Start Activity') : 'Start Activity');
               processingButton.setAttribute('data-server-verified', 'true');
             }
-            if (processingStatus) processingStatus.textContent = 'Processing available';
+            if (processingStatus) processingStatus.textContent = (window.translator ? window.translator.translate('Processing available') : 'Processing available');
             if (processingAnimation) processingAnimation.style.display = 'none';
-            window.processingSessionStarting = false;
+            // window.processingSessionStarting = false; // تم إزالته
             
             // ✅ Also cleanup from database
             try {
@@ -6571,7 +6809,7 @@ function updateProcessingState(isActive, startTime, endTime) {
       processingStatus.className = 'status-active';
       processingAnimation.style.display = 'block';
     } else {
-      processingStatus.textContent = 'Processing finished';
+      processingStatus.textContent = translator.translate('Processing Completed');
       processingStatus.className = 'status-inactive';
       processingAnimation.style.display = 'none';
 
@@ -6581,7 +6819,7 @@ function updateProcessingState(isActive, startTime, endTime) {
   } else {
     processingButton.classList.remove('disabled');
     processingButton.disabled = false;
-    processingStatus.textContent = 'Processing inactive';
+    processingStatus.textContent = translator.translate('Processing available');
     processingStatus.className = 'status-inactive';
     processingAnimation.style.display = 'none';
   }
@@ -7179,8 +7417,20 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           connectPresenceWebSocket(currentUser.id);
           
           // 🔔 طلب إذن الإشعارات للتطبيق (TWA/PWA) - نافذة النظام العادية
-          if ('Notification' in window && Notification.permission === 'default') {
-            requestNotificationPermission(currentUser.id);
+          console.log('🔔 Checking notification permission:', Notification?.permission);
+          if ('Notification' in window) {
+            if (Notification.permission === 'default') {
+              console.log('🔔 Permission is default, requesting...');
+              requestNotificationPermission(currentUser.id);
+            } else if (Notification.permission === 'granted') {
+              // الإذن موجود مسبقاً، نسجل الـ subscription فقط
+              console.log('🔔 Permission granted, registering push...');
+              registerPushNotifications(currentUser.id);
+            } else {
+              console.log('🔔 Permission denied:', Notification.permission);
+            }
+          } else {
+            console.log('🔔 Notifications not supported in this browser');
           }
           
           // Load processing history when restoring session
@@ -11811,7 +12061,7 @@ if (totalCost > (currentBalance + precision)) {
           <p style="color: ${textColor};" data-translate-key="Users are responsible for securing their account credentials and private keys. AccessoireDigital is not liable for losses due to user negligence, unauthorized access, or failure to follow security guidelines.">${translator.translate('Users are responsible for securing their account credentials and private keys. AccessoireDigital is not liable for losses due to user negligence, unauthorized access, or failure to follow security guidelines.')}</p>
 
           <h3 style="color: #4CAF50;" data-translate-key="11. Account Deletion & Data Removal">${translator.translate('11. Account Deletion & Data Removal')}</h3>
-          <p style="color: ${textColor};" Users have the right to permanently delete their account at any time through the profile settings. When you delete your account: (1) All personal data including email, name, and profile information will be permanently removed. (2) All your Points balance will be lost forever and cannot be recovered. (3) Your referral code and all referral relationships will be permanently deleted. (4) All transaction history and activity records will be completely erased. (5) Your wallet and private keys will be permanently deleted. (6) This action is IRREVERSIBLE and CANNOT be undone. Once your account is deleted, there is no way to restore your data, Points, or any information associated with your account. We do not retain any backup copies of deleted accounts.">${translator.translate('Users have the right to permanently delete their account at any time through the profile settings. When you delete your account: (1) All personal data including email, name, and profile information will be permanently removed. (2) All your Points balance will be lost forever and cannot be recovered. (3) Your referral code and all referral relationships will be permanently deleted. (4) All transaction history and activity records will be completely erased. (5) Your wallet and private keys will be permanently deleted. (6) This action is IRREVERSIBLE and CANNOT be undone. Once your account is deleted, there is no way to restore your data, Points, or any information associated with your account. We do not retain any backup copies of deleted accounts.')}</p>
+          <p style="color: ${textColor};" data-translate-key="Users have the right to permanently delete their account at any time through the profile settings.">${translator.translate('Users have the right to permanently delete their account at any time through the profile settings. When you delete your account: (1) All personal data including email, name, and profile information will be permanently removed. (2) All your Points balance will be lost forever and cannot be recovered. (3) Your referral code and all referral relationships will be permanently deleted. (4) All transaction history and activity records will be completely erased. (5) Your wallet and private keys will be permanently deleted. (6) This action is IRREVERSIBLE and CANNOT be undone.')}</p>
 
           <h3 style="color: #4CAF50;" data-translate-key="12. Platform Modifications">${translator.translate('12. Platform Modifications')}</h3>
           <p style="color: ${textColor};" data-translate-key="We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.">${translator.translate('We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.')}</p>
@@ -11921,8 +12171,13 @@ if (totalCost > (currentBalance + precision)) {
         preloadActivityData(currentUser.id);
         
         // 🔔 طلب إذن الإشعارات للتطبيق (TWA/PWA) - نافذة النظام العادية
-        if ('Notification' in window && Notification.permission === 'default') {
-          requestNotificationPermission(currentUser.id);
+        if ('Notification' in window) {
+          if (Notification.permission === 'default') {
+            requestNotificationPermission(currentUser.id);
+          } else if (Notification.permission === 'granted') {
+            // الإذن موجود مسبقاً، نسجل الـ subscription فقط
+            registerPushNotifications(currentUser.id);
+          }
         }
       }
 

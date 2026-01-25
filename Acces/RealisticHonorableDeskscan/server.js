@@ -13,6 +13,11 @@ import webpush from 'web-push';
 import { startReEngagementScheduler } from './re-engagement-notifications.js';
 
 // ============================================================================
+// 📦 إصدار الملفات - غير هذا الرقم فقط لتحديث كل الملفات
+// ============================================================================
+const ASSETS_VERSION = '14.0';
+
+// ============================================================================
 // 🛡️ NEVER DIE PROTECTION - السيرفر لا يسقط أبداً!
 // ============================================================================
 let serverCrashCount = 0;
@@ -2107,13 +2112,17 @@ const server = http.createServer(async (req, res) => {
         const userId = decoded.userId;
         
         // Get current missions
-        const result = await pool.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
-        const missions = result.rows[0];
+        let result = await pool.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
+        let missions = result.rows[0];
 
         if (!missions) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Missions not initialized' }));
-          return;
+          // ✅ إنشاء سجل تلقائي للمستخدم
+          await pool.query(
+            `INSERT INTO user_missions (user_id, streak, last_claim_date, daily_claimed, completed_missions, bonus_claimed)
+             VALUES ($1, 0, NULL, false, '{}', false)`, [userId]
+          );
+          result = await pool.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
+          missions = result.rows[0];
         }
 
         if (missions.daily_claimed) {
@@ -2131,8 +2140,11 @@ const server = http.createServer(async (req, res) => {
         const CYCLE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
         
         if (!lastCycleStart) {
-          // أول مرة - ابدأ streak من 1
-          newStreak = 1;
+          // ✅ FIX: إذا لا يوجد دورة سابقة، زد الـ streak بـ 1
+          // streak = 0 → newStreak = 1 (اليوم الأول)
+          // streak = 1 → newStreak = 2 (اليوم الثاني)
+          newStreak = Math.min(missions.streak + 1, 7);
+          if (newStreak === 0) newStreak = 1; // للأمان
         } else {
           // تحقق من الوقت منذ آخر دورة
           const timeSinceLastCycle = nowMs - lastCycleStart;
@@ -2213,43 +2225,15 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // === SECURITY CHECK 2: Minimum time check (20 seconds for better verification) ===
-        if (verificationTime < 19000) {
+        // === SECURITY CHECK 2: Minimum time check (3 seconds) ===
+        if (verificationTime < 3000) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Please complete the task first and wait' }));
+          res.end(JSON.stringify({ error: 'please_complete_task_first' }));
           return;
         }
 
-        // === SECURITY CHECK 3: Verify username exists on platform ===
+        // === SECURITY CHECK 3: Platform-specific validation ===
         const platform = missionId === 'follow_twitter' ? 'twitter' : 'telegram';
-        
-        // For Twitter/X - verify the profile exists
-        if (platform === 'twitter') {
-          try {
-            const profileUrl = `https://x.com/${usernameWithoutAt}`;
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000);
-            
-            const profileCheck = await fetch(profileUrl, {
-              method: 'HEAD',
-              signal: controller.signal,
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-              }
-            });
-            clearTimeout(timeoutId);
-            
-            // If profile doesn't exist, X returns 404
-            if (profileCheck.status === 404) {
-              res.writeHead(400, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ error: 'X/Twitter username not found. Please enter a valid username.' }));
-              return;
-            }
-          } catch (fetchError) {
-            // If fetch fails, continue with other checks (don't block)
-            console.log('Twitter profile check failed, continuing:', fetchError.message);
-          }
-        }
         
         // For Telegram - verify username format is valid for Telegram
         if (platform === 'telegram') {
@@ -2264,6 +2248,16 @@ const server = http.createServer(async (req, res) => {
           if (/^[0-9]/.test(usernameWithoutAt)) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Telegram username cannot start with a number' }));
+            return;
+          }
+        }
+        
+        // For Twitter - just validate format (no external API check)
+        if (platform === 'twitter') {
+          // Twitter usernames must be 1-15 characters
+          if (usernameWithoutAt.length < 1 || usernameWithoutAt.length > 15) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Twitter username must be 1-15 characters' }));
             return;
           }
         }
@@ -2292,7 +2286,7 @@ const server = http.createServer(async (req, res) => {
             // This username was used by a DIFFERENT user
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ 
-              error: 'This username has already been used by another account',
+              error: 'This username has already been used by another account!',
               code: 'USERNAME_ALREADY_USED'
             }));
             return;
@@ -2303,13 +2297,17 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const result = await pool.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
-        const missions = result.rows[0];
+        let result = await pool.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
+        let missions = result.rows[0];
 
         if (!missions) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Missions not initialized' }));
-          return;
+          // ✅ إنشاء سجل تلقائي للمستخدم
+          await pool.query(
+            `INSERT INTO user_missions (user_id, streak, last_claim_date, daily_claimed, completed_missions, bonus_claimed)
+             VALUES ($1, 0, NULL, false, '{}', false)`, [userId]
+          );
+          result = await pool.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
+          missions = result.rows[0];
         }
 
         const completedMissions = missions.completed_missions || {};
@@ -2331,7 +2329,7 @@ const server = http.createServer(async (req, res) => {
           if (insertError.code === '23505') { // Unique violation
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ 
-              error: 'This username has already been used',
+              error: 'This username has already been used by another account!',
               code: 'USERNAME_ALREADY_USED'
             }));
             return;
@@ -2399,13 +2397,17 @@ const server = http.createServer(async (req, res) => {
         const userId = decoded.userId;
         const { missionId } = await parseRequestBody(req);
         
-        const result = await client.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
-        const missions = result.rows[0];
+        let result = await client.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
+        let missions = result.rows[0];
 
         if (!missions) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Missions not initialized' }));
-          return;
+          // ✅ إنشاء سجل تلقائي للمستخدم
+          await client.query(
+            `INSERT INTO user_missions (user_id, streak, last_claim_date, daily_claimed, completed_missions, bonus_claimed)
+             VALUES ($1, 0, NULL, false, '{}', false)`, [userId]
+          );
+          result = await client.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
+          missions = result.rows[0];
         }
 
         const completedMissions = missions.completed_missions || {};
@@ -2570,14 +2572,17 @@ const server = http.createServer(async (req, res) => {
         const userId = decoded.userId;
         const { missionId } = await parseRequestBody(req);
 
-        const result = await client.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
-        const missions = result.rows[0];
+        let result = await client.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
+        let missions = result.rows[0];
 
         if (!missions) {
-          client.release();
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Missions not initialized' }));
-          return;
+          // ✅ إنشاء سجل تلقائي للمستخدم
+          await client.query(
+            `INSERT INTO user_missions (user_id, streak, last_claim_date, daily_claimed, completed_missions, bonus_claimed)
+             VALUES ($1, 0, NULL, false, '{}', false)`, [userId]
+          );
+          result = await client.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
+          missions = result.rows[0];
         }
 
         const completedMissions = missions.completed_missions || {};
@@ -2642,13 +2647,17 @@ const server = http.createServer(async (req, res) => {
 
         const userId = decoded.userId;
 
-        const result = await pool.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
-        const missions = result.rows[0];
+        let result = await pool.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
+        let missions = result.rows[0];
 
         if (!missions) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Missions not initialized' }));
-          return;
+          // ✅ إنشاء سجل تلقائي للمستخدم
+          await pool.query(
+            `INSERT INTO user_missions (user_id, streak, last_claim_date, daily_claimed, completed_missions, bonus_claimed)
+             VALUES ($1, 0, NULL, false, '{}', false)`, [userId]
+          );
+          result = await pool.query('SELECT * FROM user_missions WHERE user_id = $1', [userId]);
+          missions = result.rows[0];
         }
 
         if (missions.bonus_claimed) {
@@ -2711,9 +2720,12 @@ const server = http.createServer(async (req, res) => {
     // POST /api/push/subscribe - Save push subscription to database
     if (pathname === '/api/push/subscribe' && req.method === 'POST') {
       try {
+        console.log('🔔 [PUSH] Received subscription request');
         const { userId, subscription } = await parseRequestBody(req);
+        console.log('🔔 [PUSH] userId:', userId, 'endpoint:', subscription?.endpoint?.substring(0, 50));
         
         if (!userId || !subscription || !subscription.endpoint) {
+          console.log('🔔 [PUSH] ERROR: Missing userId or subscription');
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'userId and valid subscription required' }));
           return;
@@ -2735,6 +2747,7 @@ const server = http.createServer(async (req, res) => {
             revoked_at = NULL
         `, [userId, subscription.endpoint, p256dh, auth, userAgent]);
 
+        console.log('🔔 [PUSH] ✅ Subscription saved for userId:', userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'Push subscription saved' }));
         return;
@@ -8176,7 +8189,7 @@ const server = http.createServer(async (req, res) => {
             );
           }
           
-          // ✅ بدء الجلسة الجديدة وتحديث الرصيد وإزالة المتراكم
+          // ✅ بدء الجلسة الجديدة وتحديث الرصيد وإزالة المتراكم + مسح boost
           await pool.query(
             `UPDATE users 
              SET processing_active = 1,
@@ -8185,7 +8198,13 @@ const server = http.createServer(async (req, res) => {
                  processing_end_time = $3,
                  coins = $4,
                  completed_processing_reward = 0,
-                 accumulatedReward = 0
+                 accumulatedReward = 0,
+                 processing_accumulated = 0,
+                 ad_boost_active = FALSE,
+                 ad_boost_granted_at = NULL,
+                 ad_boost_session_start = NULL,
+                 last_ad_watch_timestamp = NULL,
+                 session_locked_boost = 1.0
              WHERE id = $5`,
             [now, now * 1000, endTime * 1000, newBalance, userId]
           );
@@ -9357,8 +9376,19 @@ const server = http.createServer(async (req, res) => {
       if (contentType === 'text/html') {
         let htmlContent = content.toString('utf-8');
 
-        // No longer inject client ID directly into HTML for security
-        // HTML files will load OAuth config via secure API endpoint instead
+        // 🔄 إضافة إصدار تلقائي لكل ملفات JS و CSS المحلية
+        htmlContent = htmlContent.replace(/src="([^"]+\.js)"/g, (match, file) => {
+          // لا نضيف إصدار للملفات الخارجية (http/https)
+          if (file.startsWith('http')) return match;
+          // لا نضيف إصدار إذا كان موجوداً
+          if (file.includes('?v=')) return match;
+          return `src="${file}?v=${ASSETS_VERSION}"`;
+        });
+        htmlContent = htmlContent.replace(/href="([^"]+\.css)"/g, (match, file) => {
+          if (file.startsWith('http')) return match;
+          if (file.includes('?v=')) return match;
+          return `href="${file}?v=${ASSETS_VERSION}"`;
+        });
 
         res.writeHead(200, { 
           'Content-Type': contentType,
@@ -9367,8 +9397,11 @@ const server = http.createServer(async (req, res) => {
         });
         res.end(htmlContent, 'utf-8');
       } else {
-        // For non-HTML files, serve as-is
-        res.writeHead(200, { 'Content-Type': contentType });
+        // For non-HTML files, serve with no-cache headers
+        res.writeHead(200, { 
+          'Content-Type': contentType,
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        });
         res.end(content, 'utf-8');
       }
     }

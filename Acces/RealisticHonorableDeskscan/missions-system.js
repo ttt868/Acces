@@ -36,14 +36,6 @@
     };
   }
 
-  // دالة الترجمة الفورية - تستخدم المترجم العالمي
-  function translate(key) {
-    if (window.translator && typeof window.translator.translate === 'function') {
-      return window.translator.translate(key);
-    }
-    return key;
-  }
-
   // Helper function to update balance instantly in UI
   function msUpdateBalanceInstantly(reward) {
     if (window.currentUser) {
@@ -89,14 +81,14 @@
       reward: 0.02,
       url: 'https://x.com/Access_Chain',
       type: 'social',
-      verifyDelay: 20000 // 20 seconds minimum for proper verification
+      verifyDelay: 10000 // 10 seconds - faster verification
     },
     join_telegram: {
       id: 'join_telegram', 
       reward: 0.02,
       url: 'https://t.me/+YnQtDWLlQxk5YTU8',
       type: 'social',
-      verifyDelay: 20000 // 20 seconds minimum
+      verifyDelay: 10000 // 10 seconds - faster verification
     },
     complete_activity: {
       id: 'complete_activity',
@@ -187,6 +179,7 @@
       if (response.ok) {
         const data = await response.json();
         console.log('[Missions] Server response:', data);
+        console.log('[Missions] Server streak value:', data.streak);
         missionsState = {
           streak: data.streak || 0,
           lastClaimDate: data.lastClaimDate,
@@ -200,6 +193,7 @@
           cycleStart: data.cycleStart || null,
           serverTime: data.serverTime || Date.now()
         };
+        console.log('[Missions] missionsState.streak after load:', missionsState.streak);
         console.log('[Missions] State loaded with personal cycle:', missionsState.cycleActive, 'remaining:', missionsState.cycleRemainingMs);
       } else {
         console.error('[Missions] Failed to load state:', response.status);
@@ -261,16 +255,23 @@
   // Update streak day circles
   function updateStreakDays() {
     const streakDays = document.querySelectorAll('.ms-streak-day');
-    const currentDay = missionsState.dailyClaimed ? missionsState.streak : (missionsState.streak + 1);
+    const streak = missionsState.streak || 0;
+    
+    console.log('[Missions] updateStreakDays - streak:', streak, 'dailyClaimed:', missionsState.dailyClaimed);
     
     streakDays.forEach((day, index) => {
       const dayNum = index + 1;
       day.classList.remove('completed', 'current');
       
-      if (dayNum < currentDay || (dayNum === currentDay && missionsState.dailyClaimed)) {
+      // ✅ كل الأيام المكتملة تُعلَّم بالأخضر
+      if (dayNum <= streak) {
         day.classList.add('completed');
-      } else if (dayNum === currentDay && !missionsState.dailyClaimed) {
+        console.log('[Missions] Day', dayNum, 'marked as COMPLETED');
+      } 
+      // ✅ اليوم التالي نابض فقط إذا لم يتم claim اليوم (متاح للمطالبة)
+      else if (dayNum === streak + 1 && !missionsState.dailyClaimed) {
         day.classList.add('current');
+        console.log('[Missions] Day', dayNum, 'marked as CURRENT');
       }
     });
   }
@@ -366,7 +367,7 @@
       if (missionsState.bonusClaimed) {
         bonusBtn.disabled = true;
         bonusBtn.classList.add('claimed');
-        const bonusClaimedText = translate('Bonus Claimed');
+        const bonusClaimedText = window.translator.translate('Bonus Claimed');
         bonusBtn.innerHTML = `<i class="fas fa-check"></i> <span data-translate="Bonus Claimed">${bonusClaimedText}</span>`;
       } else if (totalCompleted >= TOTAL_MISSIONS + 1) {
         bonusBtn.disabled = false;
@@ -381,14 +382,14 @@
   // Claim daily reward
   window.msClaimDaily = async function() {
     if (missionsState.dailyClaimed) {
-      window.showNotification(translate('Already claimed today'), 'info');
+      window.showNotification(window.translator.translate('Already claimed today'), 'info');
       return;
     }
 
     try {
       const user = window.currentUser || currentUser;
       if (!user || !user.token) {
-        window.showNotification(translate('Please login first'), 'error');
+        window.showNotification(window.translator.translate('Please login first'), 'error');
         return;
       }
       const token = user.token;
@@ -409,18 +410,18 @@
         missionsState.lastClaimDate = new Date().toISOString();
         
         updateMissionsUI();
-        window.showNotification(`+${data.reward} ${translate('points_earned')}`, 'success');
+        window.showNotification(`+${data.reward} ${window.translator.translate('points_earned')}`, 'success');
         
         // تحديث الرصيد فوراً
         msUpdateBalanceInstantly(data.reward);
       } else {
         // ترجمة رسالة الخطأ من السيرفر
-        const errorMsg = data.error ? translate(data.error) : translate('Failed to claim reward');
+        const errorMsg = data.error ? window.translator.translate(data.error) : window.translator.translate('Failed to claim reward');
         window.showNotification(errorMsg, 'error');
       }
     } catch (error) {
       console.error('Error claiming daily:', error);
-      window.showNotification(translate('Network error'), 'error');
+      window.showNotification(window.translator.translate('Network error'), 'error');
     }
   };
 
@@ -430,7 +431,7 @@
     if (!config) return;
 
     if (missionsState.completedMissions[missionId]) {
-      window.showNotification(translate('Already completed!'), 'info');
+      window.showNotification(window.translator.translate('Already completed!'), 'info');
       return;
     }
 
@@ -460,17 +461,24 @@
     if (usernameInput) usernameInput.value = '';
     if (verifyBtn) verifyBtn.disabled = true;
     if (timerEl) timerEl.style.display = 'none';
-    if (countdownEl) countdownEl.textContent = '15';
+    if (countdownEl) countdownEl.textContent = '7';
     
     // Set onclick handlers
     if (openBtn) {
       openBtn.onclick = () => {
         window.open(config.url, '_blank');
         
-        // Start countdown
+        // Store start time immediately when user opens the link
+        missionsState.socialVerification[missionId] = {
+          startTime: Date.now(),
+          opened: true,
+          platform: isTwitter ? 'twitter' : 'telegram'
+        };
+        
+        // Start countdown - 7 seconds
         if (timerEl) timerEl.style.display = 'block';
         
-        let countdown = 15;
+        let countdown = 7;
         const interval = setInterval(() => {
           countdown--;
           if (countdownEl) countdownEl.textContent = countdown;
@@ -480,12 +488,7 @@
             if (timerEl) timerEl.style.display = 'none';
             if (verifyBtn) verifyBtn.disabled = false;
             
-            // Store verification start time
-            missionsState.socialVerification[missionId] = {
-              startTime: Date.now(),
-              opened: true,
-              platform: isTwitter ? 'twitter' : 'telegram'
-            };
+            
           }
         }, 1000);
       };
@@ -511,40 +514,18 @@
     missionsState.verificationAttempts = {};
   };
 
-  // Anti-spam: Track failed verification attempts
-  const MAX_VERIFICATION_ATTEMPTS = 2;  // Maximum 2 attempts before lockout
-  const LOCKOUT_DURATION = 30 * 60 * 1000;  // 30 minutes lockout
-
-  // Verify social mission with STRICT anti-abuse protection
+  // Verify social mission - Simple: just check username not used by others
   window.msVerifyMission = async function(missionId) {
     const verification = missionsState.socialVerification[missionId];
     
     if (!verification || !verification.opened) {
-      window.showNotification(translate('please_complete_task_first'), 'error');
+      window.showNotification(window.translator.translate('please_complete_task_first'), 'error');
       return;
     }
 
-    // === ANTI-SPAM CHECK: Check if currently verifying ===
+    // Prevent double-click
     if (verification.isVerifying) {
-      return; // Prevent double-click spam
-    }
-
-    // === ANTI-SPAM CHECK: Check lockout ===
-    const lockoutKey = `social_lockout_${missionId}`;
-    const lockoutUntil = localStorage.getItem(lockoutKey);
-    if (lockoutUntil && Date.now() < parseInt(lockoutUntil)) {
-      const remainingMinutes = Math.ceil((parseInt(lockoutUntil) - Date.now()) / 60000);
-      window.showNotification(translate('too_many_attempts_wait') + ` ${remainingMinutes} ` + translate('minutes'), 'error');
-      msCloseModal();
       return;
-    }
-
-    // === ANTI-SPAM CHECK: Track attempts ===
-    if (!missionsState.verificationAttempts) {
-      missionsState.verificationAttempts = {};
-    }
-    if (!missionsState.verificationAttempts[missionId]) {
-      missionsState.verificationAttempts[missionId] = 0;
     }
 
     // Get username from correct input based on platform
@@ -555,7 +536,7 @@
     
     // Require username
     if (!username) {
-      window.showNotification(translate('please_enter_username'), 'error');
+      window.showNotification(window.translator.translate('please_enter_username'), 'error');
       if (usernameInput) {
         usernameInput.style.borderColor = 'red';
         usernameInput.focus();
@@ -565,7 +546,7 @@
     
     // Validate username format (@username)
     if (!username.startsWith('@') || username.length < 3) {
-      window.showNotification(translate('Username must start with @'), 'error');
+      window.showNotification(window.translator.translate('Username must start with @'), 'error');
       if (usernameInput) {
         usernameInput.style.borderColor = 'red';
         usernameInput.focus();
@@ -576,7 +557,7 @@
     // Only allow valid username characters
     const usernameWithoutAt = username.substring(1).toLowerCase();
     if (!/^[a-z0-9_]{2,30}$/.test(usernameWithoutAt)) {
-      window.showNotification(translate('invalid_username_format'), 'error');
+      window.showNotification(window.translator.translate('invalid_username_format'), 'error');
       if (usernameInput) {
         usernameInput.style.borderColor = 'red';
         usernameInput.focus();
@@ -612,14 +593,11 @@
       const data = await response.json();
 
       if (response.ok) {
-        // SUCCESS! Reset attempts and complete
-        missionsState.verificationAttempts[missionId] = 0;
-        localStorage.removeItem(lockoutKey);
-        
+        // SUCCESS! Mission completed forever
         missionsState.completedMissions[missionId] = true;
         msCloseModal();
         updateMissionsUI();
-        window.showNotification(`+${MISSIONS_CONFIG[missionId].reward} ${translate('points_earned')}`, 'success');
+        window.showNotification(`+${MISSIONS_CONFIG[missionId].reward} ${window.translator.translate('points_earned')}`, 'success');
         
         // Add animation
         const missionEl = document.getElementById(`ms-${missionId.replace(/_/g, '-')}`);
@@ -631,42 +609,17 @@
         // تحديث الرصيد فوراً
         msUpdateBalanceInstantly(MISSIONS_CONFIG[missionId].reward);
       } else {
-        // FAILED! Increment attempt counter
-        missionsState.verificationAttempts[missionId]++;
-        const attemptsLeft = MAX_VERIFICATION_ATTEMPTS - missionsState.verificationAttempts[missionId];
-        
-        // Check if username was already used
+        // FAILED - show error
         if (data.code === 'USERNAME_ALREADY_USED') {
-          window.showNotification(translate('username_already_used'), 'error');
-          missionsState.verificationAttempts[missionId]++; // Extra penalty for stolen username
+          window.showNotification(window.translator.translate('This username has already been used by another account!'), 'error');
         } else {
-          // ترجمة رسالة الخطأ من السيرفر
-          const errorMsg = data.error ? translate(data.error) : translate('Verification failed');
+          const errorMsg = data.error ? window.translator.translate(data.error) : window.translator.translate('Verification failed');
           window.showNotification(errorMsg, 'error');
-        }
-        
-        // Check if max attempts reached
-        if (missionsState.verificationAttempts[missionId] >= MAX_VERIFICATION_ATTEMPTS) {
-          // LOCKOUT! Close modal and set lockout timer
-          const lockoutUntilTime = Date.now() + LOCKOUT_DURATION;
-          localStorage.setItem(lockoutKey, lockoutUntilTime.toString());
-          
-          window.showNotification(translate('locked_for_30_minutes'), 'error');
-          msCloseModal();
-          return;
-        } else {
-          // Show remaining attempts
-          window.showNotification(`${attemptsLeft} ` + translate('attempts_remaining'), 'warning');
-          
-          // Close modal after 2 seconds to force re-opening
-          setTimeout(() => {
-            msCloseModal();
-          }, 2000);
         }
       }
     } catch (error) {
       console.error('Error verifying mission:', error);
-      window.showNotification(translate('Network error'), 'error');
+      window.showNotification(window.translator.translate('Network error'), 'error');
     } finally {
       // Reset verifying state
       verification.isVerifying = false;
@@ -682,14 +635,14 @@
     console.log('[Missions] Checking mission:', missionId);
     
     if (missionsState.completedMissions[missionId]) {
-      window.showNotification(translate('Already completed!'), 'info');
+      window.showNotification(window.translator.translate('Already completed!'), 'info');
       return;
     }
 
     try {
       const user = window.currentUser || currentUser;
       if (!user || !user.token) {
-        window.showNotification(translate('Please login first'), 'error');
+        window.showNotification(window.translator.translate('Please login first'), 'error');
         return;
       }
       const token = user.token;
@@ -709,7 +662,7 @@
       if (response.ok && data.completed) {
         missionsState.completedMissions[missionId] = true;
         updateMissionsUI();
-        window.showNotification(`+${MISSIONS_CONFIG[missionId].reward} ${translate('points_earned')}`, 'success');
+        window.showNotification(`+${MISSIONS_CONFIG[missionId].reward} ${window.translator.translate('points_earned')}`, 'success');
         
         const missionEl = document.getElementById(`ms-${missionId.replace(/_/g, '-')}`);
         if (missionEl) {
@@ -724,7 +677,7 @@
         // Show translated hint message as bubble above mission
         const missionEl = document.getElementById(`ms-${missionId.replace(/_/g, '-')}`);
         const messageKey = data.messageKey || 'mission_hint_default';
-        const translatedMsg = translate(messageKey);
+        const translatedMsg = window.translator.translate(messageKey);
         console.log('[Missions] Showing hint:', translatedMsg, 'Element:', missionEl);
         
         if (missionEl) {
@@ -750,7 +703,7 @@
       }
     } catch (error) {
       console.error('Error checking mission:', error);
-      window.showNotification(translate('Network error'), 'error');
+      window.showNotification(window.translator.translate('Network error'), 'error');
     }
   };
 
@@ -769,7 +722,7 @@
     try {
       const user = window.currentUser || currentUser;
       if (!user || !user.token) {
-        window.showNotification(translate('Please login first'), 'error');
+        window.showNotification(window.translator.translate('Please login first'), 'error');
         return;
       }
       const token = user.token;
@@ -804,7 +757,7 @@
         missionsState.completedMissions[missionId] = true;
         setTimeout(() => {
           updateMissionsUI();
-          window.showNotification(`+${MISSIONS_CONFIG[missionId].reward} ${translate('points_earned')}`, 'success');
+          window.showNotification(`+${MISSIONS_CONFIG[missionId].reward} ${window.translator.translate('points_earned')}`, 'success');
         }, 500);
 
         // تحديث الرصيد فوراً
@@ -825,7 +778,7 @@
     const totalCompleted = completedCount + (missionsState.dailyClaimed ? 1 : 0);
 
     if (totalCompleted < TOTAL_MISSIONS + 1) {
-      window.showNotification(translate('Complete all tasks first!'), 'error');
+      window.showNotification(window.translator.translate('Complete all tasks first!'), 'error');
       return;
     }
 
@@ -847,18 +800,18 @@
       if (response.ok) {
         missionsState.bonusClaimed = true;
         updateMissionsUI();
-        window.showNotification(`+${BONUS_REWARD} ${translate('bonus_points_earned')}`, 'success');
+        window.showNotification(`+${BONUS_REWARD} ${window.translator.translate('bonus_points_earned')}`, 'success');
 
         // تحديث الرصيد فوراً
         msUpdateBalanceInstantly(BONUS_REWARD);
       } else {
         // ترجمة رسالة الخطأ من السيرفر
-        const errorMsg = data.error ? translate(data.error) : translate('Failed to claim bonus');
+        const errorMsg = data.error ? window.translator.translate(data.error) : window.translator.translate('Failed to claim bonus');
         window.showNotification(errorMsg, 'error');
       }
     } catch (error) {
       console.error('Error claiming bonus:', error);
-      window.showNotification(translate('Network error'), 'error');
+      window.showNotification(window.translator.translate('Network error'), 'error');
     }
   };
 

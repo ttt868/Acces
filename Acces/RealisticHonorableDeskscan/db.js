@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import pg from 'pg';
-import { getDatabaseConfig } from '../database-config.js';
+import { getDatabaseConfig } from './database-config.js';
 const { Pool } = pg;
 
 // 🚀 نظام Throttling ذكي لمنع UPDATE المتكررة
@@ -1131,15 +1131,34 @@ async function initializeDatabase() {
         daily_claimed BOOLEAN DEFAULT FALSE,
         completed_missions JSONB DEFAULT '{}',
         bonus_claimed BOOLEAN DEFAULT FALSE,
+        mission_cycle_start BIGINT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id)
       )
     `);
     
+    // Add mission_cycle_start column if it doesn't exist (for existing tables)
+    await pool.query(`
+      ALTER TABLE user_missions ADD COLUMN IF NOT EXISTS mission_cycle_start BIGINT NULL
+    `);
+    
     // Create index for faster lookups
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_user_missions_user_id ON user_missions(user_id);
+    `);
+    
+    // Create social_usernames table for tracking social media usernames
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS social_usernames (
+        id SERIAL PRIMARY KEY,
+        platform VARCHAR(20) NOT NULL,
+        username VARCHAR(50) NOT NULL,
+        user_id INTEGER NOT NULL,
+        mission_id VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(platform, username)
+      )
     `);
 
   } catch (error) {

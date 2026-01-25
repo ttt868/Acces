@@ -243,15 +243,15 @@
 }
 
 .ms-streak-day.completed .ms-day-circle {
-  background: linear-gradient(135deg, #10b981, #059669);
-  border-color: #10b981;
-  color: white;
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  border-color: #10b981 !important;
+  color: white !important;
 }
 
 .ms-streak-day.current .ms-day-circle {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  animation: ms-pulse-border 2s infinite;
+  border-color: var(--primary-color) !important;
+  color: var(--primary-color) !important;
+  animation: ms-pulse-border 2s infinite !important;
 }
 
 .ms-streak-day.special .ms-day-circle {

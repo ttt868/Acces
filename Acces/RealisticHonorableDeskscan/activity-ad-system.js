@@ -62,9 +62,8 @@
             activityRewardedSlot = null;
             window.activityAdEvent = null;
             
-            setTimeout(() => {
-              initializeActivityAd();
-            }, 500);
+            // ⚡ إعادة تهيئة فورية للإعلان التالي
+            initializeActivityAd();
           }
         });
 
@@ -107,13 +106,31 @@
       console.log('✅ Activity Ad تم عرضه');
       return true;
     } else {
-      console.warn('⚠️ Activity Ad غير جاهز بعد');
-      if (adClosedCallback) {
-        console.log('📺 الإعلان غير جاهز - تنفيذ callback مباشرة');
-        adClosedCallback();
-        adClosedCallback = null;
-      }
-      return false;
+      console.warn('⚠️ Activity Ad غير جاهز بعد - جاري الانتظار...');
+      // ✅ انتظار الإعلان لمدة 3 ثواني
+      let waitAttempts = 0;
+      const maxAttempts = 30; // 30 × 100ms = 3 ثواني
+      
+      const waitForAd = setInterval(() => {
+        waitAttempts++;
+        console.log(`📺 انتظار الإعلان... محاولة ${waitAttempts}/${maxAttempts}`);
+        
+        if (window.activityAdEvent) {
+          clearInterval(waitForAd);
+          window.activityAdEvent.makeRewardedVisible();
+          activityAdShowing = true;
+          console.log('✅ Activity Ad تم عرضه بعد الانتظار');
+        } else if (waitAttempts >= maxAttempts) {
+          clearInterval(waitForAd);
+          console.warn('⚠️ الإعلان لم يتحمل - تنفيذ callback');
+          if (adClosedCallback) {
+            adClosedCallback();
+            adClosedCallback = null;
+          }
+        }
+      }, 100);
+      
+      return true; // نعتبره ناجح لأننا ننتظر
     }
   };
 
