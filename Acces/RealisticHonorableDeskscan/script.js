@@ -9,23 +9,18 @@ function fetchWithTimeout(url, options = {}, timeout = 15000) {
 }
 
 // Global formatNumberSmart function (must be before DOMContentLoaded)
-// 1000 → 1,000 | 1 → 1 | 0.5 → 0.50 | 2.1 → 2.10
+// 1000 → 1,000.00 | 1 → 1.00 | 0 → 0.00 | 0.5 → 0.50 | 2.1 → 2.10
 window.formatNumberSmart = function(number) {
   if (typeof number !== 'number') {
     number = parseFloat(number) || 0;
   }
 
-  // Check if it's a whole number (no decimals)
-  if (Number.isInteger(number)) {
-    return number.toLocaleString('en-US');
-  }
-  
-  // Has decimals - format with max 8 decimals
+  // ✅ دائماً اعرض رقمين عشريين على الأقل (حتى لو كان 0)
   let formatted = parseFloat(number.toFixed(8)).toString();
   
   const parts = formatted.split('.');
   
-  // CRITICAL: Ensure at least 2 decimal places for ALL fractional numbers
+  // CRITICAL: Ensure at least 2 decimal places for ALL numbers
   if (!parts[1]) {
     parts[1] = '00';
   } else if (parts[1].length === 1) {
@@ -297,17 +292,12 @@ document.addEventListener('DOMContentLoaded', function() {
       number = parseFloat(number) || 0;
     }
 
-    // Check if it's a whole number (no decimals)
-    if (Number.isInteger(number)) {
-      return number.toLocaleString('en-US');
-    }
-    
-    // Has decimals - format with max 8 decimals
+    // ✅ دائماً اعرض رقمين عشريين على الأقل (حتى لو كان 0)
     let formatted = parseFloat(number.toFixed(8)).toString();
     
     const parts = formatted.split('.');
     
-    // CRITICAL: Ensure at least 2 decimal places for ALL fractional numbers
+    // CRITICAL: Ensure at least 2 decimal places for ALL numbers
     if (!parts[1]) {
       parts[1] = '00';
     } else if (parts[1].length === 1) {
@@ -11031,20 +11021,16 @@ if (totalCost > (currentBalance + precision)) {
    // Format amount with proper decimal places - smart formatting
     function formatAmount(amount) {
       const num = parseFloat(amount);
-      if (isNaN(num)) return '0';
-      if (num === 0) return '0';
+      if (isNaN(num)) return '0.00';
       
-      // If it's a whole number, show without decimals with thousand separators
-      if (Number.isInteger(num)) {
-        return num.toLocaleString('en-US');
-      }
-      
-      // For decimal numbers, show at least 2 decimal places
+      // ✅ دائماً اعرض رقمين عشريين على الأقل (حتى لو كان 0)
       let formatted = parseFloat(num.toFixed(8)).toString();
       const parts = formatted.split('.');
       
-      // Ensure at least 2 decimal places
-      if (parts[1] && parts[1].length < 2) {
+      // Ensure at least 2 decimal places for ALL numbers
+      if (!parts[1]) {
+        parts[1] = '00';
+      } else if (parts[1].length < 2) {
         parts[1] = parts[1].padEnd(2, '0');
       }
       
@@ -11056,23 +11042,19 @@ if (totalCost > (currentBalance + precision)) {
 
     // Ensure transaction amount is displayed with smart formatting
     function formatTransactionAmount(amount) {
-      if (amount === undefined || amount === null) return '0';
+      if (amount === undefined || amount === null) return '0.00';
       
       const num = parseFloat(amount);
-      if (isNaN(num)) return '0';
-      if (num === 0) return '0';
+      if (isNaN(num)) return '0.00';
       
-      // If it's a whole number, show without decimals with thousand separators
-      if (Number.isInteger(num)) {
-        return num.toLocaleString('en-US');
-      }
-      
-      // For decimal numbers, show at least 2 decimal places
+      // ✅ دائماً اعرض رقمين عشريين على الأقل (حتى لو كان 0)
       let formatted = parseFloat(num.toFixed(8)).toString();
       const parts = formatted.split('.');
       
-      // Ensure at least 2 decimal places
-      if (parts[1] && parts[1].length < 2) {
+      // Ensure at least 2 decimal places for ALL numbers
+      if (!parts[1]) {
+        parts[1] = '00';
+      } else if (parts[1].length < 2) {
         parts[1] = parts[1].padEnd(2, '0');
       }
       
@@ -11913,7 +11895,7 @@ if (totalCost > (currentBalance + precision)) {
  
 // Format coins to show proper decimal places without unnecessary zeros
     function formatCoins(value) {
-      if (value === undefined || value === null) return '0';
+      if (value === undefined || value === null) return '0.00';
 
       // Convert to number and format with 8 decimal places initially
       const num = parseFloat(value);
