@@ -43,6 +43,17 @@ function roundReward(amount) {
   return Math.round(amount * 100000000) / 100000000;
 }
 
+/**
+ * 🔧 دالة تقريب للأعلى لأقرب 0.01
+ * مثال: 0.27737 → 0.28
+ */
+function roundUpToTwoDecimals(amount) {
+  if (typeof amount !== 'number' || isNaN(amount)) {
+    return 0;
+  }
+  return Math.ceil(amount * 100) / 100;
+}
+
 class ServerSideProcessingSync {
   constructor() {
     this.syncInterval = null;
@@ -157,6 +168,7 @@ class ServerSideProcessingSync {
           const userId = session.id;
           const userName = session.name || `User ${userId}`;
           const existingCompleted = parseFloat(session.completed_processing_reward || 0);
+          const existingAccumulated = parseFloat(session.accumulatedreward || 0);
           const adBoostActive = session.ad_boost_active === true;
           const activeReferralCount = parseInt(session.active_referral_count) || 0;
 
@@ -177,11 +189,15 @@ class ServerSideProcessingSync {
           const boostCalc = computeHashrateMultiplier(activeReferralCount, adBoostActive);
           const boostMultiplier = boostCalc.multiplier;
 
-          // حساب المكافأة النهائية (الجلسة انتهت = 100%)
+          // 🔧 حساب المكافأة النهائية (الجلسة انتهت = 100%)
           const baseReward = 0.25;
-          const finalReward = roundReward(baseReward * boostMultiplier);
+          const baseWithBoost = baseReward * boostMultiplier;
+          
+          // 🔧 FIX: خذ الأعلى بين المتراكم والمبلغ الأساسي، ثم قرب للأعلى لأقرب 0.01
+          const maxReward = Math.max(existingAccumulated, baseWithBoost);
+          const finalReward = roundUpToTwoDecimals(maxReward);
 
-          console.log(`[RECOVERY] User ${userId} (${userName}): المكافأة ${finalReward.toFixed(8)} ACCESS (boost: ${boostMultiplier.toFixed(2)}x, referrals: ${activeReferralCount}, adBoost: ${adBoostActive})`);
+          console.log(`[RECOVERY] User ${userId} (${userName}): المكافأة ${finalReward.toFixed(2)} ACCESS (accumulated: ${existingAccumulated.toFixed(8)}, boost: ${boostMultiplier.toFixed(2)}x)`);
 
           // حفظ المكافأة المكتملة في قاعدة البيانات
           await pool.query(
@@ -200,7 +216,7 @@ class ServerSideProcessingSync {
             [userId]
           ).catch(() => {}); // تجاهل الأخطاء
 
-          console.log(`[RECOVERY] ✅ User ${userId} (${userName}): تم حفظ المكافأة ${finalReward.toFixed(8)} ACCESS بنجاح`);
+          console.log(`[RECOVERY] ✅ User ${userId} (${userName}): تم حفظ المكافأة ${finalReward.toFixed(2)} ACCESS بنجاح`);
           successCount++;
 
         } catch (sessionError) {
@@ -286,6 +302,7 @@ class ServerSideProcessingSync {
         try {
           const userId = session.id;
           const existingCompleted = parseFloat(session.completed_processing_reward || 0);
+          const existingAccumulated = parseFloat(session.accumulatedreward || 0);
           const adBoostActive = session.ad_boost_active === true;
           const activeReferralCount = parseInt(session.active_referral_count) || 0;
 
@@ -302,9 +319,13 @@ class ServerSideProcessingSync {
           const boostCalc = computeHashrateMultiplier(activeReferralCount, adBoostActive);
           const boostMultiplier = boostCalc.multiplier;
 
-          // حساب المكافأة النهائية
+          // 🔧 حساب المكافأة النهائية
           const baseReward = 0.25;
-          const finalReward = roundReward(baseReward * boostMultiplier);
+          const baseWithBoost = baseReward * boostMultiplier;
+          
+          // 🔧 FIX: خذ الأعلى بين المتراكم والمبلغ الأساسي، ثم قرب للأعلى لأقرب 0.01
+          const maxReward = Math.max(existingAccumulated, baseWithBoost);
+          const finalReward = roundUpToTwoDecimals(maxReward);
 
           // حفظ المكافأة وإيقاف الجلسة
           await pool.query(
@@ -323,7 +344,7 @@ class ServerSideProcessingSync {
             [userId]
           ).catch(() => {});
 
-          console.log(`[PERIODIC] ✅ User ${userId}: حفظ ${finalReward.toFixed(8)} ACCESS (referrals: ${activeReferralCount}, adBoost: ${adBoostActive})`);
+          console.log(`[PERIODIC] ✅ User ${userId}: حفظ ${finalReward.toFixed(2)} ACCESS (accumulated: ${existingAccumulated.toFixed(8)}, boost: ${boostMultiplier.toFixed(2)}x)`);
 
         } catch (sessionError) {
           console.error(`[PERIODIC] Error processing expired session ${session.id}:`, sessionError.message);
@@ -857,21 +878,22 @@ class ServerSideProcessingSync {
 
         // Calculate minimum guaranteed reward (0.25 with boost)
         const baseReward = 0.25;
-        const guaranteedMinimum = roundReward(baseReward * finalBoostMultiplier);
+        const guaranteedMinimum = baseReward * finalBoostMultiplier;
 
-        // Final reward is the higher of accumulated or guaranteed minimum - مع التقريب
-        const finalReward = roundReward(Math.max(highestAccumulated, guaranteedMinimum));
+        // 🔧 FIX: خذ الأعلى ثم قرب للأعلى لأقرب 0.01 (0.27737 → 0.28)
+        const maxReward = Math.max(highestAccumulated, guaranteedMinimum);
+        const finalReward = roundUpToTwoDecimals(maxReward);
 
         // ✅ SESSION SUMMARY: Show complete session details at end
-        const newBalance = roundReward(currentBalance + finalReward);
+        const newBalance = roundUpToTwoDecimals(currentBalance + finalReward);
         const referralBoost = activeReferrals * 0.4;
         const adBoostValue = adBoostActive ? 1.2 : 0;
         
         console.log(`\n📋 ═══════════════════════════════════════════════════════════`);
         console.log(`📋 [SESSION COMPLETED] ${userEmail}`);
         console.log(`📋 ───────────────────────────────────────────────────────────`);
-        console.log(`📋   💰 Reward Earned: +${finalReward.toFixed(8)} ACCESS`);
-        console.log(`📋   💼 New Balance: ${newBalance.toFixed(8)} ACCESS`);
+        console.log(`📋   💰 Reward Earned: +${finalReward.toFixed(2)} ACCESS`);
+        console.log(`📋   💼 New Balance: ${newBalance.toFixed(2)} ACCESS`);
         console.log(`📋   ⚡ Boost Multiplier: ${finalBoostMultiplier.toFixed(2)}x`);
         console.log(`📋   👥 Active Referrals: ${activeReferrals} (+${referralBoost.toFixed(1)} MH/s)`);
         console.log(`📋   🎬 Ad Boost: ${adBoostActive ? '✅ Active (+1.2 MH/s)' : '❌ Not Used'}`);

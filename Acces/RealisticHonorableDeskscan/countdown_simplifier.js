@@ -66,15 +66,27 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
 
       let displayedAccumulated;
 
+      // 🔧 دالة تقريب للأعلى لأقرب 0.01
+      function roundUpToTwoDecimals(amount) {
+        return Math.ceil(amount * 100) / 100;
+      }
+
       if (processing_active === 0) {
         // 🔧 الجلسة منتهية - احسب المبلغ النهائي الكامل
         if (completedReward > 0) {
           // المكافأة المكتملة موجودة - استخدمها
           displayedAccumulated = completedReward;
         } else if (startTimeSec > 0) {
-          // 🔧 FIX: الجلسة انتهت لكن لم تُحفظ المكافأة - احسب المبلغ الكامل
+          // 🔧 FIX: الجلسة انتهت لكن لم تُحفظ المكافأة
+          // احسب المبلغ الأساسي مع الـ boost
           const baseReward = 0.25;
-          const finalReward = roundReward(baseReward * lockedBoost);
+          const baseWithBoost = baseReward * lockedBoost;
+          
+          // 🔧 خذ الأعلى: المتراكم أو الأساسي
+          const maxReward = Math.max(accumulatedReward, baseWithBoost);
+          
+          // 🔧 قرب للأعلى لأقرب 0.01 (مثل 0.27737 → 0.28)
+          const finalReward = roundUpToTwoDecimals(maxReward);
           displayedAccumulated = finalReward;
           
           // 🔧 حفظ المبلغ الكامل في قاعدة البيانات
@@ -87,7 +99,7 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
             [finalReward, userId]
           ).catch(err => console.error('Error saving final reward:', err));
           
-          console.log(`[FIX] User ${userId}: Session ended, calculated final reward: ${finalReward.toFixed(8)} ACCESS (boost: ${lockedBoost.toFixed(2)}x)`);
+          console.log(`[FIX] User ${userId}: Session ended, final reward: ${finalReward.toFixed(2)} ACCESS (accumulated: ${accumulatedReward.toFixed(8)}, boost: ${lockedBoost.toFixed(2)}x)`);
         } else {
           // لا توجد جلسة نشطة سابقة
           displayedAccumulated = accumulatedReward;
