@@ -24,7 +24,7 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
     try {
       const userId = parseInt(pathname.split('/')[5]);
 
-      // Get processing status from database
+      // Get processing status from database - مع معلومات الـ boost
       const userStatus = await pool.query(
         `SELECT 
            processing_active, 
@@ -33,7 +33,8 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
            processing_start_time_seconds,
            last_payout,
            COALESCE(accumulatedReward, 0) as accumulated_processing_reward,
-           COALESCE(completed_processing_reward, 0) as completed_processing_reward
+           COALESCE(completed_processing_reward, 0) as completed_processing_reward,
+           COALESCE(session_locked_boost, processing_boost_multiplier, 1.0) as locked_boost
          FROM users 
          WHERE id = $1`,
         [userId]
@@ -58,17 +59,41 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
       const remainingSec = Math.max(0, endTimeSec - nowSec);
       const processing_active = remainingSec > 0 ? 1 : 0;
 
-      // عند انتهاء الجلسة، إرجاع completed_processing_reward إذا كانت موجودة
-      // وإلا إرجاع accumulated - هذا يضمن بقاء المكافأة ظاهرة في جميع الأوقات
-      let displayedAccumulated;
+      // Get boost info
+      const lockedBoost = parseFloat(user.locked_boost) || 1.0;
       const completedReward = parseFloat(user.completed_processing_reward || 0);
       const accumulatedReward = parseFloat(user.accumulated_processing_reward || 0);
-      
-      if (processing_active === 0 && completedReward > 0) {
-        // الجلسة منتهية وتم حفظ المكافأة المكتملة - أظهرها
-        displayedAccumulated = completedReward;
+
+      let displayedAccumulated;
+
+      if (processing_active === 0) {
+        // 🔧 الجلسة منتهية - احسب المبلغ النهائي الكامل
+        if (completedReward > 0) {
+          // المكافأة المكتملة موجودة - استخدمها
+          displayedAccumulated = completedReward;
+        } else if (startTimeSec > 0) {
+          // 🔧 FIX: الجلسة انتهت لكن لم تُحفظ المكافأة - احسب المبلغ الكامل
+          const baseReward = 0.25;
+          const finalReward = roundReward(baseReward * lockedBoost);
+          displayedAccumulated = finalReward;
+          
+          // 🔧 حفظ المبلغ الكامل في قاعدة البيانات
+          pool.query(
+            `UPDATE users SET 
+             completed_processing_reward = $1,
+             accumulatedReward = $1,
+             processing_active = 0
+             WHERE id = $2`,
+            [finalReward, userId]
+          ).catch(err => console.error('Error saving final reward:', err));
+          
+          console.log(`[FIX] User ${userId}: Session ended, calculated final reward: ${finalReward.toFixed(8)} ACCESS (boost: ${lockedBoost.toFixed(2)}x)`);
+        } else {
+          // لا توجد جلسة نشطة سابقة
+          displayedAccumulated = accumulatedReward;
+        }
       } else {
-        // الجلسة نشطة أو منتهية لكن لم يتم حفظ المكافأة بعد - أظهر المتراكم
+        // الجلسة نشطة - أظهر المتراكم
         displayedAccumulated = accumulatedReward;
       }
 
