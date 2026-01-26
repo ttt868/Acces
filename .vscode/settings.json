@@ -16,6 +16,7 @@
             "approve": true,
             "matchCommandLine": true
         },
-        "tar": true
+        "tar": true,
+        "sshpass": true
     }
 }

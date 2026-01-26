@@ -4641,37 +4641,20 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
                 accumulatedCoinsEl.textContent = formatNumberSmart(0);
               }
               
-              // ✅ حساب XP/s (hashrate) مع الإحالات النشطة - لا نعيد تعيينه لـ 10.0
-              // فقط نزيل الـ ad boost لأنه يحتاج مشاهدة إعلان جديد
+              // ✅ لا نغير الـ hashrate أبداً - الإحالات النشطة تبقى كما هي
+              // فقط نزيل الـ ad boost attributes لأنه يحتاج مشاهدة إعلان جديد
               const hashrateValue = document.getElementById('hashrate-value');
               const dashboardHashrateValue = document.getElementById('dashboard-hashrate-value');
               
-              // جلب عدد الإحالات النشطة من السيرفر
-              fetch(`/api/processing/accumulated/${currentUser.id}`)
-                .then(resp => resp.json())
-                .then(hashData => {
-                  if (hashData.success) {
-                    const activeReferrals = hashData.activeReferrals || 0;
-                    // حساب hashrate مع الإحالات (بدون ad boost - يحتاج مشاهدة جديدة)
-                    let totalHashrate = 10.0 + (activeReferrals * 0.4);
-                    
-                    if (hashrateValue) {
-                      hashrateValue.textContent = totalHashrate.toFixed(1);
-                      hashrateValue.removeAttribute('data-ad-boost-active');
-                      hashrateValue.removeAttribute('data-ad-boost-value');
-                    }
-                    if (dashboardHashrateValue) {
-                      dashboardHashrateValue.textContent = totalHashrate.toFixed(1);
-                      dashboardHashrateValue.removeAttribute('data-ad-boost-active');
-                      dashboardHashrateValue.removeAttribute('data-ad-boost-value');
-                    }
-                  }
-                })
-                .catch(() => {
-                  // في حالة فشل الجلب، استخدم القيمة الأساسية
-                  if (hashrateValue) hashrateValue.textContent = '10.0';
-                  if (dashboardHashrateValue) dashboardHashrateValue.textContent = '10.0';
-                });
+              // فقط إزالة ad boost - لا نغير القيمة الظاهرة
+              if (hashrateValue) {
+                hashrateValue.removeAttribute('data-ad-boost-active');
+                hashrateValue.removeAttribute('data-ad-boost-value');
+              }
+              if (dashboardHashrateValue) {
+                dashboardHashrateValue.removeAttribute('data-ad-boost-active');
+                dashboardHashrateValue.removeAttribute('data-ad-boost-value');
+              }
               
               // ✅ مسح بيانات الـ ad boost فقط (الإحالات تبقى)
               if (window.localBoostData) {
