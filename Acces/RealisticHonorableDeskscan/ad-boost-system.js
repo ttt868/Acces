@@ -367,7 +367,7 @@
         activityHashrateValue.textContent = newActivityValue.toFixed(1);
         activityHashrateValue.setAttribute('data-ad-boost-active', 'true');
         activityHashrateValue.setAttribute('data-ad-boost-value', boostValue);
-        activityHashrateValue.style.color = '#4ade80';
+        // ✅ لا نغير اللون في Activity page
 
         activityHashrateDisplay.style.display = 'flex';
         activityHashrateDisplay.style.visibility = 'visible';

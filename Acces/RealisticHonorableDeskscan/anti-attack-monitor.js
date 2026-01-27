@@ -41,34 +41,48 @@ class AntiAttackMonitor {
   }
 
   // Monitor for double spending attempts
+  // ⚡ FIX: السماح بإعادة إرسال نفس المعاملة خلال 60 ثانية (للمحافظ التي تعيد المحاولة)
   checkDoubleSpending(address, nonce, txHash) {
     const patternKey = `${address}:${nonce}`;
     const pattern = this.attackPatterns.get(patternKey) || [];
+    const now = Date.now();
     
-    // Check if this nonce was already used
-    if (pattern.length > 0) {
-      pattern.push({
+    // ⚡ تنظيف المحاولات القديمة (أكثر من 60 ثانية)
+    const recentPattern = pattern.filter(p => (now - p.timestamp) < 60000);
+    
+    // ⚡ إذا كان نفس الـ txHash، اسمح به (نفس المعاملة)
+    const sameHashExists = recentPattern.some(p => p.txHash === txHash);
+    if (sameHashExists) {
+      return true; // نفس المعاملة - اسمح
+    }
+    
+    // Check if this nonce was already used recently
+    if (recentPattern.length > 0) {
+      recentPattern.push({
         txHash: txHash,
-        timestamp: Date.now(),
-        attempt: pattern.length + 1
+        timestamp: now,
+        attempt: recentPattern.length + 1
       });
       
-      this.attackPatterns.set(patternKey, pattern);
+      this.attackPatterns.set(patternKey, recentPattern);
       
-      this.flagSuspiciousActivity(address, 'double_spending_attempt', {
-        nonce: nonce,
-        attempts: pattern.length,
-        txHashes: pattern.map(p => p.txHash)
-      });
-      
-      if (pattern.length >= this.alertThresholds.duplicateNonce) {
-        this.blockAddress(address, 'Multiple double spending attempts');
-        return false;
+      // ⚡ فقط إذا كان هناك أكثر من 5 محاولات في 60 ثانية
+      if (recentPattern.length >= 5) {
+        this.flagSuspiciousActivity(address, 'double_spending_attempt', {
+          nonce: nonce,
+          attempts: recentPattern.length,
+          txHashes: recentPattern.map(p => p.txHash)
+        });
+        
+        if (recentPattern.length >= this.alertThresholds.duplicateNonce + 2) {
+          this.blockAddress(address, 'Multiple double spending attempts');
+          return false;
+        }
       }
     } else {
       this.attackPatterns.set(patternKey, [{
         txHash: txHash,
-        timestamp: Date.now(),
+        timestamp: now,
         attempt: 1
       }]);
     }

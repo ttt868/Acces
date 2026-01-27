@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- 🔒 منع وميض الرصيد - تغيير النص فوراً -->
+  <script>
+    window.balanceHiddenOnLoad = localStorage.getItem('balanceHidden') === 'true';
+  </script>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta http-equiv="Content-Language" content="ar,en,fr,es,de,tr,it,hi,zh,ja,ko,pt,ru,id,pl">
   <meta name="accept-charset" content="UTF-8">

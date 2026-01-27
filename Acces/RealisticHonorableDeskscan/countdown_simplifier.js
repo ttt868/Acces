@@ -33,7 +33,6 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
            processing_start_time_seconds,
            last_payout,
            COALESCE(accumulatedReward, 0) as accumulated_processing_reward,
-           COALESCE(completed_processing_reward, 0) as completed_processing_reward,
            COALESCE(session_locked_boost, processing_boost_multiplier, 1.0) as locked_boost
          FROM users 
          WHERE id = $1`,
@@ -61,7 +60,6 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
 
       // Get boost info
       const lockedBoost = parseFloat(user.locked_boost) || 1.0;
-      const completedReward = parseFloat(user.completed_processing_reward || 0);
       const accumulatedReward = parseFloat(user.accumulated_processing_reward || 0);
 
       let displayedAccumulated;
@@ -73,33 +71,29 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
 
       if (processing_active === 0) {
         // 🔧 الجلسة منتهية - احسب المبلغ النهائي الكامل
-        if (completedReward > 0) {
-          // المكافأة المكتملة موجودة - استخدمها
-          displayedAccumulated = completedReward;
+        if (accumulatedReward > 0) {
+          // المكافأة المتراكمة موجودة - استخدمها
+          displayedAccumulated = accumulatedReward;
         } else if (startTimeSec > 0) {
           // 🔧 FIX: الجلسة انتهت لكن لم تُحفظ المكافأة
           // احسب المبلغ الأساسي مع الـ boost
           const baseReward = 0.25;
           const baseWithBoost = baseReward * lockedBoost;
           
-          // 🔧 خذ الأعلى: المتراكم أو الأساسي
-          const maxReward = Math.max(accumulatedReward, baseWithBoost);
-          
           // 🔧 قرب للأعلى لأقرب 0.01 (مثل 0.27737 → 0.28)
-          const finalReward = roundUpToTwoDecimals(maxReward);
+          const finalReward = roundUpToTwoDecimals(baseWithBoost);
           displayedAccumulated = finalReward;
           
-          // 🔧 حفظ المبلغ الكامل في قاعدة البيانات
+          // 🔧 حفظ المبلغ الكامل في accumulatedReward فقط
           pool.query(
             `UPDATE users SET 
-             completed_processing_reward = $1,
              accumulatedReward = $1,
              processing_active = 0
              WHERE id = $2`,
             [finalReward, userId]
           ).catch(err => console.error('Error saving final reward:', err));
           
-          console.log(`[FIX] User ${userId}: Session ended, final reward: ${finalReward.toFixed(2)} ACCESS (accumulated: ${accumulatedReward.toFixed(8)}, boost: ${lockedBoost.toFixed(2)}x)`);
+          console.log(`[FIX] User ${userId}: Session ended, final reward: ${finalReward.toFixed(2)} ACCESS (boost: ${lockedBoost.toFixed(2)}x)`);
         } else {
           // لا توجد جلسة نشطة سابقة
           displayedAccumulated = accumulatedReward;
@@ -143,9 +137,9 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
         return true;
       }
 
-      // Get current user data including completed_processing_reward, boost AND ad_boost AND referrals
+      // Get current user data including boost AND ad_boost AND referrals
       const userResult = await pool.query(
-        `SELECT u.coins, u.accumulatedReward, u.completed_processing_reward,
+        `SELECT u.coins, u.accumulatedReward,
                 COALESCE(u.session_locked_boost, u.processing_boost_multiplier, 1.0) as locked_boost,
                 COALESCE(u.ad_boost_active, false) as ad_boost_active,
                 COALESCE((SELECT COUNT(*) FROM referrals WHERE referrer_id = u.id AND is_active = 1), 0) as active_referral_count
@@ -161,7 +155,6 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
 
       const currentBalance = parseFloat(userResult.rows[0].coins || 0);
       const storedAccumulated = parseFloat(userResult.rows[0].accumulatedreward || 0);
-      const completedReward = parseFloat(userResult.rows[0].completed_processing_reward || 0);
       const adBoostActive = userResult.rows[0].ad_boost_active === true;
       const activeReferralCount = parseInt(userResult.rows[0].active_referral_count || 0);
       
@@ -175,13 +168,10 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
       const baseReward = 0.25;
       const guaranteedMinimum = roundReward(baseReward * boostMultiplier); // 0.25 × boost
 
-      // حساب المكافأة النهائية بدقة
+      // حساب المكافأة النهائية بدقة - نستخدم accumulatedReward فقط
       let finalRewardAmount = 0;
 
-      // أولاً: استخدام القيمة المكتملة المخزنة (الأولوية)
-      if (completedReward > 0) {
-        finalRewardAmount = roundReward(completedReward);
-      } else if (storedAccumulated > 0) {
+      if (storedAccumulated > 0) {
         finalRewardAmount = roundReward(storedAccumulated);
       } else if (finalReward && parseFloat(finalReward) > 0) {
         finalRewardAmount = roundReward(parseFloat(finalReward));
@@ -196,13 +186,13 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
       // تقريب نهائي للتأكد من الدقة
       finalRewardAmount = roundReward(finalRewardAmount);
 
-      console.log(`✅ إكمال التعدين للمستخدم ${userId}: حفظ ${finalRewardAmount.toFixed(8)} في completed_processing_reward (boost: ${boostMultiplier.toFixed(2)}x)`);
+      console.log(`✅ إكمال التعدين للمستخدم ${userId}: حفظ ${finalRewardAmount.toFixed(8)} في accumulatedReward (boost: ${boostMultiplier.toFixed(2)}x)`);
 
       // ✅ Save completed reward WITHOUT transferring to balance
       // ✅ لا نحذف المكافأة المتراكمة - تبقى ظاهرة حتى بدء جلسة جديدة
       
       try {
-        // ✅ حفظ المكافأة المكتملة في completed_processing_reward - مع timeout
+        // ✅ حفظ المكافأة المكتملة في accumulatedReward فقط - مع timeout
         await Promise.race([
           pool.query(
             `UPDATE users SET 
@@ -211,7 +201,7 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
              processing_start_time_seconds = NULL,
              processing_boost_multiplier = 1.0,
              last_server_sync = NULL,
-             completed_processing_reward = $1::numeric(10,8)
+             accumulatedReward = $1::numeric(10,8)
              WHERE id = $2`,
             [finalRewardAmount, userId]
           ),
@@ -310,8 +300,7 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
         res.writeHead(409, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
           success: false, 
-          error: 'لديك جلسة نشطة بالفعل',
-          error_en: 'You already have an active processing session',
+          error: 'You already have an active processing session',
           remaining_seconds: remainingSec,
           already_processing: true
         }));
@@ -327,8 +316,7 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
           res.writeHead(409, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ 
             success: false, 
-            error: 'لديك جلسة نشطة بالفعل',
-            error_en: 'You already have an active processing session',
+            error: 'You already have an active processing session',
             remaining_seconds: remainingSec,
             already_processing: true
           }));
@@ -346,9 +334,9 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
     let lastError = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        // ✅ Get ALL reward fields to find the highest value for transfer
+        // ✅ Get reward fields to find the highest value for transfer - نستخدم accumulatedReward فقط
         const userCheck = await pool.query(
-          `SELECT coins, completed_processing_reward, 
+          `SELECT coins,
                   COALESCE(accumulatedReward, 0) as accumulatedreward,
                   COALESCE(accumulated_processing_reward, 0) as accumulated_processing_reward
            FROM users WHERE id = $1`,
@@ -362,12 +350,11 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
         }
 
         const currentBalance = parseFloat(userCheck.rows[0].coins || 0);
-        const completedReward = parseFloat(userCheck.rows[0].completed_processing_reward || 0);
         const storedAccumulated = parseFloat(userCheck.rows[0].accumulatedreward || 0);
         const altAccumulated = parseFloat(userCheck.rows[0].accumulated_processing_reward || 0);
         
-        // ✅ Take the HIGHEST value among all reward fields to prevent any loss
-        const maxReward = roundReward(Math.max(completedReward, storedAccumulated, altAccumulated));
+        // ✅ Take the HIGHEST value between reward fields
+        const maxReward = roundReward(Math.max(storedAccumulated, altAccumulated));
 
         // ✅ Calculate new balance ONLY if there's a reward to transfer
         let newBalance = currentBalance;
@@ -386,8 +373,7 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
                processing_start_time = $3,
                processing_end_time = $4,
                accumulatedReward = 0,
-               accumulated_processing_reward = 0,
-               completed_processing_reward = 0
+               accumulated_processing_reward = 0
              WHERE id = $5`,
             [newBalance.toFixed(8), now, now * 1000, (now + processingDuration) * 1000, userId]
           );

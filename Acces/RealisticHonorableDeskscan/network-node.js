@@ -1216,6 +1216,29 @@ class NetworkNode {
       req.on('end', async () => {
         try {
           const request = JSON.parse(body);
+          
+          // ✅ دعم Batch Requests (MetaMask يرسل مصفوفة من الطلبات)
+          if (Array.isArray(request)) {
+            // معالجة كل طلب في المصفوفة
+            const responses = await Promise.all(
+              request.map(async (singleRequest) => {
+                try {
+                  return await this.processRPCCall(singleRequest);
+                } catch (err) {
+                  return {
+                    jsonrpc: '2.0',
+                    error: { code: -32603, message: err.message },
+                    id: singleRequest.id || null
+                  };
+                }
+              })
+            );
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(responses));
+            return;
+          }
+          
+          // طلب واحد
           const response = await this.processRPCCall(request);
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1505,6 +1528,10 @@ class NetworkNode {
 
   async processRPCCall(request) {
     const { method, params, id } = request;
+
+    // 🔍 DEBUG: تسجيل كل الطلبات الواردة (مع حماية من undefined)
+    const paramsStr = params ? JSON.stringify(params).substring(0, 100) : '[]';
+    console.log(`📥 RPC: ${method} | id: ${id} | params: ${paramsStr}`);
 
     try {
       let result;
@@ -2055,33 +2082,25 @@ class NetworkNode {
           break;
 
         case 'eth_blockNumber':
-          // ⚡ METAMASK-STYLE: block number يتغير بشكل عدواني جداً لإجبار المحافظ على eth_getBalance جديد
-          // من بحث MetaMask Core: AccountTrackerController يستخدم 10 ثوانٍ polling interval
-          // لكن عند transactionConfirmed يستدعي refreshAddresses() فوراً
-          // الحل: نجعل block number يتغير بشكل مختلف في كل طلب
-          
+          // ⚡ رقم البلوك يجب أن يتغير ببطء لتجنب التناقض مع eth_feeHistory
           const realBlockNumber = this.blockchain.chain.length - 1;
           const virtualOffset = this.virtualBlockOffset || 0;
           
-          // ⚡ UNIQUE BLOCK: رقم فريد لكل طلب (تغيير كل 5ms)
-          const uniqueTimestamp = Math.floor(Date.now() / 5);
+          // ⚡ تغيير كل ثانية بدلاً من كل 5ms لتجنب مشاكل MetaMask
+          const secondsOffset = Math.floor(Date.now() / 1000) % 1000;
           
-          // ⚡ RANDOM COMPONENT: إضافة عشوائية لضمان التغيير المستمر
-          const randomOffset = Math.floor(Math.random() * 100);
+          // ⚡ PENDING BOOST: زيادة عند وجود عناوين معلقة
+          const pendingBoost = (this.pendingBalanceAddresses?.size || 0) * 10;
           
-          // ⚡ PENDING BOOST: زيادة كبيرة عند وجود عناوين معلقة
-          const pendingBoost = (this.pendingBalanceAddresses?.size || 0) * 500;
+          // ⚡ CONFIRMATION BOOST: زيادة عند وجود معاملات مؤكدة حديثاً
+          const confirmationBoost = (this.confirmedTransactionTracker?.size || 0) * 5;
           
-          // ⚡ CONFIRMATION BOOST: زيادة إضافية عند وجود معاملات مؤكدة حديثاً
-          const confirmationBoost = (this.confirmedTransactionTracker?.size || 0) * 200;
-          
-          // حساب رقم البلوك النهائي
-          const calculatedBlock = realBlockNumber + virtualOffset + (uniqueTimestamp % 100000) + randomOffset + pendingBoost + confirmationBoost;
+          // حساب رقم البلوك النهائي - يتغير ببطء
+          const calculatedBlock = realBlockNumber + virtualOffset + secondsOffset + pendingBoost + confirmationBoost;
           result = '0x' + calculatedBlock.toString(16);
           
-          // تسجيل صامت (كل 10 ثوانٍ فقط)
+          // تسجيل صامت
           if (!this._lastBlockNumberLog || Date.now() - this._lastBlockNumberLog > 10000) {
-            // Silent - reduce console spam (eth_blockNumber called frequently)
             this._lastBlockNumberLog = Date.now();
           }
           break;
@@ -2907,12 +2926,39 @@ class NetworkNode {
           break;
 
         case 'eth_feeHistory':
-          // Fee history for MetaMask gas estimation - محسوب لـ 0.00002 ACCESS
+          // Fee history for MetaMask gas estimation
+          const feeBlockCount = parseInt(params[0], 16) || 5;
+          
+          // ⚡ استخدام نفس الصيغة مثل eth_blockNumber بالضبط
+          const feeRealBlockNum = this.blockchain.chain.length - 1;
+          const feeVirtualOffset = this.virtualBlockOffset || 0;
+          const feeSecondsOffset = Math.floor(Date.now() / 1000) % 1000;
+          const currentBlockNum = feeRealBlockNum + feeVirtualOffset + feeSecondsOffset;
+          const oldestBlock = Math.max(1, currentBlockNum - feeBlockCount + 1);
+          
+          // إنشاء مصفوفات بالحجم الصحيح
+          const baseFeePerGasArray = [];
+          const gasUsedRatioArray = [];
+          const rewardArray = [];
+          
+          // baseFeePerGas يجب أن يكون blockCount + 1 عنصر
+          for (let i = 0; i <= feeBlockCount; i++) {
+            baseFeePerGasArray.push('0x38c42e18'); // 952380952 Wei
+          }
+          
+          // gasUsedRatio و reward يجب أن يكون blockCount عنصر
+          for (let i = 0; i < feeBlockCount; i++) {
+            gasUsedRatioArray.push(0.5);
+            rewardArray.push(['0x38c42e18', '0x38c42e18', '0x38c42e18']); // للـ percentiles
+          }
+          
           result = {
-            baseFeePerGas: ['0x38c42e18'], // ✅ سعر غاز صحيح = 952380952 Wei
-            gasUsedRatio: [0.5],
-            reward: [['0x38c42e18']] // ✅ نفس القيمة = 952380952 Wei
+            oldestBlock: '0x' + oldestBlock.toString(16), // ✅ مطلوب من MetaMask
+            baseFeePerGas: baseFeePerGasArray,
+            gasUsedRatio: gasUsedRatioArray,
+            reward: rewardArray
           };
+          console.log(`✅ eth_feeHistory: oldestBlock=${oldestBlock}, blockCount=${feeBlockCount}`);
           break;
 
         case 'eth_maxPriorityFeePerGas':
@@ -4632,57 +4678,152 @@ class NetworkNode {
   }
 
   async getBlockByNumber(blockNumber) {
-    let index;
+    // ⚡ FIX: استخدام نفس حساب eth_blockNumber للتناسق مع MetaMask
+    const realBlockNumber = this.blockchain.chain.length - 1;
+    const virtualOffset = this.virtualBlockOffset || 0;
+    const secondsOffset = Math.floor(Date.now() / 1000) % 1000;
+    const pendingBoost = (this.pendingBalanceAddresses?.size || 0) * 10;
+    const confirmationBoost = (this.confirmedTransactionTracker?.size || 0) * 5;
+    const calculatedBlockNum = realBlockNumber + virtualOffset + secondsOffset + pendingBoost + confirmationBoost;
+    
+    let requestedBlockNum;
+    let isVirtualBlock = false;
+    
     if (blockNumber === 'latest' || blockNumber === 'pending') {
-      index = this.blockchain.chain.length - 1;
+      // ⚡ استخدام الرقم المحسوب مثل eth_blockNumber بالضبط
+      requestedBlockNum = calculatedBlockNum;
+      isVirtualBlock = true;
     } else {
-      index = parseInt(blockNumber, 16);
+      requestedBlockNum = parseInt(blockNumber, 16);
+      // إذا كان الرقم المطلوب أكبر من الـ chain الحقيقي، فهو virtual block
+      isVirtualBlock = requestedBlockNum > realBlockNumber;
     }
 
     // 🔧 FIX: تأكد من وجود الـ blockchain chain
     if (!this.blockchain.chain || this.blockchain.chain.length === 0) {
       return {
-        number: '0x0',
-        hash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        number: '0x' + requestedBlockNum.toString(16),
+        hash: '0x' + crypto.createHash('sha256').update('block-' + requestedBlockNum).digest('hex'),
         parentHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        timestamp: '0x0',
+        timestamp: '0x' + Math.floor(Date.now() / 1000).toString(16),
         transactions: [],
         difficulty: '0x1',
         totalDifficulty: '0x1',
         nonce: '0x0',
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
-        gasUsed: '0x0'
+        gasUsed: '0x0',
+        baseFeePerGas: '0x38c42e18',
+        extraData: '0x',
+        logsBloom: '0x' + '0'.repeat(512),
+        receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+        sha3Uncles: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347',
+        size: '0x220',
+        stateRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+        transactionsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+        uncles: [],
+        mixHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        withdrawals: [],
+        withdrawalsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+        blobGasUsed: '0x0',
+        excessBlobGas: '0x0',
+        parentBeaconBlockRoot: '0x0000000000000000000000000000000000000000000000000000000000000000'
       };
     }
 
-    const block = this.blockchain.getBlockByIndex(index);
+    // ⚡ METAMASK FIX: إذا كان virtual block، استخدم آخر block حقيقي كأساس
+    let block;
+    let useIndex;
+    
+    if (isVirtualBlock || requestedBlockNum > realBlockNumber) {
+      // استخدم آخر block حقيقي
+      useIndex = realBlockNumber;
+      block = this.blockchain.getBlockByIndex(useIndex);
+    } else {
+      useIndex = Math.min(requestedBlockNum, realBlockNumber);
+      block = this.blockchain.getBlockByIndex(useIndex);
+    }
     
     if (!block) {
-      return null;
+      // ⚡ FALLBACK: أنشئ block افتراضي بدلاً من إرجاع null
+      return {
+        number: '0x' + requestedBlockNum.toString(16),
+        hash: '0x' + crypto.createHash('sha256').update('block-' + requestedBlockNum).digest('hex'),
+        parentHash: '0x' + crypto.createHash('sha256').update('block-' + (requestedBlockNum - 1)).digest('hex'),
+        timestamp: '0x' + Math.floor(Date.now() / 1000).toString(16),
+        transactions: [],
+        difficulty: '0x2',
+        totalDifficulty: '0x' + (requestedBlockNum * 2).toString(16),
+        nonce: '0x0',
+        miner: '0x0000000000000000000000000000000000000000',
+        gasLimit: '0x1c9c380',
+        gasUsed: '0x0',
+        baseFeePerGas: '0x38c42e18',
+        extraData: '0x',
+        logsBloom: '0x' + '0'.repeat(512),
+        receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+        sha3Uncles: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347',
+        size: '0x220',
+        stateRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+        transactionsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+        uncles: [],
+        mixHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        withdrawals: [],
+        withdrawalsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+        blobGasUsed: '0x0',
+        excessBlobGas: '0x0',
+        parentBeaconBlockRoot: '0x0000000000000000000000000000000000000000000000000000000000000000'
+      };
     }
 
-    let totalDifficulty = 0;
-    for (let i = 0; i <= index; i++) {
-      totalDifficulty += this.blockchain.difficulty;
-    }
+    let totalDifficulty = requestedBlockNum * 2; // تقدير سريع بدلاً من حلقة بطيئة
 
     const transactions = Array.isArray(block.transactions) 
       ? block.transactions.map(tx => tx.txId || tx.hash) 
       : [];
 
+    // ✅ تأكد من أن hash يبدأ بـ 0x - للـ virtual blocks نستخدم hash محسوب
+    let blockHash, parentHash;
+    if (isVirtualBlock) {
+      // ⚡ Virtual block: إنشاء hashes متسقة بناءً على الرقم المطلوب
+      blockHash = '0x' + crypto.createHash('sha256').update('vblock-' + requestedBlockNum).digest('hex');
+      parentHash = '0x' + crypto.createHash('sha256').update('vblock-' + (requestedBlockNum - 1)).digest('hex');
+    } else {
+      blockHash = block.hash ? (block.hash.startsWith('0x') ? block.hash : '0x' + block.hash) : '0x0000000000000000000000000000000000000000000000000000000000000000';
+      parentHash = block.previousHash ? (block.previousHash.startsWith('0x') ? block.previousHash : '0x' + block.previousHash) : '0x0000000000000000000000000000000000000000000000000000000000000000';
+    }
+
+    // ⚡ METAMASK FIX: استخدام requestedBlockNum للتناسق مع eth_blockNumber
     return {
-      number: '0x' + block.index.toString(16),
-      hash: block.hash || '0x0000000000000000000000000000000000000000000000000000000000000000',
-      parentHash: block.previousHash || '0x0000000000000000000000000000000000000000000000000000000000000000',
+      number: '0x' + requestedBlockNum.toString(16),
+      hash: blockHash,
+      parentHash: parentHash,
       timestamp: '0x' + Math.floor((block.timestamp || Date.now()) / 1000).toString(16),
-      transactions: transactions,
+      transactions: isVirtualBlock ? [] : transactions, // Virtual blocks لا تحتوي على معاملات
       difficulty: '0x' + this.blockchain.difficulty.toString(16),
       totalDifficulty: '0x' + totalDifficulty.toString(16),
       nonce: block.nonce ? '0x' + block.nonce.toString(16) : '0x0',
       miner: '0x0000000000000000000000000000000000000000',
       gasLimit: '0x1c9c380',
-      gasUsed: '0x5208'
+      gasUsed: isVirtualBlock ? '0x0' : '0x5208',
+      // ✅ EIP-1559: baseFeePerGas مطلوب لـ MetaMask لحساب رسوم الغاز
+      baseFeePerGas: '0x38c42e18',
+      // ✅ حقول إضافية مطلوبة للتوافق الكامل
+      extraData: '0x',
+      logsBloom: '0x' + '0'.repeat(512),
+      receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+      sha3Uncles: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347',
+      size: '0x220',
+      stateRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+      transactionsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+      uncles: [],
+      // ✅ حقول إضافية لـ MetaMask Mobile
+      mixHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      withdrawals: [],
+      withdrawalsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
+      blobGasUsed: '0x0',
+      excessBlobGas: '0x0',
+      parentBeaconBlockRoot: '0x0000000000000000000000000000000000000000000000000000000000000000'
     };
   }
 
@@ -5429,24 +5570,82 @@ class NetworkNode {
   // معالجة استدعاءات العقد الذكي
   async handleContractCall(callData, callBlockTag = 'latest') {
     try {
-      const { to, data } = callData;
+      const { to, data, value } = callData;
+
+      // ✅ معالجة خاصة للـ Zero Address - MetaMask يرسل إليه أحياناً
+      const zeroAddress = '0x0000000000000000000000000000000000000000';
+      if (!to || to.toLowerCase() === zeroAddress) {
+        console.log(`✅ eth_call to zero/null address - returning empty`);
+        return '0x';
+      }
 
       // ✅ التحقق من أن العنوان صحيح
-      if (!to || !this.isValidEthereumAddress(to)) {
+      if (!this.isValidEthereumAddress(to)) {
         console.warn(`⚠️ eth_call on invalid address: ${to}`);
-        // ✅ إرجاع خطأ "execution reverted" - هذا يخبر MetaMask أن العنوان ليس عقد
-        throw { code: 3, message: 'execution reverted', data: '0x' };
+        // ✅ إرجاع فارغ بدلاً من خطأ
+        return '0x';
       }
 
-      // ✅ التحقق من أن البيانات موجودة
-      if (!data || data.length < 10) {
-        console.log(`⚠️ eth_call with no function data on ${to}, treating as EOA`);
-        // ✅ إرجاع خطأ "execution reverted" للـ EOA
-        throw { code: 3, message: 'execution reverted', data: '0x' };
+      // ✅ التحقق: هل هذا تحويل عادي (Native Transfer) بدون بيانات عقد؟
+      // إذا لم يوجد data أو كان فارغاً، هذا تحويل عملة عادي - نسمح به
+      if (!data || data === '0x' || data.length < 10) {
+        // تحويل عادي - نرجع 0x للسماح به
+        console.log(`✅ eth_call: Native transfer to ${to} - allowing`);
+        return '0x';
       }
+
+      // ✅ التحقق: هل هذا عنوان عقد حقيقي أم محفظة عادية (EOA)?
+      // المحافظ العادية ليس لها كود، لذا يجب رفض استدعاءات العقد عليها
+      const contractCode = await this.blockchain.getContractCode?.(to);
+      const isContract = contractCode && contractCode !== '0x' && contractCode.length > 2;
+      
+      // ✅ إذا لم يكن عقد حقيقي، نرفض الاستدعاء (لكن نسمح للعملة الأصلية Native Token)
+      // العملة الأصلية تستخدم العنوان الصفري أو عناوين محددة مسبقاً
+      const isNativeTokenAddress = to.toLowerCase() === '0x0000000000000000000000000000000000000000';
 
       // استخراج function selector (أول 4 bytes)
       const functionSelector = data.substring(0, 10);
+
+      // ✅ للعناوين العادية (EOA) - إرجاع قيم مناسبة بدلاً من revert
+      // هذا يجعل MetaMask يفهم أن العنوان محفظة عادية وليس عقد
+      if (!isContract && !isNativeTokenAddress) {
+        // 🔧 FIX: لـ supportsInterface (ERC-165) نرجع false
+        if (functionSelector === '0x01ffc9a7') {
+          console.log(`✅ eth_call supportsInterface on EOA ${to} - returning false`);
+          return '0x0000000000000000000000000000000000000000000000000000000000000000'; // false
+        }
+        
+        // 🔧 FIX: لـ name() نرجع فارغ
+        if (functionSelector === '0x06fdde03') {
+          console.log(`✅ eth_call name() on EOA ${to} - returning empty`);
+          return '0x';
+        }
+        
+        // 🔧 FIX: لـ symbol() نرجع فارغ
+        if (functionSelector === '0x95d89b41') {
+          console.log(`✅ eth_call symbol() on EOA ${to} - returning empty`);
+          return '0x';
+        }
+        
+        // 🔧 FIX: لـ decimals() نرجع فارغ
+        if (functionSelector === '0x313ce567') {
+          console.log(`✅ eth_call decimals() on EOA ${to} - returning empty`);
+          return '0x';
+        }
+        
+        // 🔧 FIX: لـ balanceOf نرجع الرصيد
+        if (functionSelector === '0x70a08231') {
+          const address = '0x' + data.substring(34, 74);
+          const balance = this.blockchain.getBalance(address);
+          const balanceInWei = Math.floor(balance * 1e18);
+          console.log(`✅ eth_call balanceOf on EOA ${to} for ${address} - returning ${balance}`);
+          return '0x' + balanceInWei.toString(16).padStart(64, '0');
+        }
+        
+        // أي استدعاء آخر على EOA - نرجع فارغ بدلاً من revert
+        console.log(`✅ eth_call on EOA ${to} with selector ${functionSelector} - returning empty`);
+        return '0x';
+      }
 
       switch (functionSelector) {
         case '0x70a08231': // balanceOf(address)
@@ -5614,7 +5813,15 @@ class NetworkNode {
         r: decodedTx.r,
         s: decodedTx.s,
         rawFields: decodedTx.rawFields, // ✅ SIGNATURE RECOVERY: Pass raw RLP fields
-        isContractDeployment: isContractDeployment // ✅ Flag to indicate contract deployment
+        isContractDeployment: isContractDeployment, // ✅ Flag to indicate contract deployment
+        // ⚡ EIP-1559/EIP-2930 Support: Copy transaction type info
+        type: decodedTx.type || 0,
+        isEIP1559: decodedTx.isEIP1559 || false,
+        isEIP2930: decodedTx.isEIP2930 || false,
+        yParity: decodedTx.yParity,
+        maxPriorityFeePerGas: decodedTx.maxPriorityFeePerGas,
+        maxFeePerGas: decodedTx.maxFeePerGas,
+        chainId: decodedTx.chainId
       };
 
       // ✅ CONTRACT DEPLOYMENT: Don't modify value - it can be 0 for contract deployment
@@ -6146,6 +6353,22 @@ class NetworkNode {
       // This is an enhanced RLP decoder for Ethereum transactions
       const buffer = Buffer.from(hexString, 'hex');
 
+      // ⚡ EIP-1559 (Type 2) Transaction Support
+      // Type 2 transactions start with 0x02
+      if (buffer[0] === 0x02) {
+        console.log('🔍 Detected EIP-1559 (Type 2) transaction');
+        return this.decodeEIP1559Transaction(buffer.slice(1));
+      }
+      
+      // ⚡ EIP-2930 (Type 1) Transaction Support
+      if (buffer[0] === 0x01) {
+        console.log('🔍 Detected EIP-2930 (Type 1) transaction');
+        return this.decodeEIP2930Transaction(buffer.slice(1));
+      }
+
+      // Legacy transaction (Type 0)
+      console.log('🔍 Detected Legacy transaction');
+
       // Basic RLP decoding for transaction structure
       // [nonce, gasPrice, gasLimit, to, value, data, v, r, s]
 
@@ -6268,67 +6491,290 @@ class NetworkNode {
     }
   }
 
+  // ⚡ EIP-1559 (Type 2) Transaction Decoder
+  decodeEIP1559Transaction(buffer) {
+    try {
+      // EIP-1559 structure: [chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, to, value, data, accessList, signatureYParity, signatureR, signatureS]
+      const fields = this.rlpDecodeList(buffer);
+      
+      if (fields.length < 12) {
+        console.warn(`⚠️ EIP-1559 transaction has ${fields.length} fields, expected 12`);
+      }
+
+      const chainId = this.hexToInt(fields[0]);
+      const nonce = fields[1] || '0x0';
+      const maxPriorityFeePerGas = fields[2] || '0x0';
+      const maxFeePerGas = fields[3] || '0x38c42e18';
+      const gasLimit = fields[4] || '0x5208';
+      const to = fields[5] || '0x';
+      const value = fields[6] || '0x0';
+      const data = fields[7] || '0x';
+      // fields[8] is accessList (skip for now)
+      const yParity = fields[9] || '0x0';
+      const r = fields[10] || '0x' + '0'.repeat(64);
+      const s = fields[11] || '0x' + '0'.repeat(64);
+
+      console.log(`🔍 EIP-1559 decoded: chainId=${chainId}, nonce=${nonce}, to=${to}, value=${value}`);
+
+      // ⚡ For EIP-1559, v = yParity (0 or 1)
+      // We need to convert to legacy format for signature recovery
+      const v = this.hexToInt(yParity);
+
+      return {
+        type: 2, // EIP-1559
+        chainId: chainId,
+        nonce: nonce,
+        maxPriorityFeePerGas: maxPriorityFeePerGas,
+        maxFeePerGas: maxFeePerGas,
+        gasPrice: maxFeePerGas, // Use maxFeePerGas as effective gasPrice
+        gasLimit: gasLimit,
+        to: to,
+        value: value,
+        data: data,
+        v: '0x' + v.toString(16),
+        r: r,
+        s: s,
+        yParity: v,
+        rawFields: fields,
+        isEIP1559: true
+      };
+    } catch (error) {
+      console.error('❌ EIP-1559 decoding error:', error);
+      return null;
+    }
+  }
+
+  // ⚡ EIP-2930 (Type 1) Transaction Decoder
+  decodeEIP2930Transaction(buffer) {
+    try {
+      // EIP-2930 structure: [chainId, nonce, gasPrice, gasLimit, to, value, data, accessList, signatureYParity, signatureR, signatureS]
+      const fields = this.rlpDecodeList(buffer);
+      
+      const chainId = this.hexToInt(fields[0]);
+      const nonce = fields[1] || '0x0';
+      const gasPrice = fields[2] || '0x38c42e18';
+      const gasLimit = fields[3] || '0x5208';
+      const to = fields[4] || '0x';
+      const value = fields[5] || '0x0';
+      const data = fields[6] || '0x';
+      // fields[7] is accessList
+      const yParity = fields[8] || '0x0';
+      const r = fields[9] || '0x' + '0'.repeat(64);
+      const s = fields[10] || '0x' + '0'.repeat(64);
+
+      const v = this.hexToInt(yParity);
+
+      return {
+        type: 1, // EIP-2930
+        chainId: chainId,
+        nonce: nonce,
+        gasPrice: gasPrice,
+        gasLimit: gasLimit,
+        to: to,
+        value: value,
+        data: data,
+        v: '0x' + v.toString(16),
+        r: r,
+        s: s,
+        yParity: v,
+        rawFields: fields,
+        isEIP2930: true
+      };
+    } catch (error) {
+      console.error('❌ EIP-2930 decoding error:', error);
+      return null;
+    }
+  }
+
+  // ⚡ Helper: RLP decode a list from buffer
+  rlpDecodeList(buffer) {
+    const fields = [];
+    let offset = 0;
+
+    // Skip list prefix
+    if (buffer[0] >= 0xf7) {
+      const lengthBytes = buffer[0] - 0xf7;
+      offset = 1 + lengthBytes;
+    } else if (buffer[0] >= 0xc0) {
+      offset = 1;
+    }
+
+    // Extract all fields
+    while (offset < buffer.length) {
+      if (buffer[offset] < 0x80) {
+        // Single byte
+        fields.push('0x' + buffer[offset].toString(16).padStart(2, '0'));
+        offset += 1;
+      } else if (buffer[offset] === 0x80) {
+        // Empty string
+        fields.push('0x');
+        offset += 1;
+      } else if (buffer[offset] < 0xb8) {
+        // Short string (0-55 bytes)
+        const length = buffer[offset] - 0x80;
+        offset += 1;
+        if (length > 0 && offset + length <= buffer.length) {
+          fields.push('0x' + buffer.slice(offset, offset + length).toString('hex'));
+          offset += length;
+        } else {
+          fields.push('0x');
+        }
+      } else if (buffer[offset] < 0xc0) {
+        // Long string (>55 bytes)
+        const lengthOfLength = buffer[offset] - 0xb7;
+        offset += 1;
+        let length = 0;
+        for (let i = 0; i < lengthOfLength && offset + i < buffer.length; i++) {
+          length = (length * 256) + buffer[offset + i];
+        }
+        offset += lengthOfLength;
+        if (offset + length <= buffer.length) {
+          fields.push('0x' + buffer.slice(offset, offset + length).toString('hex'));
+          offset += length;
+        } else {
+          fields.push('0x');
+        }
+      } else if (buffer[offset] < 0xf8) {
+        // Short list (accessList) - skip it and add empty array representation
+        const listLength = buffer[offset] - 0xc0;
+        fields.push('0x'); // Placeholder for accessList
+        offset += 1 + listLength;
+      } else {
+        // Long list - skip
+        const lengthOfLength = buffer[offset] - 0xf7;
+        offset += 1;
+        let length = 0;
+        for (let i = 0; i < lengthOfLength && offset + i < buffer.length; i++) {
+          length = (length * 256) + buffer[offset + i];
+        }
+        offset += lengthOfLength + length;
+        fields.push('0x');
+      }
+    }
+
+    return fields;
+  }
+
+  // ⚡ Helper: Convert hex to integer
+  hexToInt(hex) {
+    if (!hex || hex === '0x' || hex === '') return 0;
+    return parseInt(hex, 16) || 0;
+  }
+
   // Recover sender address from signature with improved logic
   recoverSenderAddress(txData, v, r, s) {
     try {
       // ✅ ETHEREUM-STYLE SIGNATURE RECOVERY using elliptic + keccak256
-      if (!r || !s || !v) {
+      if (!r || !s) {
         console.warn('⚠️ Missing signature components for sender recovery');
         return null;
       }
 
       // ✅ CRITICAL FIX: Use original RLP fields for correct signature recovery
       // DO NOT reconstruct fields from parsed txData - this changes the hash!
-      let txFields;
-      
-      if (txData.rawFields && txData.rawFields.length >= 6) {
-        // Use raw RLP fields directly (already in hex format)
-        txFields = [
-          txData.rawFields[0], // nonce (hex)
-          txData.rawFields[1], // gasPrice (hex)
-          txData.rawFields[2], // gasLimit (hex)
-          txData.rawFields[3], // to (hex or empty for contract deployment)
-          txData.rawFields[4], // value (hex)
-          txData.rawFields[5]  // data (hex)
-        ];
-      } else {
-        // Fallback: reconstruct from txData (may cause issues with contract deployment)
-        console.warn('⚠️ No raw RLP fields available, reconstructing (may be inaccurate for contract deployment)');
-        txFields = [
-          txData.nonce || 0,
-          txData.gasPrice || 952380952, // ✅ صحيح: 0.00002 ACCESS / 21000
-          txData.gasLimit || 21000,
-          txData.to || '', // ✅ Empty for contract deployment
-          Math.floor((txData.value || 0) * 1e18),
-          txData.data || '0x'
-        ];
-      }
-
-      // Add chainId for EIP-155 (Access Network Chain ID: 22888)
       const chainId = 22888;
-      txFields.push(chainId, 0, 0);
+      let encodedTx;
+      let recoveryId;
+      
+      // ⚡ EIP-1559 (Type 2) signature recovery
+      if (txData.isEIP1559 || txData.type === 2) {
+        console.log('🔐 Using EIP-1559 signature recovery');
+        
+        // EIP-1559 unsigned tx: [chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, to, value, data, accessList]
+        const unsignedFields = [
+          txData.rawFields[0], // chainId
+          txData.rawFields[1], // nonce
+          txData.rawFields[2], // maxPriorityFeePerGas
+          txData.rawFields[3], // maxFeePerGas
+          txData.rawFields[4], // gasLimit
+          txData.rawFields[5], // to
+          txData.rawFields[6], // value
+          txData.rawFields[7], // data
+          []  // accessList (empty)
+        ];
+        
+        // For EIP-1559: prefix with 0x02 before hashing
+        const rlpEncoded = rlp.encode(unsignedFields);
+        const prefixed = Buffer.concat([Buffer.from([0x02]), rlpEncoded]);
+        encodedTx = prefixed;
+        
+        // EIP-1559 uses yParity (0 or 1) directly
+        recoveryId = txData.yParity !== undefined ? txData.yParity : (parseInt(v, 16) || 0);
+        
+      } else if (txData.isEIP2930 || txData.type === 1) {
+        console.log('🔐 Using EIP-2930 signature recovery');
+        
+        // EIP-2930 unsigned tx: [chainId, nonce, gasPrice, gasLimit, to, value, data, accessList]
+        const unsignedFields = [
+          txData.rawFields[0], // chainId
+          txData.rawFields[1], // nonce
+          txData.rawFields[2], // gasPrice
+          txData.rawFields[3], // gasLimit
+          txData.rawFields[4], // to
+          txData.rawFields[5], // value
+          txData.rawFields[6], // data
+          []  // accessList
+        ];
+        
+        const rlpEncoded = rlp.encode(unsignedFields);
+        const prefixed = Buffer.concat([Buffer.from([0x01]), rlpEncoded]);
+        encodedTx = prefixed;
+        
+        recoveryId = txData.yParity !== undefined ? txData.yParity : (parseInt(v, 16) || 0);
+        
+      } else {
+        // Legacy transaction
+        console.log('🔐 Using Legacy signature recovery');
+        
+        let txFields;
+        if (txData.rawFields && txData.rawFields.length >= 6) {
+          // Use raw RLP fields directly (already in hex format)
+          txFields = [
+            txData.rawFields[0], // nonce (hex)
+            txData.rawFields[1], // gasPrice (hex)
+            txData.rawFields[2], // gasLimit (hex)
+            txData.rawFields[3], // to (hex or empty for contract deployment)
+            txData.rawFields[4], // value (hex)
+            txData.rawFields[5]  // data (hex)
+          ];
+        } else {
+          // Fallback: reconstruct from txData (may cause issues with contract deployment)
+          console.warn('⚠️ No raw RLP fields available, reconstructing (may be inaccurate for contract deployment)');
+          txFields = [
+            txData.nonce || 0,
+            txData.gasPrice || 952380952, // ✅ صحيح: 0.00002 ACCESS / 21000
+            txData.gasLimit || 21000,
+            txData.to || '', // ✅ Empty for contract deployment
+            Math.floor((txData.value || 0) * 1e18),
+            txData.data || '0x'
+          ];
+        }
 
-      // RLP encode the transaction (using imported rlp and keccak256)
-      const encodedTx = rlp.encode(txFields);
+        // Add chainId for EIP-155 (Access Network Chain ID: 22888)
+        txFields.push(chainId, 0, 0);
+
+        // RLP encode the transaction (using imported rlp and keccak256)
+        encodedTx = rlp.encode(txFields);
+        
+        // Calculate recovery ID from v
+        const vNum = typeof v === 'string' ? parseInt(v, 16) : v;
+        
+        if (vNum === 27 || vNum === 28) {
+          // Legacy signature (pre-EIP-155)
+          recoveryId = vNum - 27;
+        } else {
+          // EIP-155 signature: v = chainId * 2 + 35 + recoveryId
+          recoveryId = vNum - (chainId * 2 + 35);
+        }
+      }
+      
       const txHash = Buffer.from(keccak256(encodedTx), 'hex'); // ✅ ETHEREUM-STYLE: keccak256 not SHA256
 
-      // Calculate recovery ID from v
-      let recoveryId;
-      const vNum = typeof v === 'string' ? parseInt(v, 16) : v;
-      
-      if (vNum === 27 || vNum === 28) {
-        // Legacy signature (pre-EIP-155)
-        recoveryId = vNum - 27;
-      } else {
-        // EIP-155 signature: v = chainId * 2 + 35 + recoveryId
-        recoveryId = vNum - (chainId * 2 + 35);
-      }
-
-      console.log(`🔐 Signature recovery: v=${vNum}, recoveryId=${recoveryId}, chainId=${chainId}`);
+      console.log(`🔐 Signature recovery: recoveryId=${recoveryId}, txType=${txData.type || 'legacy'}`);
 
       // Ensure recovery ID is valid (0 or 1)
       if (recoveryId < 0 || recoveryId > 1) {
-        console.warn(`⚠️ Invalid recovery ID: ${recoveryId}, using fallback`);
+        console.warn(`⚠️ Invalid recovery ID: ${recoveryId}, trying both 0 and 1`);
         recoveryId = 0;
       }
 

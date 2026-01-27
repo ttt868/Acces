@@ -1868,6 +1868,7 @@ async function completeProcessing(userId, amount) {
     const newBalance = currentCoins + rewardToTransfer;
     
     // Update user: add reward to coins and reset accumulated values
+    // 🛡️ FIXED: Also clear ad_boost and session_locked_boost when session ends!
     await pool.query(
       `UPDATE users SET 
         coins = $1,
@@ -1877,7 +1878,11 @@ async function completeProcessing(userId, amount) {
         processing_active = 0,
         processing_end_time = NULL,
         processing_start_time = NULL,
-        processing_start_time_seconds = NULL
+        processing_start_time_seconds = NULL,
+        ad_boost_active = FALSE,
+        ad_boost_granted_at = NULL,
+        ad_boost_session_start = NULL,
+        session_locked_boost = 1.0
       WHERE id = $2`,
       [newBalance, userId]
     );
@@ -2266,6 +2271,7 @@ async function grantAdBoost(userId, transactionId, ipAddress, userAgent) {
 
 /**
  * Get current ad boost status for user
+ * 🛡️ SIMPLIFIED: Only checks if ad_boost_active is TRUE and user is processing
  */
 async function getAdBoostStatus(userId) {
   try {
@@ -2277,19 +2283,26 @@ async function getAdBoostStatus(userId) {
     );
 
     if (result.rows.length === 0) {
-      return { exists: false };
+      return { exists: false, boostActive: false };
     }
 
     const user = result.rows[0];
     const now = Math.floor(Date.now() / 1000);
+    const isProcessingActive = user.processing_active === 1;
+    
+    // 🛡️ SIMPLIFIED: Boost is active if:
+    // 1. ad_boost_active = TRUE in DB
+    // 2. User is actively processing
+    // The boost is cleared when session ends or new session starts (in startProcessing/save-completed)
+    const isBoostValid = user.ad_boost_active === true && isProcessingActive;
 
     return {
       exists: true,
-      boostActive: user.ad_boost_active || false,
+      boostActive: isBoostValid,
       boostGranted: user.ad_boost_granted_at ? true : false,
       grantedAt: user.ad_boost_granted_at,
       sessionStart: user.ad_boost_session_start,
-      miningActive: user.processing_active === 1,
+      miningActive: isProcessingActive,
       lastAdWatch: user.last_ad_watch_timestamp,
       cooldownRemaining: Math.max(0, 86400 - (now - (user.last_ad_watch_timestamp || 0)))
     };

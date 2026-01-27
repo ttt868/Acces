@@ -60,10 +60,14 @@
         formatted = preciseBalance.toFixed(6).replace(/0+$/, '').replace(/\.$/, '.00'); // up to 6, trim zeros
       }
       
-      const coinElements = document.querySelectorAll('#user-coins, #profile-coins, .wallet-balance, .balance-display, .user-balance');
-      coinElements.forEach(el => {
-        if (el) el.textContent = formatted;
-      });
+      // التحقق من حالة إخفاء الرصيد
+      const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+      if (!isBalanceHidden) {
+        const coinElements = document.querySelectorAll('#user-coins, #profile-coins, .wallet-balance, .balance-display, .user-balance');
+        coinElements.forEach(el => {
+          if (el) el.textContent = formatted;
+        });
+      }
       
       // Save session
       if (window.saveUserSession) {

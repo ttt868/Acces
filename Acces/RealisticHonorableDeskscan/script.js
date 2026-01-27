@@ -656,27 +656,36 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('balanceUpdated', function(event) {
     const newBalance = event.detail.newBalance;
     const formattedBalance = event.detail.formattedBalance || formatNumberSmart(newBalance);
+    const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
     
     console.log(`Global balance update event received: ${formattedBalance} Points`);
     
-    // Comprehensive balance element update
-    const allBalanceSelectors = [
-      '#user-points', '#profile-points', '.wallet-balance',
-      '.user-balance', '.balance-display', '.point-balance', '[data-balance]',
-      '#dashboard-balance', '#main-balance', '.current-balance'
-    ];
+    // حفظ القيمة في BalancePrivacyManager
+    if (window.balancePrivacy && window.balancePrivacy.originalValues) {
+      window.balancePrivacy.originalValues.set('#user-coins', formattedBalance);
+      window.balancePrivacy.originalValues.set('#profile-coins', formattedBalance);
+    }
     
-    allBalanceSelectors.forEach(selector => {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(element => {
-        if (element) {
-          element.textContent = formatNumberSmart(newBalance);
-          if (element.hasAttribute('data-balance')) {
-            element.setAttribute('data-balance', newBalance);
+    // تحديث فقط إذا لم يكن مخفياً
+    if (!isBalanceHidden) {
+      const allBalanceSelectors = [
+        '#user-points', '#profile-points', '.wallet-balance',
+        '.user-balance', '.balance-display', '.point-balance', '[data-balance]',
+        '#dashboard-balance', '#main-balance', '.current-balance'
+      ];
+      
+      allBalanceSelectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+          if (element) {
+            element.textContent = formatNumberSmart(newBalance);
+            if (element.hasAttribute('data-balance')) {
+              element.setAttribute('data-balance', newBalance);
+            }
           }
-        }
+        });
       });
-    });
+    }
     
     // Trigger balance change indicator
     if (typeof window.showBalanceChange === 'function') {
@@ -720,17 +729,25 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('globalBalanceUpdate', function(event) {
     const { newBalance, formattedBalance } = event.detail;
     const smartFormattedBalance = formatNumberSmart(newBalance);
+    const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
     
     console.log(`Window-level balance update: ${smartFormattedBalance} Points`);
     
-    // Update all possible balance displays
-    const elements = document.querySelectorAll('[class*="balance"], [id*="balance"], [class*="points"], [id*="points"]');
-    elements.forEach(element => {
-      // Only update elements that look like they display balance amounts
-      if (element.textContent.match(/^\d+\.\d*$/) || element.textContent.includes('Points')) {
-        element.textContent = smartFormattedBalance;
-      }
-    });
+    // حفظ القيمة في BalancePrivacyManager
+    if (window.balancePrivacy && window.balancePrivacy.originalValues) {
+      window.balancePrivacy.originalValues.set('#user-coins', smartFormattedBalance);
+      window.balancePrivacy.originalValues.set('#profile-coins', smartFormattedBalance);
+    }
+    
+    // تحديث فقط إذا لم يكن مخفياً
+    if (!isBalanceHidden) {
+      const elements = document.querySelectorAll('[class*="balance"], [id*="balance"], [class*="points"], [id*="points"]');
+      elements.forEach(element => {
+        if (element.textContent.match(/^\d+\.\d*$/) || element.textContent.includes('Points')) {
+          element.textContent = smartFormattedBalance;
+        }
+      });
+    }
   });
 
   // Function to initialize loading screen - REMOVED
@@ -4364,15 +4381,25 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       saveUserSession(currentUser);
     }
 
-    // طھط­ط¯ظٹط« ط¬ظ…ظٹط¹ ط¹ظ†ط§طµط± ط¹ط±ط¶ ط§ظ„ط±طµظٹط¯ ط¨ط§ظ„طھظ†ط³ظٹظ‚ ط§ظ„ط°ظƒظٹ
+    // تحديث جميع عناصر عرض الرصيد بالتنسيق الذكي
     const smartFormatted = formatNumberSmart(newCoins);
-    const coinElements = document.querySelectorAll('#user-coins, #profile-coins, .wallet-balance, .balance-display, .user-balance');
+    const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
     
-    coinElements.forEach(element => {
-      if (element) {
-        element.textContent = smartFormatted;
-      }
-    });
+    // حفظ القيمة في BalancePrivacyManager
+    if (window.balancePrivacy && window.balancePrivacy.originalValues) {
+      window.balancePrivacy.originalValues.set('#user-coins', smartFormatted);
+      window.balancePrivacy.originalValues.set('#profile-coins', smartFormatted);
+    }
+    
+    // تحديث فقط إذا لم يكن مخفياً
+    if (!isBalanceHidden) {
+      const coinElements = document.querySelectorAll('#user-coins, #profile-coins, .wallet-balance, .balance-display, .user-balance');
+      coinElements.forEach(element => {
+        if (element) {
+          element.textContent = smartFormatted;
+        }
+      });
+    }
 
     console.log(`User coins updated to: ${smartFormatted} Points`);
   }
@@ -4628,10 +4655,13 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
                 // تحديث الرصيد في الواجهة
                 if (data.new_balance !== undefined) {
                   currentUser.coins = data.new_balance;
-                  const balanceElements = document.querySelectorAll('#user-balance, #dashboard-balance, .user-balance, #user-coins');
-                  balanceElements.forEach(el => {
-                    if (el) el.textContent = formatNumberSmart(data.new_balance);
-                  });
+                  const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+                  if (!isBalanceHidden) {
+                    const balanceElements = document.querySelectorAll('#user-balance, #dashboard-balance, .user-balance, #user-coins');
+                    balanceElements.forEach(el => {
+                      if (el) el.textContent = formatNumberSmart(data.new_balance);
+                    });
+                  }
                 }
               }
               
@@ -4678,10 +4708,10 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
               startCountdown(data.remaining_seconds * 1000);
               startGradualAccumulation();
             } else if (resp.status === 409) {
-              showNotification('جلسة نشطة بالفعل', 'info');
+              showNotification(translator.translate('You already have an active processing session'), 'info');
               if (data.remaining_seconds > 0) startCountdown(data.remaining_seconds * 1000);
             } else {
-              showNotification(data.error || 'خطأ', 'error');
+              showNotification(data.error || translator.translate('Error'), 'error');
               btn.classList.remove('disabled');
               btn.disabled = false;
               btn.innerHTML = '<i class="fas fa-play"></i> ' + translator.translate('Start Activity');
@@ -4758,28 +4788,26 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
         countdownTimer.textContent = '00:00:00';
       }
       
-      // ✅ CRITICAL: جلب وعرض completed_processing_reward من السيرفر
+      // ✅ جلب وعرض accumulatedReward من السيرفر
       if (currentUser && currentUser.id && accumulatedCoinsElement) {
         (async () => {
           try {
             const accResp = await fetch(`/api/processing/accumulated/${currentUser.id}`);
             if (accResp.ok) {
               const accData = await accResp.json();
-              // عرض completedReward أو accumulatedReward (أيهما أكبر)
-              const completedReward = parseFloat(accData.completedReward || 0);
+              // عرض accumulatedReward مباشرة
               const accumulatedReward = parseFloat(accData.accumulatedReward || 0);
-              const displayReward = Math.max(completedReward, accumulatedReward);
               
-              if (displayReward > 0) {
-                accumulatedCoinsElement.textContent = formatNumberSmart(displayReward);
-                console.log('✅ Displaying saved reward:', displayReward);
+              if (accumulatedReward > 0) {
+                accumulatedCoinsElement.textContent = formatNumberSmart(accumulatedReward);
+                console.log('✅ Displaying saved reward:', accumulatedReward);
                 // حفظ في الذاكرة
-                currentUser.processing_accumulated = displayReward;
-                currentUser.accumulatedReward = displayReward;
+                currentUser.processing_accumulated = accumulatedReward;
+                currentUser.accumulatedReward = accumulatedReward;
               }
             }
           } catch (e) {
-            console.warn('Could not fetch completed reward:', e);
+            console.warn('Could not fetch accumulated reward:', e);
           }
         })();
       }
@@ -5207,26 +5235,36 @@ processingButton.addEventListener('click', async function(e) {
         currentUser.coins = data.new_balance;
         saveUserSession(currentUser);
         
-        // ✅ تحديث جميع عناصر الرصيد في الواجهة فوراً
+        // ✅ تحديث جميع عناصر الرصيد في الواجهة فوراً (مع مراعاة التشفير)
         const formattedBalance = formatNumberSmart(data.new_balance);
+        const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
         
-        // تحديث العناصر بالـ ID مباشرة
-        const userCoinsElements = document.querySelectorAll('#user-coins');
-        userCoinsElements.forEach(el => { if (el) el.textContent = formattedBalance; });
+        // ✅ حفظ القيمة في BalancePrivacyManager دائماً (حتى لو مخفي)
+        if (window.balancePrivacy && window.balancePrivacy.originalValues) {
+          window.balancePrivacy.originalValues.set('#user-coins', formattedBalance);
+          window.balancePrivacy.originalValues.set('#profile-coins', formattedBalance);
+          window.balancePrivacy.originalValues.set('#Transfer-balance', formattedBalance);
+        }
         
-        const profileCoins = document.getElementById('profile-coins');
-        if (profileCoins) profileCoins.textContent = formattedBalance;
-        
-        const dashboardBalance = document.getElementById('dashboard-balance');
-        if (dashboardBalance) dashboardBalance.textContent = formattedBalance;
-        
-        const walletBalance = document.getElementById('wallet-balance');
-        if (walletBalance) walletBalance.textContent = formattedBalance;
-        
-        // تحديث أي عناصر أخرى بالـ class
-        document.querySelectorAll('.points-value, .balance-amount, [data-balance]').forEach(el => {
-          if (el) el.textContent = formattedBalance;
-        });
+        // تحديث العناصر فقط إذا لم يكن مخفياً
+        if (!isBalanceHidden) {
+          const userCoinsElements = document.querySelectorAll('#user-coins');
+          userCoinsElements.forEach(el => { if (el) el.textContent = formattedBalance; });
+          
+          const profileCoins = document.getElementById('profile-coins');
+          if (profileCoins) profileCoins.textContent = formattedBalance;
+          
+          const dashboardBalance = document.getElementById('dashboard-balance');
+          if (dashboardBalance) dashboardBalance.textContent = formattedBalance;
+          
+          const walletBalance = document.getElementById('wallet-balance');
+          if (walletBalance) walletBalance.textContent = formattedBalance;
+          
+          // تحديث أي عناصر أخرى بالـ class
+          document.querySelectorAll('.points-value, .balance-amount, [data-balance]').forEach(el => {
+            if (el) el.textContent = formattedBalance;
+          });
+        }
         
         console.log(`✅ Balance UI updated to: ${formattedBalance}`);
         
@@ -5254,6 +5292,10 @@ processingButton.addEventListener('click', async function(e) {
       currentUser.processing_end_time = Date.now() + (data.remaining_seconds * 1000);
       currentUser.processing_start_time_seconds = Math.floor(Date.now() / 1000);
       
+      // ✅ FIXED: Save session referral data for localBoostData initialization
+      currentUser.session_active_referrals = data.activeReferrals || 0;
+      currentUser.session_ad_boost = false; // Always false at start
+      
       saveUserSession(currentUser);
 
       // Update UI
@@ -5267,11 +5309,34 @@ processingButton.addEventListener('click', async function(e) {
         document.getElementById('accumulated-coins').textContent = formatNumberSmart(0);
       }
 
-      // ✅ إعادة تعيين CP/s (hashrate) بصرياً عند بدء جلسة جديدة
+      // ✅ FIXED: عرض الـ hashrate الصحيح فوراً من بيانات السيرفر
       const hashrateValue = document.getElementById('hashrate-value');
       const dashboardHashrateValue = document.getElementById('dashboard-hashrate-value');
-      if (hashrateValue) hashrateValue.textContent = '0.0';
-      if (dashboardHashrateValue) dashboardHashrateValue.textContent = '0.0';
+      const serverHashrate = data.hashrate || 10.0;
+      const serverReferrals = data.activeReferrals || 0;
+      
+      if (hashrateValue) {
+        hashrateValue.textContent = serverHashrate.toFixed(1);
+        hashrateValue.removeAttribute('data-ad-boost-active');
+        hashrateValue.removeAttribute('data-ad-boost-value');
+        if (serverReferrals > 0) {
+          hashrateValue.style.color = '#38b2ac';
+        } else {
+          hashrateValue.style.color = '';
+        }
+      }
+      if (dashboardHashrateValue) {
+        dashboardHashrateValue.textContent = serverHashrate.toFixed(1);
+        dashboardHashrateValue.removeAttribute('data-ad-boost-active');
+        dashboardHashrateValue.removeAttribute('data-ad-boost-value');
+        if (serverReferrals > 0) {
+          dashboardHashrateValue.style.color = '#38b2ac';
+        } else {
+          dashboardHashrateValue.style.color = '';
+        }
+      }
+      
+      console.log(`✅ Session started with hashrate: ${serverHashrate} MH/s (${serverReferrals} referrals, no ad boost)`);
 
       // Start countdown and accumulation
       startCountdown(data.remaining_seconds * 1000);
@@ -5354,14 +5419,20 @@ function startGradualAccumulation() {
   const hashrateValueElement = document.getElementById('hashrate-value');
 
   // 🚀 Local state for client-side calculation - متاح عالمياً للتحديث الفوري
+  // ✅ FIXED: Use session start data if available (from currentUser set by start response)
+  const initialReferrals = parseInt(currentUser.session_active_referrals) || 0;
+  const initialMultiplier = initialReferrals > 0 ? (1.0 + initialReferrals * 0.04) : 1.0;
+  
   window.localBoostData = {
     startTimeSec: Math.floor(currentUser.processing_start_time_seconds || Date.now() / 1000),
-    multiplier: 1.0,
-    activeReferrals: 0,
-    adBoostActive: false,
+    multiplier: initialMultiplier, // Use referrals-based multiplier from start
+    activeReferrals: initialReferrals,
+    adBoostActive: false, // Always false at session start
     startTimeFixed: false  // 🔒 لمنع تغيير وقت البداية بعد الضبط
   };
   const localBoostData = window.localBoostData;
+  
+  console.log(`✅ localBoostData initialized: multiplier=${initialMultiplier}, referrals=${initialReferrals}, adBoost=false`);
 
   // Start with zero display
   if (accumulatedCoinsElement) {
@@ -5498,19 +5569,30 @@ function startGradualAccumulation() {
     }
   }
 
-  // 🚀 Initial boost fetch
-  fetchBoostData().then(() => {
-    console.log('Initial boost data loaded');
+  // 🚀 FIXED: جلب البيانات من السيرفر أولاً لتجنب التذبذب عند reload
+  // إذا session_active_referrals موجود (جلسة جديدة) نستخدمه فوراً
+  // إذا لا (reload صفحة) نجلب من السيرفر أولاً
+  const hasSessionData = currentUser.session_active_referrals !== undefined;
+  
+  if (hasSessionData) {
+    // جلسة جديدة - البيانات موجودة، اعرض فوراً
     calculateAndDisplayLocally();
-  });
+    console.log('✅ New session - display immediately with session data');
+  } else {
+    // reload صفحة - اجلب من السيرفر أولاً ثم اعرض
+    fetchBoostData().then(() => {
+      calculateAndDisplayLocally();
+      console.log('✅ Page reload - fetched data then displayed');
+    });
+  }
 
   // 🚀 Update display every SECOND (client-side only - NO server request!)
   window.accumulationInterval = setInterval(calculateAndDisplayLocally, 1000);
   console.log('✅ Local accumulation interval started (every 1 second)');
 
-  // 🚀 Fetch boost data every 10 MINUTES (optimized for lower server load)
-  window.boostCheckInterval = setInterval(fetchBoostData, 600000);
-  console.log('✅ Boost check interval started (every 10 minutes)');
+  // 🚀 Fetch boost data every 5 SECONDS (near real-time updates)
+  window.boostCheckInterval = setInterval(fetchBoostData, 5000);
+  console.log('✅ Boost check interval started (every 5 seconds)');
 
   // ✅ CRITICAL: إرسال دوري خفيف للسيرفر لحفظ الرصيد المتراكم (كل 5 دقائق)
   // هذا يضمن عدم فقدان الرصيد إذا أُغلقت الصفحة فجأة
@@ -5643,8 +5725,21 @@ function startGradualAccumulation() {
   function syncBalanceAcrossPages(newBalance) {
     // 
     const smartFormattedBalance = formatNumberSmart(newBalance);
+    const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
 
     console.log(`Syncing balance across all pages: ${smartFormattedBalance} Points`);
+
+    // حفظ القيمة في BalancePrivacyManager
+    if (window.balancePrivacy && window.balancePrivacy.originalValues) {
+      window.balancePrivacy.originalValues.set('#user-coins', smartFormattedBalance);
+      window.balancePrivacy.originalValues.set('#profile-coins', smartFormattedBalance);
+    }
+    
+    // لا تحدث إذا كان مخفياً
+    if (isBalanceHidden) {
+      console.log('Balance hidden - skipping UI update');
+      return;
+    }
 
     // Comprehensive list of all possible balance display selectors
     const balanceSelectors = [
@@ -6195,6 +6290,33 @@ function startGradualAccumulation() {
           // ✅ إشعار المستخدم بانتهاء الجلسة
           showNotification(`${translator.translate('Processing completed!')} ${formatNumberSmart(finalReward)} ${translator.translate('points_ready_to_claim')}`, 'success');
 
+          // ✅ CRITICAL: تصفير الـ hashrate إلى 10.0 عند انتهاء الجلسة
+          // الـ boost والإحالات تحتسب فقط في الجلسة الجديدة
+          const hashrateValue = document.getElementById('hashrate-value');
+          const dashboardHashrateValue = document.getElementById('dashboard-hashrate-value');
+          
+          if (hashrateValue) {
+            hashrateValue.textContent = '10.0';
+            hashrateValue.removeAttribute('data-ad-boost-active');
+            hashrateValue.removeAttribute('data-ad-boost-value');
+            hashrateValue.style.color = ''; // إزالة اللون الخاص
+          }
+          if (dashboardHashrateValue) {
+            dashboardHashrateValue.textContent = '10.0';
+            dashboardHashrateValue.removeAttribute('data-ad-boost-active');
+            dashboardHashrateValue.removeAttribute('data-ad-boost-value');
+            dashboardHashrateValue.style.color = ''; // إزالة اللون الخاص
+          }
+          
+          // ✅ مسح بيانات الـ boost المحلية
+          if (window.localBoostData) {
+            window.localBoostData.multiplier = 1.0;
+            window.localBoostData.adBoostActive = false;
+            window.localBoostData.startTimeFixed = false;
+          }
+          
+          console.log('✅ Session ended - Hashrate reset to 10.0 MH/s');
+
           // Mark as completed
           if (currentUser) {
             currentUser.processing_active = 0;
@@ -6349,63 +6471,85 @@ function startGradualAccumulation() {
   }
 
   // Function to update dashboard hashrate display (always visible for dashboard aesthetics)
+  // ✅ FIXED: استخدام البيانات المحلية أولاً، ثم السيرفر إذا لم تكن موجودة
   async function updateDashboardHashrateDisplay() {
     const dashboardHashrateDisplay = document.getElementById('dashboard-hashrate-display');
     const dashboardHashrateValue = document.getElementById('dashboard-hashrate-value');
     
-    if (!dashboardHashrateDisplay || !dashboardHashrateValue || !currentUser || !currentUser.id) {
+    if (!dashboardHashrateDisplay || !dashboardHashrateValue) {
       return;
     }
 
-    try {
-      // Get accumulated data from server
-      const response = await fetch(`/api/processing/accumulated/${currentUser.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          const activeReferrals = data.activeReferrals || 0;
-          const adBoostActive = data.adBoostActive || false;
-          
-          // Dashboard hashrate - always show for better aesthetics
-          dashboardHashrateDisplay.style.display = 'flex';
-          
-          // Calculate hashrate including ad boost
-          let totalHashrate = 10.0; // Base hashrate
-          if (activeReferrals > 0) {
-            totalHashrate += activeReferrals * 0.4; // +0.4 per referral
-          }
-          if (adBoostActive) {
-            totalHashrate += 1.2; // +1.2 for ad boost
-          }
-          
-          dashboardHashrateValue.textContent = totalHashrate.toFixed(1);
-          
-          // Mark ad boost status in DOM to prevent double-counting
-          if (adBoostActive) {
-            dashboardHashrateValue.setAttribute('data-ad-boost-active', 'true');
-            dashboardHashrateValue.setAttribute('data-ad-boost-value', '1.2');
-          } else {
-            dashboardHashrateValue.removeAttribute('data-ad-boost-active');
-            dashboardHashrateValue.removeAttribute('data-ad-boost-value');
-          }
-          
-          // Change color if boost is active
-          if (adBoostActive || activeReferrals > 0) {
-            dashboardHashrateValue.style.color = '#38b2ac';
-          } else {
-            dashboardHashrateValue.style.color = '';
+    // Dashboard hashrate - always show
+    dashboardHashrateDisplay.style.display = 'flex';
+    
+    // ✅ استخدام localBoostData إذا كان موجوداً (أثناء الجلسة النشطة)
+    const localData = window.localBoostData;
+    
+    if (localData && currentUser && currentUser.processing_active === 1) {
+      // ✅ استخدام نفس القيم من localBoostData
+      const totalHashrate = 10.0 * localData.multiplier;
+      dashboardHashrateValue.textContent = totalHashrate.toFixed(1);
+      
+      // Mark ad boost status in DOM
+      if (localData.adBoostActive) {
+        dashboardHashrateValue.setAttribute('data-ad-boost-active', 'true');
+        dashboardHashrateValue.setAttribute('data-ad-boost-value', '1.2');
+      } else {
+        dashboardHashrateValue.removeAttribute('data-ad-boost-active');
+        dashboardHashrateValue.removeAttribute('data-ad-boost-value');
+      }
+      
+      // Change color if boost is active
+      if (localData.adBoostActive || localData.activeReferrals > 0) {
+        dashboardHashrateValue.style.color = '#38b2ac';
+      } else {
+        dashboardHashrateValue.style.color = '';
+      }
+    } else if (currentUser && currentUser.processing_active === 1) {
+      // ✅ localBoostData غير موجود لكن الجلسة نشطة - اجلب من السيرفر
+      try {
+        const response = await fetch(`/api/processing/accumulated/${currentUser.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            const activeReferrals = data.activeReferrals || 0;
+            const adBoostActive = data.adBoostActive || false;
+            
+            let totalHashrate = 10.0;
+            if (activeReferrals > 0) {
+              totalHashrate += activeReferrals * 0.4;
+            }
+            if (adBoostActive) {
+              totalHashrate += 1.2;
+            }
+            
+            dashboardHashrateValue.textContent = totalHashrate.toFixed(1);
+            
+            if (adBoostActive) {
+              dashboardHashrateValue.setAttribute('data-ad-boost-active', 'true');
+              dashboardHashrateValue.setAttribute('data-ad-boost-value', '1.2');
+            } else {
+              dashboardHashrateValue.removeAttribute('data-ad-boost-active');
+              dashboardHashrateValue.removeAttribute('data-ad-boost-value');
+            }
+            
+            if (adBoostActive || activeReferrals > 0) {
+              dashboardHashrateValue.style.color = '#38b2ac';
+            } else {
+              dashboardHashrateValue.style.color = '';
+            }
           }
         }
-      } else {
-        // Show default value even if server request fails
-        dashboardHashrateDisplay.style.display = 'flex';
-        dashboardHashrateValue.textContent = '10.0';
+      } catch (error) {
+        console.error('Error fetching hashrate:', error);
       }
-    } catch (error) {
-      console.error('Error updating dashboard hashrate:', error);
-      // Show default value on error instead of hiding
-      dashboardHashrateDisplay.style.display = 'flex';
+    } else {
+      // Not processing - show default
       dashboardHashrateValue.textContent = '10.0';
+      dashboardHashrateValue.removeAttribute('data-ad-boost-active');
+      dashboardHashrateValue.removeAttribute('data-ad-boost-value');
+      dashboardHashrateValue.style.color = '';
     }
   }
 
@@ -10612,19 +10756,22 @@ if (totalCost > (currentBalance + precision)) {
             // Update UI with server-confirmed balance
             updateUserCoins(serverBalance);
 
-            const walletBalanceElement = document.getElementById('wallet-balance');
-            if (walletBalanceElement) {
-              walletBalanceElement.textContent = formatNumberSmart(serverBalance);
-            }
+            const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+            if (!isBalanceHidden) {
+              const walletBalanceElement = document.getElementById('wallet-balance');
+              if (walletBalanceElement) {
+                walletBalanceElement.textContent = formatNumberSmart(serverBalance);
+              }
 
-            const userCoinsElement = document.getElementById('user-coins');
-            if (userCoinsElement) {
-              userCoinsElement.textContent = formatNumberSmart(serverBalance);
-            }
+              const userCoinsElement = document.getElementById('user-coins');
+              if (userCoinsElement) {
+                userCoinsElement.textContent = formatNumberSmart(serverBalance);
+              }
 
-            const profileCoinsElement = document.getElementById('profile-coins');
-            if (profileCoinsElement) {
-              profileCoinsElement.textContent = formatNumberSmart(serverBalance);
+              const profileCoinsElement = document.getElementById('profile-coins');
+              if (profileCoinsElement) {
+                profileCoinsElement.textContent = formatNumberSmart(serverBalance);
+              }
             }
 
             saveUserSession(currentUser);
@@ -11964,10 +12111,13 @@ if (totalCost > (currentBalance + precision)) {
 
   // Update user's coin balance
   function updateUserCoins(coins) {
-    const coinElements = document.querySelectorAll('#user-coins, #profile-coins');
-    coinElements.forEach(element => {
-      element.textContent = formatCoins(coins);
-    });
+    const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+    if (!isBalanceHidden) {
+      const coinElements = document.querySelectorAll('#user-coins, #profile-coins');
+      coinElements.forEach(element => {
+        element.textContent = formatCoins(coins);
+      });
+    }
   }
   
 

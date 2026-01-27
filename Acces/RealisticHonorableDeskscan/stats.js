@@ -8,6 +8,12 @@ class BalancePrivacyManager {
   }
 
   init() {
+    // تطبيق الإخفاء فوراً إذا كان مخفياً (قبل DOMContentLoaded)
+    if (this.isBalanceHidden) {
+      // إخفاء فوري باستخدام MutationObserver للعناصر التي تُضاف لاحقاً
+      this.setupImmediateHide();
+    }
+    
     // انتظار تحميل DOM
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.setupPrivacyToggles());
@@ -15,12 +21,30 @@ class BalancePrivacyManager {
       this.setupPrivacyToggles();
     }
 
-    // تطبيق الحالة الأولية فوراً
+    // تطبيق الحالة الأولية
     this.updateEyeIcon();
     this.applyPrivacyState();
 
     // مراقبة تغييرات الصفحة
     this.observePageChanges();
+  }
+  
+  setupImmediateHide() {
+    // مراقب يخفي الرصيد فوراً عند إضافة أي عنصر
+    const observer = new MutationObserver(() => {
+      if (this.isBalanceHidden) {
+        this.hideAllBalances();
+      }
+    });
+    
+    // بدء المراقبة فوراً
+    if (document.body) {
+      observer.observe(document.body, { childList: true, subtree: true });
+    } else {
+      document.addEventListener('DOMContentLoaded', () => {
+        observer.observe(document.body, { childList: true, subtree: true });
+      });
+    }
   }
 
   setupPrivacyToggles() {
@@ -123,23 +147,36 @@ class BalancePrivacyManager {
   }
 
   showAllBalances() {
-    const balanceSelectors = [
-      '#user-coins',
-      '#profile-coins', 
-      '#Transfer-balance',
-      '.wallet-balance span' // استعادة رصيد البلوك تشين
-    ];
-
-    balanceSelectors.forEach(selector => {
-      const element = document.querySelector(selector);
-      if (element && element.classList.contains('balance-hidden')) {
-        // استعادة القيمة الأصلية المحفوظة بدون أي تعديل
-        const originalValue = this.originalValues.get(selector);
-        if (originalValue) {
-          element.textContent = originalValue;
-        }
-        element.classList.remove('balance-hidden');
+    // إزالة class الإخفاء الأولي من html
+    document.documentElement.classList.remove('balance-hidden-initial');
+    document.documentElement.classList.remove('bh');
+    
+    // جلب الرصيد من currentUser مباشرة واستخدام formatNumberSmart من script.js
+    let balance = '0.00';
+    if (window.currentUser && window.currentUser.coins !== undefined) {
+      // استخدام formatNumberSmart من window إذا وجد، وإلا استخدم toFixed
+      if (typeof window.formatNumberSmart === 'function') {
+        balance = window.formatNumberSmart(window.currentUser.coins);
+      } else {
+        balance = parseFloat(window.currentUser.coins).toFixed(2);
       }
+    }
+    
+    // استخدام querySelectorAll لتحديث جميع العناصر (بما فيها صفحة Network)
+    const balanceSelectors = '#user-coins, #profile-coins, #Transfer-balance, .wallet-balance span';
+
+    document.querySelectorAll(balanceSelectors).forEach(element => {
+      if (element) {
+        element.textContent = balance;
+        element.classList.remove('balance-hidden');
+        element.style.visibility = 'visible';
+        element.style.color = '';
+      }
+    });
+    
+    // إظهار كلمة Points
+    document.querySelectorAll('.balance-currency-unit').forEach(el => {
+      el.style.display = '';
     });
 
     // إظهار كلمة "access" مرة أخرى عند فك التشفير
@@ -148,8 +185,13 @@ class BalancePrivacyManager {
 
   // حفظ قيمة جديدة عند تحديث الرصيد
   updateBalance(selector, newValue) {
-    // حفظ القيمة الجديدة مع التنسيق المناسب
-    const formattedValue = this.formatNumberSmart(newValue);
+    // استخدام formatNumberSmart من window
+    let formattedValue;
+    if (typeof window.formatNumberSmart === 'function') {
+      formattedValue = window.formatNumberSmart(newValue);
+    } else {
+      formattedValue = parseFloat(newValue).toFixed(2);
+    }
     this.originalValues.set(selector, formattedValue);
 
     const element = document.querySelector(selector);
@@ -249,40 +291,6 @@ class BalancePrivacyManager {
     }
   }
 
-  // دالة التنسيق الذكي للأرقام - إزالة الأصفار الزائدة مع الحفاظ على فواصل الآلاف
-  formatNumberSmart(number) {
-    if (typeof number !== 'number') {
-      number = parseFloat(number) || 0;
-    }
-
-    // للأرقام الصحيحة، أعدها مع فواصل الآلاف
-    if (Number.isInteger(number)) {
-      return number.toLocaleString('en-US');
-    }
-
-    // تحويل إلى نص مع دقة عالية
-    let formatted = number.toFixed(8);
-    
-    // إزالة الأصفار الزائدة من النهاية والنقطة إذا لم تعد هناك أرقام عشرية
-    formatted = formatted.replace(/\.?0+$/, '');
-    
-    // إذا انتهت بنقطة، احذفها
-    if (formatted.endsWith('.')) {
-      formatted = formatted.slice(0, -1);
-    }
-
-    // التأكد من عدم إرجاع نص فارغ
-    if (!formatted || formatted === '') {
-      return '0';
-    }
-    
-    // تطبيق فواصل الآلاف على الرقم المنسق
-    const parts = formatted.split('.');
-    parts[0] = parseInt(parts[0]).toLocaleString('en-US');
-    
-    return parts.join('.');
-  }
-
 }
 
 // Initialize the balance privacy system only
@@ -290,6 +298,7 @@ const balancePrivacyManager = new BalancePrivacyManager();
 
 // Make it globally available
 window.BalancePrivacyManager = balancePrivacyManager;
+window.balancePrivacy = balancePrivacyManager;
 
 // Override the global updateUserCoins function to work with privacy manager
 if (typeof window.updateUserCoins === 'function') {
@@ -304,10 +313,5 @@ if (typeof window.updateUserCoins === 'function') {
     }
   };
 }
-
-
-
-
-
 
 

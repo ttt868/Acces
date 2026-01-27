@@ -89,23 +89,7 @@
 }
 
 
-border: 1px solid var(--border-color);/* Google icon styling with Google's multi-color scheme */
-.google-signin-button .fa-google {
-  display: inline-block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  background: conic-gradient(from 90deg, #4285F4, #EA4335, #FBBC05, #34A853, #4285F4) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  text-fill-color: transparent !important;
 
-
-  margin-left:  !important;
-  z-index: 9999 !important;
-  position: static !important;
-  float: left !important;
-}
 
 /* Ensure RTL support doesn't affect button display */
 html[dir="rtl"] .google-signin-button svg,
@@ -271,20 +255,20 @@ body.polish .activity-history h3 {
 
 html[lang="pl"] #activity-boost-btn span,
 body.polish #activity-boost-btn span {
-  font-size: 0.85rem;
+  font-size: 0.80rem;
 }
 
 /* Polish language - reduce font size for processing info text */
 html[lang="pl"] .processing-info p,
 body.polish .processing-info p {
-  font-size: 0.8rem;
+  font-size: 0.90rem;
   line-height: 1.4;
 }
 
 /* French language - reduce font size for processing info text */
 html[lang="fr"] .processing-info p,
 body.french .processing-info p {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   line-height: 1.4;
 }
 
@@ -977,7 +961,7 @@ h1 {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   -moz-text-fill-color: transparent;
-  text-fill-color: transparent;
+  
 }
 
 
@@ -1641,7 +1625,7 @@ body.arabic .mobile-nav-item span {
 
 .hashrate-value {
   font-weight: bold;
-  color: !important;
+  
   font-family: 'Raleway', sans-serif !important;
   font-variant-numeric: oldstyle-nums !important;
 }

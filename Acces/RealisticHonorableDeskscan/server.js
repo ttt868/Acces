@@ -15,7 +15,7 @@ import { startReEngagementScheduler } from './re-engagement-notifications.js';
 // ============================================================================
 // 📦 إصدار الملفات - غير هذا الرقم فقط لتحديث كل الملفات
 // ============================================================================
-const ASSETS_VERSION = '14.6';
+const ASSETS_VERSION = '15.0';
 
 // ============================================================================
 // 🛡️ NEVER DIE PROTECTION - السيرفر لا يسقط أبداً!
@@ -235,8 +235,7 @@ async function saveAllActiveSessionsOnShutdown() {
         u.session_locked_boost,
         u.ad_boost_active,
         u.accumulatedreward,
-        u.accumulated_processing_reward,
-        u.completed_processing_reward
+        u.accumulated_processing_reward
       FROM users u
       WHERE u.processing_active = 1 
         AND u.processing_start_time_seconds > 0
@@ -269,12 +268,11 @@ async function saveAllActiveSessionsOnShutdown() {
         const rewardProgress = Math.min(1, Math.max(0, elapsedSec / processingDuration));
         const fullAccumulatedReward = Math.round((boostedReward * rewardProgress) * 100000000) / 100000000;
         
-        // حفظ المكافأة الكاملة (مع الإحالات والـ boost)
+        // حفظ المكافأة الكاملة في accumulatedreward فقط
         await pool.query(`
           UPDATE users 
           SET accumulatedreward = GREATEST(COALESCE(accumulatedreward, 0), $1),
-              accumulated_processing_reward = GREATEST(COALESCE(accumulated_processing_reward, 0), $1),
-              completed_processing_reward = GREATEST(COALESCE(completed_processing_reward, 0), $1)
+              accumulated_processing_reward = GREATEST(COALESCE(accumulated_processing_reward, 0), $1)
           WHERE id = $2
         `, [fullAccumulatedReward, userId]);
         
@@ -421,7 +419,6 @@ async function finalizeCompletedSessions() {
         u.session_locked_boost,
         u.accumulatedreward,
         u.accumulated_processing_reward,
-        u.completed_processing_reward,
         u.coins
       FROM users u
       WHERE u.processing_active = 1 
@@ -455,7 +452,6 @@ async function finalizeCompletedSessions() {
               processing_active = 0,
               accumulatedreward = 0,
               accumulated_processing_reward = 0,
-              completed_processing_reward = 0,
               session_locked_boost = 1.0
           WHERE id = $2
         `, [newBalance, userId]);
@@ -1609,6 +1605,27 @@ const server = http.createServer(async (req, res) => {
         req.on('end', async () => {
           try {
             const request = JSON.parse(body);
+            
+            // ✅ دعم Batch Requests (MetaMask يرسل مصفوفة من الطلبات)
+            if (Array.isArray(request)) {
+              const responses = await Promise.all(
+                request.map(async (singleRequest) => {
+                  try {
+                    return await networkNode.processRPCCall(singleRequest);
+                  } catch (err) {
+                    return {
+                      jsonrpc: '2.0',
+                      error: { code: -32603, message: err.message },
+                      id: singleRequest.id || null
+                    };
+                  }
+                })
+              );
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify(responses));
+              return;
+            }
+            
             const response = await networkNode.processRPCCall(request);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(response));
@@ -2043,8 +2060,12 @@ const server = http.createServer(async (req, res) => {
             }
           });
           
-          // ✅ FIX: إعادة تعيين الـ streak إذا فات أكثر من يوم
-          if (shouldResetStreak) {
+          // ✅ FIX: إعادة تعيين الـ streak إذا:
+          // 1. فات أكثر من 48 ساعة (يومين)
+          // 2. أو إذا كان streak = 7 (أكمل السلسلة) - يبدأ من جديد
+          const shouldStartNewCycle = shouldResetStreak || missions.streak >= 7;
+          
+          if (shouldStartNewCycle) {
             await pool.query(
               `UPDATE user_missions SET daily_claimed = false, completed_missions = $1, bonus_claimed = false, mission_cycle_start = NULL, streak = 0
                WHERE user_id = $2`, [JSON.stringify(savedPermanent), userId]
@@ -2140,11 +2161,14 @@ const server = http.createServer(async (req, res) => {
         const CYCLE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
         
         if (!lastCycleStart) {
-          // ✅ FIX: إذا لا يوجد دورة سابقة، زد الـ streak بـ 1
-          // streak = 0 → newStreak = 1 (اليوم الأول)
-          // streak = 1 → newStreak = 2 (اليوم الثاني)
-          newStreak = Math.min(missions.streak + 1, 7);
-          if (newStreak === 0) newStreak = 1; // للأمان
+          // ✅ FIX: إذا لا يوجد دورة سابقة، ابدأ من 1
+          // إذا كان streak = 7 (أكمل السلسلة)، ابدأ دورة جديدة من 1
+          if (missions.streak >= 7) {
+            newStreak = 1; // دورة جديدة!
+          } else {
+            newStreak = missions.streak + 1;
+            if (newStreak === 0) newStreak = 1; // للأمان
+          }
         } else {
           // تحقق من الوقت منذ آخر دورة
           const timeSinceLastCycle = nowMs - lastCycleStart;
@@ -2154,8 +2178,13 @@ const server = http.createServer(async (req, res) => {
             // لكن للأمان، حافظ على الـ streak
             newStreak = missions.streak;
           } else if (timeSinceLastCycle < CYCLE_DURATION * 2) {
-            // في الدورة التالية (24-48 ساعة) - زيادة الـ streak
-            newStreak = Math.min(missions.streak + 1, 7);
+            // في الدورة التالية (24-48 ساعة)
+            // ✅ FIX: إذا كان streak = 7، ابدأ دورة جديدة من 1
+            if (missions.streak >= 7) {
+              newStreak = 1; // دورة جديدة!
+            } else {
+              newStreak = missions.streak + 1;
+            }
           } else {
             // فات أكثر من يومين - إعادة الـ streak إلى 1
             newStreak = 1;
@@ -2429,7 +2458,6 @@ const server = http.createServer(async (req, res) => {
           // OR has an ACTIVE session that started today
           const activityResult = await client.query(
             `SELECT processing_active, processing_start_time_seconds, 
-                    COALESCE(completed_processing_reward, 0) as completed_processing_reward, 
                     COALESCE(processing_accumulated, 0) as processing_accumulated,
                     COALESCE(accumulatedReward, 0) as accumulatedReward, 
                     processing_completed_time
@@ -2446,10 +2474,9 @@ const server = http.createServer(async (req, res) => {
             const isActive = user.processing_active === 1;
             const startedToday = startTime >= todayStart;
             
-            // Option 2: Completed a session today (has accumulated reward)
-            const hasCompletedReward = parseFloat(user.completed_processing_reward) > 0 ||
-                                       parseFloat(user.processing_accumulated) > 0.001 ||
-                                       parseFloat(user.accumulatedReward) > 0.001;
+            // Option 2: Has accumulated reward (simplified - no need for completed_processing_reward)
+            const hasAccumulatedReward = parseFloat(user.processing_accumulated) > 0.001 ||
+                                         parseFloat(user.accumulatedReward) > 0.001;
             
             // Option 3: Check processing history for today
             const historyCheck = await client.query(
@@ -2460,7 +2487,7 @@ const server = http.createServer(async (req, res) => {
             );
             const hasHistoryToday = historyCheck.rows.length > 0;
             
-            taskCompleted = (isActive && startedToday) || hasCompletedReward || hasHistoryToday;
+            taskCompleted = (isActive && startedToday) || hasAccumulatedReward || hasHistoryToday;
           }
         } else if (missionId === 'send_transaction') {
           // Check if user sent a transaction today
@@ -4121,7 +4148,6 @@ const server = http.createServer(async (req, res) => {
                coins,
                COALESCE(accumulatedReward, 0) as accumulatedreward,
                COALESCE(accumulated_processing_reward, 0) as accumulated_processing_reward,
-               COALESCE(completed_processing_reward, 0) as completed_processing_reward,
                processing_boost_multiplier,
                COALESCE(session_locked_boost, processing_boost_multiplier, 1.0) as session_locked_boost,
                COALESCE(last_server_sync, 0) as last_server_sync
@@ -4378,12 +4404,11 @@ const server = http.createServer(async (req, res) => {
           activeReferralCount = Math.max(0, Math.round(hashrateFromReferrals / boostPerReferral));
         }
         
-        // Get stored accumulated reward values with proper error handling - include completed_processing_reward
+        // Get stored accumulated reward values - simplified (no completed_processing_reward)
         const storedAccumulated = parseFloat(userStatus.rows[0].accumulatedreward || 0);
         const storedAltAccumulated = parseFloat(userStatus.rows[0].accumulated_processing_reward || 0);
-        const storedCompleted = parseFloat(userStatus.rows[0].completed_processing_reward || 0);
-        // Return the highest value among all reward fields with proper rounding
-        const currentAccumulated = Math.round(Math.max(storedAccumulated, storedAltAccumulated, storedCompleted) * 100000000) / 100000000;
+        // Return the highest value between the two reward fields
+        const currentAccumulated = Math.round(Math.max(storedAccumulated, storedAltAccumulated) * 100000000) / 100000000;
 
         // SERVER-SIDE ONLY: حساب المكافأة المتراكمة باستخدام المضاعف المثبت
         let serverAccumulation = currentAccumulated; // البدء بالقيمة الحالية
@@ -4511,8 +4536,7 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(409, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
             success: false,
-            error: 'لديك جلسة نشطة بالفعل',
-            error_en: 'You already have an active processing session',
+            error: 'You already have an active processing session',
             processing_active: 1,
             remaining_seconds: remainingSeconds,
             coins: currentUserCoins,
@@ -4532,8 +4556,7 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(409, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
               success: false,
-              error: 'لديك جلسة نشطة بالفعل',
-              error_en: 'You already have an active processing session',
+              error: 'You already have an active processing session',
               processing_active: 1,
               remaining_seconds: remainingTime,
               coins: currentUserCoins,
@@ -4578,8 +4601,7 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(409, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
             success: false,
-            error: 'لديك جلسة نشطة بالفعل',
-            error_en: 'You already have an active processing session',
+            error: 'You already have an active processing session',
             already_processing: true
           }));
           return;
@@ -4625,6 +4647,10 @@ const server = http.createServer(async (req, res) => {
           [userId]
         );
         
+        // 🛡️ CRITICAL: Clear API cache to prevent stale boost data
+        accumulatedApiCache.delete(userId);
+        accumulatedApiCache.delete(String(userId));
+        
         // Silent - reduce console spam
         
         // No ad boost for this new session unless user watches an ad
@@ -4641,20 +4667,19 @@ const server = http.createServer(async (req, res) => {
           console.log(`✅ [REFERRAL BOOST] Granted to user ${userId}: +${referralHashrateBoost.toFixed(1)} MH/s from ${activeReferralCount} active referral(s)`);
         }
 
-        // CRITICAL: Get completed_processing_reward and transfer to balance BEFORE starting new session
+        // Get accumulated reward and transfer to balance BEFORE starting new session
         const rewardCheck = await pool.query(
-          `SELECT coins, completed_processing_reward, accumulatedReward, accumulated_processing_reward 
+          `SELECT coins, accumulatedReward, accumulated_processing_reward 
            FROM users WHERE id = $1`,
           [userId]
         );
         
         const currentCoins = parseFloat(rewardCheck.rows[0]?.coins || 0);
-        const completedReward = parseFloat(rewardCheck.rows[0]?.completed_processing_reward || 0);
         const storedAccumulated = parseFloat(rewardCheck.rows[0]?.accumulatedreward || 0);
         const storedAltAccumulated = parseFloat(rewardCheck.rows[0]?.accumulated_processing_reward || 0);
         
-        // Get the highest accumulated value for proper transfer
-        const maxAccumulated = Math.max(completedReward, storedAccumulated, storedAltAccumulated);
+        // Get the highest accumulated value for proper transfer (simplified)
+        const maxAccumulated = Math.max(storedAccumulated, storedAltAccumulated);
         const roundedReward = Math.round(maxAccumulated * 100000000) / 100000000;
         
         // Silent - reduce console spam
@@ -4684,7 +4709,6 @@ const server = http.createServer(async (req, res) => {
                 processing_end_time = $3,
                 accumulatedReward = 0,
                 accumulated_processing_reward = 0,
-                completed_processing_reward = 0,
                 baseAccumulatedReward = 0,
                 processing_boost_multiplier = $4,
                 session_locked_boost = $4
@@ -4719,6 +4743,9 @@ const server = http.createServer(async (req, res) => {
 
         // Silent - reduce console spam
 
+        // Calculate hashrate for response
+        const hashrateValue = 10.0 + (activeReferralCount * 0.4); // Base + referrals only (no ad boost at start)
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
@@ -4729,6 +4756,10 @@ const server = http.createServer(async (req, res) => {
           coins: newBalance, // Updated balance with transferred reward
           previous_balance: currentCoins,
           transferred_reward: roundedReward,
+          activeReferrals: activeReferralCount, // 🛡️ NEW: Send referral count
+          hashrate: hashrateValue, // 🛡️ NEW: Send calculated hashrate
+          boostMultiplier: lockedBoostMultiplier, // 🛡️ NEW: Send multiplier
+          adBoostActive: false, // 🛡️ NEW: Always false at session start
           message: roundedReward > 0 
             ? `Processing started. ${roundedReward.toFixed(8)} ACCESS added to your balance.`
             : 'Point processing started successfully'
@@ -7599,13 +7630,13 @@ const server = http.createServer(async (req, res) => {
           }
         }
         
-        // ✅ تحديث القيمة النهائية + إيقاف الجلسة + تنظيف "Collecting..."
+        // ✅ تحديث القيمة النهائية + إيقاف الجلسة
+        // لم نعد نحتاج completed_processing_reward - نستخدم accumulatedReward فقط
         await pool.query(
           `UPDATE users 
            SET processing_active = 0,
                processing_accumulated = GREATEST(COALESCE(processing_accumulated, 0), $1),
-               accumulatedReward = GREATEST(COALESCE(accumulatedReward, 0), $1),
-               completed_processing_reward = GREATEST(COALESCE(completed_processing_reward, 0), $1)
+               accumulatedReward = GREATEST(COALESCE(accumulatedReward, 0), $1)
            WHERE id = $2`,
           [rewardValue, userId]
         );
@@ -7740,7 +7771,9 @@ const server = http.createServer(async (req, res) => {
         // Get user's processing status using server-side calculation with timeout protection
         const userResult = await Promise.race([
           pool.query(
-            `SELECT processing_active, processing_start_time_seconds, accumulatedReward, processing_boost_multiplier, completed_processing_reward, ad_boost_active
+            `SELECT processing_active, processing_start_time_seconds, accumulatedReward, 
+                    COALESCE(session_locked_boost, processing_boost_multiplier, 1.0) as processing_boost_multiplier, 
+                    ad_boost_active
              FROM users WHERE id = $1`,
             [userId]
           ),
@@ -7760,7 +7793,6 @@ const server = http.createServer(async (req, res) => {
         const startTimeSec = parseInt(user.processing_start_time_seconds) || 0;
         const storedAccumulated = parseFloat(user.accumulatedreward || 0);
         const storedBoostMultiplier = parseFloat(user.processing_boost_multiplier || 1.0);
-        const completedReward = parseFloat(user.completed_processing_reward || 0);
         
         let serverCalculatedReward = 0;
         let activeReferralCount = 0;
@@ -7831,25 +7863,46 @@ const server = http.createServer(async (req, res) => {
           
           
         } else {
-          // Not actively processing - check if there's a completed reward to display
-          if (completedReward > 0) {
-            serverCalculatedReward = completedReward;
+          // Not actively processing - check if session was completed but reward not saved
+          // If startTimeSec exists and session expired, calculate the full reward
+          const processingDuration = 24 * 60 * 60; // 24 hours
+          const sessionExpired = startTimeSec > 0 && (nowSec - startTimeSec) >= processingDuration;
+          
+          if (sessionExpired && storedAccumulated < 0.24) {
+            // Session expired but reward wasn't saved correctly - calculate full reward
+            const baseReward = 0.25;
+            const sessionBoost = storedBoostMultiplier > 1 ? storedBoostMultiplier : 1.0;
+            serverCalculatedReward = baseReward * sessionBoost;
+            
+            // Save the correct reward to database
+            pool.query(
+              `UPDATE users 
+               SET accumulatedReward = $1,
+                   processing_accumulated = $1
+               WHERE id = $2 AND processing_active = 0`,
+              [serverCalculatedReward, userId]
+            ).catch(() => {});
+            
+            console.log(`[FIX] User ${userId}: Session expired, corrected reward to ${serverCalculatedReward.toFixed(8)}`);
           } else {
+            // Use stored value as-is
             serverCalculatedReward = storedAccumulated;
           }
           boostMultiplier = storedBoostMultiplier;
         }
         
         // 🚀 تجميع البيانات للـ response والـ cache
+        // 🛡️ FIXED: adBoostActive comes ONLY from getAdBoostStatus (which validates session)
+        const isAdBoostActive = processingActive === 1 && adBoostStatus?.boostActive === true;
+        
         const responseData = {
           success: true,
           accumulatedReward: serverCalculatedReward,
-          completedReward: completedReward,
           activeReferrals: activeReferralCount,
           hashrate: parseFloat((boostMultiplier * 10).toFixed(1)), // Use computed multiplier
           boostedReward: parseFloat((0.25 * boostMultiplier).toFixed(8)),
-          hasBoost: activeReferralCount > 0 || (processingActive === 1 && adBoostStatus?.boostActive),
-          adBoostActive: processingActive === 1 && (adBoostStatus?.boostActive || user.ad_boost_active || false), // EXPLICIT ad boost status
+          hasBoost: activeReferralCount > 0 || isAdBoostActive,
+          adBoostActive: isAdBoostActive, // ONLY from validated status
           processingActive: processingActive === 1,
           serverCalculated: true, // Flag to indicate this is server-calculated
           lastServerUpdate: nowSec
@@ -7936,17 +7989,25 @@ const server = http.createServer(async (req, res) => {
         await pool.query('BEGIN');
         
         try {
+          // 🛡️ FIXED: Clear ad_boost when session completes!
           await pool.query(
             `UPDATE users SET 
              processing_active = 0,
              processing_end_time = 0,
              processing_start_time_seconds = 0,
              processing_start_time = NULL,
-             completed_processing_reward = $1::numeric(10,8),
-             accumulatedReward = $1::numeric(10,8)
+             accumulatedReward = $1::numeric(10,8),
+             ad_boost_active = FALSE,
+             ad_boost_granted_at = NULL,
+             ad_boost_session_start = NULL,
+             session_locked_boost = 1.0
              WHERE id = $2`,
             [rewardAmount, userId]
           );
+          
+          // 🛡️ Clear API cache
+          accumulatedApiCache.delete(userId);
+          accumulatedApiCache.delete(String(userId));
 
           // Clean up "Collecting..." entries
           await pool.query(
@@ -8163,16 +8224,15 @@ const server = http.createServer(async (req, res) => {
           
           console.log(`✅ [APPROVED] User ${userId} - starting new session (end_time will be ${endTime * 1000})`);
           
-          // ✅ أولاً: جلب الرصيد المتراكم من الجلسة السابقة لنقله
+          // ✅ أولاً: جلب الرصيد المتراكم من الجلسة السابقة لنقله - نستخدم accumulatedReward فقط
           const accumulatedResult = await pool.query(
-            'SELECT coins, COALESCE(completed_processing_reward, 0) as accumulated, COALESCE(accumulatedReward, 0) as accumulated_alt FROM users WHERE id = $1',
+            'SELECT coins, COALESCE(accumulatedReward, 0) as accumulated FROM users WHERE id = $1',
             [userId]
           );
           
           let currentBalance = parseFloat(accumulatedResult.rows[0]?.coins || 0);
           const accumulated = parseFloat(accumulatedResult.rows[0]?.accumulated || 0);
-          const accumulatedAlt = parseFloat(accumulatedResult.rows[0]?.accumulated_alt || 0);
-          const rewardToTransfer = Math.max(accumulated, accumulatedAlt);
+          const rewardToTransfer = accumulated;
           let newBalance = currentBalance;
           let rewardTransferred = 0;
           
@@ -8197,7 +8257,6 @@ const server = http.createServer(async (req, res) => {
                  processing_start_time = $2,
                  processing_end_time = $3,
                  coins = $4,
-                 completed_processing_reward = 0,
                  accumulatedReward = 0,
                  processing_accumulated = 0,
                  ad_boost_active = FALSE,

@@ -136,7 +136,6 @@ class ServerSideProcessingSync {
       const expiredSessions = await pool.query(
         `SELECT u.id, u.name, u.processing_start_time_seconds, u.accumulatedReward,
                 COALESCE(u.session_locked_boost, u.processing_boost_multiplier, 1.0) as locked_boost,
-                COALESCE(u.completed_processing_reward, 0) as completed_processing_reward,
                 COALESCE(u.ad_boost_active, false) as ad_boost_active,
                 (SELECT COUNT(*) FROM referrals r 
                  JOIN users ref ON r.referee_id = ref.id 
@@ -167,14 +166,13 @@ class ServerSideProcessingSync {
         try {
           const userId = session.id;
           const userName = session.name || `User ${userId}`;
-          const existingCompleted = parseFloat(session.completed_processing_reward || 0);
           const existingAccumulated = parseFloat(session.accumulatedreward || 0);
           const adBoostActive = session.ad_boost_active === true;
           const activeReferralCount = parseInt(session.active_referral_count) || 0;
 
-          // إذا كانت المكافأة المكتملة موجودة بالفعل، لا نحتاج لحسابها مرة أخرى
-          if (existingCompleted > 0) {
-            console.log(`[RECOVERY] User ${userId} (${userName}): المكافأة موجودة بالفعل ${existingCompleted.toFixed(8)} ACCESS`);
+          // إذا كانت المكافأة المتراكمة موجودة بالفعل، فقط نوقف الجلسة
+          if (existingAccumulated > 0.20) {
+            console.log(`[RECOVERY] User ${userId} (${userName}): المكافأة موجودة بالفعل ${existingAccumulated.toFixed(8)} ACCESS`);
             
             // فقط نوقف الجلسة إذا كانت لا تزال نشطة
             await pool.query(
@@ -199,11 +197,10 @@ class ServerSideProcessingSync {
 
           console.log(`[RECOVERY] User ${userId} (${userName}): المكافأة ${finalReward.toFixed(2)} ACCESS (accumulated: ${existingAccumulated.toFixed(8)}, boost: ${boostMultiplier.toFixed(2)}x)`);
 
-          // حفظ المكافأة المكتملة في قاعدة البيانات
+          // حفظ المكافأة في accumulatedReward فقط
           await pool.query(
             `UPDATE users SET 
              processing_active = 0,
-             completed_processing_reward = $1::numeric(10,8),
              accumulatedReward = $1::numeric(10,8)
              WHERE id = $2`,
             [finalReward, userId]
@@ -271,7 +268,6 @@ class ServerSideProcessingSync {
         pool.query(
           `SELECT u.id, u.name, u.processing_start_time_seconds, u.accumulatedReward,
                   COALESCE(u.session_locked_boost, u.processing_boost_multiplier, 1.0) as locked_boost,
-                  COALESCE(u.completed_processing_reward, 0) as completed_processing_reward,
                   COALESCE(u.ad_boost_active, false) as ad_boost_active,
                   (SELECT COUNT(*) FROM referrals r 
                    JOIN users ref ON r.referee_id = ref.id 
@@ -301,13 +297,12 @@ class ServerSideProcessingSync {
       for (const session of expiredSessions.rows) {
         try {
           const userId = session.id;
-          const existingCompleted = parseFloat(session.completed_processing_reward || 0);
           const existingAccumulated = parseFloat(session.accumulatedreward || 0);
           const adBoostActive = session.ad_boost_active === true;
           const activeReferralCount = parseInt(session.active_referral_count) || 0;
 
-          // إذا كانت المكافأة موجودة بالفعل، فقط نوقف الجلسة
-          if (existingCompleted > 0) {
+          // إذا كانت المكافأة المتراكمة موجودة بالفعل (≥0.20)، فقط نوقف الجلسة
+          if (existingAccumulated > 0.20) {
             await pool.query(
               `UPDATE users SET processing_active = 0 WHERE id = $1`,
               [userId]
@@ -327,11 +322,10 @@ class ServerSideProcessingSync {
           const maxReward = Math.max(existingAccumulated, baseWithBoost);
           const finalReward = roundUpToTwoDecimals(maxReward);
 
-          // حفظ المكافأة وإيقاف الجلسة
+          // حفظ المكافأة في accumulatedReward فقط وإيقاف الجلسة
           await pool.query(
             `UPDATE users SET 
              processing_active = 0,
-             completed_processing_reward = $1::numeric(10,8),
              accumulatedReward = $1::numeric(10,8)
              WHERE id = $2`,
             [finalReward, userId]
