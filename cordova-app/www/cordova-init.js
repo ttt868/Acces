@@ -472,31 +472,15 @@ function overrideGoogleSignIn() {
                 console.log('📤 Calling handleGoogleSignIn with native data...');
                 console.log('📋 Fake credential payload:', fakePayload);
                 
-                // 🔍 DEBUG: Show alert with user data
-                alert('DEBUG 1: Google Sign-In OK!\nEmail: ' + userData.email + '\nName: ' + userData.name);
+                // ✅ CRITICAL: Clear old cache before login to ensure fresh data
+                localStorage.removeItem('accessoireUser');
+                localStorage.removeItem('accessoireUserData');
+                console.log('🧹 Cleared old user cache');
                 
                 // Call the existing handleGoogleSignIn from script.js
                 // This uses the same flow as web!
                 if (typeof window.handleGoogleSignIn === 'function') {
                     console.log('✅ handleGoogleSignIn found, calling it...');
-                    
-                    // 🔍 DEBUG: Test API call directly with full URL shown
-                    const testApiUrl = window.API_BASE_URL + '/api/user/' + encodeURIComponent(userData.email);
-                    alert('DEBUG 2: API URL = ' + testApiUrl);
-                    
-                    console.log('🔍 DEBUG: Testing API call to:', testApiUrl);
-                    fetch(testApiUrl)
-                        .then(r => r.json())
-                        .then(data => {
-                            console.log('🔍 DEBUG: API Response:', JSON.stringify(data));
-                            const userEmail = data.user ? data.user.email : 'NO USER';
-                            alert('DEBUG 3: API Response\nReturned email: ' + userEmail + '\nExpected: ' + userData.email);
-                        })
-                        .catch(err => {
-                            console.error('🔍 DEBUG: API Error:', err);
-                            alert('DEBUG 3: API Error\n' + err.message);
-                        });
-                    
                     window.handleGoogleSignIn(fakeResponse);
                 } else {
                     console.warn('⚠️ handleGoogleSignIn not found, using direct approach...');

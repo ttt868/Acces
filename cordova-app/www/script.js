@@ -8452,7 +8452,7 @@ function initializeGoogleSignIn() {
       }).join(''));
       const payload = JSON.parse(jsonPayload);
       
-      console.log('🔐 [DEBUG] Decoded payload email:', payload.email);
+      console.log('🔐 Decoded payload email:', payload.email);
       
       // Extract user information
       currentUser = {
@@ -12385,16 +12385,9 @@ if (totalCost > (currentBalance + precision)) {
   };
 
  async function checkIfUserExists(email, forceRefresh = false) {
-  console.log('🔍 [DEBUG] checkIfUserExists called with email:', email);
-  console.log('🔍 [DEBUG] window.location.origin:', window.location.origin);
-  console.log('🔍 [DEBUG] window.getApiOrigin():', window.getApiOrigin ? window.getApiOrigin() : 'N/A');
+  console.log('🔍 checkIfUserExists called with email:', email);
   
-  // 🔍 DEBUG ALERT
-  if (window.IS_CORDOVA_APP) {
-    console.log('🔍 DEBUG ALERT: checkIfUserExists for', email);
-  }
-  
-  // ⚡ Return cached data if available and not expired
+  // ⚡ Return cached data if available and not expired (but only if email matches!)
   const now = Date.now();
   if (!forceRefresh && userDataCache.email === email && userDataCache.data && (now - userDataCache.timestamp) < userDataCache.TTL) {
     console.log('⚡ Using cached user data for:', email);
@@ -12407,15 +12400,10 @@ if (totalCost > (currentBalance + precision)) {
       ? window.getApiOrigin() 
       : (window.API_BASE_URL || window.location.origin);
     const apiUrl = `${origin}/api/user/${encodeURIComponent(email)}`;
-    console.log('🔍 [DEBUG] checkIfUserExists FINAL apiUrl:', apiUrl);
+    console.log('🔍 checkIfUserExists apiUrl:', apiUrl);
 
     const response = await fetch(apiUrl);
-    console.log('🔍 [DEBUG] checkIfUserExists response status:', response.status);
-    
-    // 🔍 DEBUG ALERT for Cordova
-    if (window.IS_CORDOVA_APP) {
-      console.log('🔍 DEBUG: Response status =', response.status);
-    }
+    console.log('🔍 checkIfUserExists response status:', response.status);
 
     // Handle 404 as "user not found" rather than an error
     if (response.status === 404) {
