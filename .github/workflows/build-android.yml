@@ -29,6 +29,11 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '17'
+        
+    - name: Setup Gradle 7.6.4
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '7.6.4'
     
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
@@ -51,25 +56,27 @@ jobs:
       working-directory: cordova-app
       run: |
         cordova platform remove android 2>/dev/null || true
-        cordova platform add android@11.0.0
+        cordova platform add android@12.0.1
     
-    - name: Force Gradle 7.6.4 and fix appcompat
+    - name: Force Gradle 7.6.4
       working-directory: cordova-app
       run: |
-        echo '🔧 إجبار Gradle 7.6.4 بدلاً من 8.13...'
-        # Find and update gradle-wrapper.properties
-        find platforms/android -name "gradle-wrapper.properties" -exec sed -i 's|gradle-.*-bin.zip|gradle-7.6.4-bin.zip|g' {} \;
-        find platforms/android -name "gradle-wrapper.properties" -exec cat {} \;
-        # Create build-extras.gradle to force appcompat 1.4.2
-        mkdir -p platforms/android/app
+        echo '🔧 إجبار Gradle 7.6.4...'
+        # Update gradle-wrapper.properties to use 7.6.4
+        WRAPPER_FILE=$(find platforms/android -name "gradle-wrapper.properties" | head -1)
+        if [ -n "$WRAPPER_FILE" ]; then
+          sed -i 's|gradle-.*-bin.zip|gradle-7.6.4-bin.zip|g' "$WRAPPER_FILE"
+          cat "$WRAPPER_FILE"
+        fi
+        # Force appcompat 1.4.2
         cat > platforms/android/app/build-extras.gradle << 'EOF'
-        configurations.all {
-            resolutionStrategy {
-                force 'androidx.appcompat:appcompat:1.4.2'
-            }
-        }
-        EOF
-        echo '✅ تم الإعداد بنجاح'
+configurations.all {
+    resolutionStrategy {
+        force 'androidx.appcompat:appcompat:1.4.2'
+    }
+}
+EOF
+        echo '✅ تم الإعداد'
     
     - name: Build Debug APK
       working-directory: cordova-app
