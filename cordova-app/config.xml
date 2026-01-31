@@ -44,12 +44,13 @@
     <preference name="StatusBarBackgroundColor" value="#1a1a2e" />
     <preference name="StatusBarStyle" value="lightcontent" />
     <preference name="Orientation" value="portrait" />
-    <!-- splash screen مخصص عبر splash.html -->
+    <!-- إزالة splash screen تماماً -->
+    <preference name="SplashScreen" value="none" />
     <preference name="SplashScreenDelay" value="0" />
     <preference name="AutoHideSplashScreen" value="true" />
     <preference name="ShowSplashScreenSpinner" value="false" />
-    <preference name="StatusBarBackgroundColor" value="#000000" />
-    <preference name="StatusBarStyle" value="lightcontent" />
+    <preference name="FadeSplashScreen" value="false" />
+    <preference name="FadeSplashScreenDuration" value="0" />
     
     <!-- Google Sign-In Plugin -->
     <plugin name="cordova-plugin-googleplus" spec="^8.5.2">

@@ -2,9 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- Cordova -->
+  <script src="cordova.js"></script>
+  <script src="cordova-init.js"></script>
   <!-- 🔒 منع وميض الرصيد - تغيير النص فوراً -->
   <script>
     window.balanceHiddenOnLoad = localStorage.getItem('balanceHidden') === 'true';
+    // انتظار Cordova
+    document.addEventListener('deviceready', function() {
+      console.log('✅ Cordova جاهز!');
+    }, false);
   </script>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta http-equiv="Content-Language" content="ar,en,fr,es,de,tr,it,hi,zh,ja,ko,pt,ru,id,pl">
@@ -867,19 +874,8 @@ document.addEventListener('balanceUpdated', function(event) {
     src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"
     crossorigin="anonymous"
   ></script>
-  
-  <!-- Cordova Scripts -->
-  <script src="cordova.js"></script>
-  <script src="cordova-init.js"></script>
 </head>
 <body>
-  <script>
-    // إذا لم نأتِ من splash.html، نذهب إليها أولاً
-    if (!window.location.href.includes('splash.html') && !sessionStorage.getItem('splashShown')) {
-      sessionStorage.setItem('splashShown', '1');
-      window.location = 'splash.html';
-    }
-  </script>
   
 
 <!-- Offline Detection Page -->
