@@ -7,7 +7,7 @@
     <author email="support@access-network.io" href="https://access-network.io">
         Access Network Team
     </author>
-    <content src="index.html" />
+    <content src="splash.html" />
     
     <!-- Allow access to server API -->
     <access origin="https://access-network.io" />

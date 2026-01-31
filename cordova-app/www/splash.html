@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Access Network - Splash</title>
+  <title>Access Network</title>
+  <!-- Cordova -->
+  <script src="cordova.js"></script>
   <style>
     html, body {
       height: 100%;
@@ -75,20 +77,34 @@
     <div class="splash-footer">Loading...</div>
   </div>
   <script>
-    // شريط التقدم
-    let progress = 0;
-    const bar = document.getElementById('progress');
-    function animate() {
-      progress += Math.random() * 18 + 7;
-      if (progress > 100) progress = 100;
-      bar.style.width = progress + '%';
-      if (progress < 100) setTimeout(animate, 350);
+    // انتظار Cordova ثم تشغيل شريط التقدم
+    document.addEventListener('deviceready', function() {
+      console.log('✅ Cordova جاهز!');
+      startSplash();
+    }, false);
+    
+    // fallback للويب
+    setTimeout(function() {
+      if (!window.cordovaReady) startSplash();
+    }, 500);
+    
+    function startSplash() {
+      window.cordovaReady = true;
+      // شريط التقدم
+      let progress = 0;
+      const bar = document.getElementById('progress');
+      function animate() {
+        progress += Math.random() * 18 + 7;
+        if (progress > 100) progress = 100;
+        bar.style.width = progress + '%';
+        if (progress < 100) setTimeout(animate, 350);
+      }
+      animate();
+      // بعد 2.5 ثانية انتقل للتطبيق
+      setTimeout(function() {
+        window.location = 'index.html';
+      }, 2500);
     }
-    animate();
-    // بعد 2.5 ثانية انتقل للتطبيق
-    setTimeout(() => {
-      window.location = 'index.html';
-    }, 2500);
   </script>
 </body>
 </html>
