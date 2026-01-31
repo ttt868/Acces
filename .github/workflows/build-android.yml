@@ -37,6 +37,12 @@ jobs:
     - name: Accept Android SDK Licenses
       run: yes | sdkmanager --licenses || true
     
+    - name: Install Android Build Tools
+      run: |
+        echo '📦 تثبيت Build Tools 33.0.2...'
+        sdkmanager "build-tools;33.0.2" "platforms;android-33"
+        echo '✅ تم تثبيت Build Tools'
+    
     - name: Replace system Gradle with 7.6
       run: |
         echo '🔧 استبدال Gradle 9.3 بـ 7.6...'
