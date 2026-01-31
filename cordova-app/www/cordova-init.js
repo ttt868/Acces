@@ -108,9 +108,161 @@ document.addEventListener('deviceready', function() {
         StatusBar.styleLightContent();
     }
     
+    // Request all permissions
+    requestAllPermissions();
+    
     // Setup Google Sign-In
     setupGoogleSignIn();
 }, false);
+
+// ✅ Request All Permissions
+function requestAllPermissions() {
+    console.log('📱 Requesting permissions...');
+    
+    // 1. Notification Permission
+    requestNotificationPermission();
+    
+    // 2. Camera Permission (for QR Scanner)
+    requestCameraPermission();
+    
+    // 3. Clipboard Permission
+    setupClipboardAccess();
+}
+
+// ✅ Notification Permission
+function requestNotificationPermission() {
+    if (window.cordova && window.cordova.plugins && window.cordova.plugins.notification) {
+        cordova.plugins.notification.local.hasPermission(function(granted) {
+            if (!granted) {
+                cordova.plugins.notification.local.requestPermission(function(granted) {
+                    console.log(granted ? '✅ Notification permission granted' : '❌ Notification permission denied');
+                });
+            } else {
+                console.log('✅ Notification permission already granted');
+            }
+        });
+    } else if ('Notification' in window) {
+        // Web fallback
+        if (Notification.permission === 'default') {
+            Notification.requestPermission().then(permission => {
+                console.log('📱 Notification permission:', permission);
+            });
+        }
+    }
+}
+
+// ✅ Camera Permission (for QR Code Scanner)
+function requestCameraPermission() {
+    if (window.cordova && cordova.plugins && cordova.plugins.permissions) {
+        const permissions = cordova.plugins.permissions;
+        permissions.checkPermission(permissions.CAMERA, function(status) {
+            if (!status.hasPermission) {
+                permissions.requestPermission(permissions.CAMERA, function(status) {
+                    console.log(status.hasPermission ? '✅ Camera permission granted' : '❌ Camera permission denied');
+                }, function() {
+                    console.error('❌ Camera permission request failed');
+                });
+            } else {
+                console.log('✅ Camera permission already granted');
+            }
+        }, null);
+    }
+}
+
+// ✅ Clipboard Access
+function setupClipboardAccess() {
+    // Override navigator.clipboard for Cordova
+    if (window.cordova && !navigator.clipboard) {
+        navigator.clipboard = {
+            readText: function() {
+                return new Promise((resolve, reject) => {
+                    if (window.cordova.plugins && window.cordova.plugins.clipboard) {
+                        cordova.plugins.clipboard.paste(
+                            text => resolve(text),
+                            err => reject(err)
+                        );
+                    } else {
+                        reject('Clipboard plugin not available');
+                    }
+                });
+            },
+            writeText: function(text) {
+                return new Promise((resolve, reject) => {
+                    if (window.cordova.plugins && window.cordova.plugins.clipboard) {
+                        cordova.plugins.clipboard.copy(
+                            text,
+                            () => resolve(),
+                            err => reject(err)
+                        );
+                    } else {
+                        reject('Clipboard plugin not available');
+                    }
+                });
+            }
+        };
+        console.log('✅ Clipboard polyfill installed');
+    }
+}
+
+// ✅ QR Code Scanner Function (using BarcodeScanner plugin)
+window.scanQRCode = function() {
+    return new Promise((resolve, reject) => {
+        if (window.cordova && window.cordova.plugins && window.cordova.plugins.barcodeScanner) {
+            cordova.plugins.barcodeScanner.scan(
+                function(result) {
+                    if (result.cancelled) {
+                        reject('Scan cancelled');
+                    } else {
+                        console.log('✅ QR Scanned:', result.text);
+                        resolve(result.text);
+                    }
+                },
+                function(error) {
+                    console.error('❌ QR Scan error:', error);
+                    reject(error);
+                },
+                {
+                    preferFrontCamera: false,
+                    showFlipCameraButton: true,
+                    showTorchButton: true,
+                    torchOn: false,
+                    saveHistory: false,
+                    prompt: "Scan QR Code",
+                    resultDisplayDuration: 0,
+                    formats: "QR_CODE",
+                    orientation: "portrait",
+                    disableAnimations: true,
+                    disableSuccessBeep: false
+                }
+            );
+        } else {
+            // Fallback: prompt user to enter manually
+            const address = prompt('QR Scanner not available. Enter wallet address:');
+            if (address) {
+                resolve(address);
+            } else {
+                reject('No address entered');
+            }
+        }
+    });
+};
+
+// ✅ Paste from Clipboard helper
+window.pasteFromClipboard = async function() {
+    try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            return await navigator.clipboard.readText();
+        } else if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
+            return new Promise((resolve, reject) => {
+                cordova.plugins.clipboard.paste(resolve, reject);
+            });
+        }
+        return '';
+    } catch (e) {
+        console.error('❌ Clipboard read error:', e);
+        return '';
+    }
+};
 
 // ✅ Google Sign-In Setup
 function setupGoogleSignIn() {

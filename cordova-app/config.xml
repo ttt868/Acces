@@ -83,4 +83,13 @@
         <variable name="WEB_APPLICATION_CLIENT_ID" value="586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com" />
         <variable name="REVERSED_CLIENT_ID" value="com.googleusercontent.apps.586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn" />
     </plugin>
+    
+    <!-- ✅ Permissions & Features Plugins -->
+    <plugin name="cordova-plugin-android-permissions" spec="^1.1.5" />
+    <plugin name="cordova-plugin-clipboard" spec="^1.3.0" />
+    <plugin name="cordova-plugin-local-notification" spec="^0.9.0-beta.2" />
+    <plugin name="cordova-plugin-statusbar" spec="^4.0.0" />
+    <plugin name="phonegap-plugin-barcodescanner" spec="^8.1.0">
+        <variable name="CAMERA_USAGE_DESCRIPTION" value="We need camera access to scan QR codes for wallet addresses" />
+    </plugin>
 </widget>
