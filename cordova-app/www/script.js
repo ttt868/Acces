@@ -12358,9 +12358,18 @@ if (totalCost > (currentBalance + precision)) {
     }
 
     // First check if user exists in the database
+    // 🔧 DEBUG
+    if (window.IS_CORDOVA_APP) {
+      alert('📋 processLogin: Checking if user exists...\nEmail: ' + user.email);
+    }
+    
     checkIfUserExists(user.email).then(async (existingUser) => {
       if (existingUser) {
         console.log('User exists, loading data:', existingUser);
+        // 🔧 DEBUG
+        if (window.IS_CORDOVA_APP) {
+          alert('✅ User found in DB!\nID: ' + existingUser.id + '\nCoins: ' + existingUser.coins);
+        }
         // User exists, update UI with their data
         updateUserCoins(existingUser.coins || 0);
         updateReferralCode(existingUser.referralCode);
@@ -12370,6 +12379,10 @@ if (totalCost > (currentBalance + precision)) {
         loadUserReferrals(existingUser.id);
       } else {
         console.log('Creating new user with referralCode:', referralCode);
+        // 🔧 DEBUG
+        if (window.IS_CORDOVA_APP) {
+          alert('⚠️ User NOT found - Creating new user...\nEmail: ' + user.email);
+        }
         
         // ⚠️ SERVER CREATES REFERRAL CODE - Don't send from client
         // ✅ FIX: Wait for user creation and update currentUser.id
@@ -12377,15 +12390,32 @@ if (totalCost > (currentBalance + precision)) {
           const responseData = await createUser(user, null, referralCode);
           if (responseData && responseData.user) {
             console.log('✅ Create user completed in processLogin, ID:', responseData.user.id);
+            // 🔧 DEBUG
+            if (window.IS_CORDOVA_APP) {
+              alert('✅ User CREATED!\nID: ' + responseData.user.id + '\nCoins: ' + responseData.user.coins);
+            }
             currentUser = {...currentUser, ...responseData.user, id: responseData.user.id};
             saveUserSession(currentUser);
+          } else {
+            // 🔧 DEBUG
+            if (window.IS_CORDOVA_APP) {
+              alert('❌ createUser returned no user data!\nResponse: ' + JSON.stringify(responseData).substring(0, 200));
+            }
           }
         } catch (err) {
           console.error('❌ Error creating user:', err);
+          // 🔧 DEBUG
+          if (window.IS_CORDOVA_APP) {
+            alert('❌ createUser ERROR!\n' + err.message);
+          }
         }
       }
     }).catch(error => {
       console.error('Error during user check:', error);
+      // 🔧 DEBUG
+      if (window.IS_CORDOVA_APP) {
+        alert('❌ checkIfUserExists ERROR!\n' + error.message);
+      }
       // Use fallback if server fails
       useFallbackUserData();
     });
@@ -12519,6 +12549,11 @@ if (totalCost > (currentBalance + precision)) {
     try {
       console.log('🚀 createUser called with referrerCode:', referrerCode);
       
+      // 🔧 DEBUG: Confirm createUser is called
+      if (window.IS_CORDOVA_APP) {
+        console.log('📡 [CORDOVA DEBUG] createUser CALLED! Email:', user.email);
+      }
+      
       // ⚠️ لا نرسل referralCode - السيرفر ينشئه
       const userData = {
         email: user.email,
@@ -12536,15 +12571,27 @@ if (totalCost > (currentBalance + precision)) {
       const origin = (typeof window.getApiOrigin === 'function') 
         ? window.getApiOrigin() 
         : (window.API_BASE_URL || window.location.origin);
+      
+      // 🔧 DEBUG: Show the API URL
+      const apiUrl = `${origin}/api/users`;
+      if (window.IS_CORDOVA_APP) {
+        console.log('📡 [CORDOVA DEBUG] createUser URL:', apiUrl);
+        alert('📡 createUser sending to:\n' + apiUrl + '\n\nEmail: ' + user.email);
+      }
         
       // Send the create request
-      const response = await fetch(`${origin}/api/users`, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(userData)
       });
+      
+      // 🔧 DEBUG: Show response status
+      if (window.IS_CORDOVA_APP) {
+        console.log('📡 [CORDOVA DEBUG] createUser response status:', response.status);
+      }
 
       // Check response status
       if (!response.ok) {
