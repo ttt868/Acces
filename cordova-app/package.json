@@ -24,17 +24,10 @@
       "android"
     ],
     "plugins": {
-      "cordova-plugin-googleplus": {
-        "REVERSED_CLIENT_ID": "com.googleusercontent.apps.YOUR_CLIENT_ID",
-        "PLAY_SERVICES_VERSION": "15.0.1"
-      },
       "cordova-plugin-statusbar": {},
       "cordova-plugin-splashscreen": {},
       "cordova-plugin-inappbrowser": {},
       "cordova-plugin-network-information": {}
     }
-  },
-  "dependencies": {
-    "cordova-plugin-googleplus": "8.5.2"
   }
 }
