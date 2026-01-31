@@ -14344,11 +14344,22 @@ window.cancelProfileChanges = cancelProfileChanges;
     }
   });
 
-  document.getElementById('logout-confirm').addEventListener('click', function() {
+  document.getElementById('logout-confirm').addEventListener('click', async function() {
     // Clear processing timer if exists
     if (activityInterval) {
       clearInterval(activityInterval);
       activityInterval = null;
+    }
+
+    // 📱 Cordova: Sign out from Google natively (with disconnect for account picker)
+    if (window.IS_CORDOVA_APP && typeof window.nativeGoogleSignOut === 'function') {
+      try {
+        console.log('📱 Signing out from Google (Cordova)...');
+        await window.nativeGoogleSignOut();
+        console.log('✅ Google Sign-Out complete');
+      } catch (e) {
+        console.warn('⚠️ Google Sign-Out error:', e);
+      }
     }
 
     // Clear all user data except theme and language preferences

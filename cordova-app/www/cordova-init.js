@@ -89,22 +89,40 @@ function overrideFetch() {
     const originalFetch = window.fetch;
     
     window.fetch = function(url, options) {
+        const originalUrl = url;
+        
         if (typeof url === 'string') {
+            // Log for debugging in Cordova
+            if (url.includes('/api') || url.includes('/rpc')) {
+                console.log('📡 Fetch intercepted:', url);
+            }
+            
             // If URL starts with /api or /rpc, prepend base URL
             if (url.startsWith('/api') || url.startsWith('/rpc')) {
                 url = window.API_BASE_URL + url;
             }
             // If URL contains file:// (Cordova), replace with API URL
-            else if (url.startsWith('file://') && url.includes('/api')) {
-                url = window.API_BASE_URL + url.substring(url.indexOf('/api'));
+            else if (url.startsWith('file://') && (url.includes('/api') || url.includes('/rpc'))) {
+                const apiIndex = url.includes('/api') ? url.indexOf('/api') : url.indexOf('/rpc');
+                url = window.API_BASE_URL + url.substring(apiIndex);
             }
-            // If URL uses window.location.origin which became file://
-            else if (url.includes('file:///api') || url.includes('file:///rpc')) {
-                url = url.replace(/file:\/\/[^\/]*/, window.API_BASE_URL);
-            }
-            // Handle ${window.location.origin}/api pattern (origin is 'null' or 'file://')
-            else if ((url.startsWith('null/api') || url.startsWith('null/rpc'))) {
+            // Handle 'null/api' - when window.location.origin is 'null'
+            else if (url.startsWith('null/api') || url.startsWith('null/rpc')) {
                 url = window.API_BASE_URL + url.substring(4);
+            }
+            // Handle any URL that should go to API but has wrong origin
+            else if (url.includes('/api/') && !url.startsWith('http')) {
+                const apiIndex = url.indexOf('/api');
+                url = window.API_BASE_URL + url.substring(apiIndex);
+            }
+            else if (url.includes('/rpc') && !url.startsWith('http')) {
+                const rpcIndex = url.indexOf('/rpc');
+                url = window.API_BASE_URL + url.substring(rpcIndex);
+            }
+            
+            // Log the transformation
+            if (originalUrl !== url && (url.includes('/api') || url.includes('/rpc'))) {
+                console.log('📡 Fetch URL transformed: ', originalUrl, ' → ', url);
             }
         }
         
@@ -182,7 +200,7 @@ function setupGoogleSignIn() {
         });
     };
     
-    // Logout function
+    // Logout function - uses both logout AND disconnect to ensure account picker shows
     window.nativeGoogleSignOut = function() {
         return new Promise((resolve, reject) => {
             if (!window.plugins || !window.plugins.googleplus) {
@@ -190,14 +208,35 @@ function setupGoogleSignIn() {
                 return;
             }
             
-            window.plugins.googleplus.logout(
+            // First disconnect to revoke access (this ensures account picker shows next time)
+            window.plugins.googleplus.disconnect(
                 function() {
-                    console.log('✅ Google Sign-Out successful');
-                    resolve();
+                    console.log('✅ Google Disconnect successful');
+                    // Then logout for good measure
+                    window.plugins.googleplus.logout(
+                        function() {
+                            console.log('✅ Google Sign-Out successful');
+                            resolve();
+                        },
+                        function(error) {
+                            console.warn('⚠️ Google logout after disconnect failed:', error);
+                            resolve(); // Still resolve as disconnect worked
+                        }
+                    );
                 },
                 function(error) {
-                    console.error('❌ Google Sign-Out failed:', error);
-                    reject(error);
+                    console.error('❌ Google Disconnect failed:', error);
+                    // Try just logout as fallback
+                    window.plugins.googleplus.logout(
+                        function() {
+                            console.log('✅ Google Sign-Out successful (fallback)');
+                            resolve();
+                        },
+                        function(error2) {
+                            console.error('❌ Google Sign-Out also failed:', error2);
+                            reject(error2);
+                        }
+                    );
                 }
             );
         });
