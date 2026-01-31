@@ -3,14 +3,11 @@
  * This file handles the transition from web to mobile app
  */
 
-// API Base URL - السيرفر الحقيقي
-window.API_BASE_URL = 'https://access-network.io';
-// Fallback to IP if domain not working
-window.API_BASE_URL_FALLBACK = 'http://89.167.14.197:3000';
+// API Base URL - استخدام IP مباشرة لأن الدومين لا يعمل
+window.API_BASE_URL = 'http://89.167.14.197:3000';
 
 // WebSocket URL
-window.WS_BASE_URL = 'wss://access-network.io';
-window.WS_BASE_URL_FALLBACK = 'ws://89.167.14.197:3000';
+window.WS_BASE_URL = 'ws://89.167.14.197:3000';
 
 // Flag to indicate we're in Cordova app
 window.IS_CORDOVA_APP = true;
