@@ -80,6 +80,32 @@
   <link rel="stylesheet" href="referrals-style.css">
   <link rel="stylesheet" href="leaderboard-style.css">
 
+  <!-- Cordova Status Bar Fix -->
+  <style id="cordova-statusbar-fix">
+    /* Fix for Cordova status bar overlap */
+    html.cordova-app {
+      --status-bar-height: 24px; /* Default Android status bar height */
+    }
+    html.cordova-app body {
+      padding-top: var(--status-bar-height) !important;
+    }
+    html.cordova-app #app-container {
+      padding-top: 0 !important;
+    }
+    /* Ensure content doesn't go under status bar */
+    html.cordova-app .header,
+    html.cordova-app .top-bar,
+    html.cordova-app .navbar {
+      margin-top: 0 !important;
+    }
+  </style>
+  <script>
+    // Add cordova-app class when running in Cordova
+    if (window.IS_CORDOVA_APP || typeof cordova !== 'undefined' || document.URL.indexOf('http://') === -1) {
+      document.documentElement.classList.add('cordova-app');
+    }
+  </script>
+
   <!-- Instant Auth & Language Check - ZERO FLASH Professional Solution -->
   <style id="instant-auth-styles">
     /* CRITICAL: Use opacity for smooth reveal - NO PARTIAL CONTENT EVER */

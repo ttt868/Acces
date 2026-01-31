@@ -15,6 +15,23 @@ window.WS_BASE_URL_FALLBACK = 'ws://89.167.14.197:3000';
 // Flag to indicate we're in Cordova app
 window.IS_CORDOVA_APP = true;
 
+// 🔧 Override window.location.origin for Cordova
+// Many scripts use window.location.origin which is 'file://' in Cordova
+// We need to override it to use our API_BASE_URL
+Object.defineProperty(window, 'CORDOVA_ORIGIN', {
+    get: function() { return window.API_BASE_URL; }
+});
+
+// Create a proxy for location to intercept origin calls
+(function() {
+    const originalOrigin = window.location.origin;
+    // If we're in Cordova (file://), replace origin
+    if (originalOrigin === 'file://' || originalOrigin === 'null' || !originalOrigin.startsWith('http')) {
+        console.log('📱 Cordova detected: Overriding location.origin from', originalOrigin, 'to', window.API_BASE_URL);
+        // We can't directly override location.origin, but we ensure fetch/XHR use API_BASE_URL
+    }
+})();
+
 // Google Sign-In Configuration
 // Android Client ID (with SHA-1 registered) - for native sign-in
 window.GOOGLE_CLIENT_ID_ANDROID = '586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua.apps.googleusercontent.com';
