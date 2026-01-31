@@ -304,32 +304,38 @@ function overrideGoogleSignIn() {
                 const loading = document.getElementById('google-signin-loading');
                 if (loading) loading.remove();
                 
-                // More detailed error messages
+                // More detailed error messages based on Google Sign-In error codes
                 let errorMsg = 'Sign-in failed. ';
-                if (typeof error === 'string') {
-                    if (error.includes('SIGN_IN_CANCELLED') || error.includes('12501')) {
-                        errorMsg = 'Sign-in was cancelled.';
-                    } else if (error.includes('NETWORK') || error.includes('7')) {
-                        errorMsg = 'Network error. Please check your connection.';
-                    } else if (error.includes('INVALID_ACCOUNT') || error.includes('5')) {
-                        errorMsg = 'Invalid account. Please try another.';
-                    } else if (error.includes('DEVELOPER_ERROR') || error.includes('10')) {
-                        errorMsg = 'Configuration error (DEVELOPER_ERROR). Check SHA-1 and Client ID.';
-                        console.error('⚠️ DEVELOPER_ERROR: Check SHA-1 fingerprint and Client ID configuration');
-                    } else {
-                        errorMsg += 'Error: ' + error;
-                    }
-                } else if (error && error.message) {
-                    errorMsg += 'Error: ' + error.message;
-                } else if (error) {
-                    // Try to stringify the error
-                    try {
-                        errorMsg += 'Error: ' + JSON.stringify(error);
-                    } catch(e) {
-                        errorMsg += 'Unknown error: ' + String(error);
-                    }
+                const errorStr = String(error);
+                const errorNum = parseInt(errorStr.replace(/\D/g, '')) || 0;
+                
+                console.error('🔍 Error analysis - String:', errorStr, '- Parsed number:', errorNum);
+                
+                if (errorStr.includes('SIGN_IN_CANCELLED') || errorNum === 12501 || errorNum === 12) {
+                    errorMsg = 'Sign-in was cancelled.';
+                } else if (errorStr.includes('NETWORK') || errorNum === 7) {
+                    errorMsg = 'Network error. Please check your connection.';
+                } else if (errorStr.includes('INVALID_ACCOUNT') || errorNum === 5) {
+                    errorMsg = 'Invalid account. Please try another.';
+                } else if (errorStr.includes('DEVELOPER_ERROR') || errorNum === 10) {
+                    errorMsg = 'Configuration error (Error 10). SHA-1 or Web Client ID mismatch.';
+                    console.error('⚠️ Error 10: SHA-1 in Google Cloud Console does not match app signature');
+                    console.error('📋 Web Client ID used:', window.GOOGLE_CLIENT_ID_WEB);
+                } else if (errorNum === 20) {
+                    // Error 20 = SIGN_IN_REQUIRED - usually means no account signed in on device
+                    // OR missing Android Client ID configuration
+                    errorMsg = 'Sign-in required (Error 20). Please check Google Cloud Console has Android Client with correct SHA-1.';
+                    console.error('⚠️ Error 20: Android OAuth Client may be missing or misconfigured');
+                    console.error('📋 Required: Create Android OAuth Client with:');
+                    console.error('   Package name: io.accessnetwork.app');
+                    console.error('   SHA-1: (from GitHub Actions build log)');
+                    console.error('📋 Also check Web Client ID:', window.GOOGLE_CLIENT_ID_WEB);
+                } else if (errorNum === 8) {
+                    errorMsg = 'Internal error (Error 8). Please try again.';
+                } else if (errorNum === 4) {
+                    errorMsg = 'Sign in failed (Error 4). Please try again.';
                 } else {
-                    errorMsg += 'Unknown error. Please try again.';
+                    errorMsg += 'Error: ' + errorStr;
                 }
                 
                 // Show detailed error for debugging
