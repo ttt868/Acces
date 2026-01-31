@@ -3,7 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AccessoireDigital Technical Whitepaper</title>
+    <title>AccessNetwork Technical Whitepaper</title>
+    <link rel="icon" type="image/png" href="access-logo-1.png">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="AccessNetwork Technical Whitepaper. Learn about Access blockchain technology, tokenomics, mining rewards system, and the project roadmap.">
+    <meta name="keywords" content="Access whitepaper, AccessNetwork, blockchain whitepaper, crypto whitepaper, Access token, mining rewards">
+    <link rel="canonical" href="https://accesschain.org/whitepaper.html">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://accesschain.org/whitepaper.html">
+    <meta property="og:title" content="AccessNetwork Technical Whitepaper">
+    <meta property="og:description" content="Technical Whitepaper covering Access blockchain technology, tokenomics, and roadmap.">
+    <meta property="og:image" content="https://accesschain.org/access-logo-1.png">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://accesschain.org/whitepaper.html">
+    <meta name="twitter:title" content="AccessNetwork Technical Whitepaper">
+    <meta name="twitter:description" content="Technical Whitepaper for Access Network blockchain.">
+    <meta name="twitter:image" content="https://accesschain.org/access-logo-1.png">
+    
     <style>
         * {
             margin: 0;
@@ -50,7 +71,7 @@
         .logo-container {
             position: relative;
             z-index: 2;
-            margin-bottom: 20px;
+            margin-bottom: 5px;
         }
 
         .logo {
@@ -58,7 +79,7 @@
             height: 80px;
             background: white;
             border-radius: 50%;
-            margin: 0 auto 20px;
+            margin: 0 auto 5px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -71,9 +92,11 @@
         .title {
             font-size: 3rem;
             font-weight: 300;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            margin-top: 30px;
             position: relative;
             z-index: 2;
+            line-height: 1;
         }
 
         .subtitle {
@@ -82,22 +105,62 @@
             font-weight: 300;
             position: relative;
             z-index: 2;
+            margin-top: 0;
         }
 
         .version {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 15px;
+            right: 15px;
             background: rgba(255,255,255,0.2);
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 20px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             backdrop-filter: blur(10px);
+            z-index: 10;
         }
 
-        .content {
-            padding: 60px 40px;
+        .back-to-app {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            backdrop-filter: blur(10px);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            z-index: 10;
         }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+            margin-top: 20px;
+            position: relative;
+            z-index: 2;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+            position: relative;
+            z-index: 2;
+            margin-top: 5px;
+            margin-bottom: 40px;
+        
+            padding: 60px 40px;
+        }        
 
         .section {
             margin-bottom: 50px;
@@ -310,11 +373,14 @@
     <div class="container">
         <div class="header">
             <div class="version">Version 2.0</div>
-            <div class="logo-container">
-                <div class="logo">ACCESS</div>
-            </div>
-            <h1 class="title">AccessDigital</h1>
+            <h1 class="title" style="margin-top: 40px; margin-bottom: 8px;">AccessNetwork</h1>
             <p class="subtitle">Technical Whitepaper & Project Overview</p>
+            <a href="index.html" class="back-to-app">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                </svg>
+                Back to App
+            </a>
         </div>
 
         <div class="content">
@@ -542,7 +608,7 @@
 
         <div class="footer">
             <div class="footer-content">
-                <h3>AccessDigital Development Team</h3>
+                <h3>AccessNetwork Development Team</h3>
                 <p>
                     Built with dedication to creating an accessible and secure digital asset platform 
                     for users worldwide.

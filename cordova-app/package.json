@@ -16,7 +16,6 @@
     "cordova-android": "^14.0.1",
     "cordova-plugin-inappbrowser": "^6.0.0",
     "cordova-plugin-network-information": "^3.0.0",
-    "cordova-plugin-splashscreen": "^6.0.1",
     "cordova-plugin-statusbar": "^4.0.0"
   },
   "cordova": {
@@ -25,7 +24,6 @@
     ],
     "plugins": {
       "cordova-plugin-statusbar": {},
-      "cordova-plugin-splashscreen": {},
       "cordova-plugin-inappbrowser": {},
       "cordova-plugin-network-information": {}
     }

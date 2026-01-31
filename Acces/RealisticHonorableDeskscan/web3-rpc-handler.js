@@ -75,7 +75,14 @@ export async function handleWeb3RPC(request) {
 
         try {
           // ⚡ NETWORK-ONLY - قراءة مباشرة من Ledger State لضمان التحديث الفوري
-          const balance = network.getBalance(address);
+          let balance = network.getBalance(address);
+          
+          // ✅ METAMASK USE MAX FIX:
+          // خصم رسوم الغاز من الرصيد المعروض
+          const METAMASK_GAS_RESERVE = 0.00002;
+          if (balance > METAMASK_GAS_RESERVE) {
+            balance = balance - METAMASK_GAS_RESERVE;
+          }
           
           // 🔧 FIX: BigInt لتجنب 0.225336999999999904 عند MAX
           // تقريب لـ 8 أرقام ثم تحويل لـ Wei نظيف
@@ -145,35 +152,43 @@ export async function handleWeb3RPC(request) {
 
       case 'eth_gasPrice':
         // 🔐 سعر الغاز المحسوب من رسوم ثابتة 0.00002 ACCESS
-        const FIXED_GAS_FEE_ETH = 0.00002; // رسوم ثابتة
+        // gasPrice = 0.00002 ACCESS / 21000 gas = ~952380953 Wei
+        const FIXED_GAS_FEE_ETH = 0.00002;
         const DEFAULT_GAS_LIMIT = 21000;
-        const gasPriceWei = Math.floor(FIXED_GAS_FEE_ETH * 1e18 / DEFAULT_GAS_LIMIT); // ~952380952 Wei
+        const gasPriceWei = Math.ceil(FIXED_GAS_FEE_ETH * 1e18 / DEFAULT_GAS_LIMIT);
         return {
           jsonrpc: '2.0',
           id: id,
-          result: '0x' + gasPriceWei.toString(16) // إرجاع بـ Wei للمحافظ
+          result: '0x' + gasPriceWei.toString(16) // 0x38c42e19
         };
 
       case 'eth_estimateGas':
+        // ✅ METAMASK USE MAX FIX (SIMPLE SOLUTION)
+        // بما أننا نخصم 0.00002 ACCESS من الرصيد في eth_getBalance،
+        // نرجع gasEstimate = 1 دائماً حتى MetaMask لا يحسب رسوم إضافية
+        // MetaMask سيحسب: gasCost = 1 × 952380953 Wei ≈ 0.000000001 ACCESS ≈ 0
         const [transaction] = params;
-
-        // تقدير دقيق للغاز حسب نوع المعاملة
-        let gasEstimate = 21000; // الحد الأدنى للتحويل البسيط
-
-        // إذا كانت معاملة معقدة أو تحتوي data
-        if (transaction && transaction.data && transaction.data !== '0x') {
-          const dataLength = (transaction.data.length - 2) / 2; // طول البيانات بـ bytes
-          gasEstimate += dataLength * 68; // 68 gas لكل byte من البيانات
+        
+        // للعقود الذكية فقط نرجع تقدير حقيقي
+        if (transaction && transaction.data && transaction.data !== '0x' && transaction.data.length > 10) {
+          const dataLength = Math.ceil((transaction.data.length - 2) / 2);
+          let gasEstimate = 21000 + (dataLength * 68);
+          gasEstimate = Math.min(gasEstimate, 200000);
+          console.log(`⛽ web3-rpc eth_estimateGas (contract): ${gasEstimate}`);
+          return {
+            jsonrpc: '2.0',
+            id: id,
+            result: '0x' + gasEstimate.toString(16)
+          };
+        } else {
+          // للتحويلات العادية: 21000 (قياسي)
+          console.log(`⛽ web3-rpc eth_estimateGas (transfer): 21000`);
+          return {
+            jsonrpc: '2.0',
+            id: id,
+            result: '0x5208' // 21000
+          };
         }
-
-        // التأكد من أن التقدير في حدود معقولة
-        gasEstimate = Math.min(gasEstimate, 100000); // حد أقصى 100k gas
-
-        return {
-          jsonrpc: '2.0',
-          id: id,
-          result: '0x' + gasEstimate.toString(16) // إرجاع عدد صحيح بدون تحويل
-        };
 
       case 'eth_maxTransferAmount':
       case 'wallet_calculateMaxSendable':

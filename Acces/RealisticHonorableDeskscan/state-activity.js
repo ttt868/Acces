@@ -49,7 +49,10 @@ class StateProcessingManager {
 
         // Show notification about whitepaper access
         if (typeof showNotification === 'function') {
-          showNotification('Whitepaper opened in new tab. You can view, print, or save it from there.', 'success');
+          const message = (typeof translator !== 'undefined' && translator.translate) 
+            ? translator.translate('Whitepaper opened in new tab. You can view, print, or save it from there.')
+            : 'Whitepaper opened in new tab. You can view, print, or save it from there.';
+          showNotification(message, 'success');
         }
       } else {
         // Fallback: direct navigation if popup blocked

@@ -1,4 +1,6 @@
 import http from 'http';
+import nodemailer from 'nodemailer';
+import transporter from './nodemailer-config.js';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -15,7 +17,7 @@ import { startReEngagementScheduler } from './re-engagement-notifications.js';
 // ============================================================================
 // 📦 إصدار الملفات - غير هذا الرقم فقط لتحديث كل الملفات
 // ============================================================================
-const ASSETS_VERSION = '15.0';
+const ASSETS_VERSION = '15.6';
 
 // ============================================================================
 // 🛡️ NEVER DIE PROTECTION - السيرفر لا يسقط أبداً!
@@ -1529,7 +1531,43 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // � HEALTH CHECK - فحص صحة السيرفر (لا يُخزَّن في Cache)
+  // 🗺️ SITEMAP.XML - Content-Type صحيح لـ Google
+  if (pathname === '/sitemap.xml') {
+    const sitemapPath = path.join(__dirname, 'sitemap.xml');
+    try {
+      const sitemapContent = fs.readFileSync(sitemapPath, 'utf8');
+      res.writeHead(200, { 
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=3600'
+      });
+      res.end(sitemapContent);
+      return;
+    } catch (err) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Sitemap not found');
+      return;
+    }
+  }
+
+  // 🤖 ROBOTS.TXT - Content-Type صحيح
+  if (pathname === '/robots.txt') {
+    const robotsPath = path.join(__dirname, 'robots.txt');
+    try {
+      const robotsContent = fs.readFileSync(robotsPath, 'utf8');
+      res.writeHead(200, { 
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'public, max-age=86400'
+      });
+      res.end(robotsContent);
+      return;
+    } catch (err) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Robots.txt not found');
+      return;
+    }
+  }
+
+  // 🏥 HEALTH CHECK - فحص صحة السيرفر (لا يُخزَّن في Cache)
   if (pathname === '/api/health') {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -9167,6 +9205,39 @@ const server = http.createServer(async (req, res) => {
         client_id: googleClientId,
         message: 'Google Identity Services authentication ready'
       }));
+      return;
+    }
+
+    // POST /api/contact - إرسال رسالة من نموذج التواصل
+    if (pathname === '/api/contact' && req.method === 'POST') {
+      try {
+        const data = await parseRequestBody(req);
+        const { name, email, subject, message } = data;
+        if (!name || !email || !subject || !message) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'All fields are required.' }));
+          return;
+        }
+
+        // إعداد البريد
+        const mailOptions = {
+          from: process.env.SMTP_FROM || 'noreply@accesschain.org',
+          to: 'support@accesschain.org',
+          subject: `[AccessScan Contact] ${subject}`,
+          replyTo: email,
+          text: `Name: ${name}\nEmail: ${email}\nSubject: ${subject}\n\n${message}`,
+        };
+
+        // إرسال البريد
+        await transporter.sendMail(mailOptions);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Message sent successfully.' }));
+      } catch (error) {
+        console.error('Error sending contact email:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Failed to send message.' }));
+      }
       return;
     }
 

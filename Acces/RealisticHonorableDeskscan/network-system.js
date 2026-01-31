@@ -733,7 +733,16 @@ class AccessNetwork extends EventEmitter {
 
     // ✅ SECURITY FIX: التحقق من الرصيد فقط (بدون حجز) - ETHEREUM STYLE
     // Only skip check for system transactions
-    if (fromAddress && fromAddress !== null && !isSystemTransaction) {
+    // ✅ FIX: تخطي فحص الرصيد للمعاملات المُعالجة مسبقاً (لها hash من قاعدة البيانات)
+    // هذه المعاملات تم التحقق من رصيدها وخصمه في server.js قبل الوصول إلى هنا
+    const hasPreExistingHash = transaction.hash || transaction.txId || transaction.transactionHash || transaction.id;
+    const isPreProcessedTransaction = hasPreExistingHash && (
+      transaction.rpcValidated === true || 
+      transaction.isLocalTransaction === true ||
+      transaction.mixedTransaction === true
+    );
+    
+    if (fromAddress && fromAddress !== null && !isSystemTransaction && !isPreProcessedTransaction) {
       const normalizedFromAddress = fromAddress.toLowerCase();
       const gasFeeAmount = parseFloat(gasFee || this.gasPrice) || 0;
       const amountToSend = parseFloat(amount) || 0;
@@ -805,7 +814,8 @@ class AccessNetwork extends EventEmitter {
     // استثناء معاملات النظام من التحقق الصارم من الرصيد
     // const isSystemTransaction = !transaction.fromAddress || ... (already defined above)
 
-    if (!isSystemTransaction) {
+    // ✅ FIX: تخطي فحص الرصيد الثاني للمعاملات المُعالجة مسبقاً أيضاً
+    if (!isSystemTransaction && !isPreProcessedTransaction) {
       // STRICT BALANCE VALIDATION - MANDATORY FOR NON-SYSTEM TRANSACTIONS
       const gasFee = parseFloat(transaction.gasFee || this.gasPrice) || 0;
       if (isNaN(gasFee) || gasFee < 0) {
@@ -1193,8 +1203,14 @@ class AccessNetwork extends EventEmitter {
                                  transaction.isMigration === true ||
                                  transaction.isGenesis === true;
 
+      // ✅ FIX: تحديد المعاملات المُعالجة مسبقاً (تم التحقق من رصيدها في server.js)
+      const isPreProcessedTransaction = transaction.rpcValidated === true || 
+                                        transaction.isLocalTransaction === true ||
+                                        transaction.mixedTransaction === true;
+
       // 1. خصم الرصيد من المرسل (إذا لم يكن معاملة نظام)
-      if (fromAddress && fromAddress !== null && !isSystemTransaction) {
+      // ⚡ FIX: للمعاملات المُعالجة مسبقاً، تخطي الخصم لأنه تم في server.js
+      if (fromAddress && fromAddress !== null && !isSystemTransaction && !isPreProcessedTransaction) {
         const normalizedFromAddress = fromAddress.toLowerCase();
         const currentFromBalance = this.getBalance(normalizedFromAddress);
         const totalRequired = amount + gasFee;

@@ -70,21 +70,17 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
       }
 
       if (processing_active === 0) {
-        // 🔧 الجلسة منتهية - احسب المبلغ النهائي الكامل
-        if (accumulatedReward > 0) {
-          // المكافأة المتراكمة موجودة - استخدمها
-          displayedAccumulated = accumulatedReward;
-        } else if (startTimeSec > 0) {
-          // 🔧 FIX: الجلسة انتهت لكن لم تُحفظ المكافأة
-          // احسب المبلغ الأساسي مع الـ boost
-          const baseReward = 0.25;
-          const baseWithBoost = baseReward * lockedBoost;
-          
-          // 🔧 قرب للأعلى لأقرب 0.01 (مثل 0.27737 → 0.28)
-          const finalReward = roundUpToTwoDecimals(baseWithBoost);
-          displayedAccumulated = finalReward;
-          
-          // 🔧 حفظ المبلغ الكامل في accumulatedReward فقط
+        // ✅ CRITICAL FIX: الجلسة منتهية - احسب المبلغ الكامل دائماً من session_locked_boost
+        // لا نعتمد على accumulatedReward لأنه قد يكون ناقص (خاصة في الخلفية)
+        const baseReward = 0.25;
+        const fullReward = baseReward * lockedBoost;
+        
+        // ✅ تقريب لأقرب سنت (0.01) لضمان أرقام نظيفة
+        const finalReward = roundUpToTwoDecimals(fullReward);
+        displayedAccumulated = finalReward;
+        
+        // ✅ حفظ المبلغ الكامل في accumulatedReward إذا لم يكن محفوظ بالفعل
+        if (startTimeSec > 0 && accumulatedReward < finalReward) {
           pool.query(
             `UPDATE users SET 
              accumulatedReward = $1,
@@ -94,9 +90,6 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
           ).catch(err => console.error('Error saving final reward:', err));
           
           console.log(`[FIX] User ${userId}: Session ended, final reward: ${finalReward.toFixed(2)} ACCESS (boost: ${lockedBoost.toFixed(2)}x)`);
-        } else {
-          // لا توجد جلسة نشطة سابقة
-          displayedAccumulated = accumulatedReward;
         }
       } else {
         // الجلسة نشطة - أظهر المتراكم
@@ -137,7 +130,7 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
         return true;
       }
 
-      // Get current user data including boost AND ad_boost AND referrals
+      // Get current user data including boost
       const userResult = await pool.query(
         `SELECT u.coins, u.accumulatedReward,
                 COALESCE(u.session_locked_boost, u.processing_boost_multiplier, 1.0) as locked_boost,
@@ -154,39 +147,28 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
       }
 
       const currentBalance = parseFloat(userResult.rows[0].coins || 0);
-      const storedAccumulated = parseFloat(userResult.rows[0].accumulatedreward || 0);
       const adBoostActive = userResult.rows[0].ad_boost_active === true;
       const activeReferralCount = parseInt(userResult.rows[0].active_referral_count || 0);
       
-      // ✅ CRITICAL: حساب المضاعف بشكل صحيح باستخدام computeHashrateMultiplier
-      // هذا يضمن احتساب جميع الإحالات + ad boost
-      const boostCalc = computeHashrateMultiplier(activeReferralCount, adBoostActive);
-      const boostMultiplier = boostCalc.multiplier;
-      console.log(`[COMPLETE] User ${userId}: ${activeReferralCount} referrals, ad_boost=${adBoostActive}, multiplier=${boostMultiplier.toFixed(2)}x`);
+      // ✅ CRITICAL FIX: استخدام session_locked_boost المحفوظ من بداية الجلسة
+      // هذا يضمن حساب المكافأة الكاملة بغض النظر عن حالة الواجهة/الخلفية
+      const sessionLockedBoost = parseFloat(userResult.rows[0].locked_boost) || 1.0;
+      console.log(`[COMPLETE] User ${userId}: locked_boost=${sessionLockedBoost.toFixed(2)}x, referrals=${activeReferralCount}, ad_boost=${adBoostActive}`);
 
-      // ✅ CRITICAL: حساب المكافأة النهائية الكاملة مع الـ boost
+      // ✅ CRITICAL FIX: حساب المكافأة الكاملة دائماً من session_locked_boost
+      // لا نعتمد على accumulatedReward لأنه قد يكون ناقص
       const baseReward = 0.25;
-      const guaranteedMinimum = roundReward(baseReward * boostMultiplier); // 0.25 × boost
-
-      // حساب المكافأة النهائية بدقة - نستخدم accumulatedReward فقط
-      let finalRewardAmount = 0;
-
-      if (storedAccumulated > 0) {
-        finalRewardAmount = roundReward(storedAccumulated);
-      } else if (finalReward && parseFloat(finalReward) > 0) {
-        finalRewardAmount = roundReward(parseFloat(finalReward));
-      }
-
-      // ✅ CRITICAL: ضمان الحد الأدنى مع الـ boost (0.25 × boost)
-      if (finalRewardAmount < guaranteedMinimum) {
-        finalRewardAmount = guaranteedMinimum;
-        console.log(`ضمان الحد الأدنى للمكافأة للمستخدم ${userId}: تم تعيين ${finalRewardAmount.toFixed(8)} ACCESS (boost: ${boostMultiplier.toFixed(2)}x)`);
-      }
+      const fullReward = roundReward(baseReward * sessionLockedBoost);
       
-      // تقريب نهائي للتأكد من الدقة
-      finalRewardAmount = roundReward(finalRewardAmount);
+      // ✅ تقريب لأقرب سنت (0.01) لضمان أرقام نظيفة
+      // 🔧 دالة تقريب لأقرب 0.01 (Math.round لتجنب floating point errors)
+      function roundUpToTwoDecimals(amount) {
+        return Math.round(amount * 100) / 100;
+      }
+      const finalRewardAmount = roundUpToTwoDecimals(fullReward);
 
-      console.log(`✅ إكمال التعدين للمستخدم ${userId}: حفظ ${finalRewardAmount.toFixed(8)} في accumulatedReward (boost: ${boostMultiplier.toFixed(2)}x)`);
+      console.log(`✅ إكمال التعدين للمستخدم ${userId}: حفظ ${finalRewardAmount.toFixed(2)} ACCESS (boost: ${sessionLockedBoost.toFixed(2)}x)`);
+      console.log(`📊 تفاصيل: base=0.25 × ${sessionLockedBoost.toFixed(2)} = ${fullReward.toFixed(4)} → rounded to ${finalRewardAmount.toFixed(2)}`);
 
       // ✅ Save completed reward WITHOUT transferring to balance
       // ✅ لا نحذف المكافأة المتراكمة - تبقى ظاهرة حتى بدء جلسة جديدة

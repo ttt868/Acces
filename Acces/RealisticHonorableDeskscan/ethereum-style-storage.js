@@ -107,7 +107,10 @@ class EthereumStyleStorage {
       await Promise.race([queryPromise, timeoutPromise]);
     } catch (error) {
       // تجاهل صامت - البيانات محفوظة في الملفات
-      if (!error.message.includes('timeout') && !error.message.includes('DB timeout')) {
+      // تجاهل أخطاء duplicate key لأن البيانات موجودة بالفعل
+      if (!error.message.includes('timeout') && 
+          !error.message.includes('DB timeout') &&
+          !error.message.includes('duplicate key')) {
         console.warn('DB block save skipped:', error.message);
       }
     }

@@ -800,11 +800,15 @@ background-color: rgba(0, 0, 0, 0.8);
 .action-btn.primarys {
   background: linear-gradient(120deg, #4361ee, #3a7bc8);
   color: white;
-  justify-self: center;
-  align-content: center;
+  /* Fix for Safari/Apple devices - use margin auto with block display */
+  display: flex !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: fit-content;
+  -webkit-width: fit-content; /* Safari support */
   align-items: center;
-  width: auto;
-  padding: 14px 1px 14px 23px;
+  justify-content: center;
+  padding: 14px 23px;
   border-radius: 12px;
   font-weight: 600;
   box-shadow: 0 6px 15px rgba(67, 97, 238, 0.25);
@@ -845,13 +849,66 @@ background-color: rgba(0, 0, 0, 0.8);
 }
 
 .action-btn.primarys i {
-  margin-right: 10px;
+  margin-left: 8px;
+  margin-right: 0;
   font-size: 12px;
   transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+/* RTL - flip icon margin */
+html[dir="rtl"] .action-btn.primarys i,
+html[lang="ar"] .action-btn.primarys i {
+  margin-left: 0;
+  margin-right: 8px;
 }
 
 .action-btn.primarys:hover i {
   transform: translateX(3px);
+}
+
+/* Send Points button wrapper - centers button on ALL devices */
+.send-btn-wrapper {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: 15px 0 !important;
+  text-align: center !important;
+}
+
+/* Specific fix for Safari/iOS - Send Points button centering */
+#new-transaction {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex: none !important;
+  margin: 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 14px 24px !important;
+  text-align: center !important;
+}
+
+#new-transaction span {
+  flex: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  white-space: nowrap !important;
+}
+
+#new-transaction i {
+  flex: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+html[dir="rtl"] .action-btn.primarys:hover i,
+html[lang="ar"] .action-btn.primarys:hover i {
+  transform: translateX(-3px);
 }
 
 /* Dark theme specific styling for send button */

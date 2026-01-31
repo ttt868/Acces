@@ -39,8 +39,8 @@
   <!-- Open Graph Meta Tags for Social Media Sharing -->
   <meta property="og:title" content="AccessDigital - Digital Engagement & Daily Rewards">
   <meta property="og:description" content="Join thousands of users collecting points daily through digital activities, social engagement, and daily check-ins. Build your digital rewards portfolio!">
-  <meta property="og:image" content="https://accesschain.org/accessoire-app.png">
-  <meta property="og:image:secure_url" content="https://accesschain.org/accessoire-app.png">
+  <meta property="og:image" content="https://accesschain.org/access-logo-1.png">
+  <meta property="og:image:secure_url" content="https://accesschain.org/access-logo-1.png">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -54,7 +54,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="AccessDigital - Digital Engagement & Daily Rewards">
   <meta name="twitter:description" content="Join thousands of users collecting points daily through digital activities, social engagement, and daily check-ins. Build your digital rewards portfolio!">
-  <meta name="twitter:image" content="https://accesschain.org/accessoire-app.png">
+  <meta name="twitter:image" content="https://accesschain.org/access-logo-1.png">
   <meta name="twitter:image:alt" content="AccessDigital - Digital Engagement Platform">
 
   <!-- Additional Meta Tags -->
@@ -1260,9 +1260,9 @@ document.addEventListener('balanceUpdated', function(event) {
                   <i class="fas fa-file-alt"></i>
                   <span data-translate="Whitepaper">Whitepaper</span>
                 </button>
-                <button class="secondary-button logout-btn" onclick="logout()">
-                  <i class="fas fa-sign-out-alt"></i>
-                  <span data-translate="Logout">Logout</span>
+                <button class="secondary-button tasks-btn" onclick="navigateToPage('tasks')">
+                  <i class="fas fa-tasks"></i>
+                  <span data-translate="Tasks">Tasks</span>
                 </button>
                 </div>
               </div>
@@ -1702,10 +1702,12 @@ document.addEventListener('balanceUpdated', function(event) {
           </div>
         </div>
 
-        <button id="new-transaction" class="action-btn primarys" onclick="showTransactionModal()">
-          <span data-translate="Send Points">Send Points</span>
-          <i class="fas fa-paper-plane"></i>
-        </button>
+        <div class="send-btn-wrapper">
+          <button id="new-transaction" class="action-btn primarys" onclick="showTransactionModal()">
+            <span data-translate="Send Points">Send Points</span>
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
 
         <br>
 

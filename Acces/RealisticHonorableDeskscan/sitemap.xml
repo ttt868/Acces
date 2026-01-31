@@ -4,7 +4,7 @@
   <!-- Main Page -->
   <url>
     <loc>https://accesschain.org/</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -12,28 +12,28 @@
   <!-- Information Pages -->
   <url>
     <loc>https://accesschain.org/about.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/contact.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/faq.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/whitepaper.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -41,14 +41,14 @@
   <!-- Legal Pages - Main App -->
   <url>
     <loc>https://accesschain.org/privacy-policy.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/terms-of-service.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -56,14 +56,14 @@
   <!-- Legal Pages - Explorer -->
   <url>
     <loc>https://accesschain.org/privacy-policy-explorer.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/terms-of-service-app.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -71,63 +71,63 @@
   <!-- Explorer Pages -->
   <url>
     <loc>https://accesschain.org/access-explorer.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/blocks.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/block-details.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/transactions.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/transaction-details.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/address-details.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/top-accounts.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/gastracker.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/latest-mint.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -135,14 +135,14 @@
   <!-- Developer Pages -->
   <url>
     <loc>https://accesschain.org/developer-api.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>https://accesschain.org/add-network.html</loc>
-    <lastmod>2026-01-24</lastmod>
+    <lastmod>2026-01-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

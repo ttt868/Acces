@@ -1203,14 +1203,51 @@ async function getUser(email) {
       // ✅ QR code is now generated dynamically on client-side from wallet_address
       // No need to generate or store QR code HTML
 
+      // ⚡ FIX: حساب المبلغ المتراكم الصحيح بناءً على الوقت إذا كانت الجلسة نشطة
+      let calculatedAccumulated = parseFloat(user.accumulated_processing_reward || user.accumulatedreward || 0);
+      
+      // إذا كانت الجلسة نشطة، احسب المبلغ بناءً على الوقت الفعلي
+      if (user.processing_active === 1 || user.processing_active === true) {
+        const startTimeSec = parseInt(user.processing_start_time_seconds) || 0;
+        const sessionLockedBoost = parseFloat(user.session_locked_boost) || 1.0;
+        
+        if (startTimeSec > 0) {
+          const nowSec = Math.floor(Date.now() / 1000);
+          const processingDuration = 24 * 60 * 60; // 24 ساعة
+          const elapsedSec = nowSec - startTimeSec;
+          
+          if (elapsedSec > 0) {
+            const baseReward = 0.25;
+            const boostedReward = baseReward * sessionLockedBoost;
+            
+            if (elapsedSec >= processingDuration) {
+              // الجلسة انتهت - المبلغ الكامل
+              calculatedAccumulated = boostedReward;
+            } else {
+              // الجلسة مستمرة - حساب بناءً على الوقت
+              const rewardProgress = elapsedSec / processingDuration;
+              calculatedAccumulated = Math.round((boostedReward * rewardProgress) * 100) / 100; // تقريب لخانتين
+            }
+            
+            // تحديث قاعدة البيانات بالقيمة الصحيحة (في الخلفية)
+            pool.query(`
+              UPDATE users 
+              SET accumulatedreward = $1, accumulated_processing_reward = $1
+              WHERE id = $2
+            `, [calculatedAccumulated, user.id]).catch(() => {});
+          }
+        }
+      }
+
       return {
         ...user,
         referralCode: user.referral_code,
         lastPayout: user.last_payout,
         processingActive: user.processing_active,
-        // Include accumulated processing reward in user object - ensure it's properly converted to number
-        accumulated_processing_reward: parseFloat(user.accumulated_processing_reward || user.accumulatedReward || 0),
-        accumulatedReward: parseFloat(user.accumulatedReward || user.accumulated_processing_reward || 0),
+        // ⚡ استخدام القيمة المحسوبة بدلاً من المخزنة
+        accumulated_processing_reward: calculatedAccumulated,
+        accumulatedReward: calculatedAccumulated,
+        processing_accumulated: calculatedAccumulated,
         active_referral_count: parseInt(user.active_referral_count || 0)
       };
     }

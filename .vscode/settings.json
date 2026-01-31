@@ -17,6 +17,7 @@
             "matchCommandLine": true
         },
         "tar": true,
-        "sshpass": true
+        "sshpass": true,
+        "keytool": true
     }
 }

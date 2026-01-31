@@ -91,6 +91,10 @@
   window.showActivityAd = function(callback) {
     if (activityAdShowing) {
       console.log('Activity Ad معروض بالفعل');
+      // تنفيذ callback مباشرة إذا الإعلان معروض بالفعل
+      if (callback && typeof callback === 'function') {
+        callback();
+      }
       return false;
     }
 
@@ -106,14 +110,13 @@
       console.log('✅ Activity Ad تم عرضه');
       return true;
     } else {
-      console.warn('⚠️ Activity Ad غير جاهز بعد - جاري الانتظار...');
-      // ✅ انتظار الإعلان لمدة 3 ثواني
+      console.warn('⚠️ Activity Ad غير جاهز - انتظار قصير...');
+      // ✅ انتظار قصير 500ms فقط
       let waitAttempts = 0;
-      const maxAttempts = 30; // 30 × 100ms = 3 ثواني
+      const maxAttempts = 5; // 5 × 100ms = 500ms فقط
       
       const waitForAd = setInterval(() => {
         waitAttempts++;
-        console.log(`📺 انتظار الإعلان... محاولة ${waitAttempts}/${maxAttempts}`);
         
         if (window.activityAdEvent) {
           clearInterval(waitForAd);
@@ -122,7 +125,7 @@
           console.log('✅ Activity Ad تم عرضه بعد الانتظار');
         } else if (waitAttempts >= maxAttempts) {
           clearInterval(waitForAd);
-          console.warn('⚠️ الإعلان لم يتحمل - تنفيذ callback');
+          console.warn('⚠️ الإعلان لم يتحمل - فتح النافذة');
           if (adClosedCallback) {
             adClosedCallback();
             adClosedCallback = null;
@@ -130,7 +133,7 @@
         }
       }, 100);
       
-      return true; // نعتبره ناجح لأننا ننتظر
+      return true;
     }
   };
 

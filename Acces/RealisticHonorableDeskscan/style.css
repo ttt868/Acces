@@ -89,7 +89,23 @@
 }
 
 
+border: 1px solid var(--border-color);/* Google icon styling with Google's multi-color scheme */
+.google-signin-button .fa-google {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: conic-gradient(from 90deg, #4285F4, #EA4335, #FBBC05, #34A853, #4285F4) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  text-fill-color: transparent !important;
 
+
+  margin-left:  !important;
+  z-index: 9999 !important;
+  position: static !important;
+  float: left !important;
+}
 
 /* Ensure RTL support doesn't affect button display */
 html[dir="rtl"] .google-signin-button svg,
@@ -961,7 +977,7 @@ h1 {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   -moz-text-fill-color: transparent;
-  
+  text-fill-color: transparent;
 }
 
 
@@ -1051,6 +1067,38 @@ button:hover {
 button:active {
   transform: translateY(0);
   transition: transform 0.1s ease;
+}
+
+/* إزالة تأثيرات الضوء من أزرار Dashboard */
+#dashboard-page .action-button:before,
+#dashboard-page .secondary-button:before,
+#dashboard-page .action-button:after,
+#dashboard-page .secondary-button:after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
+
+#dashboard-page .action-button:hover:before,
+#dashboard-page .secondary-button:hover:before {
+  display: none !important;
+  left: -100% !important;
+}
+
+#dashboard-page .action-button,
+#dashboard-page .secondary-button {
+  overflow: visible !important;
+}
+
+#dashboard-page .action-button:hover,
+#dashboard-page .secondary-button:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+#dashboard-page .action-button:active,
+#dashboard-page .secondary-button:active {
+  transform: none !important;
 }
 
 /* Utility Classes */
@@ -1625,7 +1673,7 @@ body.arabic .mobile-nav-item span {
 
 .hashrate-value {
   font-weight: bold;
-  
+  color: !important;
   font-family: 'Raleway', sans-serif !important;
   font-variant-numeric: oldstyle-nums !important;
 }

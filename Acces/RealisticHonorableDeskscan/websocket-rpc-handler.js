@@ -121,7 +121,14 @@ class WebSocketRPCHandler extends EventEmitter {
         case 'eth_getBalance':
           const [address] = params;
           client.address = address;
-          const balance = accessNode.network.getBalance(address);
+          let balance = accessNode.network.getBalance(address);
+          
+          // ✅ METAMASK USE MAX FIX: خصم رسوم الغاز من الرصيد المعروض
+          const METAMASK_GAS_RESERVE = 0.00002;
+          if (balance > METAMASK_GAS_RESERVE) {
+            balance = balance - METAMASK_GAS_RESERVE;
+          }
+          
           // 🔧 FIX: BigInt لتجنب 0.225336999999999904
           const decimal8Val = Math.floor(Math.max(0, balance) * 1e8);
           const balanceWeiBigInt = BigInt(decimal8Val) * BigInt(1e10);
