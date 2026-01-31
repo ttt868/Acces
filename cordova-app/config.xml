@@ -28,8 +28,8 @@
         <icon src="www/access-store-72.png" density="hdpi" />
         <icon src="www/access-store-48.png" density="mdpi" />
         
-        <splash src="www/access-store-512.png" density="port-xxxhdpi" />
-        
+        <!-- لا نستخدم splash الافتراضي -->
+        <preference name="SplashScreen" value="false" />
         <preference name="android-minSdkVersion" value="24" />
         <preference name="android-targetSdkVersion" value="34" />
     </platform>
@@ -40,8 +40,10 @@
     <preference name="StatusBarBackgroundColor" value="#1a1a2e" />
     <preference name="StatusBarStyle" value="lightcontent" />
     <preference name="Orientation" value="portrait" />
-    <preference name="SplashScreenDelay" value="3000" />
-    <preference name="FadeSplashScreen" value="true" />
-    <preference name="FadeSplashScreenDuration" value="500" />
+    <!-- splash screen مخصص عبر splash.html -->
+    <preference name="SplashScreenDelay" value="0" />
+    <preference name="AutoHideSplashScreen" value="true" />
     <preference name="ShowSplashScreenSpinner" value="false" />
+    <preference name="StatusBarBackgroundColor" value="#000000" />
+    <preference name="StatusBarStyle" value="lightcontent" />
 </widget>

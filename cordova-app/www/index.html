@@ -873,6 +873,13 @@ document.addEventListener('balanceUpdated', function(event) {
   <script src="cordova-init.js"></script>
 </head>
 <body>
+  <script>
+    // إذا لم نأتِ من splash.html، نذهب إليها أولاً
+    if (!window.location.href.includes('splash.html') && !sessionStorage.getItem('splashShown')) {
+      sessionStorage.setItem('splashShown', '1');
+      window.location = 'splash.html';
+    }
+  </script>
   
 
 <!-- Offline Detection Page -->

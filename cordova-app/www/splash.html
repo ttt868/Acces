@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Access Network - Splash</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .splash-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+    }
+    .splash-logo {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 24px;
+      border-radius: 24px;
+      box-shadow: 0 4px 24px #0002;
+      background: #fff;
+      object-fit: contain;
+    }
+    .splash-title {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 2.1rem;
+      color: #222;
+      font-weight: bold;
+      margin-bottom: 32px;
+      letter-spacing: 1px;
+    }
+    .progress-bar {
+      width: 120px;
+      height: 8px;
+      background: #eee;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 0 auto;
+      box-shadow: 0 2px 8px #0001;
+    }
+    .progress-bar-inner {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #1a1a2e 60%, #4a90e2 100%);
+      border-radius: 8px;
+      transition: width 0.5s cubic-bezier(.4,2,.6,1);
+    }
+    .splash-footer {
+      position: absolute;
+      bottom: 16px;
+      left: 0; right: 0;
+      text-align: center;
+      color: #aaa;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="splash-container">
+    <img src="access-logo-1.png" alt="Access Logo" class="splash-logo">
+    <div class="splash-title">Access Network</div>
+    <div class="progress-bar"><div class="progress-bar-inner" id="progress"></div></div>
+    <div class="splash-footer">Loading...</div>
+  </div>
+  <script>
+    // شريط التقدم
+    let progress = 0;
+    const bar = document.getElementById('progress');
+    function animate() {
+      progress += Math.random() * 18 + 7;
+      if (progress > 100) progress = 100;
+      bar.style.width = progress + '%';
+      if (progress < 100) setTimeout(animate, 350);
+    }
+    animate();
+    // بعد 2.5 ثانية انتقل للتطبيق
+    setTimeout(() => {
+      window.location = 'index.html';
+    }, 2500);
+  </script>
+</body>
+</html>
