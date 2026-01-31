@@ -227,27 +227,51 @@ function overrideGoogleSignIn() {
                 console.log('✅ Google Sign-In successful:', userData.name);
                 
                 // Send to server for authentication
-                const response = await fetch(window.API_BASE_URL + '/api/auth/google', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email: userData.email,
-                        name: userData.name,
-                        googleId: userData.id,
-                        picture: userData.imageUrl
-                    })
-                });
+                console.log('📤 Sending to server:', window.API_BASE_URL + '/api/auth/google');
+                
+                let response;
+                try {
+                    response = await fetch(window.API_BASE_URL + '/api/auth/google', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: userData.email,
+                            name: userData.name,
+                            googleId: userData.id,
+                            picture: userData.imageUrl
+                        })
+                    });
+                } catch (fetchError) {
+                    console.error('❌ Network error:', fetchError);
+                    // Try fallback URL
+                    console.log('🔄 Trying fallback URL:', window.API_BASE_URL_FALLBACK);
+                    response = await fetch(window.API_BASE_URL_FALLBACK + '/api/auth/google', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: userData.email,
+                            name: userData.name,
+                            googleId: userData.id,
+                            picture: userData.imageUrl
+                        })
+                    });
+                }
+                
+                console.log('📥 Server response status:', response.status);
                 
                 if (response.ok) {
                     const result = await response.json();
-                    console.log('✅ Server authentication successful');
+                    console.log('✅ Server authentication successful:', result);
                     
                     // Store user data
                     if (result.user) {
                         localStorage.setItem('user', JSON.stringify(result.user));
                         localStorage.setItem('isLoggedIn', 'true');
+                        localStorage.setItem('userEmail', result.user.email);
                     }
                     if (result.token) {
                         localStorage.setItem('authToken', result.token);
@@ -261,7 +285,9 @@ function overrideGoogleSignIn() {
                     // Reload or redirect
                     window.location.reload();
                 } else {
-                    throw new Error('Server authentication failed');
+                    const errorText = await response.text();
+                    console.error('❌ Server error:', response.status, errorText);
+                    throw new Error('Server error: ' + response.status);
                 }
                 
             } catch (error) {
