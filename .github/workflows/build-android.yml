@@ -33,6 +33,13 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
+    - name: Clear Gradle cache
+      run: |
+        echo '🧹 مسح Gradle cache لحل مشكلة الموارد المعطوبة...'
+        rm -rf ~/.gradle/caches/
+        rm -rf ~/.gradle/wrapper/
+        echo '✅ تم مسح Gradle cache بنجاح'
+    
     - name: Install Cordova
       run: npm install -g cordova
     
