@@ -198,6 +198,7 @@ window.WebSocket.prototype = OriginalWebSocket.prototype;
 /**
  * Override signInWithGoogle for Cordova
  * This replaces the web-based Google Sign-In with native
+ * BUT uses the same flow as web (calls handleGoogleSignIn from script.js)
  */
 function overrideGoogleSignIn() {
     // Wait for DOM to be ready
@@ -224,74 +225,65 @@ function overrideGoogleSignIn() {
                 // Call native Google Sign-In
                 const userData = await window.nativeGoogleSignIn();
                 
-                console.log('✅ Google Sign-In successful:', userData.name);
+                console.log('✅ Google Sign-In successful:', userData.name, userData.email);
                 
-                // Send to server for authentication
-                console.log('📤 Sending to server:', window.API_BASE_URL + '/api/auth/google');
+                // Remove loading indicator
+                const loading = document.getElementById('google-signin-loading');
+                if (loading) loading.remove();
                 
-                let response;
-                try {
-                    response = await fetch(window.API_BASE_URL + '/api/auth/google', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            email: userData.email,
-                            name: userData.name,
-                            googleId: userData.id,
-                            picture: userData.imageUrl
-                        })
-                    });
-                } catch (fetchError) {
-                    console.error('❌ Network error:', fetchError);
-                    // Try fallback URL
-                    console.log('🔄 Trying fallback URL:', window.API_BASE_URL_FALLBACK);
-                    response = await fetch(window.API_BASE_URL_FALLBACK + '/api/auth/google', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            email: userData.email,
-                            name: userData.name,
-                            googleId: userData.id,
-                            picture: userData.imageUrl
-                        })
-                    });
-                }
+                // Create a fake credential response like Google Identity Services does
+                // This way we can use the existing handleGoogleSignIn from script.js
+                const fakePayload = {
+                    email: userData.email,
+                    name: userData.name,
+                    picture: userData.imageUrl,
+                    sub: userData.id  // Google user ID
+                };
                 
-                console.log('📥 Server response status:', response.status);
+                // Create a fake JWT-like structure (base64 encoded)
+                const header = btoa(JSON.stringify({alg: 'none', typ: 'JWT'}));
+                const payload = btoa(JSON.stringify(fakePayload));
+                const fakeCredential = header + '.' + payload + '.fake_signature';
                 
-                if (response.ok) {
-                    const result = await response.json();
-                    console.log('✅ Server authentication successful:', result);
-                    
-                    // Store user data
-                    if (result.user) {
-                        localStorage.setItem('user', JSON.stringify(result.user));
-                        localStorage.setItem('isLoggedIn', 'true');
-                        localStorage.setItem('userEmail', result.user.email);
-                    }
-                    if (result.token) {
-                        localStorage.setItem('authToken', result.token);
-                    }
-                    
-                    // Trigger any existing callbacks
-                    if (window.handleGoogleSignIn) {
-                        window.handleGoogleSignIn(result);
-                    }
-                    
-                    // Reload or redirect
-                    window.location.reload();
+                // Create response object like Google Identity Services
+                const fakeResponse = {
+                    credential: fakeCredential,
+                    select_by: 'cordova_native'
+                };
+                
+                console.log('📤 Calling handleGoogleSignIn with native data...');
+                
+                // Call the existing handleGoogleSignIn from script.js
+                // This uses the same flow as web!
+                if (typeof window.handleGoogleSignIn === 'function') {
+                    window.handleGoogleSignIn(fakeResponse);
                 } else {
-                    const errorText = await response.text();
-                    console.error('❌ Server error:', response.status, errorText);
-                    throw new Error('Server error: ' + response.status);
+                    console.error('❌ handleGoogleSignIn not found, trying alternative...');
+                    
+                    // Alternative: Set currentUser directly and continue
+                    window.currentUser = {
+                        email: userData.email,
+                        name: userData.name,
+                        avatar: userData.imageUrl,
+                        token: fakeCredential
+                    };
+                    
+                    // Try to call continueWithLogin if available
+                    if (typeof window.continueWithLogin === 'function') {
+                        window.continueWithLogin(window.currentUser, '');
+                    } else {
+                        // Last resort: reload
+                        localStorage.setItem('accessoireUser', JSON.stringify(window.currentUser));
+                        window.location.reload();
+                    }
                 }
                 
             } catch (error) {
                 console.error('❌ Google Sign-In error:', error);
+                
+                // Remove loading indicator
+                const loading = document.getElementById('google-signin-loading');
+                if (loading) loading.remove();
                 
                 // More detailed error messages
                 let errorMsg = 'Sign-in failed. ';
@@ -315,10 +307,6 @@ function overrideGoogleSignIn() {
                 }
                 
                 alert(errorMsg);
-            } finally {
-                // Remove loading
-                const loading = document.getElementById('google-signin-loading');
-                if (loading) loading.remove();
             }
         };
         
