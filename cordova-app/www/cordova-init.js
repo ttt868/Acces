@@ -473,24 +473,28 @@ function overrideGoogleSignIn() {
                 console.log('📋 Fake credential payload:', fakePayload);
                 
                 // 🔍 DEBUG: Show alert with user data
-                alert('DEBUG: Google Sign-In OK!\nEmail: ' + userData.email + '\nName: ' + userData.name);
+                alert('DEBUG 1: Google Sign-In OK!\nEmail: ' + userData.email + '\nName: ' + userData.name);
                 
                 // Call the existing handleGoogleSignIn from script.js
                 // This uses the same flow as web!
                 if (typeof window.handleGoogleSignIn === 'function') {
                     console.log('✅ handleGoogleSignIn found, calling it...');
                     
-                    // 🔍 DEBUG: Test API call directly
-                    console.log('🔍 DEBUG: Testing API call to:', window.API_BASE_URL + '/api/user/' + userData.email);
-                    fetch(window.API_BASE_URL + '/api/user/' + encodeURIComponent(userData.email))
+                    // 🔍 DEBUG: Test API call directly with full URL shown
+                    const testApiUrl = window.API_BASE_URL + '/api/user/' + encodeURIComponent(userData.email);
+                    alert('DEBUG 2: API URL = ' + testApiUrl);
+                    
+                    console.log('🔍 DEBUG: Testing API call to:', testApiUrl);
+                    fetch(testApiUrl)
                         .then(r => r.json())
                         .then(data => {
                             console.log('🔍 DEBUG: API Response:', JSON.stringify(data));
-                            alert('DEBUG: API Response\n' + JSON.stringify(data).substring(0, 200));
+                            const userEmail = data.user ? data.user.email : 'NO USER';
+                            alert('DEBUG 3: API Response\nReturned email: ' + userEmail + '\nExpected: ' + userData.email);
                         })
                         .catch(err => {
                             console.error('🔍 DEBUG: API Error:', err);
-                            alert('DEBUG: API Error\n' + err.message);
+                            alert('DEBUG 3: API Error\n' + err.message);
                         });
                     
                     window.handleGoogleSignIn(fakeResponse);
