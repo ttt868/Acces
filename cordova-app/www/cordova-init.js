@@ -12,6 +12,65 @@ window.WS_BASE_URL = 'ws://89.167.14.197:3000';
 // Flag to indicate we're in Cordova app
 window.IS_CORDOVA_APP = true;
 
+// ✅ CRITICAL: Native HTTP fetch using cordova-plugin-advanced-http
+// This bypasses all CORS and mixed content issues!
+window.nativeHttpRequest = function(url, method, data) {
+    return new Promise((resolve, reject) => {
+        // Wait for cordova.plugins.http to be available
+        if (typeof cordova !== 'undefined' && cordova.plugin && cordova.plugin.http) {
+            const http = cordova.plugin.http;
+            
+            // Set data serializer
+            http.setDataSerializer('json');
+            
+            const options = {
+                method: method || 'get',
+                data: data || {},
+                headers: { 'Content-Type': 'application/json' }
+            };
+            
+            console.log('📡 [NATIVE HTTP]', method, url);
+            
+            http.sendRequest(url, options, 
+                function(response) {
+                    console.log('📡 [NATIVE HTTP] Success:', response.status);
+                    try {
+                        const jsonData = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+                        resolve({
+                            ok: response.status >= 200 && response.status < 300,
+                            status: response.status,
+                            json: () => Promise.resolve(jsonData),
+                            text: () => Promise.resolve(typeof response.data === 'string' ? response.data : JSON.stringify(response.data))
+                        });
+                    } catch(e) {
+                        resolve({
+                            ok: response.status >= 200 && response.status < 300,
+                            status: response.status,
+                            json: () => Promise.reject(e),
+                            text: () => Promise.resolve(response.data)
+                        });
+                    }
+                },
+                function(error) {
+                    console.error('📡 [NATIVE HTTP] Error:', error);
+                    reject(new Error(error.error || 'Network error'));
+                }
+            );
+        } else {
+            // Fallback to regular fetch if plugin not available
+            console.log('📡 [FALLBACK FETCH]', method, url);
+            const fetchOptions = {
+                method: method || 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (data && method !== 'GET') {
+                fetchOptions.body = JSON.stringify(data);
+            }
+            fetch(url, fetchOptions).then(resolve).catch(reject);
+        }
+    });
+};
+
 // 🔧 Override window.location.origin for Cordova
 // Many scripts use window.location.origin which is 'file://' in Cordova
 // We need to override it to use our API_BASE_URL
@@ -120,6 +179,26 @@ window.GOOGLE_CLIENT_ID_WEB = '586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.app
         
         // Log the final request
         console.log('📡 [FETCH] FINAL URL:', url);
+        
+        // ✅ Use Native HTTP for API calls in Cordova (bypasses CORS/mixed content)
+        if (window.IS_CORDOVA_APP && (url.includes('/api') || url.includes('/rpc'))) {
+            const method = (options && options.method) || 'GET';
+            let data = null;
+            if (options && options.body) {
+                try {
+                    data = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+                } catch(e) {
+                    data = options.body;
+                }
+            }
+            
+            // Try native HTTP first, fallback to regular fetch
+            return window.nativeHttpRequest(url, method, data)
+                .catch(nativeErr => {
+                    console.warn('📡 [NATIVE HTTP] Failed, trying regular fetch:', nativeErr.message);
+                    return originalFetch.call(this, url, options);
+                });
+        }
         
         return originalFetch.call(this, url, options)
             .then(response => {

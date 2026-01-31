@@ -63,6 +63,12 @@
     <preference name="Orientation" value="portrait" />
     <preference name="Fullscreen" value="false" />
     
+    <!-- ✅ CRITICAL: Use HTTP scheme to allow mixed content -->
+    <preference name="scheme" value="http" />
+    <preference name="hostname" value="localhost" />
+    <preference name="MixedContentMode" value="0" />
+    <preference name="AllowInsecureLocalhost" value="true" />
+    
     <!-- Splash Screen Settings -->
     <preference name="SplashScreenDelay" value="2000" />
     <preference name="AutoHideSplashScreen" value="true" />

@@ -18,7 +18,8 @@
     "cordova-plugin-network-information": "^3.0.0",
     "cordova-plugin-statusbar": "^4.0.0",
     "cordova-plugin-splashscreen": "^6.0.2",
-    "cordova-plugin-googleplus": "^8.5.2"
+    "cordova-plugin-googleplus": "^8.5.2",
+    "cordova-plugin-advanced-http": "^3.3.1"
   },
   "cordova": {
     "platforms": [
@@ -29,6 +30,7 @@
       "cordova-plugin-inappbrowser": {},
       "cordova-plugin-network-information": {},
       "cordova-plugin-splashscreen": {},
+      "cordova-plugin-advanced-http": {},
       "cordova-plugin-googleplus": {
         "WEB_APPLICATION_CLIENT_ID": "586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com",
         "REVERSED_CLIENT_ID": "com.googleusercontent.apps.586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn"
