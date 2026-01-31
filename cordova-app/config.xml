@@ -31,9 +31,11 @@
         <!-- لا نستخدم splash الافتراضي -->
         <preference name="SplashScreen" value="false" />
         <preference name="android-minSdkVersion" value="24" />
-        <preference name="android-targetSdkVersion" value="34" />
-        <!-- حل مشكلة موارد appcompat -->
-        <preference name="AndroidXAppCompatVersion" value="1.6.1" />
+        <preference name="android-targetSdkVersion" value="33" />
+        <!-- استخدام إصدار قديم من appcompat لتجنب مشكلة الـ color -->
+        <preference name="AndroidXAppCompatVersion" value="1.4.2" />
+        <!-- تحديد إصدار Gradle -->
+        <preference name="GradleVersion" value="7.6" />
     </platform>
     
     <!-- Preferences -->
@@ -48,4 +50,10 @@
     <preference name="ShowSplashScreenSpinner" value="false" />
     <preference name="StatusBarBackgroundColor" value="#000000" />
     <preference name="StatusBarStyle" value="lightcontent" />
+    
+    <!-- Google Sign-In Plugin -->
+    <plugin name="cordova-plugin-googleplus" spec="^8.5.2">
+        <variable name="WEB_APPLICATION_CLIENT_ID" value="685837253370-5vpv4c6p4c1kvn1sdh2s6chcqvj7qtmn.apps.googleusercontent.com" />
+        <variable name="REVERSED_CLIENT_ID" value="com.googleusercontent.apps.685837253370-5vpv4c6p4c1kvn1sdh2s6chcqvj7qtmn" />
+    </plugin>
 </widget>

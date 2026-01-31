@@ -5,9 +5,10 @@ on:
     branches: [ main ]
     paths:
       - 'cordova-app/**'
+      - '.github/workflows/build-android.yml'
   pull_request:
     branches: [ main ]
-  workflow_dispatch:  # للبناء اليدوي
+  workflow_dispatch:
 
 jobs:
   build-android:
@@ -32,65 +33,62 @@ jobs:
     
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
+      
+    - name: Accept Android SDK Licenses
+      run: yes | sdkmanager --licenses || true
     
-    - name: Install Gradle 7.6.4
-      run: |
-        wget -q https://services.gradle.org/distributions/gradle-7.6.4-bin.zip -O /tmp/gradle.zip
-        sudo unzip -q /tmp/gradle.zip -d /opt/
-        sudo ln -sf /opt/gradle-7.6.4/bin/gradle /usr/local/bin/gradle
-        gradle --version
+    - name: Install Cordova CLI
+      run: npm install -g cordova@12
     
-    - name: Install Cordova
-      run: npm install -g cordova
-    
-    - name: Install dependencies
+    - name: Install project dependencies
       working-directory: cordova-app
       run: npm install
     
-    - name: Add Android platform
+    - name: Add Android platform with Gradle 7.6
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6-bin.zip
       run: |
+        echo '📱 إضافة منصة Android...'
         cordova platform remove android 2>/dev/null || true
-        cordova platform add android@12.0.1
+        cordova platform add android@12.0.1 --verbose
+        echo '✅ تم إضافة منصة Android'
     
     - name: Build Debug APK
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6-bin.zip
       run: |
-        echo '🚧 بدء بناء APK (Debug)...'
-        cordova build android --debug
+        echo '🚧 بناء Debug APK...'
+        cordova build android --debug --verbose
         echo '✅ تم بناء Debug APK'
     
-    - name: Build Release APK (Signed)
+    - name: Build Release APK
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6-bin.zip
       run: |
-        echo '🚧 بدء بناء APK (Release)...'
-        cordova build android --release --buildConfig=build.json
+        echo '🚧 بناء Release APK...'
+        cordova build android --release --buildConfig=build.json --verbose
         echo '✅ تم بناء Release APK'
+    
+    - name: List APK files
+      run: |
+        echo "📱 ملفات APK المُنتجة:"
+        find cordova-app/platforms/android -name "*.apk" -type f 2>/dev/null || echo "No APK found"
     
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
-        name: access-network-debug
+        name: access-network-debug-apk
         path: cordova-app/platforms/android/app/build/outputs/apk/debug/*.apk
+        if-no-files-found: warn
         retention-days: 30
     
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
-        name: access-network-release
+        name: access-network-release-apk
         path: cordova-app/platforms/android/app/build/outputs/apk/release/*.apk
+        if-no-files-found: warn
         retention-days: 30
-    
-    - name: Get APK info
-      run: |
-        echo "📱 Debug APK:"
-        ls -lh cordova-app/platforms/android/app/build/outputs/apk/debug/*.apk 2>/dev/null || echo "No debug APK"
-        echo ""
-        echo "📱 Release APK:"
-        ls -lh cordova-app/platforms/android/app/build/outputs/apk/release/*.apk 2>/dev/null || echo "No release APK"
