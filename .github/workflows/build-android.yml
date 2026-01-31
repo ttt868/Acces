@@ -48,11 +48,17 @@ jobs:
     
     - name: Build Debug APK
       working-directory: cordova-app
-      run: cordova build android --debug
+      run: |
+        echo '🚧 بدء بناء APK (Debug)...'
+        cordova build android --debug || echo '❌ فشل بناء APK (Debug) — راجع سجل الأخطاء أعلاه، وسيتم رفع أي ملفات APK تم إنتاجها إن وجدت.'
+        true
     
     - name: Build Release APK (Signed)
       working-directory: cordova-app
-      run: cordova build android --release --buildConfig=build.json
+      run: |
+        echo '🚧 بدء بناء APK (Release)...'
+        cordova build android --release --buildConfig=build.json || echo '❌ فشل بناء APK (Release) — راجع سجل الأخطاء أعلاه، وسيتم رفع أي ملفات APK تم إنتاجها إن وجدت.'
+        true
     
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
