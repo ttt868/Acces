@@ -15,10 +15,11 @@ window.WS_BASE_URL_FALLBACK = 'ws://89.167.14.197:3000';
 // Flag to indicate we're in Cordova app
 window.IS_CORDOVA_APP = true;
 
-// Google Sign-In Configuration for Android
+// Google Sign-In Configuration
+// Android Client ID (with SHA-1 registered) - for native sign-in
 window.GOOGLE_CLIENT_ID_ANDROID = '586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua.apps.googleusercontent.com';
-// Use Android Client ID for webClientId in native plugin
-window.GOOGLE_CLIENT_ID_WEB = '586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua.apps.googleusercontent.com';
+// Web Client ID - required by cordova-plugin-googleplus
+window.GOOGLE_CLIENT_ID_WEB = '586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com';
 
 /**
  * Wait for Cordova to be ready

@@ -64,9 +64,9 @@
     <preference name="SplashMaintainAspectRatio" value="true" />
     <preference name="SplashShowOnlyFirstTime" value="false" />
     
-    <!-- Google Sign-In Plugin - Android Client ID -->
+    <!-- Google Sign-In Plugin - Web Client ID (required for Android) -->
     <plugin name="cordova-plugin-googleplus" spec="^8.5.2">
-        <variable name="WEB_APPLICATION_CLIENT_ID" value="586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua.apps.googleusercontent.com" />
-        <variable name="REVERSED_CLIENT_ID" value="com.googleusercontent.apps.586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua" />
+        <variable name="WEB_APPLICATION_CLIENT_ID" value="586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com" />
+        <variable name="REVERSED_CLIENT_ID" value="com.googleusercontent.apps.586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn" />
     </plugin>
 </widget>
