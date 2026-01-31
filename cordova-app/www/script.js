@@ -12295,6 +12295,22 @@ if (totalCost > (currentBalance + precision)) {
     loadUserData(user.email).then(() => {
       // After fresh data is loaded, update UI again if needed
       updateUserInfo(currentUser);
+      
+      // 🔧 DEBUG: Show loaded data in Cordova
+      if (window.IS_CORDOVA_APP) {
+        console.log('✅ [CORDOVA DEBUG] loadUserData completed!');
+        console.log('📋 currentUser.id:', currentUser.id);
+        console.log('📋 currentUser.email:', currentUser.email);
+        console.log('📋 currentUser.coins:', currentUser.coins);
+        console.log('📋 currentUser.referralCode:', currentUser.referralCode);
+        
+        // Show alert for debugging - REMOVE AFTER TESTING
+        if (currentUser.id) {
+          alert('✅ DB Connected! User ID: ' + currentUser.id + ', Coins: ' + currentUser.coins);
+        } else {
+          alert('⚠️ No user ID after loadUserData! Will try to create user...');
+        }
+      }
 
       // Connect to WebSocket for presence tracking
       if (currentUser.id) {
@@ -12387,6 +12403,9 @@ if (totalCost > (currentBalance + precision)) {
  async function checkIfUserExists(email, forceRefresh = false) {
   console.log('🔍 checkIfUserExists called with email:', email);
   
+  // 🔧 DEBUG: Show what we're doing
+  console.log('🔍 [DEBUG] forceRefresh:', forceRefresh, 'cached email:', userDataCache.email, 'current email:', email);
+  
   // ⚡ Return cached data if available and not expired (but only if email matches!)
   const now = Date.now();
   if (!forceRefresh && userDataCache.email === email && userDataCache.data && (now - userDataCache.timestamp) < userDataCache.TTL) {
@@ -12401,9 +12420,19 @@ if (totalCost > (currentBalance + precision)) {
       : (window.API_BASE_URL || window.location.origin);
     const apiUrl = `${origin}/api/user/${encodeURIComponent(email)}`;
     console.log('🔍 checkIfUserExists apiUrl:', apiUrl);
+    
+    // 🔧 DEBUG ALERT for Cordova
+    if (window.IS_CORDOVA_APP) {
+      console.log('📡 [CORDOVA DEBUG] About to fetch:', apiUrl);
+    }
 
     const response = await fetch(apiUrl);
     console.log('🔍 checkIfUserExists response status:', response.status);
+    
+    // 🔧 DEBUG: Log response for Cordova
+    if (window.IS_CORDOVA_APP) {
+      console.log('📡 [CORDOVA DEBUG] Response received, status:', response.status);
+    }
 
     // Handle 404 as "user not found" rather than an error
     if (response.status === 404) {
@@ -12416,6 +12445,7 @@ if (totalCost > (currentBalance + precision)) {
     }
 
     const text = await response.text();
+    console.log('📡 [CORDOVA DEBUG] Response text length:', text.length);
     let userData;
 
     try {
@@ -12461,6 +12491,11 @@ if (totalCost > (currentBalance + precision)) {
     const { wallet_private_key, ...safeUser } = userData.user;
     console.log('User data received (safe):', { ...userData, user: safeUser });
 
+    // 🔧 DEBUG: Show success in Cordova
+    if (window.IS_CORDOVA_APP) {
+      console.log('✅ [CORDOVA DEBUG] User found! ID:', userData.user.id, 'Email:', userData.user.email);
+    }
+
     // ⚡ Cache the result
     userDataCache.data = userData.user;
     userDataCache.email = email;
@@ -12469,6 +12504,10 @@ if (totalCost > (currentBalance + precision)) {
     return userData.user;
   } catch (error) {
     console.error('Error checking user:', error);
+    // 🔧 DEBUG: Show error in Cordova
+    if (window.IS_CORDOVA_APP) {
+      console.error('❌ [CORDOVA DEBUG] checkIfUserExists ERROR:', error.message);
+    }
     return null;
   }
 }
