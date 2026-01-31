@@ -55,39 +55,13 @@ window.GOOGLE_CLIENT_ID_ANDROID = '586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua
 // Web Client ID - required by cordova-plugin-googleplus
 window.GOOGLE_CLIENT_ID_WEB = '586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com';
 
-/**
- * Wait for Cordova to be ready
- */
-document.addEventListener('deviceready', onDeviceReady, false);
-
-function onDeviceReady() {
-    console.log('📱 Cordova is ready!');
+// ✅ CRITICAL: Override fetch and XHR IMMEDIATELY (before script.js loads)
+// This must run before any API calls are made
+(function immediateOverrides() {
+    console.log('📡 Setting up fetch/XHR overrides IMMEDIATELY');
     
-    // Configure StatusBar
-    if (window.StatusBar) {
-        StatusBar.backgroundColorByHexString('#1a1a2e');
-        StatusBar.styleLightContent();
-    }
-    
-    // Override fetch to use full API URL
-    overrideFetch();
-    
-    // Override XMLHttpRequest
-    overrideXHR();
-    
-    // Setup Google Sign-In
-    setupGoogleSignIn();
-    
-    // Check network status
-    checkNetworkStatus();
-}
-
-/**
- * Override fetch to add base URL
- */
-function overrideFetch() {
+    // Override fetch
     const originalFetch = window.fetch;
-    
     window.fetch = function(url, options) {
         const originalUrl = url;
         
@@ -128,14 +102,9 @@ function overrideFetch() {
         
         return originalFetch.call(this, url, options);
     };
-}
-
-/**
- * Override XMLHttpRequest to add base URL
- */
-function overrideXHR() {
-    const originalOpen = XMLHttpRequest.prototype.open;
     
+    // Override XMLHttpRequest
+    const originalOpen = XMLHttpRequest.prototype.open;
     XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
         if (typeof url === 'string') {
             // If URL starts with /api or /rpc, prepend base URL
@@ -151,10 +120,43 @@ function overrideXHR() {
             else if (url.startsWith('null/api') || url.startsWith('null/rpc')) {
                 url = window.API_BASE_URL + url.substring(4);
             }
+            // Handle any URL that should go to API but has wrong origin
+            else if (url.includes('/api/') && !url.startsWith('http')) {
+                url = window.API_BASE_URL + url.substring(url.indexOf('/api'));
+            }
+            else if (url.includes('/rpc') && !url.startsWith('http')) {
+                url = window.API_BASE_URL + url.substring(url.indexOf('/rpc'));
+            }
         }
         
         return originalOpen.call(this, method, url, async, user, password);
     };
+    
+    console.log('✅ Fetch/XHR overrides ready!');
+})();
+
+/**
+ * Wait for Cordova to be ready
+ */
+document.addEventListener('deviceready', onDeviceReady, false);
+
+function onDeviceReady() {
+    console.log('📱 Cordova is ready!');
+    
+    // Configure StatusBar
+    if (window.StatusBar) {
+        StatusBar.backgroundColorByHexString('#1a1a2e');
+        StatusBar.styleLightContent();
+    }
+    
+    // Note: fetch/XHR overrides are done IMMEDIATELY at top of file
+    // No need to call them again here
+    
+    // Setup Google Sign-In
+    setupGoogleSignIn();
+    
+    // Check network status
+    checkNetworkStatus();
 }
 
 /**
