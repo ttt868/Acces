@@ -17,7 +17,8 @@ window.IS_CORDOVA_APP = true;
 
 // Google Sign-In Configuration for Android
 window.GOOGLE_CLIENT_ID_ANDROID = '586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua.apps.googleusercontent.com';
-window.GOOGLE_CLIENT_ID_WEB = '489122702138-p1l61s1rlq4ghmeb0dkml4f2hkv7jt54.apps.googleusercontent.com';
+// Use Android Client ID for webClientId in native plugin
+window.GOOGLE_CLIENT_ID_WEB = '586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua.apps.googleusercontent.com';
 
 /**
  * Wait for Cordova to be ready
@@ -217,7 +218,7 @@ function overrideGoogleSignIn() {
                 const loadingDiv = document.createElement('div');
                 loadingDiv.id = 'google-signin-loading';
                 loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:99999;';
-                loadingDiv.innerHTML = '<div style="color:#fff;font-size:18px;text-align:center;"><div style="margin-bottom:20px;">جاري تسجيل الدخول...</div><div style="width:40px;height:40px;border:3px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+                loadingDiv.innerHTML = '<div style="color:#fff;font-size:18px;text-align:center;"><div style="margin-bottom:20px;">Signing in...</div><div style="width:40px;height:40px;border:3px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
                 document.body.appendChild(loadingDiv);
                 
                 // Call native Google Sign-In
@@ -226,19 +227,16 @@ function overrideGoogleSignIn() {
                 console.log('✅ Google Sign-In successful:', userData.name);
                 
                 // Send to server for authentication
-                const response = await fetch(window.API_BASE_URL + '/api/auth/google-mobile', {
+                const response = await fetch(window.API_BASE_URL + '/api/auth/google', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        idToken: userData.idToken,
-                        accessToken: userData.accessToken,
                         email: userData.email,
                         name: userData.name,
-                        imageUrl: userData.imageUrl,
-                        userId: userData.id,
-                        platform: 'android'
+                        googleId: userData.id,
+                        picture: userData.imageUrl
                     })
                 });
                 
@@ -268,7 +266,29 @@ function overrideGoogleSignIn() {
                 
             } catch (error) {
                 console.error('❌ Google Sign-In error:', error);
-                alert('فشل تسجيل الدخول: ' + (error.message || 'حاول مرة أخرى'));
+                
+                // More detailed error messages
+                let errorMsg = 'Sign-in failed. ';
+                if (typeof error === 'string') {
+                    if (error.includes('SIGN_IN_CANCELLED') || error.includes('12501')) {
+                        errorMsg = 'Sign-in was cancelled.';
+                    } else if (error.includes('NETWORK') || error.includes('7')) {
+                        errorMsg = 'Network error. Please check your connection.';
+                    } else if (error.includes('INVALID_ACCOUNT') || error.includes('5')) {
+                        errorMsg = 'Invalid account. Please try another.';
+                    } else if (error.includes('DEVELOPER_ERROR') || error.includes('10')) {
+                        errorMsg = 'Configuration error. Please contact support.';
+                        console.error('⚠️ DEVELOPER_ERROR: Check SHA-1 fingerprint and Client ID configuration');
+                    } else {
+                        errorMsg += error;
+                    }
+                } else if (error && error.message) {
+                    errorMsg += error.message;
+                } else {
+                    errorMsg += 'Please try again.';
+                }
+                
+                alert(errorMsg);
             } finally {
                 // Remove loading
                 const loading = document.getElementById('google-signin-loading');

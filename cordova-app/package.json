@@ -2,7 +2,7 @@
   "name": "io.accessnetwork.app",
   "displayName": "Access Network",
   "version": "1.0.0",
-  "description": "A sample Apache Cordova application that responds to the deviceready event.",
+  "description": "Access Network - Earn cryptocurrency by mining ACCESS tokens",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,13 +10,15 @@
   "keywords": [
     "ecosystem:cordova"
   ],
-  "author": "Apache Cordova Team",
+  "author": "Access Network Team",
   "license": "Apache-2.0",
   "devDependencies": {
     "cordova-android": "^13.0.0",
     "cordova-plugin-inappbrowser": "^6.0.0",
     "cordova-plugin-network-information": "^3.0.0",
-    "cordova-plugin-statusbar": "^4.0.0"
+    "cordova-plugin-statusbar": "^4.0.0",
+    "cordova-plugin-splashscreen": "^6.0.2",
+    "cordova-plugin-googleplus": "^8.5.2"
   },
   "cordova": {
     "platforms": [
@@ -25,7 +27,13 @@
     "plugins": {
       "cordova-plugin-statusbar": {},
       "cordova-plugin-inappbrowser": {},
-      "cordova-plugin-network-information": {}
+      "cordova-plugin-network-information": {},
+      "cordova-plugin-splashscreen": {},
+      "cordova-plugin-googleplus": {
+        "WEB_APPLICATION_CLIENT_ID": "586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua.apps.googleusercontent.com",
+        "REVERSED_CLIENT_ID": "com.googleusercontent.apps.586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua"
+      }
     }
   }
+}
 }

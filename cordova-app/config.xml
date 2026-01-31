@@ -7,7 +7,7 @@
     <author email="support@access-network.io" href="https://access-network.io">
         Access Network Team
     </author>
-    <content src="splash.html" />
+    <content src="index.html" />
     
     <!-- Allow access to server API -->
     <access origin="https://access-network.io" />
@@ -28,13 +28,23 @@
         <icon src="www/access-store-72.png" density="hdpi" />
         <icon src="www/access-store-48.png" density="mdpi" />
         
-        <!-- لا نستخدم splash الافتراضي -->
-        <preference name="SplashScreen" value="false" />
+        <!-- Splash Screen - use our logo -->
+        <splash src="www/access-store-512nobg.png" density="land-hdpi" />
+        <splash src="www/access-store-512nobg.png" density="land-ldpi" />
+        <splash src="www/access-store-512nobg.png" density="land-mdpi" />
+        <splash src="www/access-store-512nobg.png" density="land-xhdpi" />
+        <splash src="www/access-store-512nobg.png" density="land-xxhdpi" />
+        <splash src="www/access-store-512nobg.png" density="land-xxxhdpi" />
+        <splash src="www/access-store-512nobg.png" density="port-hdpi" />
+        <splash src="www/access-store-512nobg.png" density="port-ldpi" />
+        <splash src="www/access-store-512nobg.png" density="port-mdpi" />
+        <splash src="www/access-store-512nobg.png" density="port-xhdpi" />
+        <splash src="www/access-store-512nobg.png" density="port-xxhdpi" />
+        <splash src="www/access-store-512nobg.png" density="port-xxxhdpi" />
+        
         <preference name="android-minSdkVersion" value="24" />
         <preference name="android-targetSdkVersion" value="33" />
-        <!-- استخدام إصدار قديم من appcompat لتجنب مشكلة الـ color -->
         <preference name="AndroidXAppCompatVersion" value="1.4.2" />
-        <!-- تحديد إصدار Gradle -->
         <preference name="GradleVersion" value="7.6" />
     </platform>
     
@@ -44,17 +54,19 @@
     <preference name="StatusBarBackgroundColor" value="#1a1a2e" />
     <preference name="StatusBarStyle" value="lightcontent" />
     <preference name="Orientation" value="portrait" />
-    <!-- إزالة splash screen تماماً -->
-    <preference name="SplashScreen" value="none" />
-    <preference name="SplashScreenDelay" value="0" />
+    
+    <!-- Splash Screen Settings -->
+    <preference name="SplashScreenDelay" value="2000" />
     <preference name="AutoHideSplashScreen" value="true" />
     <preference name="ShowSplashScreenSpinner" value="false" />
-    <preference name="FadeSplashScreen" value="false" />
-    <preference name="FadeSplashScreenDuration" value="0" />
+    <preference name="FadeSplashScreen" value="true" />
+    <preference name="FadeSplashScreenDuration" value="500" />
+    <preference name="SplashMaintainAspectRatio" value="true" />
+    <preference name="SplashShowOnlyFirstTime" value="false" />
     
-    <!-- Google Sign-In Plugin -->
+    <!-- Google Sign-In Plugin - Android Client ID -->
     <plugin name="cordova-plugin-googleplus" spec="^8.5.2">
-        <variable name="WEB_APPLICATION_CLIENT_ID" value="685837253370-5vpv4c6p4c1kvn1sdh2s6chcqvj7qtmn.apps.googleusercontent.com" />
-        <variable name="REVERSED_CLIENT_ID" value="com.googleusercontent.apps.685837253370-5vpv4c6p4c1kvn1sdh2s6chcqvj7qtmn" />
+        <variable name="WEB_APPLICATION_CLIENT_ID" value="586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua.apps.googleusercontent.com" />
+        <variable name="REVERSED_CLIENT_ID" value="com.googleusercontent.apps.586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua" />
     </plugin>
 </widget>
