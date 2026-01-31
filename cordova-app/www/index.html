@@ -646,16 +646,27 @@ document.addEventListener('balanceUpdated', function(event) {
     }
 
     // Handle sign out decision
-    function handleSignOut(confirmed) {
+    async function handleSignOut(confirmed) {
       const modal = document.getElementById('signOutModal');
       modal.style.display = 'none';
 
       if (confirmed) {
+        // 📱 Cordova: Sign out from Google natively (with disconnect for account picker)
+        if (window.IS_CORDOVA_APP && typeof window.nativeGoogleSignOut === 'function') {
+          try {
+            console.log('📱 Signing out from Google (Cordova)...');
+            await window.nativeGoogleSignOut();
+            console.log('✅ Google Sign-Out complete');
+          } catch (e) {
+            console.warn('⚠️ Google Sign-Out error:', e);
+          }
+        }
+
         // Clear stored data
         localStorage.clear();
         sessionStorage.clear();
 
-        // Sign out from Google Identity Services
+        // Sign out from Google Identity Services (for web)
         if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
           google.accounts.id.disableAutoSelect();
         }
