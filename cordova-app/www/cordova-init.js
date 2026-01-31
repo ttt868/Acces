@@ -240,9 +240,14 @@ function overrideGoogleSignIn() {
                     sub: userData.id  // Google user ID
                 };
                 
-                // Create a fake JWT-like structure (base64 encoded)
-                const header = btoa(JSON.stringify({alg: 'none', typ: 'JWT'}));
-                const payload = btoa(JSON.stringify(fakePayload));
+                // Create a fake JWT-like structure (base64url encoded - same as real JWT)
+                // Note: btoa gives base64, we need to convert to base64url
+                function base64urlEncode(str) {
+                    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                }
+                
+                const header = base64urlEncode(JSON.stringify({alg: 'none', typ: 'JWT'}));
+                const payload = base64urlEncode(JSON.stringify(fakePayload));
                 const fakeCredential = header + '.' + payload + '.fake_signature';
                 
                 // Create response object like Google Identity Services
@@ -252,15 +257,17 @@ function overrideGoogleSignIn() {
                 };
                 
                 console.log('📤 Calling handleGoogleSignIn with native data...');
+                console.log('📋 Fake credential payload:', fakePayload);
                 
                 // Call the existing handleGoogleSignIn from script.js
                 // This uses the same flow as web!
                 if (typeof window.handleGoogleSignIn === 'function') {
+                    console.log('✅ handleGoogleSignIn found, calling it...');
                     window.handleGoogleSignIn(fakeResponse);
                 } else {
-                    console.error('❌ handleGoogleSignIn not found, trying alternative...');
+                    console.warn('⚠️ handleGoogleSignIn not found, using direct approach...');
                     
-                    // Alternative: Set currentUser directly and continue
+                    // Direct approach: Set currentUser and call continueWithLogin
                     window.currentUser = {
                         email: userData.email,
                         name: userData.name,
@@ -268,12 +275,18 @@ function overrideGoogleSignIn() {
                         token: fakeCredential
                     };
                     
+                    // Save to localStorage first
+                    localStorage.setItem('accessoireUser', JSON.stringify(window.currentUser));
+                    
                     // Try to call continueWithLogin if available
                     if (typeof window.continueWithLogin === 'function') {
+                        console.log('✅ Using continueWithLogin...');
                         window.continueWithLogin(window.currentUser, '');
+                    } else if (typeof window.processLogin === 'function') {
+                        console.log('✅ Using processLogin...');
+                        window.processLogin(window.currentUser, '');
                     } else {
-                        // Last resort: reload
-                        localStorage.setItem('accessoireUser', JSON.stringify(window.currentUser));
+                        console.log('⚠️ No login function found, reloading...');
                         window.location.reload();
                     }
                 }
