@@ -75,10 +75,17 @@ jobs:
         echo '=================================================='
         echo 'ADD THIS SHA-1 TO GOOGLE CLOUD CONSOLE:'
         echo '=================================================='
-        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep -A1 "SHA1:" || keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep "SHA1"
+        # Create debug keystore if not exists
+        if [ ! -f ~/.android/debug.keystore ]; then
+          mkdir -p ~/.android
+          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+        fi
+        # Print SHA-1
+        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep "SHA1:" | sed 's/.*SHA1: /SHA1: /'
         echo '=================================================='
         echo 'Go to: https://console.cloud.google.com/apis/credentials'
         echo 'Edit your Android OAuth Client and add this SHA-1'
+        echo 'Package name: io.accessnetwork.app'
         echo '=================================================='
         echo '✅ Plugins installed'
 
