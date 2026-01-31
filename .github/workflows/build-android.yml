@@ -68,6 +68,18 @@ jobs:
         echo '🔌 Installing Cordova plugins...'
         cordova plugin add cordova-plugin-splashscreen@6.0.2 --save
         cordova plugin add cordova-plugin-googleplus@8.5.2 --save --variable WEB_APPLICATION_CLIENT_ID="586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua.apps.googleusercontent.com" --variable REVERSED_CLIENT_ID="com.googleusercontent.apps.586936149662-lq3riap3r9m7ic4cfv02ohsvo9p6a5ua"
+    
+    - name: Print Debug Keystore SHA-1 (for Google Cloud Console)
+      run: |
+        echo '🔑 Getting SHA-1 fingerprint for Google Sign-In...'
+        echo '=================================================='
+        echo 'ADD THIS SHA-1 TO GOOGLE CLOUD CONSOLE:'
+        echo '=================================================='
+        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep -A1 "SHA1:" || keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep "SHA1"
+        echo '=================================================='
+        echo 'Go to: https://console.cloud.google.com/apis/credentials'
+        echo 'Edit your Android OAuth Client and add this SHA-1'
+        echo '=================================================='
         echo '✅ Plugins installed'
 
     - name: Add Android platform with Gradle 7.6
