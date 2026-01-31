@@ -19,13 +19,33 @@ Object.defineProperty(window, 'CORDOVA_ORIGIN', {
     get: function() { return window.API_BASE_URL; }
 });
 
-// Create a proxy for location to intercept origin calls
+// ✅ إنشاء location proxy لجعل origin يرجع API_BASE_URL
 (function() {
     const originalOrigin = window.location.origin;
-    // If we're in Cordova (file://), replace origin
+    
+    // If we're in Cordova (file://), create a location wrapper
     if (originalOrigin === 'file://' || originalOrigin === 'null' || !originalOrigin.startsWith('http')) {
-        console.log('📱 Cordova detected: Overriding location.origin from', originalOrigin, 'to', window.API_BASE_URL);
-        // We can't directly override location.origin, but we ensure fetch/XHR use API_BASE_URL
+        console.log('📱 Cordova detected: Setting up origin override from', originalOrigin, 'to', window.API_BASE_URL);
+        
+        // Create a wrapper object that intercepts .origin
+        window.getOrigin = function() {
+            return window.API_BASE_URL;
+        };
+        
+        // ✅ Override String.prototype.replace to handle URL patterns
+        const originalStringReplace = String.prototype.replace;
+        String.prototype.replace = function(searchValue, replaceValue) {
+            let result = originalStringReplace.call(this, searchValue, replaceValue);
+            // Fix file:// URLs that sneak through
+            if (typeof result === 'string' && result.includes('file://') && (result.includes('/api') || result.includes('/rpc'))) {
+                if (result.includes('/api')) {
+                    result = window.API_BASE_URL + result.substring(result.indexOf('/api'));
+                } else if (result.includes('/rpc')) {
+                    result = window.API_BASE_URL + result.substring(result.indexOf('/rpc'));
+                }
+            }
+            return result;
+        };
     }
 })();
 
@@ -69,11 +89,23 @@ function overrideFetch() {
     const originalFetch = window.fetch;
     
     window.fetch = function(url, options) {
-        // If URL starts with /api, prepend base URL
-        if (typeof url === 'string' && url.startsWith('/api')) {
-            url = window.API_BASE_URL + url;
-        } else if (typeof url === 'string' && url.startsWith('/rpc')) {
-            url = window.API_BASE_URL + url;
+        if (typeof url === 'string') {
+            // If URL starts with /api or /rpc, prepend base URL
+            if (url.startsWith('/api') || url.startsWith('/rpc')) {
+                url = window.API_BASE_URL + url;
+            }
+            // If URL contains file:// (Cordova), replace with API URL
+            else if (url.startsWith('file://') && url.includes('/api')) {
+                url = window.API_BASE_URL + url.substring(url.indexOf('/api'));
+            }
+            // If URL uses window.location.origin which became file://
+            else if (url.includes('file:///api') || url.includes('file:///rpc')) {
+                url = url.replace(/file:\/\/[^\/]*/, window.API_BASE_URL);
+            }
+            // Handle ${window.location.origin}/api pattern (origin is 'null' or 'file://')
+            else if ((url.startsWith('null/api') || url.startsWith('null/rpc'))) {
+                url = window.API_BASE_URL + url.substring(4);
+            }
         }
         
         return originalFetch.call(this, url, options);
@@ -87,11 +119,20 @@ function overrideXHR() {
     const originalOpen = XMLHttpRequest.prototype.open;
     
     XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
-        // If URL starts with /api, prepend base URL
-        if (typeof url === 'string' && url.startsWith('/api')) {
-            url = window.API_BASE_URL + url;
-        } else if (typeof url === 'string' && url.startsWith('/rpc')) {
-            url = window.API_BASE_URL + url;
+        if (typeof url === 'string') {
+            // If URL starts with /api or /rpc, prepend base URL
+            if (url.startsWith('/api') || url.startsWith('/rpc')) {
+                url = window.API_BASE_URL + url;
+            }
+            // Handle file:// URLs
+            else if (url.startsWith('file://') && (url.includes('/api') || url.includes('/rpc'))) {
+                const apiIndex = url.includes('/api') ? url.indexOf('/api') : url.indexOf('/rpc');
+                url = window.API_BASE_URL + url.substring(apiIndex);
+            }
+            // Handle null origin
+            else if (url.startsWith('null/api') || url.startsWith('null/rpc')) {
+                url = window.API_BASE_URL + url.substring(4);
+            }
         }
         
         return originalOpen.call(this, method, url, async, user, password);
