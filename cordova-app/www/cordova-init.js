@@ -92,9 +92,11 @@ function setupGoogleSignIn() {
         return new Promise((resolve, reject) => {
             if (!window.plugins || !window.plugins.googleplus) {
                 console.error('Google Plus plugin not available');
-                reject(new Error('Google Plus plugin not available'));
+                reject('PLUGIN_NOT_AVAILABLE');
                 return;
             }
+            
+            console.log('📱 Calling googleplus.login with webClientId:', window.GOOGLE_CLIENT_ID_WEB);
             
             window.plugins.googleplus.login(
                 {
@@ -103,7 +105,7 @@ function setupGoogleSignIn() {
                     'offline': false
                 },
                 function(userData) {
-                    console.log('✅ Google Sign-In successful:', userData.displayName);
+                    console.log('✅ Google Sign-In RAW response:', JSON.stringify(userData));
                     resolve({
                         id: userData.userId,
                         email: userData.email,
@@ -114,7 +116,10 @@ function setupGoogleSignIn() {
                     });
                 },
                 function(error) {
-                    console.error('❌ Google Sign-In failed:', error);
+                    console.error('❌ Google Sign-In FAILED with error:', error);
+                    console.error('❌ Error type:', typeof error);
+                    console.error('❌ Error stringified:', JSON.stringify(error));
+                    // Pass the raw error for better debugging
                     reject(error);
                 }
             );
@@ -308,17 +313,26 @@ function overrideGoogleSignIn() {
                     } else if (error.includes('INVALID_ACCOUNT') || error.includes('5')) {
                         errorMsg = 'Invalid account. Please try another.';
                     } else if (error.includes('DEVELOPER_ERROR') || error.includes('10')) {
-                        errorMsg = 'Configuration error. Please contact support.';
+                        errorMsg = 'Configuration error (DEVELOPER_ERROR). Check SHA-1 and Client ID.';
                         console.error('⚠️ DEVELOPER_ERROR: Check SHA-1 fingerprint and Client ID configuration');
                     } else {
-                        errorMsg += error;
+                        errorMsg += 'Error: ' + error;
                     }
                 } else if (error && error.message) {
-                    errorMsg += error.message;
+                    errorMsg += 'Error: ' + error.message;
+                } else if (error) {
+                    // Try to stringify the error
+                    try {
+                        errorMsg += 'Error: ' + JSON.stringify(error);
+                    } catch(e) {
+                        errorMsg += 'Unknown error: ' + String(error);
+                    }
                 } else {
-                    errorMsg += 'Please try again.';
+                    errorMsg += 'Unknown error. Please try again.';
                 }
                 
+                // Show detailed error for debugging
+                console.error('🔴 Final error message:', errorMsg);
                 alert(errorMsg);
             }
         };
