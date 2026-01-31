@@ -51,21 +51,38 @@ jobs:
       working-directory: cordova-app
       run: |
         cordova platform remove android 2>/dev/null || true
-        cordova platform add android@12.0.1
+        cordova platform add android@11.0.0
+    
+    - name: Force Gradle 7.6.4 and fix appcompat
+      working-directory: cordova-app
+      run: |
+        echo '🔧 إجبار Gradle 7.6.4 بدلاً من 8.13...'
+        # Force Gradle 7.6.4 which works with appcompat
+        sed -i 's|gradle-.*-bin.zip|gradle-7.6.4-bin.zip|g' platforms/android/gradle/wrapper/gradle-wrapper.properties
+        cat platforms/android/gradle/wrapper/gradle-wrapper.properties
+        # Create build-extras.gradle to force appcompat 1.4.2
+        cat > platforms/android/app/build-extras.gradle << 'EOF'
+        configurations.all {
+            resolutionStrategy {
+                force 'androidx.appcompat:appcompat:1.4.2'
+            }
+        }
+        EOF
+        echo '✅ تم الإعداد بنجاح'
     
     - name: Build Debug APK
       working-directory: cordova-app
       run: |
         echo '🚧 بدء بناء APK (Debug)...'
-        cordova build android --debug -- --warning-mode all || echo '❌ فشل بناء APK (Debug) — راجع سجل الأخطاء والتحذيرات أعلاه، وسيتم رفع أي ملفات APK تم إنتاجها إن وجدت.'
-        true
+        cordova build android --debug
+        echo '✅ تم بناء Debug APK'
     
     - name: Build Release APK (Signed)
       working-directory: cordova-app
       run: |
         echo '🚧 بدء بناء APK (Release)...'
-        cordova build android --release --buildConfig=build.json -- --warning-mode all || echo '❌ فشل بناء APK (Release) — راجع سجل الأخطاء والتحذيرات أعلاه، وسيتم رفع أي ملفات APK تم إنتاجها إن وجدت.'
-        true
+        cordova build android --release --buildConfig=build.json
+        echo '✅ تم بناء Release APK'
     
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
