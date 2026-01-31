@@ -57,10 +57,11 @@ jobs:
       working-directory: cordova-app
       run: |
         echo '🔧 إجبار Gradle 7.6.4 بدلاً من 8.13...'
-        # Force Gradle 7.6.4 which works with appcompat
-        sed -i 's|gradle-.*-bin.zip|gradle-7.6.4-bin.zip|g' platforms/android/gradle/wrapper/gradle-wrapper.properties
-        cat platforms/android/gradle/wrapper/gradle-wrapper.properties
+        # Find and update gradle-wrapper.properties
+        find platforms/android -name "gradle-wrapper.properties" -exec sed -i 's|gradle-.*-bin.zip|gradle-7.6.4-bin.zip|g' {} \;
+        find platforms/android -name "gradle-wrapper.properties" -exec cat {} \;
         # Create build-extras.gradle to force appcompat 1.4.2
+        mkdir -p platforms/android/app
         cat > platforms/android/app/build-extras.gradle << 'EOF'
         configurations.all {
             resolutionStrategy {
