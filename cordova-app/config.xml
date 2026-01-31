@@ -53,7 +53,9 @@
     <preference name="BackgroundColor" value="0xff1a1a2e" />
     <preference name="StatusBarBackgroundColor" value="#1a1a2e" />
     <preference name="StatusBarStyle" value="lightcontent" />
+    <preference name="StatusBarOverlaysWebView" value="false" />
     <preference name="Orientation" value="portrait" />
+    <preference name="Fullscreen" value="false" />
     
     <!-- Splash Screen Settings -->
     <preference name="SplashScreenDelay" value="2000" />
