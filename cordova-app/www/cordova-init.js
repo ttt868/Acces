@@ -19,6 +19,17 @@ Object.defineProperty(window, 'CORDOVA_ORIGIN', {
     get: function() { return window.API_BASE_URL; }
 });
 
+// ✅ CRITICAL: Global helper function to get correct API origin
+// This MUST be used instead of window.location.origin for API calls
+window.getApiOrigin = function() {
+    const origin = window.location.origin;
+    if (origin === 'null' || origin === 'file://' || !origin || !origin.startsWith('http')) {
+        return window.API_BASE_URL;
+    }
+    return origin;
+};
+console.log('📡 getApiOrigin() =', window.getApiOrigin());
+
 // ✅ إنشاء location proxy لجعل origin يرجع API_BASE_URL
 (function() {
     const originalOrigin = window.location.origin;
@@ -59,6 +70,8 @@ window.GOOGLE_CLIENT_ID_WEB = '586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.app
 // This must run before any API calls are made
 (function immediateOverrides() {
     console.log('📡 Setting up fetch/XHR overrides IMMEDIATELY');
+    console.log('📡 API_BASE_URL =', window.API_BASE_URL);
+    console.log('📡 window.location.origin =', window.location.origin);
     
     // Override fetch
     const originalFetch = window.fetch;
@@ -66,41 +79,60 @@ window.GOOGLE_CLIENT_ID_WEB = '586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.app
         const originalUrl = url;
         
         if (typeof url === 'string') {
-            // Log for debugging in Cordova
+            // Log ALL API/RPC requests for debugging
             if (url.includes('/api') || url.includes('/rpc')) {
-                console.log('📡 Fetch intercepted:', url);
+                console.log('📡 [FETCH DEBUG] Original URL:', url);
             }
             
             // If URL starts with /api or /rpc, prepend base URL
             if (url.startsWith('/api') || url.startsWith('/rpc')) {
                 url = window.API_BASE_URL + url;
+                console.log('📡 [FETCH] Case 1: Relative path → ', url);
             }
             // If URL contains file:// (Cordova), replace with API URL
             else if (url.startsWith('file://') && (url.includes('/api') || url.includes('/rpc'))) {
                 const apiIndex = url.includes('/api') ? url.indexOf('/api') : url.indexOf('/rpc');
                 url = window.API_BASE_URL + url.substring(apiIndex);
+                console.log('📡 [FETCH] Case 2: file:// → ', url);
             }
             // Handle 'null/api' - when window.location.origin is 'null'
             else if (url.startsWith('null/api') || url.startsWith('null/rpc')) {
                 url = window.API_BASE_URL + url.substring(4);
+                console.log('📡 [FETCH] Case 3: null origin → ', url);
             }
             // Handle any URL that should go to API but has wrong origin
             else if (url.includes('/api/') && !url.startsWith('http')) {
                 const apiIndex = url.indexOf('/api');
                 url = window.API_BASE_URL + url.substring(apiIndex);
+                console.log('📡 [FETCH] Case 4: Contains /api/ → ', url);
             }
             else if (url.includes('/rpc') && !url.startsWith('http')) {
                 const rpcIndex = url.indexOf('/rpc');
                 url = window.API_BASE_URL + url.substring(rpcIndex);
+                console.log('📡 [FETCH] Case 5: Contains /rpc → ', url);
             }
             
-            // Log the transformation
-            if (originalUrl !== url && (url.includes('/api') || url.includes('/rpc'))) {
-                console.log('📡 Fetch URL transformed: ', originalUrl, ' → ', url);
+            // Final log showing transformation
+            if (originalUrl !== url) {
+                console.log('📡 [FETCH] TRANSFORMED:', originalUrl, '→', url);
             }
         }
         
-        return originalFetch.call(this, url, options);
+        // Log the final request
+        console.log('📡 [FETCH] FINAL URL:', url);
+        
+        return originalFetch.call(this, url, options)
+            .then(response => {
+                // Log response status for API calls
+                if (url.includes('/api') || url.includes('/rpc')) {
+                    console.log('📡 [FETCH] Response status:', response.status, 'for', url);
+                }
+                return response;
+            })
+            .catch(error => {
+                console.error('📡 [FETCH] ERROR:', error.message, 'for', url);
+                throw error;
+            });
     };
     
     // Override XMLHttpRequest

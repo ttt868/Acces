@@ -8439,6 +8439,10 @@ function initializeGoogleSignIn() {
   // ✅ تصدير الدالة على window ليتمكن index.html من استخدامها
   window.handleGoogleSignIn = function handleGoogleSignIn(response) {
     try {
+      console.log('🔐 [DEBUG] handleGoogleSignIn called');
+      console.log('🔐 [DEBUG] Response type:', typeof response);
+      console.log('🔐 [DEBUG] Response:', JSON.stringify(response).substring(0, 200));
+      
       // Decode the JWT token with proper UTF-8 support
       const credential = response.credential;
       const base64Url = credential.split('.')[1];
@@ -8447,6 +8451,8 @@ function initializeGoogleSignIn() {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
       const payload = JSON.parse(jsonPayload);
+      
+      console.log('🔐 [DEBUG] Decoded payload email:', payload.email);
       
       // Extract user information
       currentUser = {
@@ -12379,6 +12385,10 @@ if (totalCost > (currentBalance + precision)) {
   };
 
  async function checkIfUserExists(email, forceRefresh = false) {
+  console.log('🔍 [DEBUG] checkIfUserExists called with email:', email);
+  console.log('🔍 [DEBUG] window.location.origin:', window.location.origin);
+  console.log('🔍 [DEBUG] window.getApiOrigin():', window.getApiOrigin ? window.getApiOrigin() : 'N/A');
+  
   // ⚡ Return cached data if available and not expired
   const now = Date.now();
   if (!forceRefresh && userDataCache.email === email && userDataCache.data && (now - userDataCache.timestamp) < userDataCache.TTL) {
@@ -12387,10 +12397,15 @@ if (totalCost > (currentBalance + precision)) {
   }
 
   try {
-    const apiUrl = `${window.location.origin}/api/user/${encodeURIComponent(email)}`;
-    console.log('Checking if user exists at:', apiUrl);
+    // 🔧 CORDOVA FIX: Use getApiOrigin() helper or fallback to API_BASE_URL
+    const origin = (typeof window.getApiOrigin === 'function') 
+      ? window.getApiOrigin() 
+      : (window.API_BASE_URL || window.location.origin);
+    const apiUrl = `${origin}/api/user/${encodeURIComponent(email)}`;
+    console.log('🔍 [DEBUG] checkIfUserExists FINAL apiUrl:', apiUrl);
 
     const response = await fetch(apiUrl);
+    console.log('🔍 [DEBUG] checkIfUserExists response status:', response.status);
 
     // Handle 404 as "user not found" rather than an error
     if (response.status === 404) {
@@ -12480,8 +12495,13 @@ if (totalCost > (currentBalance + precision)) {
 
       console.log('📦 User data being sent to server:', userData);
 
+      // 🔧 CORDOVA FIX: Use getApiOrigin() helper
+      const origin = (typeof window.getApiOrigin === 'function') 
+        ? window.getApiOrigin() 
+        : (window.API_BASE_URL || window.location.origin);
+        
       // Send the create request
-      const response = await fetch(`${window.location.origin}/api/users`, {
+      const response = await fetch(`${origin}/api/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -12603,7 +12623,12 @@ if (totalCost > (currentBalance + precision)) {
   // Load user referrals from database
   async function loadUserReferrals(userId) {
     try {
-      const response = await fetch(`${window.location.origin}/api/referrals/${userId}`);
+      // 🔧 CORDOVA FIX: Use getApiOrigin() helper
+      const origin = (typeof window.getApiOrigin === 'function') 
+        ? window.getApiOrigin() 
+        : (window.API_BASE_URL || window.location.origin);
+        
+      const response = await fetch(`${origin}/api/referrals/${userId}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
