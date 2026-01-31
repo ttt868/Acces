@@ -69,25 +69,17 @@ jobs:
         cordova plugin add cordova-plugin-splashscreen@6.0.2 --save
         cordova plugin add cordova-plugin-googleplus@8.5.2 --save --variable WEB_APPLICATION_CLIENT_ID="586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com" --variable REVERSED_CLIENT_ID="com.googleusercontent.apps.586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn"
     
-    - name: Print Debug Keystore SHA-1 (for Google Cloud Console)
+    - name: Setup Fixed Debug Keystore
       run: |
-        echo '🔑 Getting SHA-1 fingerprint for Google Sign-In...'
+        echo '🔑 Using fixed debug keystore for consistent SHA-1...'
+        mkdir -p ~/.android
+        cp cordova-app/keystores/debug.keystore ~/.android/debug.keystore
         echo '=================================================='
-        echo 'ADD THIS SHA-1 TO GOOGLE CLOUD CONSOLE:'
+        echo 'FIXED SHA-1 (already registered in Google Cloud Console):'
+        echo 'SHA1: B3:DC:1A:86:7C:AC:0C:7D:E2:1B:80:46:3D:49:5D:5C:BB:32:E0:A5'
         echo '=================================================='
-        # Create debug keystore if not exists
-        if [ ! -f ~/.android/debug.keystore ]; then
-          mkdir -p ~/.android
-          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-        fi
-        # Print SHA-1
-        keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep "SHA1:" | sed 's/.*SHA1: /SHA1: /'
-        echo '=================================================='
-        echo 'Go to: https://console.cloud.google.com/apis/credentials'
-        echo 'Edit your Android OAuth Client and add this SHA-1'
         echo 'Package name: io.accessnetwork.app'
         echo '=================================================='
-        echo '✅ Plugins installed'
 
     - name: Add Android platform with Gradle 7.6
       working-directory: cordova-app
