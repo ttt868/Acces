@@ -194,4 +194,103 @@ window.WebSocket = function(url, protocols) {
 };
 window.WebSocket.prototype = OriginalWebSocket.prototype;
 
+/**
+ * Override signInWithGoogle for Cordova
+ * This replaces the web-based Google Sign-In with native
+ */
+function overrideGoogleSignIn() {
+    // Wait for DOM to be ready
+    const checkAndOverride = function() {
+        // Override the signInWithGoogle function
+        window.signInWithGoogle = async function() {
+            console.log('📱 Using Cordova Native Google Sign-In');
+            
+            try {
+                // Check if plugin is available
+                if (!window.plugins || !window.plugins.googleplus) {
+                    console.error('❌ Google Plus plugin not available');
+                    alert('Google Sign-In is not available. Please try again later.');
+                    return;
+                }
+                
+                // Show loading indicator
+                const loadingDiv = document.createElement('div');
+                loadingDiv.id = 'google-signin-loading';
+                loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:99999;';
+                loadingDiv.innerHTML = '<div style="color:#fff;font-size:18px;text-align:center;"><div style="margin-bottom:20px;">جاري تسجيل الدخول...</div><div style="width:40px;height:40px;border:3px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto;"></div></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+                document.body.appendChild(loadingDiv);
+                
+                // Call native Google Sign-In
+                const userData = await window.nativeGoogleSignIn();
+                
+                console.log('✅ Google Sign-In successful:', userData.name);
+                
+                // Send to server for authentication
+                const response = await fetch(window.API_BASE_URL + '/api/auth/google-mobile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        idToken: userData.idToken,
+                        accessToken: userData.accessToken,
+                        email: userData.email,
+                        name: userData.name,
+                        imageUrl: userData.imageUrl,
+                        userId: userData.id,
+                        platform: 'android'
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Server authentication successful');
+                    
+                    // Store user data
+                    if (result.user) {
+                        localStorage.setItem('user', JSON.stringify(result.user));
+                        localStorage.setItem('isLoggedIn', 'true');
+                    }
+                    if (result.token) {
+                        localStorage.setItem('authToken', result.token);
+                    }
+                    
+                    // Trigger any existing callbacks
+                    if (window.handleGoogleSignIn) {
+                        window.handleGoogleSignIn(result);
+                    }
+                    
+                    // Reload or redirect
+                    window.location.reload();
+                } else {
+                    throw new Error('Server authentication failed');
+                }
+                
+            } catch (error) {
+                console.error('❌ Google Sign-In error:', error);
+                alert('فشل تسجيل الدخول: ' + (error.message || 'حاول مرة أخرى'));
+            } finally {
+                // Remove loading
+                const loading = document.getElementById('google-signin-loading');
+                if (loading) loading.remove();
+            }
+        };
+        
+        // Also override triggerGoogleSignIn if exists
+        window.triggerGoogleSignIn = window.signInWithGoogle;
+        
+        console.log('✅ Google Sign-In overridden for Cordova');
+    };
+    
+    // Run immediately and also after a delay to ensure it overrides
+    checkAndOverride();
+    setTimeout(checkAndOverride, 1000);
+    setTimeout(checkAndOverride, 3000);
+}
+
+// Call override after device ready
+document.addEventListener('deviceready', function() {
+    setTimeout(overrideGoogleSignIn, 500);
+}, false);
+
 console.log('📱 Cordova Init loaded - API:', window.API_BASE_URL);

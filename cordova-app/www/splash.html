@@ -2,19 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
   <title>Access Network</title>
   <!-- Cordova -->
   <script src="cordova.js"></script>
   <style>
-    html, body {
-      height: 100%;
+    * {
       margin: 0;
       padding: 0;
-      background: #fff;
-      width: 100vw;
-      height: 100vh;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      width: 100%;
       overflow: hidden;
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0d0d1f 100%);
+      font-family: 'SF Pro Display', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     .splash-container {
       display: flex;
@@ -25,85 +28,141 @@
       width: 100vw;
       position: relative;
     }
-    .splash-logo {
-      width: 120px;
-      height: 120px;
-      margin-bottom: 24px;
-      border-radius: 24px;
-      box-shadow: 0 4px 24px #0002;
-      background: #fff;
-      object-fit: contain;
-    }
+    
+    /* العنوان المتحرك */
     .splash-title {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 2.1rem;
-      color: #222;
-      font-weight: bold;
-      margin-bottom: 32px;
-      letter-spacing: 1px;
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 50px;
+      text-shadow: 0 0 30px rgba(74, 144, 226, 0.5);
+      min-height: 50px;
     }
-    .progress-bar {
-      width: 120px;
-      height: 8px;
-      background: #eee;
-      border-radius: 8px;
-      overflow: hidden;
-      margin: 0 auto;
-      box-shadow: 0 2px 8px #0001;
+    .splash-title .char {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: charAppear 0.4s forwards;
     }
-    .progress-bar-inner {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #1a1a2e 60%, #4a90e2 100%);
-      border-radius: 8px;
-      transition: width 0.5s cubic-bezier(.4,2,.6,1);
+    @keyframes charAppear {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
+    
+    /* اللوغو بدون خلفية */
+    .splash-logo {
+      width: 150px;
+      height: 150px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 40px rgba(74, 144, 226, 0.4));
+      animation: logoFloat 3s ease-in-out infinite;
+    }
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    /* نقاط التحميل */
+    .loading-dots {
+      margin-top: 50px;
+      display: flex;
+      gap: 8px;
+    }
+    .loading-dots .dot {
+      width: 10px;
+      height: 10px;
+      background: #4a90e2;
+      border-radius: 50%;
+      animation: dotPulse 1.4s infinite ease-in-out;
+    }
+    .loading-dots .dot:nth-child(1) { animation-delay: 0s; }
+    .loading-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotPulse {
+      0%, 80%, 100% {
+        transform: scale(0.6);
+        opacity: 0.5;
+      }
+      40% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+    
+    /* نص أسفل الشاشة */
     .splash-footer {
       position: absolute;
-      bottom: 16px;
-      left: 0; right: 0;
+      bottom: 40px;
+      left: 0;
+      right: 0;
       text-align: center;
-      color: #aaa;
-      font-size: 0.9rem;
-      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.85rem;
+      letter-spacing: 1px;
     }
   </style>
 </head>
 <body>
   <div class="splash-container">
-    <img src="access-logo-1.png" alt="Access Logo" class="splash-logo">
-    <div class="splash-title">Access Network</div>
-    <div class="progress-bar"><div class="progress-bar-inner" id="progress"></div></div>
-    <div class="splash-footer">Loading...</div>
+    <!-- العنوان المتحرك -->
+    <div class="splash-title" id="title"></div>
+    
+    <!-- اللوغو بدون خلفية -->
+    <img src="access-store-512nobg.png" alt="Access" class="splash-logo">
+    
+    <!-- نقاط التحميل -->
+    <div class="loading-dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    
+    <div class="splash-footer">Powered by Blockchain</div>
   </div>
+  
   <script>
-    // انتظار Cordova ثم تشغيل شريط التقدم
+    // تأثير كتابة العنوان حرف حرف
+    const title = "ACCESS NETWORK";
+    const titleEl = document.getElementById('title');
+    let charIndex = 0;
+    
+    function typeTitle() {
+      if (charIndex < title.length) {
+        const char = title[charIndex];
+        const span = document.createElement('span');
+        span.className = 'char';
+        span.textContent = char === ' ' ? '\u00A0' : char;
+        span.style.animationDelay = (charIndex * 0.08) + 's';
+        titleEl.appendChild(span);
+        charIndex++;
+        setTimeout(typeTitle, 80);
+      }
+    }
+    
+    // انتظار Cordova ثم البدء
     document.addEventListener('deviceready', function() {
-      console.log('✅ Cordova جاهز!');
+      console.log('✅ Cordova Ready!');
       startSplash();
     }, false);
     
     // fallback للويب
     setTimeout(function() {
       if (!window.cordovaReady) startSplash();
-    }, 500);
+    }, 300);
     
     function startSplash() {
       window.cordovaReady = true;
-      // شريط التقدم
-      let progress = 0;
-      const bar = document.getElementById('progress');
-      function animate() {
-        progress += Math.random() * 18 + 7;
-        if (progress > 100) progress = 100;
-        bar.style.width = progress + '%';
-        if (progress < 100) setTimeout(animate, 350);
-      }
-      animate();
-      // بعد 2.5 ثانية انتقل للتطبيق
+      // بدء تأثير الكتابة
+      typeTitle();
+      
+      // الانتقال للتطبيق بعد 3 ثواني
       setTimeout(function() {
         window.location = 'index.html';
-      }, 2500);
+      }, 3000);
     }
   </script>
 </body>
