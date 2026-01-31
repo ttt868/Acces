@@ -50,14 +50,14 @@ jobs:
       working-directory: cordova-app
       run: |
         echo '🚧 بدء بناء APK (Debug)...'
-        cordova build android --debug || echo '❌ فشل بناء APK (Debug) — راجع سجل الأخطاء أعلاه، وسيتم رفع أي ملفات APK تم إنتاجها إن وجدت.'
+        cordova build android --debug -- --warning-mode all || echo '❌ فشل بناء APK (Debug) — راجع سجل الأخطاء والتحذيرات أعلاه، وسيتم رفع أي ملفات APK تم إنتاجها إن وجدت.'
         true
     
     - name: Build Release APK (Signed)
       working-directory: cordova-app
       run: |
         echo '🚧 بدء بناء APK (Release)...'
-        cordova build android --release --buildConfig=build.json || echo '❌ فشل بناء APK (Release) — راجع سجل الأخطاء أعلاه، وسيتم رفع أي ملفات APK تم إنتاجها إن وجدت.'
+        cordova build android --release --buildConfig=build.json -- --warning-mode all || echo '❌ فشل بناء APK (Release) — راجع سجل الأخطاء والتحذيرات أعلاه، وسيتم رفع أي ملفات APK تم إنتاجها إن وجدت.'
         true
     
     - name: Upload Debug APK
