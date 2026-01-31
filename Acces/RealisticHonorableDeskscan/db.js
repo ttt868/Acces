@@ -299,7 +299,6 @@ async function initializeDatabase() {
         email TEXT UNIQUE,
         name TEXT,
         avatar TEXT,
-        google_id TEXT,
         coins NUMERIC(20,8) DEFAULT 0,
         referral_code TEXT UNIQUE,
         referred_by TEXT,
@@ -318,19 +317,6 @@ async function initializeDatabase() {
         processing_boost_multiplier NUMERIC DEFAULT 0,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
-    `);
-
-    // Add google_id column if not exists (for existing databases)
-    await pool.query(`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT FROM information_schema.columns 
-          WHERE table_name = 'users' AND column_name = 'google_id'
-        ) THEN
-          ALTER TABLE users ADD COLUMN google_id TEXT;
-        END IF;
-      END$$;
     `);
 
     // Ensure wallet columns exist in users table (for backward compatibility)
