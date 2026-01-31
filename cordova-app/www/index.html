@@ -80,23 +80,17 @@
   <link rel="stylesheet" href="referrals-style.css">
   <link rel="stylesheet" href="leaderboard-style.css">
 
-  <!-- Cordova Status Bar Fix -->
-  <style id="cordova-statusbar-fix">
-    /* Fix for Cordova status bar overlap */
-    html.cordova-app {
-      --status-bar-height: 24px; /* Default Android status bar height */
-    }
+  <!-- Cordova App Styles -->
+  <style id="cordova-app-styles">
+    /* Cordova app adjustments - ensure proper viewport */
     html.cordova-app body {
-      padding-top: var(--status-bar-height) !important;
+      /* No extra padding needed - let the app use full screen */
+      min-height: 100vh;
+      overflow-x: hidden;
     }
+    /* Prevent content from going behind navigation bars */
     html.cordova-app #app-container {
-      padding-top: 0 !important;
-    }
-    /* Ensure content doesn't go under status bar */
-    html.cordova-app .header,
-    html.cordova-app .top-bar,
-    html.cordova-app .navbar {
-      margin-top: 0 !important;
+      min-height: 100vh;
     }
   </style>
   <script>
