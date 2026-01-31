@@ -1,0 +1,3228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- 🔒 منع وميض الرصيد - تغيير النص فوراً -->
+  <script>
+    window.balanceHiddenOnLoad = localStorage.getItem('balanceHidden') === 'true';
+  </script>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta http-equiv="Content-Language" content="ar,en,fr,es,de,tr,it,hi,zh,ja,ko,pt,ru,id,pl">
+  <meta name="accept-charset" content="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, viewport-fit=cover, user-scalable=no, shrink-to-fit=no">
+  <meta name="mobile-web-app-capable" content="no">
+  <meta name="apple-mobile-web-app-capable" content="no">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="monetag" content="fbd3213b115b518a8dd608e024d622f5">
+  <meta name="google-adsense-account" content="ca-pub-3543981710825954">
+  
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3543981710825954" crossorigin="anonymous"></script>
+  
+  
+  <!-- PWA Meta Tags -->
+  <meta name="application-name" content="Access Digital">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Access Digital">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#4a90e2">
+  <meta name="msapplication-tap-highlight" content="no">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="access-logo-1ipfs.png">
+  
+  <title>Access Platform - Digital Points System</title>
+
+  <!-- Open Graph Meta Tags for Social Media Sharing -->
+  <meta property="og:title" content="AccessDigital - Digital Engagement & Daily Rewards">
+  <meta property="og:description" content="Join thousands of users collecting points daily through digital activities, social engagement, and daily check-ins. Build your digital rewards portfolio!">
+  <meta property="og:image" content="https://accesschain.org/access-logo-1.png">
+  <meta property="og:image:secure_url" content="https://accesschain.org/access-logo-1.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="AccessDigital - Digital Engagement Platform">
+  <meta property="og:url" content="https://accesschain.org">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="AccessDigital">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AccessDigital - Digital Engagement & Daily Rewards">
+  <meta name="twitter:description" content="Join thousands of users collecting points daily through digital activities, social engagement, and daily check-ins. Build your digital rewards portfolio!">
+  <meta name="twitter:image" content="https://accesschain.org/access-logo-1.png">
+  <meta name="twitter:image:alt" content="AccessDigital - Digital Engagement Platform">
+
+  <!-- Additional Meta Tags -->
+  <meta name="description" content="AccessDigital - Digital engagement rewards platform. Collect ACCESS points through daily activities, social engagement, and referral bonuses. Join the digital rewards community!">
+  <meta name="keywords" content="digital rewards, daily activities, social engagement, ACCESS points, referral program, daily check-ins, loyalty rewards, digital assets">
+  <meta name="author" content="AccessDigital">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://accesschain.org">
+  
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="style-dashboard.css">
+  <link rel="stylesheet" href="style-missions.css?v=13.9">
+   <link rel="stylesheet" href="profile-style.css">
+   <link rel="stylesheet" href="network-style.css">
+  <link rel="stylesheet" href="referrals-style.css">
+  <link rel="stylesheet" href="leaderboard-style.css">
+
+  <!-- Instant Auth & Language Check - ZERO FLASH Professional Solution -->
+  <style id="instant-auth-styles">
+    /* CRITICAL: Use opacity for smooth reveal - NO PARTIAL CONTENT EVER */
+    body { 
+      opacity: 0 !important; 
+      transition: opacity 150ms ease-out !important;
+    }
+    body.app-ready { 
+      opacity: 1 !important; 
+    }
+    
+    /* Auth container rules - both hidden by default */
+    #login-container { display: none !important; }
+    #app-container { display: none !important; }
+    
+    /* Only show containers when BOTH auth state AND app-ready are present */
+    html.user-logged-in.app-ready #app-container { display: flex !important; }
+    html.user-logged-in.app-ready #login-container { display: none !important; }
+    html.user-not-logged-in.app-ready #login-container { display: flex !important; }
+    html.user-not-logged-in.app-ready #app-container { display: none !important; }
+    
+    /* Transaction Filter - Mobile/Desktop responsive */
+    .tx-filter-mobile { display: none !important; }
+    .tx-filter-desktop { display: block !important; }
+    
+    @media (max-width: 768px) {
+      .tx-filter-mobile { display: block !important; }
+      .tx-filter-desktop { display: none !important; }
+      .tx-search-box { max-width: 100% !important; }
+    }
+  </style>
+  <script>
+    // Instant synchronous auth + language check - runs BEFORE page renders
+    (function() {
+      // ===== LANGUAGE BOOTSTRAP =====
+      try {
+        var savedLang = localStorage.getItem('preferredLanguage') || 'en';
+        document.documentElement.lang = savedLang;
+        if (savedLang === 'ar') {
+          document.documentElement.dir = 'rtl';
+          document.documentElement.classList.add('arabic');
+        } else {
+          document.documentElement.dir = 'ltr';
+        }
+        window.__preloadedLang = savedLang;
+      } catch (e) {
+        document.documentElement.lang = 'en';
+        document.documentElement.dir = 'ltr';
+        window.__preloadedLang = 'en';
+      }
+      
+      // ===== AUTH BOOTSTRAP =====
+      var isLoggedIn = false;
+      try {
+        var sessionData = localStorage.getItem('accessoireUser');
+        if (sessionData) {
+          var user = JSON.parse(sessionData);
+          if (user && user.email) {
+            isLoggedIn = true;
+          }
+        }
+      } catch (e) {
+        isLoggedIn = false;
+      }
+      if (isLoggedIn) {
+        document.documentElement.classList.add('user-logged-in');
+      } else {
+        document.documentElement.classList.add('user-not-logged-in');
+      }
+      
+      // Apply body classes once DOM is ready
+      document.addEventListener('DOMContentLoaded', function() {
+        if (window.__preloadedLang === 'ar') {
+          document.body.classList.add('arabic');
+        }
+        // app-ready will be added by script.js AFTER all translations are applied
+      });
+    })();
+  </script>
+
+  
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Enhanced headers for Google Identity Services with proper FedCM handling -->
+  <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
+  <meta http-equiv="Cross-Origin-Embedder-Policy" content="credentialless">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy" content="identity-credentials-get=(), otp-credentials=(), publickey-credentials=get()">
+  <meta http-equiv="Feature-Policy" content="identity-credentials-get 'none'; otp-credentials 'none'">
+  <!-- Google Client ID will be loaded dynamically from server -->
+  <!-- تحميل الخطوط مع fallback -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Arabic:wght@400;700&family=Noto+Sans+SC:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Language Selection Modal -->
+  <!-- Language Selection Modal -->
+  <div id="languageModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+    <div class="modal-content" style="background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 400px; border-radius: 10px; max-height: 70vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <h3 style="margin: 0;" data-translate="Select Language">Select Language</h3>
+
+        <button onclick="closeLanguageModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+      </div>
+      <div class="language-options" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+        <div class="language-option" onclick="selectLanguage('en')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇺🇸</span>
+          <div>
+            <div style="font-weight: bold;">English</div>
+            <div style="font-size: 12px; color: #666;">EN</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('ar')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇸🇦</span>
+          <div>
+            <div style="font-weight: bold;">العربية</div>
+            <div style="font-size: 12px; color: #666;">AR</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('fr')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇫🇷</span>
+          <div>
+            <div style="font-weight: bold;">Français</div>
+            <div style="font-size: 12px; color: #666;">FR</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('es')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇪🇸</span>
+          <div>
+            <div style="font-weight: bold;">Español</div>
+            <div style="font-size: 12px; color: #666;">ES</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('de')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇩🇪</span>
+          <div>
+            <div style="font-weight: bold;">Deutsch</div>
+            <div style="font-size: 12px; color: #666;">DE</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('tr')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇹🇷</span>
+          <div>
+            <div style="font-weight: bold;">Türkçe</div>
+            <div style="font-size: 12px; color: #666;">TR</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('it')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇮🇹</span>
+          <div>
+            <div style="font-weight: bold;">Italiano</div>
+            <div style="font-size: 12px; color: #666;">IT</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('hi')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇮🇳</span>
+          <div>
+            <div style="font-weight: bold;">हिन्दी</div>
+            <div style="font-size: 12px; color: #666;">HI</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('zh')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇨🇳</span>
+          <div>
+            <div style="font-weight: bold;">中文</div>
+            <div style="font-size: 12px; color: #666;">ZH</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('ja')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇯🇵</span>
+          <div>
+            <div style="font-weight: bold;">日本語</div>
+            <div style="font-size: 12px; color: #666;">JA</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('ko')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇰🇷</span>
+          <div>
+            <div style="font-weight: bold;">한국어</div>
+            <div style="font-size: 12px; color: #666;">KO</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('pt')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇵🇹</span>
+          <div>
+            <div style="font-weight: bold;">Português</div>
+            <div style="font-size: 12px; color: #666;">PT</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('ru')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇷🇺</span>
+          <div>
+            <div style="font-weight: bold;">Русский</div>
+            <div style="font-size: 12px; color: #666;">RU</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('id')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇮🇩</span>
+          <div>
+            <div style="font-weight: bold;">Bahasa Indonesia</div>
+            <div style="font-size: 12px; color: #666;">ID</div>
+          </div>
+        </div>
+        <div class="language-option" onclick="selectLanguage('pl')" style="display: flex; align-items: center; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 20px; margin-right: 10px;">🇵🇱</span>
+          <div>
+            <div style="font-weight: bold;">Polski</div>
+            <div style="font-size: 12px; color: #666;">PL</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme Selection Modal -->
+  <div id="themeModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+    <div class="modal-content" style="background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 400px; border-radius: 10px; max-height: 70vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0;" data-translate="Theme Mode">Theme Mode</h3>
+        <button onclick="closeThemeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+      </div>
+      <div class="theme-options" style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+        <div class="theme-option" onclick="selectTheme('light')" style="display: flex; align-items: center; padding: 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 24px; margin-right: 15px;">☀️</span>
+          <div>
+            <div style="font-weight: bold;" data-translate="Light">Light</div>
+            <div style="font-size: 12px; color: #666;" data-translate="Bright theme for daytime">Bright theme for daytime</div>
+          </div>
+        </div>
+        <div class="theme-option" onclick="selectTheme('dark')" style="display: flex; align-items: center; padding: 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 24px; margin-right: 15px;">🌙</span>
+          <div>
+            <div style="font-weight: bold;" data-translate="Dark">Dark</div>
+            <div style="font-size: 12px; color: #666;" data-translate="Dark theme for nighttime">Dark theme for nighttime</div>
+          </div>
+        </div>
+        <div class="theme-option" onclick="selectTheme('auto')" style="display: flex; align-items: center; padding: 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; transition: background 0.3s;">
+          <span style="font-size: 24px; margin-right: 15px;">🌅</span>
+          <div>
+            <div style="font-weight: bold;" data-translate="Auto (Sunset)">Auto</div>
+            <div style="font-size: 12px; color: #666;" data-translate="Changes automatically based on time">Changes automatically based on time</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Referral Copy Options Modal - Bottom Sheet Style -->
+  <div id="referral-copy-modal" class="referral-copy-modal" style="display: none;">
+    <div class="referral-copy-overlay" onclick="closeReferralCopyModal()"></div>
+    <div class="referral-copy-content">
+      <div class="referral-copy-header">
+        <div class="modal-handle"></div>
+        <h3 data-translate="Share Options">Share Options</h3>
+      </div>
+
+      <div class="referral-copy-options">
+        <div class="referral-copy-option" onclick="copyReferralCodeOnly()">
+          <div class="copy-option-icon">
+            <i class="fas fa-hashtag"></i>
+          </div>
+          <div class="copy-option-content">
+            <h4 data-translate="Copy Referral Code">Copy Referral Code</h4>
+            <span class="referral-code-preview" id="modal-referral-code">5SEKUCNY</span>
+          </div>
+          <div class="copy-option-action">
+            <i class="fas fa-copy"></i>
+          </div>
+        </div>
+
+        <div class="referral-copy-option" onclick="shareReferralLink()">
+          <div class="copy-option-icon">
+            <i class="fas fa-share-alt"></i>
+          </div>
+          <div class="copy-option-content">
+            <h4 data-translate="Share Invite Link">Share Invite Link</h4>
+            <span class="referral-link-preview" id="modal-referral-link">https://example.com?invite=5SEKUCNY</span>
+          </div>
+          <div class="copy-option-action">
+            <i class="fas fa-external-link-alt"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard Modal -->
+  <div id="leaderboardModal" class="leaderboard-modal">
+    <div class="leaderboard-content">
+      <!-- Header - Sticky -->
+      <div class="leaderboard-header">
+        <div class="leaderboard-title-row">
+          <h2 class="leaderboard-title">
+            <i class="fas fa-trophy"></i>
+            <span data-translate="Leaderboard">Leaderboard</span>
+          </h2>
+          <button class="leaderboard-close-btn" onclick="closeLeaderboardModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="leaderboard-tabs" id="leaderboard-period-tabs">
+          <button id="leaderboard-btn-alltime" class="leaderboard-tab active" data-period="all" onclick="switchLeaderboardPeriod('all')">
+            <span data-translate="All Time">All Time</span>
+          </button>
+          <button id="leaderboard-btn-weekly" class="leaderboard-tab" data-period="weekly" onclick="switchLeaderboardPeriod('weekly')">
+            <span data-translate="Weekly">Weekly</span>
+          </button>
+          <button id="leaderboard-btn-today" class="leaderboard-tab" data-period="today" onclick="switchLeaderboardPeriod('today')">
+            <span data-translate="Today">Today</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Header - Sticky -->
+      <div class="leaderboard-table-header">
+        <div data-translate="Rank">Rank</div>
+        <div data-translate="Invites">Invites</div>
+        <div data-translate="Rewards">Rewards</div>
+      </div>
+
+      <!-- List Container - Scrollable -->
+      <div class="leaderboard-list-container" id="leaderboardList">
+        <!-- Loading State -->
+        <div class="leaderboard-loading" id="leaderboardLoading">
+          <div class="leaderboard-spinner"></div>
+          <p data-translate="Loading leaderboard...">Loading leaderboard...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div class="leaderboard-empty" id="leaderboardEmpty" style="display: none;">
+          <i class="fas fa-users"></i>
+          <p data-translate="No data available yet">No data available yet</p>
+        </div>
+
+        <!-- Items will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Account Modal - Step 1: Reason Selection -->
+  <div id="deleteAccountModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);" onclick="closeDeleteAccountModalOnOutsideClick(event)">
+    <div class="modal-content" style="background-color: #fefefe; margin: 10% auto; padding: 30px; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: 12px; box-sizing: border-box;" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0; color: #dc3545;" data-translate="Delete Account">Delete Account</h3>
+        <button onclick="closeDeleteAccountModal()" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #999;">&times;</button>
+      </div>
+      
+      <div class="delete-warning-box" style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <p style="margin: 0; color: #856404; font-weight: 500;" data-translate="⚠️ Warning: This action cannot be undone!">⚠️ Warning: This action cannot be undone!</p>
+      </div>
+
+      <p class="delete-question-text" style="margin-bottom: 20px; color: #666;" data-translate="Why are you deleting your account?">Why are you deleting your account?</p>
+
+      <div style="margin-bottom: 20px;">
+        <select id="deleteReasonSelect" class="delete-reason-select" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: white;">
+          <option value="" data-translate="-- Select a reason --">-- Select a reason --</option>
+          <option value="privacy_concerns" data-translate="Privacy concerns">Privacy concerns</option>
+          <option value="not_useful" data-translate="App is not useful">App is not useful</option>
+          <option value="found_alternative" data-translate="Found a better alternative">Found a better alternative</option>
+          <option value="too_complicated" data-translate="Too complicated to use">Too complicated to use</option>
+          <option value="technical_issues" data-translate="Technical issues">Technical issues</option>
+          <option value="no_longer_needed" data-translate="No longer needed">No longer needed</option>
+          <option value="security_concerns" data-translate="Security concerns">Security concerns</option>
+          <option value="other" data-translate="Other reason">Other reason</option>
+        </select>
+      </div>
+
+      <div id="otherReasonContainer" style="display: none; margin-bottom: 20px;">
+        <textarea id="otherReasonText" class="delete-reason-textarea" placeholder="Please tell us more (optional)" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-height: 80px; resize: vertical; box-sizing: border-box;" data-translate-placeholder="Please tell us more (optional)"></textarea>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px;">
+        <button onclick="closeDeleteAccountModal()" style="padding: 10px 20px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;" data-translate="Keep Account">Keep Account</button>
+        <button onclick="showDeleteWarning()" style="padding: 10px 20px; background-color: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;" data-translate="Continue">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Account Modal - Step 2: First Warning -->
+  <div id="deleteWarningModal" class="modal" style="display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6);" onclick="closeDeleteWarningModalOnOutsideClick(event)">
+    <div class="modal-content" style="background-color: #fefefe; margin: 12% auto; padding: 30px; border: 1px solid #888; width: 90%; max-width: 450px; border-radius: 12px; box-sizing: border-box;" onclick="event.stopPropagation()">
+      <h3 style="margin: 0 0 20px 0; color: #dc3545; text-align: center;" data-translate="⚠️ Final Warning">⚠️ Final Warning</h3>
+      
+      <div class="delete-warning-box-2" style="background: #fff3cd; border: 2px solid #ffc107; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+        <p style="margin: 0 0 15px 0; font-weight: 600; color: #856404;" data-translate="If you delete your account:">If you delete your account:</p>
+        <ul style="margin: 0; padding-left: 20px; color: #856404;">
+          <li data-translate="All your points will be lost forever">All your points will be lost forever</li>
+          <li data-translate="Your referral code will be deleted">Your referral code will be deleted</li>
+          <li data-translate="All transaction history will be erased">All transaction history will be erased</li>
+          <li data-translate="Your wallet and private key will be deleted">Your wallet and private key will be deleted</li>
+          <li style="font-weight: 600;" data-translate="This action CANNOT be undone!">This action CANNOT be undone!</li>
+        </ul>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button onclick="closeDeleteWarningModal()" style="padding: 12px 24px; background-color: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; flex: 1;" data-translate="Keep My Account">Keep My Account</button>
+        <button onclick="showFinalConfirmation()" style="padding: 12px 24px; background-color: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; flex: 1;" data-translate="I Understand, Delete">I Understand, Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Account Modal - Step 3: Final Confirmation -->
+  <div id="deleteFinalModal" class="modal" style="display: none; position: fixed; z-index: 1002; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);" onclick="closeFinalConfirmationModalOnOutsideClick(event)">
+    <div class="modal-content" style="background-color: #fefefe; margin: 15% auto; padding: 30px; border: 2px solid #dc3545; width: 90%; max-width: 400px; border-radius: 12px; box-sizing: border-box;" onclick="event.stopPropagation()">
+      <h3 style="margin: 0 0 20px 0; color: #dc3545; text-align: center;" data-translate="🚨 LAST CHANCE">🚨 LAST CHANCE</h3>
+      
+      <p class="delete-final-text" style="text-align: center; font-size: 16px; font-weight: 600; margin-bottom: 25px; color: #333;" data-translate="Are you absolutely sure?">Are you absolutely sure?</p>
+
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button onclick="closeFinalConfirmation()" style="padding: 12px 24px; background-color: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;" data-translate="Cancel">Cancel</button>
+        <button onclick="confirmAccountDeletion()" style="padding: 12px 24px; background-color: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;" data-translate="Yes, Delete Forever">Yes, Delete Forever</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sign Out Confirmation Modal -->
+  <div id="signOutModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+
+<!-- Install Prompt System -->
+  <script src="install-prompt.js"></script>
+
+<!-- Notification System -->
+  <script src="notification-system.js"></script>
+
+  <!-- Load translations first to define the Translator class -->
+<script src="translations.js"></script>
+
+<script>
+// Wait for translations.js to fully load before creating the Translator
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize translator globally to prevent "translator is not defined" errors
+  if (typeof window.translator === 'undefined' && typeof Translator !== 'undefined') {
+    window.translator = new Translator();
+  }
+  
+  // حماية صور المستخدمين من التنزيل
+  document.addEventListener('contextmenu', function(e) {
+    if (e.target.classList.contains('leaderboard-avatar') || 
+        e.target.classList.contains('profile-avatar') ||
+        e.target.classList.contains('dashboard-avatar-img') ||
+        e.target.classList.contains('referral-avatar')) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  });
+  
+  // منع السحب والإفلات للصور
+  document.addEventListener('dragstart', function(e) {
+    if (e.target.tagName === 'IMG' && 
+        (e.target.classList.contains('leaderboard-avatar') || 
+         e.target.classList.contains('profile-avatar') ||
+         e.target.classList.contains('dashboard-avatar-img') ||
+         e.target.classList.contains('referral-avatar'))) {
+      e.preventDefault();
+      return false;
+    }
+  });
+});
+
+// Create a fallback initialization for immediate use
+try {
+  if (typeof Translator !== 'undefined' && typeof window.translator === 'undefined') {
+    window.translator = new Translator();
+  }
+} catch(e) {
+  console.log('Translator will be initialized after page load');
+}
+
+// Listen for balance updates across the application
+document.addEventListener('balanceUpdated', function(event) {
+  const { newBalance, formattedBalance } = event.detail;
+
+  // Ensure all balance displays are updated immediately
+  // Note: Removed .stat-value from selector to prevent updating blocks/transactions count in network explorer
+  const allBalanceElements = document.querySelectorAll('[id*="coin"], [id*="balance"], .balance, .wallet-balance, .user-balance, .balance-display');
+  allBalanceElements.forEach(element => {
+    // Skip elements that are for blocks/transactions count (not balance)
+    if (element.id === 'total-blocks' || element.id === 'total-transactions') {
+      return;
+    }
+    if (element && element.textContent && element.textContent.match(/^\d+(\.\d+)?$/)) {
+      element.textContent = formattedBalance;
+    }
+  });
+
+  console.log('Balance synchronized across all components:', formattedBalance);
+});
+</script>
+
+    <div class="modal-content" style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 350px; max-width: none; border-radius: 5px; box-sizing: border-box;">
+     
+      <h3 style="margin-top: 0;" data-translate="Are you sure you want to sign out?">Are you sure you want to sign out?</h3>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+       <button onclick="handleSignOut(true)" data-translate="Yes" style="padding: 8px 16px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Yes</button>
+        
+<button onclick="handleSignOut(false)" data-translate="No" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">No</button>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Close theme modal when clicking outside
+    window.addEventListener('click', function(event) {
+      const themeModal = document.getElementById('themeModal');
+      if (event.target === themeModal) {
+        closeThemeModal();
+      }
+    });
+
+    // Close language modal when clicking outside
+    window.addEventListener('click', function(event) {
+      const languageModal = document.getElementById('languageModal');
+      if (event.target === languageModal) {
+        closeLanguageModal();
+      }
+    });
+
+    // Show sign out confirmation
+    function showSignOutConfirmation() {
+      document.getElementById('signOutModal').style.display = 'block';
+    }
+
+    // Referral Modal Functions
+    function showInviteModal() {
+      if (window.referralSystem) {
+        window.referralSystem.showInviteModal();
+      }
+    }
+
+    function closeInviteModal() {
+      const modal = document.getElementById('invite-modal-overlay');
+      modal.style.display = 'none';
+    }
+
+    function copyInviteLink() {
+      if (window.referralSystem) {
+        window.referralSystem.copyInviteLink();
+      }
+    }
+
+    // Handle sign out decision
+    function handleSignOut(confirmed) {
+      const modal = document.getElementById('signOutModal');
+      modal.style.display = 'none';
+
+      if (confirmed) {
+        // Clear stored data
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // Sign out from Google Identity Services
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+          google.accounts.id.disableAutoSelect();
+        }
+
+        // Redirect to login page
+        window.location.reload();
+      }
+    }
+
+    // Initialize Google Identity Services
+    function initGoogleIdentityServices() {
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+        console.log("Google Identity Services loaded successfully");
+
+        // Check if we have the Google Client ID loaded from server
+        if (!window.GOOGLE_CLIENT_ID) {
+          console.warn('Google Client ID not loaded yet, will retry...');
+          setTimeout(initGoogleIdentityServices, 1000);
+          return false;
+        }
+
+        // Initialize Google Identity Services with enhanced FedCM handling
+        google.accounts.id.initialize({
+          client_id: window.GOOGLE_CLIENT_ID,
+          callback: window.handleGoogleSignIn || function() { console.log('Callback not yet ready'); },
+          auto_select: false,
+          cancel_on_tap_outside: false,
+          use_fedcm_for_prompt: false,
+          context: 'signin',
+          ux_mode: 'popup',
+          state_cookie_domain: window.location.hostname,
+          allowed_parent_origin: window.location.origin,
+          intermediate_iframe_close_callback: function() {
+            console.log('Identity Services intermediate iframe closed');
+          },
+          native_callback: function() {
+            console.log('Native callback triggered');
+          }
+        });
+
+        console.log("Google Identity Services initialized successfully with FedCM support");
+        return true;
+      } else {
+        console.log("Google Identity Services not loaded yet, retrying...");
+        setTimeout(initGoogleIdentityServices, 500);
+        return false;
+      }
+    }
+
+    // Google Identity Services will be initialized after OAuth config is loaded
+    // No direct initialization needed here - loadGoogleOAuthConfig() handles it
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Additional icons for referral system -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" integrity="sha256-KHMI4idNwX80EfQGGvK+CetXZOHrB4x/DaYlvKcxF+8=" crossorigin="anonymous"></script>
+  <!-- Fallback QR code library if primary fails -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://unpkg.com/qr-scanner@1.4.2/qr-scanner.umd.min.js" defer></script>
+  <!-- عداد حقيقي احترافي بدون مكتبات خارجية -->
+
+
+
+  <script>
+    // Load Google OAuth configuration dynamically
+    async function loadGoogleOAuthConfig() {
+      try {
+        const response = await fetch('/api/oauth-config');
+        const config = await response.json();
+        if (config.success) {
+          window.GOOGLE_CLIENT_ID = config.clientId;
+          console.log('Google OAuth configuration loaded securely');
+          // Initialize Google services after config is loaded
+          initGoogleIdentityServices();
+        } else {
+          console.error('Failed to load OAuth configuration:', config.error || 'Unknown error');
+        }
+      } catch (error) {
+        console.error('Failed to load OAuth configuration from server:', error);
+        // No fallback - force secure configuration loading
+      }
+    }
+
+    // Load config before initializing Google services
+    loadGoogleOAuthConfig();
+
+    window.signInWithGoogle = function() {
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+        try {
+          console.log('Using enhanced Google sign-in with FedCM-safe configuration');
+
+          // First, try to disable any existing FedCM features
+          if (google.accounts.id.disableAutoSelect) {
+            google.accounts.id.disableAutoSelect();
+          }
+
+          // Use renderButton for more reliable authentication flow
+          const buttonContainer = document.createElement('div');
+          buttonContainer.style.position = 'fixed';
+          buttonContainer.style.top = '-1000px';
+          buttonContainer.style.left = '-1000px';
+          buttonContainer.style.visibility = 'hidden';
+          document.body.appendChild(buttonContainer);
+
+          google.accounts.id.renderButton(buttonContainer, {
+            theme: 'outline',
+            size: 'large',
+            type: 'standard',
+            shape: 'rectangular',
+            text: 'signin_with',
+            logo_alignment: 'left',
+            width: 250
+          });
+
+          // Trigger the hidden button click
+          setTimeout(() => {
+            const hiddenButton = buttonContainer.querySelector('div[role="button"]');
+            if (hiddenButton) {
+              hiddenButton.click();
+            } else {
+              // Fallback to prompt method
+              google.accounts.id.prompt({
+                moment_callback: function(res) {
+                  console.log('Moment callback:', res);
+                  if (res.isNotDisplayed() || res.isSkippedMoment()) {
+                    // Fallback to OAuth2 flow - ensure we have client ID
+                    if (window.GOOGLE_CLIENT_ID) {
+                      window.location.href = `https://accounts.google.com/oauth/authorize?client_id=${window.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid email profile`;
+                    } else {
+                      console.error('Google Client ID not configured - OAuth not available');
+                    }
+                  }
+                }
+              });
+            }
+
+            // Clean up hidden button
+            setTimeout(() => {
+              if (buttonContainer.parentNode) {
+                document.body.removeChild(buttonContainer);
+              }
+            }, 1000);
+          }, 100);
+
+        } catch (error) {
+          console.error('Error with enhanced sign-in method:', error);
+          // Final fallback to direct OAuth2 flow
+          try {
+            if (!window.GOOGLE_CLIENT_ID) {
+              console.error('Google Client ID not configured - OAuth not available');
+              return;
+            }
+            const clientId = window.GOOGLE_CLIENT_ID;
+            const redirectUri = encodeURIComponent(window.location.origin);
+            const authUrl = `https://accounts.google.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid email profile&access_type=online&prompt=select_account`;
+
+            window.location.href = authUrl;
+          } catch (fallbackError) {
+            console.error('All authentication methods failed:', fallbackError);
+            alert('Unable to initialize Google Sign-in. Please try refreshing the page.');
+          }
+        }
+      } else {
+        console.error('Google Identity Services not loaded yet');
+        // Fallback without Google Identity Services - ensure we have client ID
+        if (!window.GOOGLE_CLIENT_ID) {
+          console.error('Google Client ID not configured - OAuth not available');
+          return;
+        }
+        const clientId = window.GOOGLE_CLIENT_ID;
+        const redirectUri = encodeURIComponent(window.location.origin);
+        const authUrl = `https://accounts.google.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid email profile&access_type=online&prompt=select_account`;
+
+        window.location.href = authUrl;
+      }
+    };
+
+    // Handle OAuth2 callback token
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const error = urlParams.get('error');
+
+    if (error) {
+      console.error('Authentication error:', error);
+      document.getElementById('login-error').textContent = 'Authentication failed. Please try again.';
+      document.getElementById('login-error').style.display = 'block';
+    } else if (token) {
+      try {
+        // Decode user data from token
+        const userData = JSON.parse(atob(token));
+
+        // Create credential object similar to Google Identity Services
+        const fakeCredential = {
+          credential: btoa(JSON.stringify({
+            iss: 'https://accounts.google.com',
+            aud: window.GOOGLE_CLIENT_ID,
+            sub: userData.email,
+            email: userData.email,
+            name: userData.name,
+            picture: userData.picture,
+            email_verified: true,
+            iat: Math.floor(Date.now() / 1000),
+            exp: Math.floor(Date.now() / 1000) + 3600
+          }))
+        };
+        // Clean URL
+
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        // Process the authentication
+        if (typeof handleGoogleSignIn === 'function') {
+          handleGoogleSignIn(fakeCredential);
+        } else {
+          console.log('Authentication successful, waiting for handler...');
+          window.pendingAuthData = fakeCredential;
+        }
+      } catch (err) {
+        console.error('Error processing authentication token:', err);
+        document.getElementById('login-error').textContent = 'Authentication processing failed.';
+        document.getElementById('login-error').style.display = 'block';
+      }
+    }
+
+    // Simple Google Identity Services without FedCM
+    console.log('Using Google Identity Services in standard mode');
+
+    
+  </script>
+
+  <!-- Google Publisher Tag for Rewarded Ads -->
+  <script
+    async
+    src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"
+    crossorigin="anonymous"
+  ></script>
+  
+  <!-- Cordova Scripts -->
+  <script src="cordova.js"></script>
+  <script src="cordova-init.js"></script>
+</head>
+<body>
+  
+
+<!-- Offline Detection Page -->
+  <div id="connection-offline-page" class="connection-offline-page" style="display: none;">
+    <div class="connection-offline-container">
+      <div class="connection-offline-container">
+          <div class="connection-offline-hero">
+            <div class="connection-offline-icon-container">
+              <div class="connection-offline-icon">
+                <svg viewBox="0 0 100 100" class="connection-wifi-offline-icon">
+                  <!-- WiFi symbol -->
+                  <path d="M50 75 C52 75 54 77 54 79 C54 81 52 83 50 83 C48 83 46 81 46 79 C46 77 48 75 50 75 Z" fill="currentColor"/>
+                  <path d="M50 65 C55 65 59 67 62 71 L67 66 C62 61 56 58 50 58 C44 58 38 61 33 66 L38 71 C41 67 45 65 50 65 Z" fill="currentColor"/>
+                  <path d="M50 48 C59 48 67 52 73 58 L78 53 C70 45 60 40 50 40 C40 40 30 45 22 53 L27 58 C33 52 41 48 50 48 Z" fill="currentColor"/>
+                  <path d="M50 31 C63 31 75 37 83 46 L88 41 C78 31 65 25 50 25 C35 25 22 31 12 41 L17 46 C25 37 37 31 50 31 Z" fill="currentColor"/>
+                  <!-- Diagonal line to indicate "no connection" -->
+                  <line x1="15" y1="15" x2="85" y2="85" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="connection-signal-waves">
+                <div class="connection-wave connection-wave-1"></div>
+                <div class="connection-wave connection-wave-2"></div>
+                <div class="connection-wave connection-wave-3"></div>
+              </div>
+            </div>
+
+            <div class="connection-offline-content">
+              <h1 class="connection-offline-title" data-translate="No Internet Connection">No Internet Connection</h1>
+              <p class="connection-offline-subtitle" data-translate="Please check your internet connection and try again">Please check your internet connection and try again</p>
+
+              <div class="connection-offline-actions">
+                <button class="connection-retry-btn" onclick="checkConnection()" data-translate="Try again">
+                  <i class="fas fa-sync-alt"></i>
+                  <span>Try again</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Login Screen -->
+  <div id="login-container" class="login-container">
+    <div class="login-box">
+      <div class="logo-container">
+        <div class="login-title-container">
+          <img src="accessoire-app.png" alt="AccessDigital Logo" class="login-logo">
+          <h1>AccessDigital</h1>
+        </div>
+        <p class="tagline" data-translate="Digital engagement rewards platform">Digital engagement rewards platform</p>
+      </div>
+
+      <div class="login-form">
+        <div class="language-selector">
+          <select id="language-select" style="font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; font-size: 14px;">
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="it">Italiano</option>
+            <option value="pt">Português</option>
+            <option value="de">Deutsch</option>
+            <option value="tr">Türkçe</option>
+            <option value="pl">Polski</option>
+            <option value="ru">Русский</option>
+            <option value="hi">हिन्दी</option>
+            <option value="zh">中文</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>    
+            <option value="ar">العربية</option>
+            <option value="id">Bahasa Indonesia</option>
+          </select>
+        </div>
+
+<div id="google-signin-button" class="google-signin-container">
+          <button class="custom-google-signin-btn" onclick="signInWithGoogle()">
+            <svg class="google-logo" viewBox="0 0 24 24" width="18" height="18">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span data-translate="signInWithGoogle">Sign in with Google</span>
+          </button>
+        </div>
+
+
+
+        <div id="login-error" class="login-error" style="display: none; color: red; text-align: center; margin-top: 10px;"></div>
+ 
+        <div class="referral-input">
+          <input type="text" id="referral-code" data-translate-placeholder="referralCodePlaceholder" placeholder="Enter Referral Code (Optional)">
+          <p class="referral-bonus" data-translate="referralBonus">Enter a valid referral code and get 0.15 points!</p>
+        </div>
+
+        <div class="privacy-policy-section" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+          <a href="privacy-policy.html" target="_blank" class="privacy-policy-link">
+            <i class="fas fa-shield-alt"></i>
+            <span data-translate="Privacy Policy">Privacy Policy</span>
+          </a>
+          <a href="terms-of-service-app.html" target="_blank" class="privacy-policy-link">
+            <i class="fas fa-file-contract"></i>
+            <span data-translate="Terms of Service">Terms of Service</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Interface -->
+  <div id="app-container" class="app-container">
+    <!-- Sidebar (for desktop) -->
+    <div id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <img src="accessoire-app.png" alt="AccessDigital" class="logo">
+        <button id="toggle-sidebar" class="toggle-sidebar-btn">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+
+      <div class="sidebar-spacer"></div>
+
+      <nav class="sidebar-nav">
+        <ul>
+          <li>
+            <a href="#" class="nav-link active" data-page="dashboard">
+              <i class="fas fa-home"></i> <span data-translate="dashboard">Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-link" data-page="activity">
+              <i class="fas fa-hammer"></i> Activity
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-link" data-page="referrals">
+              <i class="fas fa-users"></i> Referrals
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-link" data-page="network">
+              <i class="fas fa-cube"></i> Network
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-link" data-page="tasks">
+              <i class="fas fa-tasks"></i> <span data-translate="Tasks">Tasks</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-link" data-page="pointsystem">
+              <i class="fas fa-chart-pie"></i> Point System
+            </a>
+          </li>
+
+          <li>
+            <a href="#" class="nav-link" data-page="profile">
+              <i class="fas fa-user"></i> Profile
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-link" onclick="logout()">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      </div>
+
+    <!-- Mobile Bottom Navigation (for mobile) -->
+    <div class="mobile-nav">
+      <div class="mobile-nav-items">
+        <a href="#" class="mobile-nav-item active" data-page="dashboard">
+          <i class="fas fa-home"></i>
+          <span data-translate="home">Home</span>
+        </a>
+        <a href="#" class="mobile-nav-item" data-page="activity">
+          <i class="fas fa-hammer"></i>
+          <span data-translate="activity">Activity</span>
+        </a>
+        <a href="#" class="mobile-nav-item" data-page="referrals">
+          <i class="fas fa-users"></i>
+          <span data-translate="referrals">Referrals</span>
+        </a>
+          <a href="#" class="mobile-nav-item" data-page="profile">
+          <i class="fas fa-user"></i>
+          <span data-translate="profile">Profile</span>
+        </a>
+        <a href="#" class="mobile-nav-item" data-page="more">
+          <i class="fas fa-ellipsis-h"></i>
+          <span data-translate="more">More</span>
+        </a>
+      </div>
+    </div>
+
+   <!-- Main Content -->
+  <div id="main-content" class="main-content">
+      <!-- Dashboard Page -->
+      <div id="dashboard-page" class="page-content">
+
+
+        <!-- Dashboard Header with User Avatar and Actions -->
+        <div class="dashboard-header">
+          <div class="dashboard-user-section">
+            <div class="dashboard-user-avatar">
+              <img id="dashboard-profile-avatar" src="https://via.placeholder.com/100" alt="" class="dashboard-avatar-img" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';">
+            </div>
+            <div class="dashboard-user-name" id="dashboard-user-name">User</div>
+          </div>
+
+          <div class="dashboard-action-icons">
+            <div class="action-icon theme-icon" title="Theme Mode" onclick="showThemeModal()">
+              <i class="fas fa-sun" id="dashboard-theme-icon"></i>
+            </div>
+            <div class="action-icon language-icon" title="Language" onclick="showLanguageModal()">
+              <i class="fas fa-globe"></i>
+              <span class="language-code" id="dashboard-language-code">AR</span>
+            </div>
+            <div class="action-icon settings-icon" title="Settings" onclick="navigateToPage('profile')">
+              <i class="fas fa-cog"></i>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Referral Widget - -->
+        <div class="referral-widget" id="referral-widget">
+      <div class="referral-stats-item" id="referral-count-display" title="xxx!?" onclick="navigateToPage('referrals')">
+  <div class="referral-icon-container full-click-area" data-count="0" data-active="0" data-total="0">
+    <span class="referral-emoji">👥</span>
+    <span class="referral-count-text" id="referral-count-badge">0/0</span>
+    <span class="referral-label-text" data-translate="Friends">Friends</span>
+  </div>
+</div>
+
+
+
+
+          <div class="referral-invite-item" id="referral-invite-btn" title="Invite Freinds" onclick="showInviteModal()">
+            <div class="invite-icon-container">
+              <i class="fas fa-share"></i>
+              <span class="invite-label-text" data-translate="Invite">Invite</span>
+            </div>
+          </div>
+        </div>
+        <div class="dashboard-container">
+          <!--بطاقة الموحدة التي تجمع كل العناصر -->
+          <div class="dashboard-unified-card">
+
+
+            <div class="dashboard-timer-balance-row">
+              <!-- عرض رصيد بسيط -->
+
+                <!-- Network Selector -->
+                <div class="network-selector-container">
+                  <div class="network-selector" onclick="toggleNetworkDropdown()">
+                    <div class="network-info">
+                       <img src="accessoire-app.png" alt="Access" class="network-logo">
+                      <span class="network-name" data-translate="Access Chain">Access Chain</span>
+
+                      <div class="chain-icon-container">
+                        <svg class="chain-icon" viewBox="0 0 24 24" width="18" height="18">
+                          <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7h-4c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" fill="currentColor"/>
+                        </svg>
+                        <div class="chain-pulse"></div>
+                      </div>
+                    </div>
+
+                    <i class="fas fa-chevron-down network-arrow"></i>
+
+
+                    <!-- Dropdown -->
+                    <div class="network-dropdown" id="networkDropdown">
+                      <div class="wallet-address-section">
+                        <div class="account-address-label" data-translate="Account Address">Account Address</div>
+                        <div class="wallet-address-display">
+                          <span class="account-address-text" id="dashboard-account-address">Loading...</span>
+                          <button class="account-copy-btn" onclick="copyDashboardAccountAddress()" title="Copy Address">
+                            <i class="fas fa-copy"></i>
+                          </button>
+                        </div>
+                        <div class="view-explorer-wrapper">
+                          <a href="#" class="account-view-link" onclick="viewDashboardAddress(event)" title="View Address Details">
+                            <span data-translate="View on Explorer">View on Explorer</span><img src="logo.png" alt="Access Logo" style="width: 18px; height: 18px; object-fit: contain; margin-left: 4px; vertical-align: middle;">
+                          </a>
+                        </div>
+                        <div class="connect-wallet-wrapper">
+                          <button class="connect-wallet-btn" onclick="openWalletConnectModal()" title="Add Network to Wallet">
+                            <i class="fas fa-wallet"></i> <span data-translate="Connect Wallet">Connect Wallet</span>
+                          </button>
+                        </div>
+                      </div>
+
+
+                    </div>
+                  </div>
+                </div>
+
+ <div class="center-balance-display">
+                <div class="balance-showcase">
+                  <div class="balance-info">
+
+                    <div class="balance-label-container">
+                      <div class="balance-label" data-translate="Total Balance">TOTAL BALANCE</div>
+                      <button class="balance-privacy-toggle" onclick="window.BalancePrivacyManager?.togglePrivacy()">
+                        <i class="far fa-eye"></i>
+                      </button>
+                       <i class="fas fa-wallet wallet-icon"></i>
+                      <svg width="40" height="30" class="balance-chart-icon">
+                        <polyline points="5,20 15,10 25,15 35,5 45,10 55,5" 
+                                  fill="none" 
+                                  stroke="#6366f1" 
+                                  stroke-width="2.5" 
+                                  stroke-linejoin="round" 
+                                  stroke-linecap="round" />
+                      </svg>
+
+                    </div>
+                    <div class="balance-value">
+                      <div class="balance-amount-container">                        <span id="user-coins">0.00</span>
+                        <span class="balance-currency-unit">Points</span>
+                      </div>
+                    </div>
+                  </div>
+
+
+                </div>
+              </div>
+
+              <!-- العداد فقط -->
+              <div class="dashboard-activity-timer" id="dashboard-activity-timer" style="display: block; visibility: visible; opacity: 1;">
+              <!-- ساعة الرقاص الجميلة -->
+              <div class="pendulum-clock">
+                <div class="clock-body">
+                  <div class="clock-face">
+                    <div class="clock-hands">
+                      <div class="hour-hand"></div>
+                      <div class="minute-hand"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="pendulum">
+                  <div class="pendulum-weight"></div>
+                </div>
+              </div>
+
+              <div class="dashboard-timer-header">
+                <span class="dashboard-timer-title"><span data-translate="Timer">Timer</span> <i class="fas fa-bolt timer-bolt-icon"></i></span>
+                <div id="dashboard-hashrate-display" class="dashboard-hashrate-display" style="display: flex; visibility: visible; opacity: 1;">
+                  <span class="hashrate-label">XP/s</span>
+                  <span id="dashboard-hashrate-value">10.0</span>
+                </div>
+              </div>
+
+              <div class="dashboard-timer-display">
+                <div class="dashboard-countdown" id="dashboard-countdown-display">00:00:00</div>
+                <div class="dashboard-timer-status" id="dashboard-timer-status" data-translate="Not Active" style="display: none;">Not Active</div>
+              </div>
+            </div>
+            </div>
+
+                <!-- Dashboard Action Buttons -->
+            <div class="dashboard-action-buttons">
+              <!-- Primary Action Buttons -->
+              <div class="primary-action-buttons">
+                <button class="action-button start-activity-btn" onclick="navigateToPage('activity')">
+                   
+                  <span data-translate="Start">Start</span>
+                  <i class="fas fa-play"></i>
+                </button>
+                <button class="action-button referrals-btn" onclick="navigateToPage('referrals')">
+                  <span data-translate="Referrals">Referrals</span>
+                  <i class="fas fa-users"></i>
+                </button>
+              </div>
+
+              <!-- Secondary Action Buttons -->
+              <div class="secondary-action-buttons">
+                <button class="secondary-button network-btn" onclick="navigateToPage('network')">
+                  <i class="fas fa-link"></i>
+                  <span data-translate="Network">Network</span>
+                </button>
+                <button class="secondary-button tokenomics-btn" onclick="navigateToPage('pointsystem')">
+                  <i class="fas fa-chart-pie"></i>
+                  <span data-translate="Point System">Point System</span>
+                </button>
+                <button class="secondary-button whitepaper-btn" onclick="downloadWhitepaper()">
+                  <i class="fas fa-file-alt"></i>
+                  <span data-translate="Whitepaper">Whitepaper</span>
+                </button>
+                <button class="secondary-button tasks-btn" onclick="navigateToPage('tasks')">
+                  <i class="fas fa-tasks"></i>
+                  <span data-translate="Tasks">Tasks</span>
+                </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+      <!-- Activity Page -->
+      <div id="activity-page" class="page-content" style="display:none">
+        <div class="activity-container">
+          <div class="activity-card">
+            <div class="activity-header">
+
+              <div id="activity-status" class="activity-status" style="display: none;">Activity inactive</div>
+
+            <div class="activity-stats">
+          <div class="accumulated-display">
+           <span class="stats-label" data-translate="Accumulated">Accumulated:</span>
+
+          <span id="accumulated-coins" style="
+    font-family: 'Raleway', sans-serif !important;
+    font-variant-numeric: oldstyle-nums !important;
+    font-feature-settings: 'onum' 1, 'lnum' 0 !important;
+    font-weight: 800 !important;
+    color: var(--text-color) !important;
+    display: flex !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    background: linear-gradient(45deg, var(--text-color), var(--primary-color), #4aa0e2) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    letter-spacing: -0.5px !important;">
+  0.00000000
+</span>
+
+          </div>
+          <div id="hashrate-display" class="hashrate-display" style="display: none;">
+            <span class="stats-label">XP/s</span>
+            <span id="hashrate-value">10.0</span>
+          </div>
+ </div>
+            </div>
+
+            <div class="activity-timer">
+              <div class="timer-label">Next activity available in:</div>
+              <div id="countdown-timer" class="countdown-timer">00:00:00</div>
+            </div>
+
+            <div class="activity-action">
+
+
+<button id="toggle-activity" class="toggle-activity-btn" data-translate="Start Activity" data-server-verified="true">
+  <i class="fas fa-play"></i> Start Activity
+</button>
+
+
+
+              <div id="activity-animation" class="activity-animation" style="display:none"></div>
+            </div>
+
+            <div class="processing-info">
+              <p data-translate="processingInfo1">Activity once every 24 hours to gain Accessoire points!</p>
+              <p data-translate="processingInfo2">Each successful activity session gives you +0.24 points.</p>
+            </div>
+
+            <!-- Activity progress display removed -->
+         </div>
+
+          <div class="activity-history">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <h3 style="margin: 0;">Activity History</h3>
+              <button id="activity-boost-btn" class="boost-btn" onclick="showActivityBoost()" style="padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; margin: 0;">
+                <i class="fas fa-rocket"></i>
+                <span data-translate="Boost">Boost</span>
+              </button>
+            </div>
+            <div class="history-container">
+              <!-- Activity history will be populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Referrals Page -->
+      <div id="referrals-page" class="page-content" style="display:none">
+        <div class="referrals-container">
+          <div class="referral-card">
+            <div class="referral-header">
+              <h3 data-translate="inviteEarn">Invite Friends & Get Points</h3>
+            </div>
+
+            <div class="referral-bonus-info">
+              <div class="bonusamount">             
+                     <span data-translate="Referral Benefits">Referral Benefits</span>
+
+                <span class="bonus-value">0</span>
+                <img src="accessoire-app.png" alt="Referral Logo" class="referral-bonus-logo">
+              </div>
+              <div class="bonus-text" data-translate="bonusText">Get 0.15 points for each friend who joins using your referral code!</div>
+            </div>
+
+            <div class="referral-share">
+              <div class="share-label" data-translate="Your Referral Code:">Your Referral Code:</div>
+              <div class="share-code">
+                <i class="fas fa-link referral-icon"></i>
+                <span id="referral-code-display"></span>
+                <button id="copy-referral" class="copy-btn" onclick="showReferralCopyModal()">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="referrals-list-container">
+            <div class="referrals-header">
+              <h3 data-translate="yourReferrals">Your Referrals</h3>
+
+                            <button class="leaderboard-btn" onclick="openLeaderboardModal()">
+                <i class="fas fa-trophy"></i>
+                <span data-translate="Leaderboard">Leaderboard</span>
+                            </button>
+            </div>
+            <ul id="referrals-list" class="referrals-list">
+              <!-- Referrals will be populated by JavaScript -->
+              <li id="no-referrals-message" class="empty-referrals" style="display:none;">
+                <div class="empty-message">
+                  <i class="fas fa-users"></i>
+                  <p data-translate="No referrals yet">No referrals yet</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+
+
+
+      <div id="profile-page" class="page-content" style="display:none">
+
+          <div class="profile-name-container">
+            <!-- Profile Menu (Three Dots) -->
+            <div class="profile-menu-container">
+              <button class="profile-menu-btn" onclick="toggleProfileMenu()">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <div class="profile-dropdown-menu" id="profile-dropdown-menu">
+                <div class="profile-menu-option" onclick="editProfile()">
+                  <i class="fas fa-edit"></i>
+                  <span data-translate="Edit Profile">Edit Profile</span>
+                </div>
+                <div class="profile-menu-option" onclick="showSignOutConfirmation()">
+                  <i class="fas fa-sign-out-alt"></i>
+                  <span data-translate="Logout">Logout</span>
+                </div>
+                <div class="profile-menu-option" onclick="openDeleteAccountModal()" style="color: #dc3545;">
+                  <i class="fas fa-trash-alt"></i>
+                  <span data-translate="Delete Account">Delete Account</span>
+                </div>
+              </div>
+            </div>
+
+           <!-- Avatar first -->
+           <div class="avatar-container" id="avatar-container">
+             <img id="profile-avatar" src="https://via.placeholder.com/100" alt="" class="profile-avatar" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';">
+             <div class="camera-icon-badge">
+               <i class="fas fa-camera"></i>
+             </div>
+             <input type="file" id="profile-image-upload" accept="image/*">
+
+             <!-- Photo Options Menu -->
+             <div class="photo-options-menu" id="photo-options-menu">
+               <div class="photo-option camera-option" id="camera-option">
+                 <i class="fas fa-camera"></i>
+                 <span data-translate="Take Photo">Take Photo</span>
+               </div>
+               <div class="photo-option gallery-option" id="gallery-option">
+                 <i class="fas fa-images"></i>
+                 <span data-translate="Choose from Gallery">Choose from Gallery</span>
+               </div>
+               <div class="photo-option delete" id="delete-option">
+                 <i class="fas fa-trash"></i>
+                 <span data-translate="Remove Photo">Remove Photo</span>
+               </div>
+             </div>
+           </div>
+
+            <!-- Name below avatar -->
+            <div class="profile-text-container">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%;">
+                <div id="profile-name" class="profile-name-display">
+                  <img src="accessoire-app.png" alt="Logo" class="mini-logo">
+                  User
+                </div>
+
+                <div id="profile-member-since" class="profile-member-since" style="display: none;">
+                  <span data-translate="Member since:">Member since:</span> <span id="member-since-date">January 1, 2025</span>
+                </div>
+
+                <input type="text" id="profile-name-input" class="profile-name-edit" placeholder="Your Name" maxlength="22" data-translate-placeholder="Your Name">
+
+              </div>
+
+              <div class="profile-edit-buttons" style="display: none;">
+                <button id="save-profile-changes" class="save-changes-btn" data-translate="Save Changes">Save Changes</button>
+                <button id="cancel-profile-changes" class="cancel-changes-btn" data-translate="Cancel">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+
+
+
+
+
+        <!-- Balance & Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card balance-card">
+            <div class="stat-icons">
+              <img src="accessoire-app.png" alt="Logo" class="mini-logo">
+            </div>
+            <div class="stat-content">
+              <h3 data-translate="Balance">Balance</h3>
+              <div class="stat-value">
+                <span id="profile-coins">0</span>
+                <span class="currency"></span>
+                <button class="balance-privacy-toggle" onclick="window.BalancePrivacyManager?.togglePrivacy()">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            </button>
+          </div>
+
+          <div class="stat-card referral-card">
+            <div class="stat-icons">
+              <button class="share-links" onclick="showInviteModal()" title="Share Invite Link">
+                  <i class="fas fa-share-alt"></i>
+              </button>
+
+            </div>
+            <div class="stat-content">
+              <h3 data-translate="Referral Code">Referral Code</h3>
+              <div class="stat-value referral-code">
+                 <span id="profile-referral-code">-</span>
+              </div>
+            </div>
+             <button class="copy-btn" onclick="copyReferralCode(event)" title="Copy Referral Code">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+        </div>
+
+
+
+        <!-- Settings Section -->
+        <div class="settings-section">
+          <h3 class="section-title">
+            <i class="fas fa-cog"></i>
+            <span data-translate="Settings">Settings</span>
+          </h3>
+
+          <div class="settings-grid">
+            <div class="setting-item">
+              <div class="setting-info">
+                <div class="setting-icon" style="color: #f59e0b; -webkit-background-clip: text; font-size: 32px;">
+                  <i class="fas fa-envelope"></i>
+                </div>
+                <div class="setting-content">
+                  <h4 data-translate="Email Address">Email Address</h4>
+                  <p class="setting-description" data-translate="Your account email">Your account email</p>
+                </div>
+              </div>
+              <div class="setting-value">
+                             <p id="profile-email" class="profile-email">user@example.com</p>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <div class="setting-icon" style="color: #38bdf8; -webkit-background-clip: text; font-size: 32px;">
+                  <i class="fas fa-language"></i>
+                </div>
+                <div class="setting-content">
+                  <h4 data-translate="Language">Language</h4>
+                  <p class="setting-description" data-translate="Interface language">Interface language</p>
+                </div>
+              </div>
+              <div class="setting-value">
+                <select id="profile-language" class="modern-select">
+                  <option value="en">English</option>
+                  <option value="fr">Français</option>
+                  <option value="es">Español</option>
+                  <option value="it">Italiano</option>
+                  <option value="pt">Português</option>
+                  <option value="de">Deutsch</option>
+                  <option value="tr">Türkçe</option>
+                  <option value="pl">Polski</option>
+                  <option value="ru">Русский</option>
+                  <option value="hi">हिन्दी</option>
+                  <option value="zh">中文</option>
+                  <option value="ja">日本語</option>
+                  <option value="ko">한국어</option>    
+                  <option value="ar">العربية</option>
+                  <option value="id">Bahasa Indonesia</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <div class="setting-icon" style="color: #818cf8; -webkit-background-clip: text;
+  font-size: 32px;">
+                  <i class="fas fa-moon"></i>
+                </div>
+                <div class="setting-content">
+                  <h4 data-translate="Theme Mode">Theme Mode</h4>
+                  <p class="setting-description" data-translate="Dark or light theme">Dark or light theme</p>
+                </div>
+              </div>
+              <div class="setting-value">
+                <select id="night-mode-select" class="modern-select">
+                  <option value="light" data-translate="Light">Light</option>
+                  <option value="dark" data-translate="Dark">Dark</option>
+                  <option value="auto" data-translate="Auto">Auto</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <div class="setting-icon" style="
+  background: linear-gradient(45deg, #F4C542, #D64545, #4A90E2, #7ED321);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; font-size: 32px;">
+                  <i class="fas fa-palette"></i>
+                </div>
+        <div class="setting-content">
+                  <h4 data-translate="Theme Controls">Theme Controls</h4>
+                  <p class="setting-description" data-translate="Quick theme switching">Quick theme switching</p>
+                </div>
+              </div>
+              <div class="setting-value theme-controls">
+                <button id="theme-dim" class="theme-toggle-btn" title="Dark Mode">
+                  <i class="fas fa-moon"></i>
+                </button>
+                <button id="theme-brighten" class="theme-toggle-btn" title="Light Mode">
+                  <i class="fas fa-sun"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <div class="setting-icon" style="
+  background: linear-gradient(45deg, #1DA1F2, #0088cc, #229ED9, #00acee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; font-size: 32px;">
+                  <i class="fas fa-share-alt"></i>
+                </div>
+                <div class="setting-content">
+                  <h4 data-translate="Social Media">Social Media</h4>
+                  <p class="setting-description" data-translate="Follow us">Follow us</p>
+                </div>
+              </div>
+              <div class="setting-value">
+                <div class="social-media-controls">
+                  <a href="https://x.com/Access_Chain?t=MwxUtkdWH9LneIOancb7tg&s=09" target="_blank" rel="noopener noreferrer" class="social-media-btn x-btn" title="Follow us on X">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block;">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="#000000"/>
+                    </svg>
+                  </a>
+                  <a href="https://t.me/+YnQtDWLlQxk5YTU8" target="_blank" rel="noopener noreferrer" class="social-media-btn telegram-btn" title="Join our Telegram">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+                      <!-- أيقونة الطائرة الورقية فقط -->
+                      <path fill="#FFFFFF" d="M58.5 113.5l91-35.5c4.2-1.5 7.9 1 6.5 7.2l-15.5 73c-1.1 5-4.2 6.2-8.5 3.9l-23.5-17.3-11.3 10.9c-1.3 1.3-2.3 2.3-4.7 2.3l1.7-24 43.5-39.3c1.9-1.7-.4-2.6-2.9-1l-53.7 33.8-23.2-7.2c-5-1.6-5.1-5 1.1-7.4z"/>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+  <!-- Community Page -->
+<div id="network-page" class="page-content" style="display:none">
+  <div class="community-container">
+    <div class="community-header">
+      <div class="network-title-container">
+        <div class="title-logo-container">
+          <h2 data-translate="Access Community Network">Access Community Network</h2>
+
+          <p class="chain-description" data-translate="Official Network For Access Points">Official Network For Access Points</p>
+        </div>
+      </div>
+    </div>
+
+
+    
+   
+  
+   <div class="community-wallet"> 
+      <div class="account-card">
+        <div class="account-header">
+
+ <h3 data-translate="Your account">Your account:</h3>
+
+
+
+          <div class="wallet-balance">
+
+ <small>🝗</small>
+
+
+            <span id="user-coins">0</span>         
+
+            <button class="balance-privacy-toggle" onclick="window.BalancePrivacyManager?.togglePrivacy()">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div class="account-address-container">
+          <div class="qrcode-container">
+            <canvas id="wallet-qrcode" width="150" height="150"></canvas>
+          </div>
+
+          <label data-translate="Your Account Address">Your Account Address</label>
+          <div class="account-address">
+            <span id="user-account-address"></span>
+            <button id="copy-account-address" class="copy-btn" onclick="copyAccountAddress()"><i class="fas fa-copy"></i></button>
+          </div>
+        </div>
+
+        <div class="send-btn-wrapper">
+          <button id="new-transaction" class="action-btn primarys" onclick="showTransactionModal()">
+            <span data-translate="Send Points">Send Points</span>
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+
+        <br>
+
+        <div class="wallet-key-container">
+          <label data-translate="Private Key (Keep Secret)">Private Key (Keep Secret)</label>
+          <div class="wallet-key-box">
+            <input type="password" id="private-key-display" disabled value="••••••••••••••••••••••••••••••••">
+            <button id="toggle-private-key" class="toggle-btn" onclick="togglePrivateKeyDisplay()">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+          <div class="key-warning" data-translate="Never share your private key with anyone!">
+            Never share your private key with anyone!
+          </div>
+        </div>
+
+        <div class="wallet-actions">
+          <button id="export-account" class="action-btn" onclick="exportAccountDetails()">
+            <i class="fas fa-download"></i> <span data-translate="Export Keys">Export Keys</span>
+          </button>
+          <button id="import-account" class="action-btn" onclick="importAccountDetails()">
+            <i class="fas fa-upload"></i> <span data-translate="Import Keys">Import Keys</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="network-transactions">
+      <div class="transaction-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 data-translate="Recent Transactions">Recent Transactions</h3>
+        <!-- Filter button for mobile - on the RIGHT -->
+        <div class="tx-filter-dropdown tx-filter-mobile" style="position: relative; display: none; margin-left: auto;">
+          <button id="txFilterBtnMobile" onclick="window.toggleTxFilterMenu(event)" 
+            style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 6px; background: var(--card-bg, #f9fafb); color: var(--text-primary, #1f2937); font-size: 13px; cursor: pointer; transition: all 0.2s;"
+            onmouseover="this.style.borderColor='#7c3aed'" onmouseout="this.style.borderColor='var(--border-color, #e5e7eb)'">
+            <i class="fas fa-filter" style="font-size: 11px; color: #7c3aed;"></i>
+            <span id="txFilterLabelMobile" data-translate="All">All</span>
+            <i class="fas fa-chevron-down" style="font-size: 10px; margin-left: 2px;"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search and Filter Bar -->
+      <div class="tx-search-filter-bar" style="display: flex; align-items: center; gap: 8px; padding: 8px 0; margin-bottom: 8px;">
+        <div class="tx-search-box" style="flex: 1; max-width: 280px; position: relative;">
+          <i class="fas fa-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary, #6b7280); font-size: 12px;"></i>
+          <input type="text" id="txSearchInput" placeholder="Search address or hash..." data-translate-placeholder="Search address or hash..." 
+            style="width: 100%; padding: 8px 10px 8px 32px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 6px; font-size: 13px; background: var(--card-bg, #f9fafb); color: var(--text-primary, #1f2937); outline: none; transition: border-color 0.2s;"
+            oninput="window.filterTransactionsBySearch(this.value)"
+            onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='var(--border-color, #e5e7eb)'">
+        </div>
+        <!-- Filter dropdown - pushed to far right -->
+        <div class="tx-filter-dropdown tx-filter-desktop" style="position: relative; margin-left: auto;">
+          <button id="txFilterBtn" onclick="window.toggleTxFilterMenu(event)" 
+            style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--border-color, #e5e7eb); border-radius: 6px; background: var(--card-bg, #f9fafb); color: var(--text-primary, #1f2937); font-size: 13px; cursor: pointer; transition: all 0.2s;"
+            onmouseover="this.style.borderColor='#7c3aed'" onmouseout="this.style.borderColor='var(--border-color, #e5e7eb)'">
+            <i class="fas fa-filter" style="font-size: 11px; color: #7c3aed;"></i>
+            <span id="txFilterLabel" data-translate="All">All</span>
+            <i class="fas fa-chevron-down" style="font-size: 10px; margin-left: 2px;"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Menu (shared) -->
+      <div id="txFilterMenu" style="display: none; position: fixed; background: var(--card-bg, white); border: 1px solid var(--border-color, #e5e7eb); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 160px; z-index: 1000; overflow: hidden; color: var(--text-primary, #1f2937);">
+        <div class="tx-filter-option" onclick="window.applyTxFilter('all')" data-filter="all" style="padding: 10px 14px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: background 0.15s; color: var(--text-primary, #1f2937);">
+          <i class="fas fa-list" style="width: 16px; color: var(--text-secondary, #6b7280);"></i>
+          <span data-translate="All">All</span>
+        </div>
+        <div class="tx-filter-option" onclick="window.applyTxFilter('showAll')" data-filter="showAll" style="padding: 10px 14px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: background 0.15s; border-bottom: 1px solid var(--border-color, #e5e7eb); color: var(--text-primary, #1f2937);">
+          <i class="fas fa-eye" style="width: 16px; color: #7c3aed;"></i>
+          <span data-translate="Show All Transactions">Show All Transactions</span>
+        </div>
+        <div class="tx-filter-option" onclick="window.applyTxFilter('newest')" data-filter="newest" style="padding: 10px 14px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: background 0.15s; color: var(--text-primary, #1f2937);">
+          <i class="fas fa-clock" style="width: 16px; color: #3b82f6;"></i>
+          <span data-translate="Newest">Newest</span>
+        </div>
+        <div class="tx-filter-option" onclick="window.applyTxFilter('oldest')" data-filter="oldest" style="padding: 10px 14px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: background 0.15s; color: var(--text-primary, #1f2937);">
+          <i class="fas fa-history" style="width: 16px; color: #8b5cf6;"></i>
+          <span data-translate="Oldest">Oldest</span>
+        </div>
+        <div class="tx-filter-option" onclick="window.applyTxFilter('highest')" data-filter="highest" style="padding: 10px 14px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: background 0.15s; color: var(--text-primary, #1f2937);">
+          <i class="fas fa-arrow-up" style="width: 16px; color: #10b981;"></i>
+          <span data-translate="Highest Amount">Highest Amount</span>
+        </div>
+        <div class="tx-filter-option" onclick="window.applyTxFilter('lowest')" data-filter="lowest" style="padding: 10px 14px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: background 0.15s; color: var(--text-primary, #1f2937);">
+          <i class="fas fa-arrow-down" style="width: 16px; color: #f59e0b;"></i>
+          <span data-translate="Lowest Amount">Lowest Amount</span>
+        </div>
+        <div class="tx-filter-option" onclick="window.applyTxFilter('sent')" data-filter="sent" style="padding: 10px 14px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: background 0.15s; color: var(--text-primary, #1f2937);">
+          <i class="fas fa-paper-plane" style="width: 16px; color: #ef4444;"></i>
+          <span data-translate="Sent">Sent</span>
+        </div>
+        <div class="tx-filter-option" onclick="window.applyTxFilter('received')" data-filter="received" style="padding: 10px 14px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: background 0.15s; color: var(--text-primary, #1f2937);">
+          <i class="fas fa-download" style="width: 16px; color: #10b981;"></i>
+          <span data-translate="Received">Received</span>
+        </div>
+      </div>
+
+      <div class="transaction-list" id="transaction-list">
+        <div class="empty-transactions" id="empty-transactions">
+          <i class="fas fa-exchange-alt"></i>
+          <p data-translate="No transactions yet">No transactions yet</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="network-explorer">
+      <div class="explorer-header">
+        <h3 data-translate="Accessoire Scan">Accessoire Scan</h3>
+        <a href="#" class="view-all" onclick="showFullExplorer()" data-translate="View All">View All</a>
+      </div>
+      <div class="explorer-stats">
+        <div class="stat-item">
+          <div class="stat-labels" data-translate="Blocks">Blocks</div>
+          <div class="stat-value" id="total-blocks">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-labels" data-translate="Transactions">Transactions</div>
+          <div class="stat-value" id="total-transactions">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-labels" data-translate="Network Fee">Network Fee</div>
+          <div class="stat-value">0.00002 Points</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transaction Modal -->
+  <div id="transaction-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeTransactionModal()">&times;</span>
+      <h3 data-translate="Send Access Points">Send Access Points</h3>
+      <div class="form-group">
+        <label for="recipient-address" data-translate="Recipient Address">Recipient Address</label>
+        <div class="address-input-container">
+          <input type="text" id="recipient-address" placeholder="Enter recipient wallet address" data-translate="Enter recipient wallet address">
+          <div class="address-actions">
+
+                  <button type="button" class="address-action-btn" id="paste-address" title="Paste Address">
+                    <i class="fas fa-paste"></i>
+                  </button>
+
+             <button type="button" class="address-action-btn" id="scan-qr-code" title="Scan QR Code">
+                    <i class="fas fa-qrcode"></i>
+                  </button>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+                 <label for="transaction-amount" data-translate="Amount">Amount</label>
+                  <div class="amount-input-container">
+                    <input type="number" id="transaction-amount" step="0.00000001" min="0" placeholder="Enter amount to send" data-translate="Enter amount to send">
+
+                <button type="button" class="max-amount-btn" onclick="setMaxAmount()" data-translate="Max Amount">Max Amount</button>
+
+</div>
+<div class="gas-fee-info">
+  <small data-translate="Minimum: 0.00001 Access">Minimum: 0.00001 Points</small>
+</div>
+
+
+                </div>
+      <div class="form-group">
+        <label for="transaction-network" data-translate="Network Chain">Network Chain</label>
+        <select id="transaction-network" class="network-select">
+          <option value="access" selected>Access Points</option>
+          <option value="eth" disabled>ETH (Coming Soon)</option>
+          <option value="sol" disabled>SOL (Coming Soon)</option>
+          <option value="bnb" disabled>BNB (Coming Soon)</option>
+        </select>
+      </div>
+      <div class="transaction-fee">
+        <div class="fee-label" data-translate="Transaction Fee:">Transaction Fee:</div>
+        <div class="fee-value">0.00002 Points</div>
+      </div>
+      <div class="form-actions">
+        <button id="confirm-transaction" class="action-btn primary" onclick="sendTransaction()" data-translate="Confirm Transaction">Confirm Transaction</button>
+        <button class="action-btn secondary" onclick="closeTransactionModal()" data-translate="Cancel">Cancel</button>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- QR Scanner Modal -->
+  <div id="qr-scanner-modal" class="qr-scanner-modal" style="display: none;">
+    <div class="scanner-content">
+      <div class="scanner-header">
+        <h3 data-translate="Scan QR Code">Scan QR Code</h3>
+        <button class="close-scanner" onclick="closeQRScanner()" data-translate="Close">×</button>
+      </div>
+      <div class="scanner-container">
+        <video id="qr-video"></video>
+        <div class="scan-region-highlight"></div>
+      </div>
+      <div class="scanner-info" data-translate="Position the QR code within the frame to scan">
+        Position the QR code within the frame to scan
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Account Modal -->
+  <div id="import-account-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeImportModal()">&times;</span>
+      <h3 data-translate="Import Account">Import Account</h3>
+
+
+     
+      <div class="import-help">
+        <p data-translate="Account import functionality is temporarily disabled. It will be enabled in the future.">Account import functionality is temporarily disabled. It will be enabled in the future.</p>
+      </div>
+
+      <div class="import-tabs">
+        <button id="privatekey-tab" class="import-tab active" data-translate="Private Key">Private Key</button>
+        <button id="json-tab" class="import-tab" data-translate="JSON File">JSON File</button>
+        <button id="address-tab" class="import-tab" data-translate="Address Lookup">Address Lookup</button>
+      </div>
+
+      <div id="privatekey-import" class="import-content">
+        <div class="form-group">
+          <label for="private-key-input" data-translate="Enter Private Key">Enter Private Key</label>
+          <input type="password" id="private-key-input" data-translate-placeholder="Enter your private key" placeholder="Enter your private key" autocomplete="off">
+          <button id="toggle-input-visibility" class="toggle-btn" onclick="toggleImportKeyVisibility()">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <div class="key-warning">
+          <i class="fas fa-exclamation-triangle"></i> <span data-translate="Never share your private key with anyone!">Never share your private key with anyone!</span>
+        </div>
+        <div class="form-actions">
+          <button id="import-key-btn" class="action-btn primary" disabled data-translate="Import Account">Import Account</button>
+        </div>
+      </div>
+
+      <div id="json-import" class="import-content" style="display: none;">
+        <div class="drop-area" id="drop-area">
+          <i class="fas fa-file-upload"></i>
+          <p data-translate="Drag and drop your wallet file or">Drag and drop your wallet file or</p>
+          <label for="account-file-input" class="file-input-label" data-translate="Select File">Select File</label>
+          <input type="file" id="account-file-input" accept="application/json" style="display: none;">
+        </div>
+        <div class="form-actions">
+          <button id="import-file-btn" class="action-btn primary" disabled data-translate="Import Account">Import Account</button>
+        </div>
+      </div>
+
+      <div id="address-import" class="import-content" style="display: none;">
+        <div class="form-group">
+          <label for="account-address-input" data-translate="Enter Account Address">Enter Account Address</label>
+          <input type="text" id="account-address-input" placeholder="0x..." autocomplete="off">
+        </div>
+        <p class="address-info-text" data-translate="View wallet transactions in read-only mode without accessing private keys, balances, or assets.">
+          View wallet transactions in read-only mode without accessing private keys, balances, or assets.
+        </p>
+        <div class="form-actions">
+          <button id="lookup-address-btn" class="action-btn primary" disabled data-translate="Look Up Account">Look Up Account</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+      <!-- Tasks Page -->
+      <!-- Daily Missions Page -->
+      <div id="tasks-page" class="page-content" style="display:none">
+        <div class="ms-container">
+          
+          <!-- Missions Header -->
+          <div class="ms-header">
+            <div class="ms-title-section">
+              <h2 data-translate="Daily Missions">Daily Missions</h2>
+              <p class="ms-subtitle" data-translate="Complete tasks to earn rewards">Complete tasks to earn rewards</p>
+            </div>
+            <div class="ms-streak-badge" id="ms-streak-badge">
+              <i class="fas fa-fire"></i>
+              <span id="ms-streak-count">0</span>
+              <span data-translate="Days">Days</span>
+            </div>
+          </div>
+
+          <!-- Daily Login Reward -->
+          <div class="ms-section" id="ms-daily-section">
+            <div class="ms-section-header" id="ms-daily-header">
+              <i class="fas fa-calendar-check"></i>
+              <h3 data-translate="Daily Check-in">Daily Check-in</h3>
+            </div>
+            
+            <div class="ms-streak-container">
+              <div class="ms-streak-days">
+                <div class="ms-streak-day" data-day="1">
+                  <div class="ms-day-circle">
+                    <span>1</span>
+                  </div>
+                  <span class="ms-day-reward">+0.01</span>
+                </div>
+                <div class="ms-streak-day" data-day="2">
+                  <div class="ms-day-circle">
+                    <span>2</span>
+                  </div>
+                  <span class="ms-day-reward">+0.02</span>
+                </div>
+                <div class="ms-streak-day" data-day="3">
+                  <div class="ms-day-circle">
+                    <span>3</span>
+                  </div>
+                  <span class="ms-day-reward">+0.03</span>
+                </div>
+                <div class="ms-streak-day" data-day="4">
+                  <div class="ms-day-circle">
+                    <span>4</span>
+                  </div>
+                  <span class="ms-day-reward">+0.04</span>
+                </div>
+                <div class="ms-streak-day" data-day="5">
+                  <div class="ms-day-circle">
+                    <span>5</span>
+                  </div>
+                  <span class="ms-day-reward">+0.05</span>
+                </div>
+                <div class="ms-streak-day" data-day="6">
+                  <div class="ms-day-circle">
+                    <span>6</span>
+                  </div>
+                  <span class="ms-day-reward">+0.06</span>
+                </div>
+                <div class="ms-streak-day special" data-day="7">
+                  <div class="ms-day-circle">
+                    <i class="fas fa-gift"></i>
+                  </div>
+                  <span class="ms-day-reward">+0.15</span>
+                </div>
+              </div>
+              <button class="ms-claim-daily-btn" id="ms-claim-daily-btn" onclick="msClaimDaily()">
+                <i class="fas fa-hand-pointer"></i>
+                <span data-translate="Claim Today">Claim Today</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Social Tasks -->
+          <div class="ms-section">
+            <div class="ms-section-header">
+              <i class="fas fa-share-alt"></i>
+              <h3 data-translate="Social Tasks">Social Tasks</h3>
+              <span class="ms-section-bonus">+0.04 <span data-translate="total">total</span></span>
+            </div>
+            
+            <div class="ms-list">
+              <!-- Follow Twitter -->
+              <div class="ms-item" id="ms-follow-twitter" data-mission="follow_twitter">
+                <div class="ms-icon twitter">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </div>
+                <div class="ms-info">
+                  <span class="ms-title" data-translate="Follow us on X">Follow us on X</span>
+                  <span class="ms-desc" data-translate="Follow @Access_Chain">Follow @Access_Chain</span>
+                </div>
+                <div class="ms-reward">
+                  <span>+0.02</span>
+                  <img src="accessoire-app.png" alt="Points" class="ms-reward-icon">
+                </div>
+                <button class="ms-btn" onclick="msStartMission('follow_twitter')">
+                  <span data-translate="Start">Start</span>
+                </button>
+              </div>
+
+              <!-- Join Telegram -->
+              <div class="ms-item" id="ms-join-telegram" data-mission="join_telegram">
+                <div class="ms-icon telegram">
+                  <i class="fab fa-telegram-plane"></i>
+                </div>
+                <div class="ms-info">
+                  <span class="ms-title" data-translate="Join Telegram">Join Telegram</span>
+                  <span class="ms-desc" data-translate="Join our community">Join our community</span>
+                </div>
+                <div class="ms-reward">
+                  <span>+0.02</span>
+                  <img src="accessoire-app.png" alt="Points" class="ms-reward-icon">
+                </div>
+                <button class="ms-btn" onclick="msStartMission('join_telegram')">
+                  <span data-translate="Start">Start</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity Tasks -->
+          <div class="ms-section">
+            <div class="ms-section-header">
+              <i class="fas fa-tasks"></i>
+              <h3 data-translate="Activity Tasks">Activity Tasks</h3>
+              <span class="ms-section-bonus">+0.08 <span data-translate="total">total</span></span>
+            </div>
+            
+            <div class="ms-list">
+              <!-- Complete Activity -->
+              <div class="ms-item" id="ms-complete-activity" data-mission="complete_activity">
+                <div class="ms-icon activity">
+                  <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="ms-info">
+                  <span class="ms-title" data-translate="Complete Activity">Complete Activity</span>
+                  <span class="ms-desc" data-translate="Complete one activity session">Complete one activity session</span>
+                </div>
+                <div class="ms-reward">
+                  <span>+0.02</span>
+                  <img src="accessoire-app.png" alt="Points" class="ms-reward-icon">
+                </div>
+                <button class="ms-btn" onclick="msCheckMission('complete_activity')">
+                  <span data-translate="Check">Check</span>
+                </button>
+              </div>
+
+              <!-- Send Transaction -->
+              <div class="ms-item" id="ms-send-transaction" data-mission="send_transaction">
+                <div class="ms-icon transaction">
+                  <i class="fas fa-paper-plane"></i>
+                </div>
+                <div class="ms-info">
+                  <span class="ms-title" data-translate="Send Transaction">Send Transaction</span>
+                  <span class="ms-desc" data-translate="Send points to any address">Send points to any address</span>
+                </div>
+                <div class="ms-reward">
+                  <span>+0.02</span>
+                  <img src="accessoire-app.png" alt="Points" class="ms-reward-icon">
+                </div>
+                <button class="ms-btn" onclick="msCheckMission('send_transaction')">
+                  <span data-translate="Check">Check</span>
+                </button>
+              </div>
+
+              <!-- Invite Friend -->
+              <div class="ms-item" id="ms-invite-friend" data-mission="invite_friend">
+                <div class="ms-icon referral">
+                  <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="ms-info">
+                  <span class="ms-title" data-translate="Invite a Friend">Invite a Friend</span>
+                  <span class="ms-desc" data-translate="Get a new referral today">Get a new referral today</span>
+                </div>
+                <div class="ms-reward">
+                  <span>+0.02</span>
+                  <img src="accessoire-app.png" alt="Points" class="ms-reward-icon">
+                </div>
+                <button class="ms-btn" onclick="msCheckMission('invite_friend')">
+                  <span data-translate="Check">Check</span>
+                </button>
+              </div>
+
+              <!-- View Profile -->
+              <div class="ms-item" id="ms-view-profile" data-mission="view_profile">
+                <div class="ms-icon profile">
+                  <i class="fas fa-user"></i>
+                </div>
+                <div class="ms-info">
+                  <span class="ms-title" data-translate="Visit Profile">Visit Profile</span>
+                  <span class="ms-desc" data-translate="Check your profile page">Check your profile page</span>
+                </div>
+                <div class="ms-reward">
+                  <span>+0.01</span>
+                  <img src="accessoire-app.png" alt="Points" class="ms-reward-icon">
+                </div>
+                <button class="ms-btn" onclick="msVisitPage('view_profile', 'profile')">
+                  <span data-translate="Go">Go</span>
+                </button>
+              </div>
+
+              <!-- View Network -->
+              <div class="ms-item" id="ms-view-network" data-mission="view_network">
+                <div class="ms-icon network">
+                  <i class="fas fa-link"></i>
+                </div>
+                <div class="ms-info">
+                  <span class="ms-title" data-translate="Visit Network">Visit Network</span>
+                  <span class="ms-desc" data-translate="Check network page">Check network page</span>
+                </div>
+                <div class="ms-reward">
+                  <span>+0.01</span>
+                  <img src="accessoire-app.png" alt="Points" class="ms-reward-icon">
+                </div>
+                <button class="ms-btn" onclick="msVisitPage('view_network', 'network')">
+                  <span data-translate="Go">Go</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bonus Section -->
+          <div class="ms-section ms-bonus-section" id="ms-bonus-section">
+            <div class="ms-section-header" id="ms-bonus-header">
+              <i class="fas fa-star"></i>
+              <h3 data-translate="Bonus Rewards">Bonus Rewards</h3>
+            </div>
+            
+            <div class="ms-bonus-container">
+              <div class="ms-bonus-info">
+                <span data-translate="Complete all daily tasks">Complete all daily tasks</span>
+                <span class="ms-bonus-amount">+0.05 <span data-translate="Bonus">Bonus</span></span>
+              </div>
+              <div class="ms-bonus-progress-bar">
+                <div class="ms-bonus-progress" id="ms-bonus-progress" style="width: 0%"></div>
+              </div>
+              <div class="ms-bonus-status">
+                <span id="ms-completed-tasks">0</span>/<span id="ms-total-tasks">8</span> <span data-translate="tasks completed">tasks completed</span>
+              </div>
+            </div>
+            
+            <button class="ms-claim-bonus-btn" id="ms-claim-bonus-btn" onclick="msClaimBonus()" disabled>
+              <i class="fas fa-gift"></i>
+              <span data-translate="Claim Bonus">Claim Bonus</span>
+            </button>
+          </div>
+
+          <!-- Reset Timer -->
+          <div class="ms-reset-timer">
+            <i class="fas fa-clock"></i>
+            <span data-translate="Tasks reset in">Tasks reset in</span>
+            <span id="ms-reset-countdown">00:00:00</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Social Mission Modal - Twitter/X -->
+      <div class="ms-modal-overlay" id="ms-modal-twitter" style="display: none;">
+        <div class="ms-modal" onclick="event.stopPropagation()">
+          <div class="ms-modal-header">
+            <h3 style="display: flex; align-items: center; gap: 10px;">
+              <span data-translate="Follow on Twitter">Follow on Twitter</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+            </h3>
+            <button class="ms-modal-close" onclick="msCloseModal()">&times;</button>
+          </div>
+          <div class="ms-modal-body">
+            <p class="ms-modal-text" data-translate="Complete the task to earn your reward">Complete the task to earn your reward</p>
+            
+            <div class="ms-modal-steps">
+              <div class="ms-modal-step">
+                <span class="ms-step-number">1</span>
+                <span class="ms-step-text" data-translate="Click the button below to open X">Click the button below to open X</span>
+              </div>
+              <div class="ms-modal-step">
+                <span class="ms-step-number">2</span>
+                <span class="ms-step-text" data-translate="Follow @Access_Chain">Follow @Access_Chain</span>
+              </div>
+              <div class="ms-modal-step">
+                <span class="ms-step-number">3</span>
+                <span class="ms-step-text" data-translate="Enter your X username">Enter your X username</span>
+              </div>
+            </div>
+            
+            <div class="ms-username-input" style="margin: 15px 0;">
+              <input type="text" id="ms-twitter-username" placeholder="@username" 
+                style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; text-align: center;">
+              <p style="font-size: 11px; color: var(--light-text); margin-top: 5px;" data-translate="We may verify your follow status">We may verify your follow status</p>
+            </div>
+            
+            <div class="ms-modal-actions">
+              <button class="ms-action-btn primary" id="ms-twitter-open-btn">
+                <i class="fas fa-external-link-alt"></i>
+                <span data-translate="Open X">Open X</span>
+              </button>
+              <button class="ms-action-btn secondary" id="ms-twitter-verify-btn" disabled>
+                <i class="fas fa-check-circle"></i>
+                <span data-translate="Verify">Verify</span>
+              </button>
+            </div>
+            <div class="ms-verify-timer" id="ms-twitter-timer" style="display: none;">
+              <span data-translate="Please wait">Please wait</span>: <strong id="ms-twitter-countdown">15</strong>s
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Social Mission Modal - Telegram -->
+      <div class="ms-modal-overlay" id="ms-modal-telegram" style="display: none;">
+        <div class="ms-modal" onclick="event.stopPropagation()">
+          <div class="ms-modal-header">
+            <h3 style="display: flex; align-items: center; gap: 10px;">
+              <span data-translate="Join Telegram">Join Telegram</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#0088cc">
+                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+              </svg>
+            </h3>
+            <button class="ms-modal-close" onclick="msCloseModal()">&times;</button>
+          </div>
+          <div class="ms-modal-body">
+            <p class="ms-modal-text" data-translate="Complete the task to earn your reward">Complete the task to earn your reward</p>
+            
+            <div class="ms-modal-steps">
+              <div class="ms-modal-step">
+                <span class="ms-step-number">1</span>
+                <span class="ms-step-text" data-translate="Click the button below to open Telegram">Click the button below to open Telegram</span>
+              </div>
+              <div class="ms-modal-step">
+                <span class="ms-step-number">2</span>
+                <span class="ms-step-text" data-translate="Join our Telegram group">Join our Telegram group</span>
+              </div>
+              <div class="ms-modal-step">
+                <span class="ms-step-number">3</span>
+                <span class="ms-step-text" data-translate="Enter your Telegram username">Enter your Telegram username</span>
+              </div>
+            </div>
+            
+            <div class="ms-username-input" style="margin: 15px 0;">
+              <input type="text" id="ms-telegram-username" placeholder="@username" 
+                style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; text-align: center;">
+              <p style="font-size: 11px; color: var(--light-text); margin-top: 5px;" data-translate="We may verify your membership">We may verify your membership</p>
+            </div>
+            
+            <div class="ms-modal-actions">
+              <button class="ms-action-btn primary" id="ms-telegram-open-btn">
+                <i class="fas fa-external-link-alt"></i>
+                <span data-translate="Open Telegram">Open Telegram</span>
+              </button>
+              <button class="ms-action-btn secondary" id="ms-telegram-verify-btn" disabled>
+                <i class="fas fa-check-circle"></i>
+                <span data-translate="Verify">Verify</span>
+              </button>
+            </div>
+            <div class="ms-verify-timer" id="ms-telegram-timer" style="display: none;">
+              <span data-translate="Please wait">Please wait</span>: <strong id="ms-telegram-countdown">15</strong>s
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Point System Page -->
+      <div id="pointsystem-page" class="page-content" style="display:none">
+        <div class="tokenomics-page-container">
+          
+          <!-- Hero Section -->
+          <div class="tokenomics-page-hero">
+            <div class="tokenomics-hero-content">
+              <div class="tokenomics-hero-logo">
+                <img src="accessoire-app.png" alt="AccessRewards" class="tokenomics-hero-token-logo">
+              </div>
+              <div class="tokenomics-network-badge">
+
+             <span data-translate="Access Network">Access Network</span>
+
+                <i class="fas fa-network-wired"></i>
+              </div>
+              
+              <!-- Platform Description -->
+             <p style="margin-top: 12px; font-size: 13px; color: var(--light-text); text-align: center; opacity: 0.85;" 
+  data-translate="Digital engagement rewards platform">
+  Digital engagement rewards platform
+</p>
+
+
+            </div>
+          </div>
+
+          <!-- Point Distribution Chart -->
+          <div class="tokenomics-distribution-section">
+            <h2 class="tokenomics-section-title" data-translate="Point Distribution">Point Distribution</h2>
+            <div class="tokenomics-distribution-content">
+              <div class="tokenomics-chart-container">
+                <div class="tokenomics-distribution-chart">
+                  <svg viewBox="0 0 200 200" class="tokenomics-pie-chart">
+                    <!-- Activity Rewards - 45% -->
+                    <circle cx="100" cy="100" r="80" fill="transparent" stroke="#4CAF50" stroke-width="40" 
+                            stroke-dasharray="226 502" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
+                    <!-- Platform Development - 25% -->
+                    <circle cx="100" cy="100" r="80" fill="transparent" stroke="#2196F3" stroke-width="40" 
+                            stroke-dasharray="125 502" stroke-dashoffset="-226" transform="rotate(-90 100 100)"/>
+                    <!-- Community Rewards - 15% -->
+                    <circle cx="100" cy="100" r="80" fill="transparent" stroke="#FF9800" stroke-width="40" 
+                            stroke-dasharray="75 502" stroke-dashoffset="-351" transform="rotate(-90 100 100)"/>
+                    <!-- Team & Advisors - 10% -->
+                    <circle cx="100" cy="100" r="80" fill="transparent" stroke="#9C27B0" stroke-width="40" 
+                            stroke-dasharray="50 502" stroke-dashoffset="-426" transform="rotate(-90 100 100)"/>
+                    <!-- Reserve Fund - 5% -->
+                    <circle cx="100" cy="100" r="80" fill="transparent" stroke="#F44336" stroke-width="40" 
+                            stroke-dasharray="25 502" stroke-dashoffset="-476" transform="rotate(-90 100 100)"/>
+                  </svg>
+                  <div class="tokenomics-chart-center">
+                    <div class="tokenomics-center-value">Access</div>
+                    <div class="tokenomics-center-label" data-translate="Points">Points</div>
+                  </div>
+                </div>
+              </div>
+              <div class="tokenomics-distribution-legend">
+                <div class="tokenomics-legend-item">
+                  <div class="tokenomics-legend-color" style="background: #4CAF50;"></div>
+                  <div class="tokenomics-legend-text">
+                    <span class="tokenomics-legend-title" data-translate="Activity Benefits">Activity Benefits</span>
+                    <span class="tokenomics-legend-percentage">45%</span>
+                  </div>
+                </div>
+                <div class="tokenomics-legend-item">
+                  <div class="tokenomics-legend-color" style="background: #2196F3;"></div>
+                  <div class="tokenomics-legend-text">
+                    <span class="tokenomics-legend-title" data-translate="Platform Development">Platform Development</span>
+                    <span class="tokenomics-legend-percentage">25%</span>
+                  </div>
+                </div>
+                <div class="tokenomics-legend-item">
+                  <div class="tokenomics-legend-color" style="background: #FF9800;"></div>
+                  <div class="tokenomics-legend-text">
+                    <span class="tokenomics-legend-title" data-translate="Community Benefits">Community Benefits</span>
+                    <span class="tokenomics-legend-percentage">15%</span>
+                  </div>
+                </div>
+                <div class="tokenomics-legend-item">
+                  <div class="tokenomics-legend-color" style="background: #9C27B0;"></div>
+                  <div class="tokenomics-legend-text">
+                    <span class="tokenomics-legend-title" data-translate="Team & Advisors">Team & Advisors</span>
+                    <span class="tokenomics-legend-percentage">10%</span>
+                  </div>
+                </div>
+                <div class="tokenomics-legend-item">
+                  <div class="tokenomics-legend-color" style="background: #F44336;"></div>
+                  <div class="tokenomics-legend-text">
+                    <span class="tokenomics-legend-title" data-translate="Reserve Fund">Reserve Fund</span>
+                    <span class="tokenomics-legend-percentage">5%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Technical Specifications -->
+          <div class="tokenomics-specs-section">
+            <h2 class="tokenomics-section-title" data-translate="Technical Specifications">Technical Specifications</h2>
+            <div class="tokenomics-specs-grid">
+              <div class="tokenomics-spec-card">
+                <div class="tokenomics-spec-icon">
+                  <i class="fas fa-cube"></i>
+                </div>
+                <div class="tokenomics-spec-content">
+                  <h3 data-translate="Network Type">Network Type</h3>
+                  <p data-translate="Custom Mainnet">Custom Mainnet</p>
+                </div>
+              </div>
+              <div class="tokenomics-spec-card">
+                <div class="tokenomics-spec-icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="tokenomics-spec-content">
+                  <h3 data-translate="Block Time">Block Time</h3>
+                  <p data-translate="~3 seconds">~3 seconds</p>
+                </div>
+              </div>
+              <div class="tokenomics-spec-card">
+                <div class="tokenomics-spec-icon">
+                  <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="tokenomics-spec-content">
+                  <h3 data-translate="Consensus">Consensus</h3>
+                  <p data-translate="Proof of Activity">Proof of Activity</p>
+                </div>
+              </div>
+              <div class="tokenomics-spec-card">
+                <div class="tokenomics-spec-icon">
+                  <i class="fas fa-coins"></i>
+                </div>
+                <div class="tokenomics-spec-content">
+                  <h3 data-translate="Transaction Fee">Transaction Fee</h3>
+                  <p data-translate="0.00002 Points">0.00002 Points</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+
+
+
+
+
+          <!-- Live Activity Section -->
+          <div class="tokenomics-processing-section">
+            <h2 class="section-title" data-translate="Live Activity Center">Live Activity Center</h2>
+
+            <!-- Activity Overview Cards -->
+            <div class="tokenomics-processing-grid">
+              <div class="tokenomics-processing-card total-supply-card">
+                <div class="tokenomics-processing-icon">
+                  <i class="fas fa-coins"></i>
+                </div>
+                <div class="tokenomics-processing-content">
+                  <h3 data-translate="Total Supply">Total Supply</h3>
+<div class="tokenomics-stat-value" id="tokenomics-total-supply">25,000,000</div>
+                  <div class="tokenomics-stat-unit">Acces</div>
+                </div>
+              </div>
+
+              <div class="tokenomics-processing-card mined-supply-card">
+                <div class="tokenomics-processing-icon">
+                  <i class="fas fa-gem"></i>
+                </div>
+                <div class="tokenomics-processing-content">
+                  <h3 data-translate="Currently Processed">Currently Processed</h3>
+                  <div class="tokenomics-stat-value">
+                    <span id="tokenomics-mined-supply">+250.0K</span>
+                    <span class="tokenomics-stat-unit" data-translate="Acces">Acces</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tokenomics-processing-card active-miners-card">
+                <div class="tokenomics-processing-icon">
+                  <i class="fas fa-users-cog"></i>
+                </div>
+                <div class="tokenomics-processing-content">
+                  <h3 data-translate="Active Processors">Active Processors</h3>
+                  <div class="tokenomics-stat-value" id="tokenomics-active-miners">+10,000</div>
+                  <div class="tokenomics-stat-unit" data-translate="Processors">Processors</div>
+                </div>
+              </div>
+
+              <div class="tokenomics-processing-card processing-rate-card">
+                <div class="tokenomics-processing-icon">
+                  <i class="fas fa-tachometer-alt"></i>
+                </div>
+                <div class="tokenomics-processing-content">
+                  <h3 data-translate="Activity Rate">Activity Rate</h3>
+                  <div class="tokenomics-stat-value" id="tokenomics-processing-rate">+0.24</div>
+                  <div class="tokenomics-stat-unit">Acces/24h</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Visual Activity Center -->
+            <div class="tokenomics-processing-visual">
+              <h3 class="tokenomics-activity-title" data-translate="Activity Operations Center">Activity Operations Center</h3>
+
+              <div class="tokenomics-engines-container">
+                <div class="tokenomics-engine engine-1">
+                  <div class="tokenomics-engine-body">
+                    <div class="tokenomics-engine-core"></div>
+                    <div class="tokenomics-engine-rotor"></div>
+                    <div class="tokenomics-engine-pistons">
+                      <div class="tokenomics-piston piston-1"></div>
+                      <div class="tokenomics-piston piston-2"></div>
+                      <div class="tokenomics-piston piston-3"></div>
+                    </div>
+                  </div>
+
+          <div class="tokenomics-engine-label" data-translate="Activity Station #1">Activity Station #1</div>
+          <div class="tokenomics-engine-status active" data-translate="Active">Active</div>
+
+
+                </div>
+
+                <div class="tokenomics-engine engine-2">
+                  <div class="tokenomics-engine-body">
+                    <div class="tokenomics-engine-core"></div>
+                    <div class="tokenomics-engine-rotor"></div>
+                    <div class="tokenomics-engine-pistons">
+                      <div class="tokenomics-piston piston-1"></div>
+                      <div class="tokenomics-piston piston-2"></div>
+                      <div class="tokenomics-piston piston-3"></div>
+                    </div>
+                  </div>
+                  <div class="tokenomics-engine-label" data-translate="Activity Station #2">Activity Station #2</div>
+                  <div class="tokenomics-engine-status active" data-translate="Active">Active</div>
+
+                </div>
+
+                <div class="tokenomics-engine engine-3">
+                  <div class="tokenomics-engine-body">
+                    <div class="tokenomics-engine-core"></div>
+                    <div class="tokenomics-engine-rotor"></div>
+                    <div class="tokenomics-engine-pistons">
+                      <div class="tokenomics-piston piston-1"></div>
+                      <div class="tokenomics-piston piston-2"></div>
+                      <div class="tokenomics-piston piston-3"></div>
+                    </div>
+                  </div>
+                 <div class="tokenomics-engine-label" data-translate="Activity Station #3">Activity Station #3</div>
+                 <div class="tokenomics-engine-status active" data-translate="Active">Active</div>
+
+                </div>
+              </div>
+
+            <!-- Network Strength Indicator -->
+<div class="network-strength-container">
+  <div class="network-pulse-indicator">
+    <div class="pulse-ring pulse-ring-1"></div>
+    <div class="pulse-ring pulse-ring-2"></div>
+    <div class="pulse-ring pulse-ring-3"></div>
+    <div class="network-core">
+      <i class="fas fa-network-wired"></i>
+    </div>
+  </div>
+  <div class="network-status-text">
+    <h4 data-translate="Decentralized Network">Decentralized Network</h4>
+    <p data-translate="Secure • Fast • Global">Secure • Fast • Global</p>
+  </div>
+</div>
+  </div>
+</div>
+
+<!-- Future Vision & Innovation Section -->
+<div class="tokenomics-future-vision-section">
+  <h2 class="tokenomics-section-title" data-translate="The Future of Digital Interaction">The Future of Digital Interaction</h2>
+
+  <div class="tokenomics-vision-grid">
+    <div class="tokenomics-vision-card vision-innovation">
+      <div class="tokenomics-vision-icon">
+        <i class="fas fa-rocket"></i>
+      </div>
+      <div class="tokenomics-vision-content">
+        <h3 data-translate="Next-Gen Platform">Next-Gen Platform</h3>
+        <p data-translate="Access-Network offers an innovative approach to digital engagement, combining community features with achievement tracking to create meaningful user experiences.">Access-Network offers an innovative approach to digital engagement, combining community features with achievement tracking to create meaningful user experiences.</p>
+      </div>
+    </div>
+
+    <div class="tokenomics-vision-card vision-opportunity">
+      <div class="tokenomics-vision-icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="tokenomics-vision-content">
+        <h3 data-translate="Community Growth">Community Growth</h3>
+        <p data-translate="Early members help shape a global digital network that encourages positive engagement through technology and collaboration, creating meaningful community impact.">Early members help shape a global digital network that encourages positive engagement through technology and collaboration, creating meaningful community impact.</p>
+      </div>
+    </div>
+
+    <div class="tokenomics-vision-card vision-partnership">
+      <div class="tokenomics-vision-icon">
+        <i class="fas fa-handshake"></i>
+      </div>
+      <div class="tokenomics-vision-content">
+        <h3 data-translate="Strategic Partnerships">Strategic Partnerships</h3>
+        <p data-translate="Building partnerships with technology platforms to expand Access-Network's reach and enhance user experience.">Building partnerships with technology platforms to expand Access-Network's reach and enhance user experience.</p>
+      </div>
+    </div>
+
+    <div class="tokenomics-vision-card vision-ecosystem">
+      <div class="tokenomics-vision-icon">
+        <i class="fas fa-globe-americas"></i>
+      </div>
+      <div class="tokenomics-vision-content">
+        <h3 data-translate="Global Community">Global Community</h3>
+        <p data-translate="Creating an inclusive digital platform that connects users worldwide through secure and transparent technology.">Creating an inclusive digital platform that connects users worldwide through secure and transparent technology.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tokenomics-future-roadmap">
+    <div class="tokenomics-roadmap-header">
+      <h3 data-translate="Innovation Roadmap">Innovation Roadmap</h3>
+      <p data-translate="Progressive development stages ahead">Progressive development stages ahead</p>
+    </div>
+
+    <div class="tokenomics-roadmap-timeline">
+      <div class="tokenomics-roadmap-phase active">
+        <div class="tokenomics-phase-icon">
+          <i class="fas fa-flag"></i>
+        </div>
+        <div class="tokenomics-phase-content">
+          <h4 data-translate="Phase Alpha">Phase Alpha</h4>
+          <p data-translate="Platform Launch & Community Activity Center">Platform Launch & Community Activity Center</p>
+          <span class="tokenomics-phase-status completed" data-translate="Completed">Completed</span>
+        </div>
+      </div>
+
+      <div class="tokenomics-roadmap-phase active">
+        <div class="tokenomics-phase-icon">
+          <i class="fas fa-layer-group"></i>
+        </div>
+        <div class="tokenomics-phase-content">
+          <h4 data-translate="Phase Beta">Phase Beta</h4>
+          <p data-translate="Enhanced User Features & Interactive Dashboard">Enhanced User Features & Interactive Dashboard</p>
+          <span class="tokenomics-phase-status progress" data-translate="In Progress">In Progress</span>
+        </div>
+      </div>
+
+      <div class="tokenomics-roadmap-phase">
+        <div class="tokenomics-phase-icon">
+          <i class="fas fa-network-wired"></i>
+        </div>
+        <div class="tokenomics-phase-content">
+          <h4 data-translate="Phase Gamma">Phase Gamma</h4>
+          <p data-translate="Expansion of Network Access & User Experience">Expansion of Network Access & User Experience</p>
+          <span class="tokenomics-phase-status upcoming" data-translate="Upcoming">Upcoming</span>
+        </div>
+      </div>
+
+      <div class="tokenomics-roadmap-phase">
+        <div class="tokenomics-phase-icon">
+          <i class="fas fa-crown"></i>
+        </div>
+        <div class="tokenomics-phase-content">
+          <h4 data-translate="Phase Delta">Phase Delta</h4>
+          <p data-translate="Advanced Features & Platform Expansion">Advanced Features & Platform Expansion</p>
+          <span class="tokenomics-phase-status future" data-translate="Future">Future</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tokenomics-potential-highlight">
+    <div class="tokenomics-highlight-content">
+      <div class="tokenomics-highlight-icon">
+        <i class="fas fa-gem"></i>
+      </div>
+      <div class="tokenomics-highlight-text">
+        <h3 data-translate="Our Vision">Our Vision</h3>
+        <p data-translate="Access-Network is a digital rewards platform combining innovation, community features, and progress tracking — enabling users to engage actively in a connected ecosystem.">
+Access-Network is a digital rewards platform combining innovation, community features, and progress tracking — enabling users to engage actively in a connected ecosystem.
+</p>
+      </div>
+      
+    </div>
+    </div>
+    </div>
+               
+
+
+          <!-- Whitepaper Section - مصغر ومحسن -->
+          <div class="tokenomics-whitepaper-section">
+            <div class="tokenomics-whitepaper-card">
+              <div class="tokenomics-whitepaper-icon">
+                <i class="fas fa-file-alt"></i>
+              </div>
+              <div class="tokenomics-whitepaper-content">
+                <h3 data-translate="Technical Whitepaper">Technical Whitepaper</h3>
+                <p data-translate="Comprehensive technical documentation and project overview">Comprehensive technical documentation and project overview</p>
+                <button class="tokenomics-whitepaper-btn" onclick="downloadWhitepaper()">
+                  <i class="fas fa-download"></i>
+                  <span data-translate="Download Whitepaper">Download Whitepaper</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+  <!-- Activity stats manager -->
+  <script src="processing-stats.js"></script>
+
+  <!-- State processing manager -->
+  <script src="state-processing.js"></script>
+  <script src="offline-detection.js"></script>
+
+  <!-- Profile member since script -->
+  <script src="profile-member-since.js"></script>
+ <script src="state-activity.js"></script>
+   <!-- Main script loads after translations -->
+  <script src="stats.js"></script>
+  <script>
+
+
+
+</script>
+    <!-- ⚠️ يجب تحميل activity-ad-system.js قبل script.js -->
+    <script src="activity-ad-system.js"></script>
+    
+    <script src="script.js"></script>
+    <script src="missions-system.js"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', {
+            scope: '/'
+          })
+            .then((registration) => {
+              console.log('Service Worker registered successfully:', registration.scope);
+              
+              // Request notification permission
+              if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().then((permission) => {
+                  console.log('Notification permission:', permission);
+                  
+                  // If permission granted, try to register for push notifications
+                  if (permission === 'granted' && window.currentUser && window.currentUser.id) {
+                    if (typeof registerPushNotifications === 'function') {
+                      registerPushNotifications(window.currentUser.id);
+                    }
+                  }
+                });
+              } else if ('Notification' in window && Notification.permission === 'granted') {
+                // Permission already granted, register immediately
+                if (window.currentUser && window.currentUser.id && typeof registerPushNotifications === 'function') {
+                  registerPushNotifications(window.currentUser.id);
+                }
+              }
+            })
+            .catch((error) => {
+              console.error('Service Worker registration failed:', error);
+            });
+        });
+
+        // Function to send notification from page
+        window.sendPWANotification = function(title, body, tag) {
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: 'SHOW_NOTIFICATION',
+              title: title,
+              body: body,
+              tag: tag
+            });
+          } else if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(title, {
+              body: body,
+              icon: '/access-logo-1ipfs.png',
+              badge: '/access-logo-1ipfs.png'
+            });
+          }
+        };
+      }
+    </script>
+
+    <!-- Ad Boost Modal -->
+    <div id="ad-boost-modal" class="modal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);" onclick="closeAdBoostModalOnOutsideClick(event)">
+      <div class="modal-content" style="background-color: var(--card-background); margin: 10% auto; padding: 30px; border: 1px solid var(--border-color); width: 90%; max-width: 500px; border-radius: 15px; box-shadow: var(--shadow-lg); text-align: center;" onclick="event.stopPropagation()">
+        <div id="ad-boost-message" style="margin-bottom: 20px;">
+          <div style="font-size: 48px; margin-bottom: 15px;">🚀</div>
+          <h3 style="color: var(--text-primary); margin-bottom: 10px;" data-translate="Boost Your Activity Speed">Boost Your Activity Speed</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 20px;" data-translate="Watch a short ad to boost your XP/s by +1.2 for this activity session!">
+            Watch a short ad to boost your XP/s by +1.2 for this activity session!
+          </p>
+          <p style="color: var(--text-tertiary); font-size: 0.9em;" data-translate="Equivalent to 3 active referrals">
+            Equivalent to 3 active referrals
+          </p>
+        </div>
+        
+        <div class="modal-buttons" style="display: flex; gap: 10px; justify-content: center; margin-top: 25px;">
+          <button id="watch-ad-button" class="action-button" style="padding: 12px 30px; font-size: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fas fa-play"></i>
+            <span data-translate="Watch Ad">Watch Ad</span>
+          </button>
+          <button id="close-ad-modal-button" class="secondary-button" style="padding: 12px 30px; font-size: 16px; background: #dc3545; border: 1px solid #dc3545; border-radius: 8px; color: white; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center;">
+            <span data-translate="Cancel">Cancel</span>
+          </button>
+        </div>
+        
+        <div id="ad-cooldown-message" style="display: none; margin-top: 15px; padding: 20px; background: var(--warning-background, rgba(255, 193, 7, 0.1)); border-radius: 12px; color: var(--warning-text, #ff9800); text-align: center;">
+          
+          <div id="cooldown-message-container" style="font-size: 15px; font-weight: 500; margin-bottom: 12px; line-height: 1.4;"></div>
+          <div id="cooldown-time-display" style="font-size: 28px; font-weight: 700; font-family: 'Courier New', monospace; color: var(--primary-color, #667eea); margin-top: 8px;"></div>
+          
+          <!-- Hidden translation templates -->
+          <span id="ad-boost-cooldown-message" style="display: none;" data-translate="Ad boost active! Wait for session to end">Ad boost active! Wait for session to end</span>
+          <span id="ad-boost-wait-message" style="display: none;" data-translate="Wait to watch another ad">Wait to watch another ad</span>
+          <span id="ad-boost-start-mining" style="display: none;" data-translate="Start activity first to watch an ad">Start activity first to watch an ad</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Start Ad Modal (مستقل تماماً عن نظام Boost) -->
+    <div id="activity-ad-modal" class="modal" style="display: none; position: fixed; z-index: 100000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9);">
+      <div class="modal-content" style="background-color: var(--card-background); margin: 5% auto; padding: 0; border: none; width: 95%; max-width: 800px; height: 85vh; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); position: relative; overflow: hidden;">
+        
+        <!-- Close Button (للإغلاق والتخطي) -->
+        <button id="close-activity-ad" class="close-ad-btn" style="position: absolute; top: 10px; right: 10px; z-index: 100001; background: rgba(0,0,0,0.7); border: none; color: white; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+          <i class="fas fa-times"></i>
+        </button>
+
+        <!-- Skip Ad Button (يظهر بعد 5 ثواني) -->
+        <button id="skip-activity-ad" class="skip-ad-btn" style="display: none; position: absolute; top: 60px; right: 10px; z-index: 100001; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s;">
+          <i class="fas fa-forward"></i>
+          <span data-translate="Skip Ad">تخطي الإعلان</span>
+        </button>
+
+        <!-- Ad Container -->
+        <div id="activity-ad-container" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #000;">
+          <!-- Google Ad will be loaded here -->
+          <div id="gpt-ad-container"></div>
+          
+          <!-- Loading Message -->
+          <div id="ad-loading-message" style="color: white; text-align: center;">
+            <div class="spinner" style="border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+            <p data-translate="Loading Ad...">جاري تحميل الإعلان...</p>
+          </div>
+        </div>
+
+        <!-- Ad Info Footer -->
+        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); padding: 12px; text-align: center; color: white; font-size: 13px;">
+          <p style="margin: 0;" data-translate="You can close this ad anytime">يمكنك إغلاق هذا الإعلان في أي وقت</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add GPT Script for Activity Ads -->
+    <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js" crossorigin="anonymous"></script>
+
+    <!-- Ad Boost System Script -->
+    <script src="ad-boost-system.js"></script>
+
+    <style>
+      /* Connect Wallet Button Style */
+      .view-explorer-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-top: 12px;
+      }
+      .view-explorer-wrapper .account-view-link {
+        display: inline-flex;
+        align-items: center;
+      }
+      .connect-wallet-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255,255,255,0.2);
+      }
+      body.light-mode .connect-wallet-wrapper {
+        border-top: 1px solid #ddd !important;
+      }
+
+      /* RTL Support for Arabic - flip icons */
+      html[lang="ar"] .connect-wallet-btn,
+      html[dir="rtl"] .connect-wallet-btn {
+        flex-direction: row-reverse;
+      }
+      html[lang="ar"] .account-view-link,
+      html[dir="rtl"] .account-view-link {
+        flex-direction: row-reverse;
+      }
+      html[lang="ar"] .account-view-link img,
+      html[dir="rtl"] .account-view-link img {
+        margin-left: 0;
+        margin-right: 4px;
+      }
+
+      .connect-wallet-btn {
+        background: linear-gradient(135deg, #3898FF 0%, #1E7AE5 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 3px 10px rgba(56, 152, 255, 0.3);
+      }
+      .connect-wallet-btn:hover {
+        background: linear-gradient(135deg, #4BA3FF 0%, #2B8AF0 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(56, 152, 255, 0.4);
+      }
+      .connect-wallet-btn:active {
+        transform: translateY(0);
+      }
+      .connect-wallet-btn i {
+        font-size: 0.85rem;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      .close-ad-btn:hover {
+        background: rgba(220, 53, 69, 0.9) !important;
+        transform: scale(1.1);
+      }
+
+      .skip-ad-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      /* Wallet Connect Modal Styles */
+      .wallet-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        padding: 20px;
+        animation: modalFadeIn 0.2s ease;
+      }
+      @keyframes modalFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .wallet-modal-content {
+        background: #1a1a1a;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 380px;
+        max-height: 85vh;
+        overflow-y: auto;
+        border: 1px solid #333;
+        animation: modalSlideUp 0.3s ease;
+      }
+      @keyframes modalSlideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .wallet-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 20px;
+        border-bottom: 1px solid #333;
+      }
+      .wallet-modal-header h3 {
+        color: #fff;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+      }
+      .modal-close-btn {
+        background: transparent;
+        border: none;
+        color: #888;
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 5px;
+        transition: color 0.2s;
+      }
+      .modal-close-btn:hover { color: #fff; }
+      .wallet-modal-body { padding: 20px; }
+      .wallet-modal-desc {
+        color: #888;
+        text-align: center;
+        margin-bottom: 18px;
+        font-size: 0.85rem;
+      }
+      .wallet-option-item {
+        display: flex;
+        align-items: center;
+        padding: 14px;
+        background: #2a2a2a;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        text-decoration: none;
+        color: #fff;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+      }
+      .wallet-option-item:hover {
+        background: #333;
+        border-color: #3898FF;
+        transform: translateX(5px);
+      }
+      .wallet-logo-img {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        margin-right: 14px;
+      }
+      .wallet-option-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .wallet-option-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+      .wallet-option-desc {
+        font-size: 0.75rem;
+        color: #888;
+      }
+      .wallet-divider-line {
+        display: flex;
+        align-items: center;
+        margin: 18px 0;
+        color: #555;
+        font-size: 0.8rem;
+      }
+      .wallet-divider-line::before,
+      .wallet-divider-line::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #333;
+      }
+      .wallet-divider-line span { padding: 0 12px; }
+      .install-wallet-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+      }
+      .install-wallet-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      }
+    </style>
+
+    <script>
+      // Access Network configuration for wallet connection
+      // روابط ديناميكية تتأقلم مع أي دومين
+      const currentOrigin = window.location.origin;
+      const accessNetworkConfig = {
+        chainId: '0x5968',
+        chainName: 'Access Network',
+        nativeCurrency: { name: 'ACCESS', symbol: 'ACCESS', decimals: 18 },
+        rpcUrls: [currentOrigin + '/rpc'],
+        blockExplorerUrls: [currentOrigin + '/transaction-details.html?hash=']
+      };
+
+      function openWalletConnectModal() {
+        // Check if wallet is available in browser
+        if (typeof window.ethereum !== 'undefined') {
+          // Direct connection available
+          addNetworkToWallet();
+          return;
+        }
+
+        // Show wallet selection modal
+        const currentUrl = encodeURIComponent(window.location.origin + '/add-network.html');
+        
+        const modal = document.createElement('div');
+        modal.id = 'wallet-connect-modal';
+        modal.innerHTML = `
+          <div class="wallet-modal-overlay" onclick="closeWalletConnectModal()">
+            <div class="wallet-modal-content" onclick="event.stopPropagation()">
+              <div class="wallet-modal-header">
+                <h3><i class="fas fa-wallet"></i> Add Network</h3>
+                <button class="modal-close-btn" onclick="closeWalletConnectModal()">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div class="wallet-modal-body">
+                <p class="wallet-modal-desc">Select wallet to add Access Network</p>
+                
+                <a href="https://metamask.app.link/dapp/${window.location.host}/add-network.html" class="wallet-option-item" onclick="closeWalletConnectModal()">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" class="wallet-logo-img">
+                  <div class="wallet-option-info">
+                    <span class="wallet-option-name">MetaMask</span>
+                    <span class="wallet-option-desc">Open in MetaMask</span>
+                  </div>
+                  <i class="fas fa-chevron-right" style="color:#888"></i>
+                </a>
+                
+                <a href="https://link.trustwallet.com/open_url?coin_id=60&url=${currentUrl}" class="wallet-option-item" onclick="closeWalletConnectModal()">
+                  <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="Trust Wallet" class="wallet-logo-img">
+                  <div class="wallet-option-info">
+                    <span class="wallet-option-name">Trust Wallet</span>
+                    <span class="wallet-option-desc">Open in Trust Wallet</span>
+                  </div>
+                  <i class="fas fa-chevron-right" style="color:#888"></i>
+                </a>
+                
+                <a href="https://go.cb-w.com/dapp?cb_url=${currentUrl}" class="wallet-option-item" onclick="closeWalletConnectModal()">
+                  <img src="https://altcoinsbox.com/wp-content/uploads/2022/12/coinbase-wallet-logo.png" alt="Coinbase" class="wallet-logo-img">
+                  <div class="wallet-option-info">
+                    <span class="wallet-option-name">Coinbase Wallet</span>
+                    <span class="wallet-option-desc">Open in Coinbase</span>
+                  </div>
+                  <i class="fas fa-chevron-right" style="color:#888"></i>
+                </a>
+                
+                <div class="wallet-divider-line">
+                  <span>or install</span>
+                </div>
+                
+                <a href="https://metamask.io/download/" target="_blank" class="install-wallet-btn">
+                  <i class="fas fa-download"></i> Install MetaMask
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+      }
+
+      function closeWalletConnectModal() {
+        const modal = document.getElementById('wallet-connect-modal');
+        if (modal) modal.remove();
+      }
+
+      async function addNetworkToWallet() {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [accessNetworkConfig]
+          });
+          showNotification('✅ Access Network added successfully!', 'success');
+        } catch (error) {
+          if (error.code === 4001) {
+            showNotification('Request rejected', 'error');
+          } else {
+            showNotification('Failed to add network', 'error');
+          }
+        }
+      }
+    </script>
+</body>
+</html>

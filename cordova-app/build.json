@@ -1,0 +1,18 @@
+{
+    "android": {
+        "debug": {
+            "keystore": "access-network.keystore",
+            "storePassword": "Access2026Secure",
+            "alias": "access-network",
+            "password": "Access2026Secure",
+            "keystoreType": "jks"
+        },
+        "release": {
+            "keystore": "access-network.keystore",
+            "storePassword": "Access2026Secure",
+            "alias": "access-network",
+            "password": "Access2026Secure",
+            "keystoreType": "jks"
+        }
+    }
+}

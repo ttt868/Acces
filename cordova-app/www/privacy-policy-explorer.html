@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - AccessScan</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Privacy Policy for AccessScan blockchain explorer. Learn how we collect, use, and protect your data when using our Access Network explorer services.">
+    <meta name="keywords" content="AccessScan privacy policy, blockchain explorer privacy, data protection, Access Network">
+    <link rel="canonical" href="https://accesschain.org/privacy-policy-explorer.html">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://accesschain.org/privacy-policy-explorer.html">
+    <meta property="og:title" content="Privacy Policy - AccessScan">
+    <meta property="og:description" content="Privacy Policy for AccessScan blockchain explorer.">
+    <meta property="og:image" content="https://accesschain.org/logo.png">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:url" content="https://accesschain.org/privacy-policy-explorer.html">
+    <meta name="twitter:title" content="Privacy Policy - AccessScan">
+    <meta name="twitter:description" content="Privacy Policy for AccessScan blockchain explorer.">
+    <meta name="twitter:image" content="https://accesschain.org/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .logo-subtitle {
+            font-size: 10px;
+            color: #666;
+            margin-top: -2px;
+        }
+
+        .back-btn {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            color: white;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .hero-logo img {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+        }
+
+        .hero-logo-text {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .hero-logo-subtitle {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: -4px;
+        }
+
+        .hero-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        h1.hero-title {
+            font-size: 18px !important;
+            font-weight: bold !important;
+            margin-bottom: 12px !important;
+        }
+
+        .hero-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* Content Section */
+        .content-section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+        }
+
+        .notice-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: #856404;
+        }
+
+        .notice-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #856404;
+        }
+
+        .privacy-content h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 30px 0 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .privacy-content h2:first-child {
+            margin-top: 0;
+        }
+
+        .privacy-content p {
+            margin-bottom: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .privacy-content ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .privacy-content li {
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .privacy-content strong {
+            color: #333;
+        }
+
+        /* Footer Section */
+        .footer-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: #5a67d8;
+            text-decoration: underline;
+        }
+
+        .copyright {
+            color: #666;
+            font-size: 13px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .hero-section {
+                padding: 30px 20px;
+            }
+
+            .hero-title {
+                font-size: 28px;
+            }
+
+            .content-section {
+                padding: 25px 20px;
+            }
+
+            .footer-links {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header-content {
+                padding: 0 15px;
+            }
+
+            .logo-text {
+                font-size: 20px;
+            }
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Link styling */
+        .content-section a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .content-section a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">A Scan Original</div>
+                </div>
+            </div>
+            <a href="access-explorer.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                Back to Explorer
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <div class="hero-logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                    <div>
+                        <div class="hero-logo-text">accessScan</div>
+                        <div class="hero-logo-subtitle">A Scan Original</div>
+                    </div>
+                </div>
+                <h1 class="hero-title">Privacy Policy</h1>
+                <p class="hero-subtitle">Last updated: January 15, 2025</p>
+            </div>
+        </div>
+
+        <!-- Content Section -->
+        <div class="content-section">
+            <div class="notice-box">
+                <div class="notice-title">PLEASE READ THIS PRIVACY POLICY CAREFULLY.</div>
+                <p>AccessScan.com is committed to the protection of your Personal Data and takes the matter of protecting your privacy as high priority.</p>
+            </div>
+
+            <div class="privacy-content">
+                <p>This Privacy Policy covers the information we collect about you when you use our network explorer services, or otherwise interact with AccessScan ("Privacy Policy") and all the websites operated by the Company ("Site"), unless a different privacy policy is displayed.</p>
+
+                <h2>1. TYPES OF DATA WE COLLECT</h2>
+                <p>The types of Personal Data that we collect directly from you or from third parties depend on the circumstances of collection and on the nature of the service requested. It may include:</p>
+                <ul>
+                    <li>Personal information that links back to an individual, e.g., name, gender, date of birth, and other personal identification numbers</li>
+                    <li>Contact information, e.g., address, phone number and email address</li>
+                    <li>Technical information, e.g., IP address for API services, browser type, device type, operating system, log data, API access logs, and metadata related to interactions with our services</li>
+                    <li>Usage and behavioural data, e.g. browsing activity on our platform, search queries, access times, referral sources, and interactions with network explorer features</li>
+                    <li>Statistical data, e.g., aggregated, anonymized insights derived from website traffic, user behaviour, and engagement metrics</li>
+                </ul>
+
+                <h2>2. HOW WE COLLECT PERSONAL DATA</h2>
+                <p>This Privacy Policy covers any Personal Data provided to us:</p>
+                <ul>
+                    <li>When you engage with our network explorer services</li>
+                    <li>When you create an account with us</li>
+                    <li>When you use our API services</li>
+                    <li>When you contact our support team</li>
+                    <li>When you visit our website and use our services</li>
+                </ul>
+
+                <h2>3. HOW WE COLLECT DATA ON OUR WEBSITE</h2>
+                <p><strong>IP Address:</strong> We use your IP address to help diagnose problems with our server, and to administer the Site.</p>
+                <p><strong>Cookies:</strong> We use cookies in some of our pages to store your preferences and record session information. The information collected is used to ensure a more personalized service level for our users.</p>
+                <p><strong>Web Server Logs:</strong> To throttle the rate of requests and prevent certain types of attacks against us, we track incoming IP addresses for very short periods and then release them. All raw web server logs are retained for a minimum of 5 days only and then purged automatically.</p>
+
+                <h2>4. WHAT WE USE YOUR PERSONAL DATA FOR</h2>
+                <p>We may use your Personal Data for the following purposes:</p>
+                <ul>
+                    <li>To enable us to provide network explorer services to you</li>
+                    <li>To protect the safety and well-being of yourself and other users</li>
+                    <li>To investigate and respond to claims and inquiries from you</li>
+                    <li>For business development purposes such as statistical and marketing analysis, systems testing, maintenance and development</li>
+                    <li>To better understand your preferences and improve our services</li>
+                    <li>To comply with any legal or regulatory requirements</li>
+                    <li>To provide API access and related services</li>
+                    <li>To analyze network data and provide insights</li>
+                </ul>
+
+                <h2>5. YOUR RIGHTS TO YOUR PERSONAL DATA</h2>
+                <p>We respect and uphold the rights of data subjects. You are eligible to:</p>
+                <ul>
+                    <li>Request access to and correction of your Personal Data where inaccurate, incomplete, or not up-to-date</li>
+                    <li>Revoke or Transfer your consent to the processing of your Personal Data</li>
+                    <li>Restrict or limit the processing of your Personal Data</li>
+                    <li>Request deletion of your Personal Data from our databases</li>
+                    <li>Request a copy of your Personal Data in a structured, machine-readable format</li>
+                    <li>Opt-out of receiving direct marketing materials at any time</li>
+                </ul>
+
+                <h2>6. DATA SHARING AND DISCLOSURE</h2>
+                <p>We will not trade or sell your Personal Data to third parties without your consent. Your Personal Data may only be disclosed to:</p>
+                <ul>
+                    <li>Data warehouses and IT service providers</li>
+                    <li>Analytics and security service providers</li>
+                    <li>Legal bodies as permitted or required by law</li>
+                    <li>Regulatory authorities applicable to you</li>
+                    <li>Safety and security personnel</li>
+                </ul>
+
+                <h2>7. DATA SECURITY</h2>
+                <p>We implement appropriate technical and organizational measures to protect your Personal Data, including:</p>
+                <ul>
+                    <li>Encrypted transmission and storage of sensitive data</li>
+                    <li>Access controls and authentication systems</li>
+                    <li>Regular security assessments and monitoring</li>
+                    <li>Secure backup and recovery procedures</li>
+                </ul>
+
+                <h2>8. DATA RETENTION</h2>
+                <p>We retain your Personal Data only for as long as necessary for the purposes outlined in this policy. We prepare disposal schedules for inactive data to be automatically purged within a 24-month period unless required by law to retain it longer.</p>
+
+                <h2>9. DATA BREACH NOTIFICATION</h2>
+                <p>In the event of a Personal Data breach, we will:</p>
+                <ul>
+                    <li>Notify relevant data protection authorities within 72 hours</li>
+                    <li>Inform affected individuals within 7 days when required</li>
+                    <li>Provide details of the breach and remedial measures taken</li>
+                    <li>Maintain records of all breaches for at least 2 years</li>
+                </ul>
+
+                <h2>10. THIRD PARTY WEBSITES</h2>
+                <p>We may link this Site to other companies' websites. These Third Party Sites operate independently and are not governed by this Privacy Policy. Please ensure you are satisfied with their privacy statements before submitting any personal information.</p>
+
+                <h2>11. API SERVICES</h2>
+                <p>When you use our API services, we collect:</p>
+                <ul>
+                    <li>API key usage and access patterns</li>
+                    <li>Request logs and response data</li>
+                    <li>Performance and error metrics</li>
+                    <li>Rate limiting and usage statistics</li>
+                </ul>
+
+                <h2>12. NETWORK DATA</h2>
+                <p>Please note that network transactions and addresses are public by nature. We provide tools to explore this public data but do not control the underlying network networks. Any data you submit to network networks may be permanently recorded and publicly accessible.</p>
+
+                <h2>13. CONTACT INFORMATION</h2>
+                <p>For inquiries or complaints regarding our handling of your Personal Data, please contact us through our support channels or visit our main explorer at <a href="access-explorer.html">AccessScan Explorer</a>.</p>
+                <p style="margin-top: 20px;"><strong data-translate="Contact Email:">Contact Email:</strong> <a href="mailto:support@accesschain.org" style="color: #2196F3; text-decoration: none;">support@accesschain.org</a></p>
+            </div>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="footer-section">
+            <div class="footer-links">
+                <a href="access-explorer.html" class="footer-link">Home</a>
+                <a href="terms-of-service.html" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link">API Documentation</a>
+                <a href="#" class="footer-link">Knowledge Base</a>
+                <a href="contact.html" class="footer-link">Contact Us</a>
+                <a href="#" class="footer-link">Bug Bounty</a>
+            </div>
+            <div class="copyright">
+                AccessScan © 2025 (ACCESS-SCAN) | ⚡ Built by Team AccessScan
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Add subtle animation on scroll
+        window.addEventListener('scroll', function() {
+            const scrolled = window.pageYOffset;
+            const hero = document.querySelector('.hero-section');
+            if (hero) {
+                hero.style.transform = `translateY(${scrolled * 0.2}px)`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+{
+  "id": "com.accessdigital.app",
+  "name": "AccessDigital",
+  "short_name": "Access Chain",
+  "description": "Digital engagement rewards platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "access-store-192nobg.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "access-store-512nobg.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "access-store-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "access-store-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "scope": "/",
+  "categories": ["finance", "productivity", "social"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Open Dashboard",
+      "url": "/?page=dashboard",
+      "icons": [{ "src": "access-store-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Activity",
+      "short_name": "Activity",
+      "description": "Start Activity",
+      "url": "/?page=activity",
+      "icons": [{ "src": "access-store-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

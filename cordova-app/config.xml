@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="io.accessnetwork.app" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Access Network</name>
+    <description>
+        Access Network - Earn cryptocurrency by mining ACCESS tokens. Connect your wallet and start earning today!
+    </description>
+    <author email="support@access-network.io" href="https://access-network.io">
+        Access Network Team
+    </author>
+    <content src="index.html" />
+    
+    <!-- Allow access to server API -->
+    <access origin="https://access-network.io" />
+    <access origin="http://89.167.14.197:3000" />
+    <access origin="*" />
+    
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-intent href="tel:*" />
+    <allow-intent href="sms:*" />
+    <allow-intent href="mailto:*" />
+    
+    <!-- Android specific -->
+    <platform name="android">
+        <icon src="www/access-store-192.png" density="xxxhdpi" />
+        <icon src="www/access-store-144.png" density="xxhdpi" />
+        <icon src="www/access-store-96.png" density="xhdpi" />
+        <icon src="www/access-store-72.png" density="hdpi" />
+        <icon src="www/access-store-48.png" density="mdpi" />
+        
+        <splash src="www/access-store-512.png" density="port-xxxhdpi" />
+        
+        <preference name="android-minSdkVersion" value="24" />
+        <preference name="android-targetSdkVersion" value="34" />
+    </platform>
+    
+    <!-- Preferences -->
+    <preference name="DisallowOverscroll" value="true" />
+    <preference name="BackgroundColor" value="0xff1a1a2e" />
+    <preference name="StatusBarBackgroundColor" value="#1a1a2e" />
+    <preference name="StatusBarStyle" value="lightcontent" />
+    <preference name="Orientation" value="portrait" />
+    <preference name="SplashScreenDelay" value="3000" />
+    <preference name="FadeSplashScreen" value="true" />
+    <preference name="FadeSplashScreenDuration" value="500" />
+    <preference name="ShowSplashScreenSpinner" value="false" />
+</widget>

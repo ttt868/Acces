@@ -1,0 +1,77 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'cordova-app/**'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # للبناء اليدوي
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: cordova-app/package-lock.json
+    
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+    
+    - name: Install Cordova
+      run: npm install -g cordova
+    
+    - name: Install dependencies
+      working-directory: cordova-app
+      run: npm install
+    
+    - name: Add Android platform
+      working-directory: cordova-app
+      run: |
+        cordova platform remove android 2>/dev/null || true
+        cordova platform add android
+    
+    - name: Build Debug APK
+      working-directory: cordova-app
+      run: cordova build android --debug
+    
+    - name: Build Release APK (Signed)
+      working-directory: cordova-app
+      run: cordova build android --release --buildConfig=build.json
+    
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: access-network-debug
+        path: cordova-app/platforms/android/app/build/outputs/apk/debug/*.apk
+        retention-days: 30
+    
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: access-network-release
+        path: cordova-app/platforms/android/app/build/outputs/apk/release/*.apk
+        retention-days: 30
+    
+    - name: Get APK info
+      run: |
+        echo "📱 Debug APK:"
+        ls -lh cordova-app/platforms/android/app/build/outputs/apk/debug/*.apk 2>/dev/null || echo "No debug APK"
+        echo ""
+        echo "📱 Release APK:"
+        ls -lh cordova-app/platforms/android/app/build/outputs/apk/release/*.apk 2>/dev/null || echo "No release APK"

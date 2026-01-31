@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>🚀 PI Network Style - Local Calculation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .box {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #0f3460;
+        }
+        .value {
+            font-size: 2em;
+            color: #00ff88;
+            font-weight: bold;
+            font-family: monospace;
+        }
+        .label {
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .stat-item {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        h1 { color: #00ff88; }
+        h2 { color: #4da6ff; }
+    </style>
+</head>
+<body>
+    <h1>🚀 نظام الحساب المحلي (PI Network Style)</h1>
+    
+    <div class="box">
+        <div class="label">💰 Accumulated Reward (محسوب محلياً)</div>
+        <div class="value" id="accumulated">0.00000000</div>
+        <div class="label" style="margin-top: 10px; font-size: 0.9em;">
+            يتحدث كل ثانية - بدون أي استعلام للخادم!
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">
+            <div class="label">⏱️ الوقت المنقضي</div>
+            <div class="value" id="elapsed" style="font-size: 1.5em;">00:00:00</div>
+        </div>
+        <div class="stat-item">
+            <div class="label">📊 نسبة الإنجاز</div>
+            <div class="value" id="progress" style="font-size: 1.5em;">0%</div>
+        </div>
+        <div class="stat-item">
+            <div class="label">🚀 Boost Multiplier</div>
+            <div class="value" id="boost" style="font-size: 1.5em;">1.12x</div>
+        </div>
+        <div class="stat-item">
+            <div class="label">📡 استعلامات API</div>
+            <div class="value" id="apiCalls" style="font-size: 1.5em;">0</div>
+        </div>
+    </div>
+
+    <div class="box" style="margin-top: 20px;">
+        <h2>المقارنة:</h2>
+        <table style="width: 100%; color: #eee;">
+            <tr>
+                <td><strong>النظام القديم:</strong></td>
+                <td>~18 استعلام/ساعة لكل مستخدم</td>
+            </tr>
+            <tr style="background: rgba(0, 255, 136, 0.1);">
+                <td><strong>النظام الجديد:</strong></td>
+                <td><span style="color: #00ff88;">1 استعلام/ساعة فقط</span> (للـ boost sync)</td>
+            </tr>
+            <tr>
+                <td><strong>الضغط على DB:</strong></td>
+                <td><span style="color: #00ff88;">↓ 95%</span></td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        // محاكاة بيانات المستخدم
+        const startTime = Date.now() - (2 * 60 * 60 * 1000); // بدأ قبل ساعتين
+        const boostMultiplier = 1.12; // ad boost نشط
+        let apiCallCount = 0;
+
+        // 🧮 الحساب المحلي - نفس الصيغة في script.js
+        function calculateLocalAccumulated() {
+            const nowSec = Date.now() / 1000;
+            const startTimeSec = startTime / 1000;
+            const processingDuration = 24 * 60 * 60;
+            const elapsedSec = nowSec - startTimeSec;
+            
+            if (elapsedSec <= 0) return 0;
+            if (elapsedSec >= processingDuration) return 0.25 * boostMultiplier;
+            
+            const progress = elapsedSec / processingDuration;
+            const reward = 0.25 * boostMultiplier * progress;
+            return Math.round(reward * 100000000) / 100000000;
+        }
+
+        // تحديث العرض كل ثانية
+        function updateDisplay() {
+            const accumulated = calculateLocalAccumulated();
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const hours = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+            const progress = ((elapsed / (24 * 60 * 60)) * 100).toFixed(2);
+
+            document.getElementById('accumulated').textContent = accumulated.toFixed(8);
+            document.getElementById('elapsed').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('progress').textContent = progress + '%';
+            document.getElementById('boost').textContent = boostMultiplier.toFixed(2) + 'x';
+        }
+
+        // محاكاة استدعاء API (كل ساعة)
+        setInterval(() => {
+            apiCallCount++;
+            document.getElementById('apiCalls').textContent = apiCallCount;
+            console.log('🔄 Sync with server (boost update only)');
+        }, 3600000); // كل ساعة
+
+        // تحديث العرض كل ثانية
+        setInterval(updateDisplay, 1000);
+        updateDisplay();
+
+        console.log('✅ Local calculation started');
+        console.log('📊 Updates every 1 second');
+        console.log('🔄 Server sync every 1 hour');
+    </script>
+</body>
+</html>

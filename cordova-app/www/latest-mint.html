@@ -1,0 +1,2361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFT Latest Mints | AccessScan</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Discover the latest NFT mints on Access Network. Track newly created NFTs, view artwork, and explore NFT collections on AccessScan.">
+    <meta name="keywords" content="NFT mints, Access Network NFT, latest NFTs, NFT tracker, crypto collectibles, AccessScan NFT">
+    <link rel="canonical" href="https://accesschain.org/latest-mint.html">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://accesschain.org/latest-mint.html">
+    <meta property="og:title" content="NFT Latest Mints | AccessScan">
+    <meta property="og:description" content="Discover the latest NFT mints on Access Network blockchain.">
+    <meta property="og:image" content="https://accesschain.org/logo.png">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://accesschain.org/latest-mint.html">
+    <meta name="twitter:title" content="NFT Latest Mints | AccessScan">
+    <meta name="twitter:description" content="Track newly created NFTs on Access Network.">
+    <meta name="twitter:image" content="https://accesschain.org/logo.png">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        // ✅ Apply theme IMMEDIATELY before page renders (prevents white flash)
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        // ✅ Check session IMMEDIATELY to prevent sign-in button flicker
+        (function() {
+            const sessionData = localStorage.getItem('explorerGoogleSession');
+            if (sessionData) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    const now = Date.now();
+                    const sessionAge = now - (session.timestamp || 0);
+                    const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+                    // If session is valid, add a class to html to hide sign-in button
+                    if (sessionAge < maxAge && session.token && session.user) {
+                        document.documentElement.classList.add('user-logged-in');
+                    }
+                } catch (error) {
+                    // Ignore errors, button will show normally
+                }
+            }
+        })();
+    </script>
+    <style>
+        /* Hide sign-in button immediately if user is logged in */
+        html.user-logged-in .sign-in-btn:not(.user-logged-in) {
+            display: none !important;
+        }
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-code: #f6f8fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6c757d;
+            --border-color: #e1e8ed;
+            --accent-color: #0969da;
+            --accent-purple: #667eea;
+            --accent-blue: #4da6ff;
+            --footer-bg: #f8f9fa;
+            --footer-text: #333;
+            --search-bg: #ffffff;
+            --search-border: #e1e8ed;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-code: #1c2128;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+            --accent-color: #58a6ff;
+            --accent-purple: #8b95ff;
+            --accent-blue: #4da6ff;
+            --footer-bg: #161b22;
+            --footer-text: #e6edf3;
+            --search-bg: #0d1117;
+            --search-border: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 0 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-primary);
+            font-weight: 800;
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: -2px;
+        }
+
+        /* Hamburger Menu */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            border: none;
+            background: none;
+            position: relative;
+            right: 10px;
+        }
+
+        .menu-toggle span {
+            width: 20px;
+            height: 2px;
+            background: var(--text-primary);
+            margin: 2px 0;
+            transition: 0.3s;
+        }
+
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sign-in-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+        }
+
+        /* On mobile: Hide user info when logged in, but keep sign-in button when not logged in */
+        @media (max-width: 768px) {
+            /* When user is logged in, hide the desktop user info button */
+            .sign-in-btn.user-logged-in {
+                display: none !important;
+            }
+
+            /* When user is NOT logged in, always show the sign-in button */
+            .sign-in-btn:not(.user-logged-in) {
+                display: flex !important;
+            }
+        }
+
+        .sign-in-btn svg {
+            color: var(--text-primary) !important;
+        }
+
+        .sign-in-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .sign-in-btn:hover svg {
+            color: var(--text-primary) !important;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0;
+            position: relative;
+            z-index: 100;
+            overflow: visible;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 0;
+            align-items: center;
+            overflow: visible;
+            position: relative;
+            z-index: 100;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+        }
+
+        .nav-item.active {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+            font-weight: 500;
+        }
+
+        .dropdown {
+            position: relative;
+            z-index: 999;
+        }
+
+        .dropdown.active {
+            z-index: 9999;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            min-width: 250px;
+            display: none;
+            z-index: 99999999;
+            padding: 8px 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            margin-top: 2px;
+        }
+
+        /* تعديل موضع قائمة More لتظهر في الوسط */
+        .dropdown:last-child .dropdown-menu {
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        .dropdown:last-child.active .dropdown-menu {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .dropdown.active .dropdown-menu {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: none;
+            font-size: 14px;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-purple);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px;
+            height: 100vh;
+            height: 100dvh;
+            background: var(--bg-primary);
+            box-shadow: 2px 0 20px rgba(0,0,0,0.2);
+            z-index: 9998;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .mobile-menu.active {
+            left: 0;
+        }
+
+        .mobile-menu-header {
+            padding: 20px 20px 20px 0px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mobile-menu-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .mobile-menu-content {
+            padding: 20px 0;
+        }
+
+        .mobile-nav-item {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: 1px solid var(--bg-secondary);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .mobile-nav-item:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-purple);
+            padding-left: 25px;
+        }
+
+        .mobile-nav-item:active {
+            background: var(--border-color);
+            transform: scale(0.98);
+        }
+
+        .mobile-nav-section {
+            padding: 10px 20px;
+            font-weight: 600;
+            color: #c0c0c0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.5;
+        }
+
+        [data-theme="dark"] .mobile-nav-section {
+            color: #606060;
+            opacity: 0.6;
+        }
+
+        /* Mobile User Section Styles */
+        .mobile-user-section {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: -20px -20px 0 -20px;
+        }
+
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .mobile-user-details {
+            flex: 1;
+            min-width: 0;
+            padding-left: 8px;
+        }
+
+        .mobile-user-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 2px;
+            color: white;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mobile-user-email {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mobile-user-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .mobile-user-actions .mobile-nav-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 15px;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            border-bottom: none;
+            transition: background 0.3s ease;
+        }
+
+        .mobile-user-actions .mobile-nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-user-actions .mobile-nav-item i {
+            margin-right: 8px;
+            width: 16px;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 15px 0;
+        }
+
+        .mobile-signin-section {
+            padding: 0 0 10px 0;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0 25px 0;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .search-container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: left !important;
+            direction: ltr !important;
+        }
+
+        .search-title {
+            font-size: 20px;
+            font-weight: 400;
+            margin-bottom: 0;
+            text-align: left !important;
+            direction: ltr !important;
+            width: 100%;
+            display: none;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 0;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 100%;
+            padding: 18px 60px 18px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: left !important;
+            direction: ltr !important;
+            text-indent: 0 !important;
+            padding-left: 20px !important;
+            background: #ffffff;
+            color: #1a1a1a;
+        }
+
+        [data-theme="dark"] .search-input {
+            background: #ffffff;
+            color: #1a1a1a;
+            border-radius: 10px;
+        }
+
+        [data-theme="dark"] .search-box {
+            background: transparent;
+            border-radius: 10px;
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 38px;
+        }
+
+        .search-btn:hover {
+            background: #5a67d8;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .page-title-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .page-main-title {
+            font-size: 20px;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .api-docs-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 400;
+            transition: color 0.2s ease;
+        }
+
+        .api-docs-link:hover {
+            color: #0784c3;
+            text-decoration: none;
+        }
+
+        /* Table Card */
+        .table-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .table-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .table-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* NFT Table */
+        .nft-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .nft-table thead {
+            background: var(--bg-secondary);
+        }
+
+        .nft-table th {
+            padding: 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nft-table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+
+        .nft-table tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .nft-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .nft-table td {
+            padding: 16px;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        /* NFT Icon */
+        .nft-icon-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nft-icon {
+            width: 60px;
+            height: 60px;
+            background: #f0f2f5;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        [data-theme="dark"] .nft-icon {
+            background: #1c2128;
+        }
+
+        .nft-icon-hex {
+            width: 40px;
+            height: 40px;
+        }
+
+        /* NFT Item Details */
+        .nft-item-details {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nft-item-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 15px;
+        }
+
+        .nft-item-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Address Link */
+        .address-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .address-link:hover {
+            text-decoration: underline;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            opacity: 0;
+        }
+
+        .nft-table tbody tr:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-color);
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #e8f4f8;
+            color: #0784c3;
+        }
+
+        [data-theme="dark"] .badge {
+            background: #1c3d4d;
+            color: #4da6ff;
+        }
+
+        /* Table Controls */
+        .table-top-controls {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: var(--bg-primary);
+        }
+
+        .pagination-controls-top {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .records-info {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .download-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 400;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .download-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* Pagination */
+        .pagination {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .pagination-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 400;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--bg-secondary);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: var(--text-secondary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .pagination-btn:not(:disabled) {
+            background: var(--bg-primary);
+            color: #ffffff;
+            border-color: #ffffff;
+        }
+
+        [data-theme="dark"] .pagination-btn:hover:not(:disabled) {
+            background: var(--bg-secondary);
+            border-color: #ffffff;
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .pagination-btn.active {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+        }
+
+        [data-theme="dark"] .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: var(--text-secondary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        .page-info {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 400;
+        }
+
+        .show-rows-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .show-rows-section select {
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        /* Mobile: Center show-rows-section */
+        @media (max-width: 768px) {
+            .show-rows-section {
+                justify-content: center;
+            }
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--accent-purple);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .copy-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10000;
+            pointer-events: none;
+        }
+
+        .copy-toast.show {
+            opacity: 1;
+        }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            background: rgba(0,0,0,0.5);
+            z-index: 1999;
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+
+        .mobile-menu-overlay.active {
+            display: block;
+        }
+
+        body.mobile-menu-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Authentication Modal */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .auth-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .auth-header {
+            padding: 30px 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .auth-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .auth-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .auth-form {
+            padding: 30px;
+        }
+
+        .google-btn {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .google-btn:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-1px);
+        }
+
+        .auth-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-close:hover {
+            background: var(--bg-secondary);
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .success-message {
+            color: #28a745;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Custom checkbox */
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 0;
+        }
+
+        .checkbox-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkmark {
+            height: 16px;
+            width: 16px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            margin-right: 8px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-container:hover input ~ .checkmark {
+            border-color: var(--accent-purple);
+        }
+
+        .checkbox-container input:checked ~ .checkmark {
+            background-color: var(--accent-purple);
+            border-color: var(--accent-purple);
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            left: 4px;
+            top: 1px;
+            width: 4px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .checkbox-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--footer-bg);
+            color: var(--footer-text);
+            padding: 40px 0 20px;
+            margin-top: 50px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer-link:hover {
+            color: var(--accent-color);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex;
+            }
+
+            .nav-content {
+                display: none;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+
+            .container {
+                padding: 0 10px;
+            }
+
+            .search-title {
+                font-size: 18px;
+            }
+
+            .nft-table {
+                font-size: 12px;
+            }
+
+            .nft-table th,
+            .nft-table td {
+                padding: 12px 8px;
+            }
+
+            .nft-icon {
+                width: 50px;
+                height: 50px;
+            }
+
+            .pagination {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .pagination-controls {
+                justify-content: center;
+            }
+        }
+
+        [data-theme="dark"] .show-rows-section select {
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .show-rows-section select option {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">A Scan Original</div>
+                </div>
+            </div>
+
+            <div class="right-section">
+                <a href="#" class="sign-in-btn" onclick="showAuthModal()" style="display: none;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                </a>
+                <button class="menu-toggle" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="access-explorer.html" class="nav-item">Home</a>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Network ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="transactions.html" class="dropdown-item">Transactions</a>
+                    <a href="#" class="dropdown-item">Pending Transactions</a>
+                    <a href="#" class="dropdown-item">Contract Internal Transactions</a>
+                    <a href="blocks.html" class="dropdown-item">View Blocks</a>
+                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <a href="#" class="dropdown-item">Verified Contracts</a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Validators ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="#" class="dropdown-item">Validators Leaderboard</a>
+                    <a href="#" class="dropdown-item">Validator Stats</a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Tokens ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="#" class="dropdown-item">Top Tokens (AEP-20)</a>
+                    <a href="#" class="dropdown-item">Token Transfers (AEP-20)</a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item active" onclick="toggleDropdown(this, event)">NFTs ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="#" class="dropdown-item">Top NFTs</a>
+                    <a href="#" class="dropdown-item">Latest Trades</a>
+                    <a href="#" class="dropdown-item">Latest Transfers</a>
+                    <a href="latest-mint.html" class="dropdown-item">Latest Mints</a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Resources ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="#" class="dropdown-item">Charts & Stats</a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Developers ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <a href="#" class="dropdown-item">Input Data Decoder</a>
+                    <a href="#" class="dropdown-item">Unit Converter</a>
+                    <a href="#" class="dropdown-item">CSV Export</a>
+                    <a href="#" class="dropdown-item">Account Balance Checker</a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">More ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="#" class="dropdown-item">Charts & Stats</a>
+                    <a href="gastracker.html" class="dropdown-item">Gas Tracker</a>
+                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <a href="#" class="dropdown-item">Verify Contract</a>
+                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <a href="#" class="dropdown-item" onclick="event.preventDefault(); toggleTheme();" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="desktop-theme-text">Light Mode</span>
+                        <span id="desktop-theme-icon">☀️</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">A Scan Original</div>
+                </div>
+            </div>
+            <button class="mobile-menu-close" onclick="toggleMobileMenu()">×</button>
+        </div>
+
+        <div class="mobile-menu-content">
+            <!-- User Profile Section for Mobile (Only shown when logged in) -->
+            <div class="mobile-user-section" id="mobileUserSection" style="display: none;">
+                <div class="mobile-user-info">
+                    <div class="mobile-user-details">
+                        <div class="mobile-user-name" id="mobileUserName">User Name</div>
+                        <div class="mobile-user-email" id="mobileUserEmail">user@example.com</div>
+                    </div>
+                </div>
+                <div class="mobile-user-actions">
+                    <a href="#" class="mobile-nav-item" onclick="showUserProfile()">
+                        <i class="fas fa-user"></i> My Profile
+                    </a>
+                    <a href="#" class="mobile-nav-item" onclick="logoutExplorer()">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+                <div class="mobile-menu-divider"></div>
+            </div>
+
+            <!-- Sign In Section for Mobile (Only shown when not logged in) -->
+            <div class="mobile-signin-section" id="mobileSigninSection">
+                <a href="#" class="mobile-nav-item" onclick="showAuthModal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                </a>
+                <div class="mobile-menu-divider"></div>
+            </div>
+
+            <a href="access-explorer.html" class="mobile-nav-item">Home</a>
+
+            <div class="mobile-nav-section">Network</div>
+            <a href="transactions.html" class="mobile-nav-item">Transactions</a>
+            <a href="blocks.html" class="mobile-nav-item">View Blocks</a>
+            <a href="gastracker.html" class="mobile-nav-item">Gas Tracker</a>
+            <a href="top-accounts.html" class="mobile-nav-item">Top Accounts</a>
+
+            <div class="mobile-nav-section">NFTs</div>
+            <a href="#" class="mobile-nav-item">Top NFTs</a>
+            <a href="#" class="mobile-nav-item">Latest Trades</a>
+            <a href="#" class="mobile-nav-item">Latest Transfers</a>
+            <a href="latest-mint.html" class="mobile-nav-item">Latest Mints</a>
+
+            <div class="mobile-nav-section">Resources</div>
+            <a href="#" class="mobile-nav-item">Charts & Stats</a>
+
+            <div class="mobile-nav-section">Developers</div>
+            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+
+            <div class="mobile-nav-section">More</div>
+            <a href="#" class="mobile-nav-item">Charts & Stats</a>
+            <a href="gastracker.html" class="mobile-nav-item">Gas Tracker</a>
+            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <a href="#" class="mobile-nav-item">Verify Contract</a>
+
+            <!-- Dark Mode Toggle Button -->
+            <div style="padding: 20px; margin-top: auto; border-top: 1px solid var(--border-color);">
+                <button onclick="toggleTheme()" style="width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-primary); font-weight: 500; transition: all 0.2s;">
+                    <span id="mobile-theme-icon" style="font-size: 18px;">☀️</span>
+                    <span id="mobile-theme-text">Light Mode</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="search-container">
+            <h1 class="search-title"></h1>
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search by Address / Txn Hash / Block / NFT">
+                <button class="search-btn" onclick="performSearch()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="10" cy="10" r="7" stroke="white" stroke-width="2.5" fill="none"/>
+                        <line x1="16" y1="16" x2="21" y2="21" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Page Title with API Link -->
+        <div class="page-title-section">
+            <h1 class="page-main-title">NFT Latest Mints</h1>
+            <a href="developer-api.html" class="api-docs-link">
+                &lt;/&gt; API
+            </a>
+        </div>
+
+        <div class="table-card">
+            <div class="table-header">
+                <h2></h2>
+            </div>
+
+            <!-- Table Top Controls -->
+            <div class="table-top-controls">
+                <div class="records-info">
+                    More than <strong id="totalRecords">0</strong> records found<br>
+                    <small>(Showing records between #<span id="startRecord">0</span> to #<span id="endRecord">0</span>)</small>
+                </div>
+                <button class="download-btn" id="downloadBtn">
+                    <i class="fas fa-download"></i>
+                    Download Page Data
+                </button>
+                <div class="pagination-controls-top">
+                    <button class="pagination-btn" id="firstBtnTop" onclick="goToFirstPage()">First</button>
+                    <button class="pagination-btn" id="prevBtnTop" onclick="previousPage()">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="page-info" id="pageInfoTop">Page 1 of 1</span>
+                    <button class="pagination-btn" id="nextBtnTop" onclick="nextPage()">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button class="pagination-btn" id="lastBtnTop" onclick="goToLastPage()">Last</button>
+                </div>
+            </div>
+
+            <!-- NFT Table -->
+            <div id="tableContainer">
+                <table class="nft-table">
+                    <thead>
+                        <tr>
+                            <th>Maker</th>
+                            <th>Type</th>
+                            <th>Item</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nftTableBody">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <div class="show-rows-section">
+                    Show
+                    <select id="rowsPerPage" onchange="updateRowsPerPage()">
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    Records
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" id="firstBtn" onclick="goToFirstPage()">First</button>
+                    <button class="pagination-btn" id="prevBtn" onclick="previousPage()">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="page-info" id="pageInfo">Page 1 of 1</span>
+                    <button class="pagination-btn" id="nextBtn" onclick="nextPage()">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button class="pagination-btn" id="lastBtn" onclick="goToLastPage()">Last</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Sign In Modal -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-container">
+            <button class="auth-close" onclick="hideAuthModal()">×</button>
+
+            <div class="auth-header">
+                <div class="auth-title">Sign In to AccessScan</div>
+                <div class="auth-subtitle">Access the network explorer with your Google account</div>
+            </div>
+
+            <div class="auth-form">
+                <button type="button" class="google-btn" onclick="triggerGoogleSignIn()">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continue with Google
+                </button>
+
+                <!-- Terms Checkbox -->
+                <div class="form-group" style="margin-top: 25px;">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="termsCheckbox" required>
+                        <span class="checkmark"></span>
+                        I agree to the <a href="terms-of-service.html" target="_blank" style="color: var(--accent-purple);">Terms of Service</a>.
+                    </label>
+                </div>
+
+                <div id="authMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copy Toast -->
+    <div class="copy-toast" id="copyToast">Copied to clipboard!</div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="about.html" class="footer-link">About</a>
+                <a href="faq.html" class="footer-link">FAQ</a>
+                <a href="developer-api.html" class="footer-link">API</a>
+                <a href="contact.html" class="footer-link">Contact Us</a>
+                <a href="terms-of-service.html" class="footer-link">Terms</a>
+            </div>
+            <p>&copy; 2025 AccessScan. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // ==================== DROPDOWN FUNCTIONALITY ====================
+        // Toggle dropdown menus
+        function toggleDropdown(element, event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const dropdown = element.closest('.dropdown');
+            const isActive = dropdown.classList.contains('active');
+
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown.active').forEach(d => {
+                if (d !== dropdown) {
+                    d.classList.remove('active');
+                }
+            });
+
+            // Toggle current dropdown
+            if (isActive) {
+                dropdown.classList.remove('active');
+            } else {
+                dropdown.classList.add('active');
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown.active').forEach(dropdown => {
+                    dropdown.classList.remove('active');
+                });
+            }
+        });
+
+        // ==================== AUTHENTICATION SYSTEM (Same as access-explorer.html) ====================
+        let currentExplorerUser = null;
+        let explorerSessionToken = null;
+
+        // Google Client ID - loaded securely from server
+        let GOOGLE_CLIENT_ID = null;
+
+        // Load Google Client ID from secure server endpoint
+        async function loadGoogleClientId() {
+            try {
+                const response = await fetch('/api/oauth-config');
+                const data = await response.json();
+                if (data.success && data.clientId) {
+                    GOOGLE_CLIENT_ID = data.clientId;
+                    console.log('✅ Google OAuth configured securely');
+                } else {
+                    console.error('Failed to load Google Client ID:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading Google Client ID:', error);
+            }
+        }
+
+        function getRedirectUri() {
+            return window.location.origin + window.location.pathname;
+        }
+
+        function triggerGoogleSignIn() {
+            if (!GOOGLE_CLIENT_ID) {
+                showAuthMessage('Google authentication not configured. Please try again.');
+                return;
+            }
+
+            const termsCheckbox = document.getElementById('termsCheckbox');
+            if (!termsCheckbox.checked) {
+                showAuthMessage('Please accept the Terms of Service first.');
+                return;
+            }
+
+            sessionStorage.setItem('googleAuthInProgress', 'true');
+
+            const redirectUri = getRedirectUri();
+            const scope = 'openid email profile';
+            const responseType = 'token id_token';
+            const nonce = generateNonce();
+
+            sessionStorage.setItem('googleAuthNonce', nonce);
+
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
+                `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+                `&response_type=${encodeURIComponent(responseType)}` +
+                `&scope=${encodeURIComponent(scope)}` +
+                `&nonce=${encodeURIComponent(nonce)}`;
+
+            console.log('🔐 Redirecting to Google Sign-In...');
+            window.location.href = authUrl;
+        }
+
+        function generateNonce() {
+            const array = new Uint8Array(16);
+            crypto.getRandomValues(array);
+            return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function handleOAuthCallback() {
+            const hash = window.location.hash;
+            if (!hash || hash.length <= 1) return;
+
+            const authInProgress = sessionStorage.getItem('googleAuthInProgress');
+            if (!authInProgress) return;
+
+            console.log('🔍 Processing OAuth callback...');
+            sessionStorage.removeItem('googleAuthInProgress');
+
+            try {
+                const params = new URLSearchParams(hash.substring(1));
+                const idToken = params.get('id_token');
+
+                if (!idToken) throw new Error('No ID token received');
+
+                const base64Url = idToken.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+
+                const userInfo = JSON.parse(jsonPayload);
+
+                const savedNonce = sessionStorage.getItem('googleAuthNonce');
+                if (savedNonce && userInfo.nonce !== savedNonce) {
+                    throw new Error('Nonce mismatch - possible security issue');
+                }
+                sessionStorage.removeItem('googleAuthNonce');
+
+                const userData = {
+                    email: userInfo.email,
+                    name: userInfo.name,
+                    picture: userInfo.picture,
+                    sub: userInfo.sub
+                };
+
+                saveExplorerSession(idToken, userData);
+
+                console.log('✅ Google sign in successful:', userData.name);
+
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
+                showAuthMessage('Successfully signed in with Google!', 'success');
+                setTimeout(() => {
+                    hideAuthModal();
+                }, 1500);
+
+            } catch (error) {
+                console.error('❌ Error processing OAuth callback:', error);
+                showAuthMessage('Sign in failed. Please try again.');
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', handleOAuthCallback);
+        } else {
+            handleOAuthCallback();
+        }
+
+        function loadExplorerSession() {
+            const sessionData = localStorage.getItem('explorerGoogleSession');
+            if (sessionData) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    const now = Date.now();
+                    const sessionAge = now - (session.timestamp || 0);
+                    const maxAge = 30 * 24 * 60 * 60 * 1000;
+
+                    if (sessionAge < maxAge && session.token && session.user) {
+                        explorerSessionToken = session.token;
+                        currentExplorerUser = session.user;
+                        updateExplorerAuthUI();
+                        console.log('✅ Explorer session restored:', session.user.name);
+                        return true;
+                    } else {
+                        console.log('⚠️ Explorer session expired, clearing...');
+                        clearExplorerSession();
+                    }
+                } catch (error) {
+                    console.error('❌ Error loading explorer session:', error);
+                    clearExplorerSession();
+                }
+            }
+            return false;
+        }
+
+        function saveExplorerSession(token, user) {
+            explorerSessionToken = token;
+            currentExplorerUser = user;
+
+            const sessionData = {
+                token: token,
+                user: user,
+                timestamp: Date.now(),
+                loginMethod: 'google',
+                lastActivity: Date.now()
+            };
+
+            localStorage.setItem('explorerGoogleSession', JSON.stringify(sessionData));
+            sessionStorage.setItem('explorerGoogleBackup', JSON.stringify(sessionData));
+
+            updateExplorerAuthUI();
+            console.log('💾 Explorer session saved for:', user.name);
+        }
+
+        function clearExplorerSession() {
+            explorerSessionToken = null;
+            currentExplorerUser = null;
+            localStorage.removeItem('explorerGoogleSession');
+            sessionStorage.removeItem('explorerGoogleBackup');
+            updateExplorerAuthUI();
+            console.log('🗑️ Explorer session cleared completely');
+        }
+
+        function updateExplorerAuthUI() {
+            const signInBtn = document.querySelector('.sign-in-btn');
+            const mobileUserSection = document.getElementById('mobileUserSection');
+            const mobileSigninSection = document.getElementById('mobileSigninSection');
+            const mobileUserName = document.getElementById('mobileUserName');
+            const mobileUserEmail = document.getElementById('mobileUserEmail');
+
+            if (currentExplorerUser) {
+                const displayName = currentExplorerUser.name || 'User';
+                const userEmail = currentExplorerUser.email || '';
+
+                // Add class to html to hide sign-in button
+                document.documentElement.classList.add('user-logged-in');
+
+                // Desktop version - show user info with class for mobile hiding
+                signInBtn.className = 'sign-in-btn user-logged-in';
+                signInBtn.style.display = 'flex';
+                signInBtn.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                        <span style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${displayName}</span>
+                        <button onclick="logoutExplorer()" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px; cursor: pointer;">Logout</button>
+                    </div>
+                `;
+
+                // Mobile version - show user section in sidebar
+                if (mobileUserSection && mobileSigninSection) {
+                    mobileUserSection.style.display = 'block';
+                    mobileSigninSection.style.display = 'none';
+
+                    if (mobileUserName) mobileUserName.textContent = displayName;
+                    if (mobileUserEmail) mobileUserEmail.textContent = userEmail;
+                }
+            } else {
+                // Remove class from html to show sign-in button
+                document.documentElement.classList.remove('user-logged-in');
+
+                // Desktop version - show sign in button when NOT logged in
+                signInBtn.className = 'sign-in-btn';
+                signInBtn.style.display = 'flex';
+                signInBtn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                `;
+
+                // Mobile version - show sign in section in sidebar
+                if (mobileUserSection && mobileSigninSection) {
+                    mobileUserSection.style.display = 'none';
+                    mobileSigninSection.style.display = 'block';
+                }
+            }
+        }
+
+        function showUserProfile() {
+            alert('Profile page will be implemented soon');
+            toggleMobileMenu();
+        }
+
+        function logoutExplorer() {
+            clearExplorerSession();
+
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu && mobileMenu.classList.contains('active')) {
+                toggleMobileMenu();
+            }
+
+            setTimeout(() => {
+                showAuthMessage('Successfully signed out.', 'success');
+            }, 500);
+
+            console.log('👋 User logged out successfully');
+        }
+
+        function showAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function hideAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+            clearAuthMessages();
+        }
+
+        function clearAuthMessages() {
+            document.getElementById('authMessage').innerHTML = '';
+        }
+
+        function showAuthMessage(message, type = 'error') {
+            const messageDiv = document.getElementById('authMessage');
+            messageDiv.innerHTML = `<div class="${type}-message">${message}</div>`;
+        }
+
+        // ==================== THEME TOGGLE ====================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            updateThemeUI(newTheme);
+        }
+
+        function updateThemeUI(theme) {
+            const mobileIcon = document.getElementById('mobile-theme-icon');
+            const mobileText = document.getElementById('mobile-theme-text');
+            const desktopIcon = document.getElementById('desktop-theme-icon');
+            const desktopText = document.getElementById('desktop-theme-text');
+
+            if (theme === 'dark') {
+                if (mobileIcon) mobileIcon.textContent = '🌙';
+                if (mobileText) mobileText.textContent = 'Dark Mode';
+                if (desktopIcon) desktopIcon.textContent = '🌙';
+                if (desktopText) desktopText.textContent = 'Dark Mode';
+            } else {
+                if (mobileIcon) mobileIcon.textContent = '☀️';
+                if (mobileText) mobileText.textContent = 'Light Mode';
+                if (desktopIcon) desktopIcon.textContent = '☀️';
+                if (desktopText) desktopText.textContent = 'Light Mode';
+            }
+        }
+
+        // ==================== MOBILE MENU ====================
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.querySelector('.mobile-menu-overlay');
+            menu.classList.toggle('active');
+            overlay.classList.toggle('active');
+            document.body.classList.toggle('mobile-menu-open');
+        }
+
+        // ==================== DROPDOWN ====================
+        // Toggle dropdown menus
+        function toggleDropdown(element, event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const dropdown = element.closest('.dropdown');
+            const isActive = dropdown.classList.contains('active');
+
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown.active').forEach(d => {
+                if (d !== dropdown) {
+                    d.classList.remove('active');
+                }
+            });
+
+            // Toggle current dropdown
+            if (isActive) {
+                dropdown.classList.remove('active');
+            } else {
+                dropdown.classList.add('active');
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('mobileMenu');
+            const toggle = document.querySelector('.menu-toggle');
+
+            // Close mobile menu
+            if (!menu.contains(event.target) && !toggle.contains(event.target)) {
+                if (menu.classList.contains('active')) {
+                    toggleMobileMenu();
+                }
+            }
+
+            // Close all dropdowns if clicking outside
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown.active').forEach(dropdown => {
+                    dropdown.classList.remove('active');
+                });
+            }
+        });
+
+        // ==================== SEARCH ====================
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+
+            console.log('🔍 Search query:', query);
+
+            let cleanQuery = query;
+            if (cleanQuery.startsWith('0x')) {
+                cleanQuery = cleanQuery.substring(2);
+            }
+
+            if (!isNaN(query) && query.length < 40) {
+                console.log('✅ Detected: Block number');
+                window.location.href = `block-details.html?number=${query}`;
+            } else if (cleanQuery.length === 64 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
+                console.log('✅ Detected: Transaction/Block hash');
+                window.location.href = `transaction-details.html?hash=${cleanQuery}`;
+            } else if (cleanQuery.length === 40 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
+                console.log('✅ Detected: Address');
+                window.location.href = `address-details.html?address=0x${cleanQuery}`;
+            } else {
+                alert('Invalid search query. Please enter a valid block number, transaction hash, or address.');
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        // ==================== NFT DATA ====================
+        let nftMints = [];
+        let filteredMints = [];
+        let currentPage = 1;
+        let rowsPerPage = 25;
+
+        // ✅ حفظ واستعادة حالة الـ Pagination من localStorage
+        function saveLatestMintsState() {
+            const state = {
+                currentPage: currentPage,
+                rowsPerPage: rowsPerPage,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('latestMintsPaginationState', JSON.stringify(state));
+            console.log('💾 Saved latest mints state:', state);
+        }
+
+        function loadLatestMintsState() {
+            const savedState = localStorage.getItem('latestMintsPaginationState');
+            if (savedState) {
+                try {
+                    const state = JSON.parse(savedState);
+                    // استخدم الحالة المحفوظة إذا كانت حديثة (أقل من ساعة)
+                    const isRecent = (Date.now() - state.timestamp) < (60 * 60 * 1000);
+                    if (isRecent) {
+                        currentPage = state.currentPage || 1;
+                        rowsPerPage = state.rowsPerPage || 25;
+                        
+                        // تحديث القائمة المنسدلة
+                        const select = document.getElementById('rowsPerPage');
+                        if (select) {
+                            select.value = rowsPerPage;
+                        }
+                        
+                        console.log('✅ Restored latest mints state:', state);
+                        return true;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Could not restore latest mints state:', error);
+                }
+            }
+            return false;
+        }
+
+        async function fetchNFTMints() {
+            try {
+                document.getElementById('tableContainer').innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading NFT mints from Access Network...</p></div>';
+
+                const response = await fetch('/api/nft/mints?limit=100');
+                const data = await response.json();
+                
+                if (data.success && data.mints) {
+                    // تحويل البيانات إلى الصيغة المطلوبة
+                    nftMints = data.mints.map(mint => ({
+                        maker: mint.minter,
+                        recipient: mint.recipient,
+                        type: mint.nftSymbol || 'NFT',
+                        name: mint.nftName || `${mint.nftSymbol} #${mint.tokenId}`,
+                        description: `Token ID: #${mint.tokenId}`,
+                        txHash: mint.txHash,
+                        contractAddress: mint.contractAddress,
+                        tokenId: mint.tokenId,
+                        tokenUri: mint.tokenUri,
+                        nftImage: mint.nftImage,
+                        timestamp: mint.timestamp
+                    }));
+                } else {
+                    nftMints = [];
+                }
+                
+                filteredMints = [...nftMints];
+                renderTable();
+                updatePaginationInfo();
+                updatePaginationInfoTop();
+            } catch (error) {
+                console.error('Error fetching NFT mints:', error);
+                nftMints = [];
+                filteredMints = [];
+                renderTable();
+                updatePaginationInfo();
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('nftTableBody');
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const pageData = filteredMints.slice(start, end);
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px;">No NFT mints found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pageData.map(nft => {
+                // تحقق من وجود صورة NFT
+                const hasImage = nft.nftImage && nft.nftImage !== 'null' && nft.nftImage.startsWith('http');
+                const nftIconHtml = hasImage 
+                    ? `<img src="${nft.nftImage}" alt="${nft.name}" style="width: 60px; height: 60px; border-radius: 12px; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                       <svg class="nft-icon-hex" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                           <polygon points="50,5 93.3,27.5 93.3,72.5 50,95 6.7,72.5 6.7,27.5" 
+                                    fill="none" stroke="#8b949e" stroke-width="3"/>
+                           <text x="50" y="58" text-anchor="middle" 
+                                 font-size="24" font-weight="600" fill="#8b949e" font-family="Arial, sans-serif">NFT</text>
+                       </svg>`
+                    : `<svg class="nft-icon-hex" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                           <polygon points="50,5 93.3,27.5 93.3,72.5 50,95 6.7,72.5 6.7,27.5" 
+                                    fill="none" stroke="#8b949e" stroke-width="3"/>
+                           <text x="50" y="58" text-anchor="middle" 
+                                 font-size="24" font-weight="600" fill="#8b949e" font-family="Arial, sans-serif">NFT</text>
+                       </svg>`;
+                
+                return `
+                <tr>
+                    <td>
+                        <a href="address-details.html?address=${nft.maker}" class="address-link">
+                            ${nft.maker.substring(0, 12)}...${nft.maker.substring(nft.maker.length - 8)}
+                            <button class="copy-btn" onclick="copyToClipboard('${nft.maker}')">
+                                <i class="far fa-copy"></i>
+                            </button>
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge">${nft.type}</span>
+                    </td>
+                    <td>
+                        <div class="nft-item-details">
+                            <div class="nft-icon">
+                                ${nftIconHtml}
+                            </div>
+                            <div>
+                                <div class="nft-item-name">
+                                    <a href="transaction-details.html?hash=${nft.txHash}" style="color: inherit; text-decoration: none;">
+                                        ${nft.name}
+                                    </a>
+                                </div>
+                                <div class="nft-item-description">${nft.description}</div>
+                                ${nft.contractAddress ? `<div class="nft-item-description" style="margin-top: 4px;">
+                                    Contract: ${nft.contractAddress.substring(0, 10)}...${nft.contractAddress.substring(nft.contractAddress.length - 6)}
+                                </div>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+            
+            saveLatestMintsState(); // ✅ حفظ الحالة بعد التحديث
+        }
+
+        function updatePaginationInfoTop() {
+            updatePaginationInfo();
+        }
+
+        function updatePaginationInfo() {
+            const totalPages = Math.ceil(filteredMints.length / rowsPerPage) || 1;
+            const start = (currentPage - 1) * rowsPerPage + 1;
+            const end = Math.min(start + rowsPerPage - 1, filteredMints.length);
+
+            const pageInfo = `Page ${currentPage} of ${totalPages}`;
+            const pageInfoEl = document.getElementById('pageInfo');
+            const pageInfoTopEl = document.getElementById('pageInfoTop');
+            
+            if (pageInfoEl) pageInfoEl.textContent = pageInfo;
+            if (pageInfoTopEl) pageInfoTopEl.textContent = pageInfo;
+
+            const totalRecordsEl = document.getElementById('totalRecords');
+            const startRecordEl = document.getElementById('startRecord');
+            const endRecordEl = document.getElementById('endRecord');
+            
+            if (totalRecordsEl) totalRecordsEl.textContent = filteredMints.length;
+            if (startRecordEl) startRecordEl.textContent = filteredMints.length > 0 ? start : 0;
+            if (endRecordEl) endRecordEl.textContent = end;
+
+            // Update all buttons
+            const buttons = {
+                first: ['firstBtn', 'firstBtnTop'],
+                prev: ['prevBtn', 'prevBtnTop'],
+                next: ['nextBtn', 'nextBtnTop'],
+                last: ['lastBtn', 'lastBtnTop']
+            };
+
+            buttons.first.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = currentPage === 1;
+            });
+
+            buttons.prev.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = currentPage === 1;
+            });
+
+            buttons.next.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = currentPage >= totalPages;
+            });
+
+            buttons.last.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = currentPage >= totalPages;
+            });
+        }
+
+
+        // Smooth scroll to table top
+        function scrollToTable() {
+            const tableSection = document.querySelector('.table-card');
+            if (tableSection) {
+                const offset = 20;
+                const elementPosition = tableSection.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // Navigation functions
+        function nextPage() {
+            const totalPages = Math.ceil(filteredMints.length / rowsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+                updatePaginationInfo();
+                scrollToTable();
+            }
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+                updatePaginationInfo();
+                scrollToTable();
+            }
+        }
+
+        function goToFirstPage() {
+            currentPage = 1;
+            renderTable();
+            updatePaginationInfo();
+            scrollToTable();
+        }
+
+        function goToLastPage() {
+            const totalPages = Math.ceil(filteredMints.length / rowsPerPage);
+            currentPage = totalPages;
+            renderTable();
+            updatePaginationInfo();
+            scrollToTable();
+        }
+
+        function updateRowsPerPage() {
+            const select = document.getElementById('rowsPerPage');
+            if (select) {
+                rowsPerPage = parseInt(select.value);
+                currentPage = 1;
+                renderTable();
+                updatePaginationInfo();
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            filteredMints = nftMints.filter(nft => 
+                nft.maker.toLowerCase().includes(searchTerm) ||
+                nft.name.toLowerCase().includes(searchTerm) ||
+                nft.description.toLowerCase().includes(searchTerm)
+            );
+            currentPage = 1;
+            renderTable();
+            updatePaginationInfo();
+        });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById('copyToast');
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2000);
+            });
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const dataStr = JSON.stringify(filteredMints, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const exportFileDefaultName = 'access-nft-mints.json';
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        });
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load Google Client ID first
+            await loadGoogleClientId();
+
+            // First, try to restore session
+            loadExplorerSession();
+
+            // Always call updateExplorerAuthUI to show/hide Sign In button
+            updateExplorerAuthUI();
+
+            // If no session in localStorage, try sessionStorage backup
+            const backupSession = sessionStorage.getItem('explorerGoogleBackup');
+            if (backupSession && !currentExplorerUser) {
+                try {
+                    const session = JSON.parse(backupSession);
+                    if (session.token && session.user) {
+                        explorerSessionToken = session.token;
+                        currentExplorerUser = session.user;
+                        updateExplorerAuthUI();
+                        saveExplorerSession(session.token, session.user);
+                        console.log('🔄 Session restored from backup');
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Could not restore backup session:', error);
+                }
+            }
+
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeUI(savedTheme);
+
+            // ✅ استعادة حالة الصفحة المحفوظة
+            loadLatestMintsState();
+
+            fetchNFTMints();
+
+            function listenForNewMints() {
+                setInterval(async () => {
+                    console.log('Checking for new NFT mints on Access Network...');
+                }, 10000);
+            }
+
+            listenForNewMints();
+        });
+
+        document.getElementById('authModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                hideAuthModal();
+            }
+        });
+    </script>
+</body>
+</html>

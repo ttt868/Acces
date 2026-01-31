@@ -1,0 +1,1117 @@
+/* Leaderboard Modal Styles */
+.leaderboard-modal {
+  display: none;
+  position: fixed;
+  z-index: 99999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  animation: fadeIn 0.3s ease;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.leaderboard-modal.active {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.leaderboard-content {
+  background: var(--card-background);
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+  margin: 0;
+}
+
+/* Header Section - Sticky */
+.leaderboard-header {
+  position: sticky;
+  top: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  z-index: 10;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.leaderboard-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.leaderboard-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.leaderboard-title i {
+  font-size: 28px;
+  color: #ffd700;
+}
+
+.leaderboard-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease;
+}
+
+.leaderboard-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Tabs Section */
+#leaderboard-period-tabs {
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px;
+  border-radius: 10px;
+}
+
+/* Individual Tab Buttons with ID selectors */
+#leaderboard-btn-alltime,
+#leaderboard-btn-weekly,
+#leaderboard-btn-today {
+  flex: 1;
+  padding: 10px 16px;
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: none !important;
+  white-space: nowrap;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  text-decoration: none !important;
+  transform: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Indonesian language - smaller font to fit text */
+html[lang="id"] #leaderboard-btn-alltime,
+html[lang="id"] #leaderboard-btn-weekly,
+html[lang="id"] #leaderboard-btn-today {
+  font-size: 11px;
+  padding: 10px 8px;
+}
+
+#leaderboard-btn-alltime:hover,
+#leaderboard-btn-alltime:focus,
+#leaderboard-btn-alltime:active,
+#leaderboard-btn-alltime:focus-visible,
+#leaderboard-btn-alltime:focus-within,
+#leaderboard-btn-alltime::before,
+#leaderboard-btn-alltime::after,
+#leaderboard-btn-weekly:hover,
+#leaderboard-btn-weekly:focus,
+#leaderboard-btn-weekly:active,
+#leaderboard-btn-weekly:focus-visible,
+#leaderboard-btn-weekly:focus-within,
+#leaderboard-btn-weekly::before,
+#leaderboard-btn-weekly::after,
+#leaderboard-btn-today:hover,
+#leaderboard-btn-today:focus,
+#leaderboard-btn-today:active,
+#leaderboard-btn-today:focus-visible,
+#leaderboard-btn-today:focus-within,
+#leaderboard-btn-today::before,
+#leaderboard-btn-today::after {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  text-decoration: none !important;
+  transform: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+  content: none !important;
+}
+
+#leaderboard-btn-alltime.active,
+#leaderboard-btn-weekly.active,
+#leaderboard-btn-today.active {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
+}
+
+#leaderboard-btn-alltime.active:hover,
+#leaderboard-btn-alltime.active:focus,
+#leaderboard-btn-alltime.active:active,
+#leaderboard-btn-alltime.active:focus-visible,
+#leaderboard-btn-alltime.active:focus-within,
+#leaderboard-btn-weekly.active:hover,
+#leaderboard-btn-weekly.active:focus,
+#leaderboard-btn-weekly.active:active,
+#leaderboard-btn-weekly.active:focus-visible,
+#leaderboard-btn-weekly.active:focus-within,
+#leaderboard-btn-today.active:hover,
+#leaderboard-btn-today.active:focus,
+#leaderboard-btn-today.active:active,
+#leaderboard-btn-today.active:focus-visible,
+#leaderboard-btn-today.active:focus-within {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Dark mode support - using media query */
+@media (prefers-color-scheme: dark) {
+  #leaderboard-btn-alltime,
+  #leaderboard-btn-weekly,
+  #leaderboard-btn-today {
+    background: rgba(0, 0, 0, 0.3) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+  
+  #leaderboard-btn-alltime:hover,
+  #leaderboard-btn-alltime:focus,
+  #leaderboard-btn-alltime:active,
+  #leaderboard-btn-weekly:hover,
+  #leaderboard-btn-weekly:focus,
+  #leaderboard-btn-weekly:active,
+  #leaderboard-btn-today:hover,
+  #leaderboard-btn-today:focus,
+  #leaderboard-btn-today:active {
+    background: rgba(0, 0, 0, 0.3) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transform: none !important;
+  }
+  
+  #leaderboard-btn-alltime.active,
+  #leaderboard-btn-weekly.active,
+  #leaderboard-btn-today.active {
+    background: rgba(0, 0, 0, 0.5) !important;
+    color: white !important;
+  }
+  
+  #leaderboard-btn-alltime.active:hover,
+  #leaderboard-btn-alltime.active:focus,
+  #leaderboard-btn-alltime.active:active,
+  #leaderboard-btn-weekly.active:hover,
+  #leaderboard-btn-weekly.active:focus,
+  #leaderboard-btn-weekly.active:active,
+  #leaderboard-btn-today.active:hover,
+  #leaderboard-btn-today.active:focus,
+  #leaderboard-btn-today.active:active {
+    background: rgba(0, 0, 0, 0.5) !important;
+    color: white !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transform: none !important;
+  }
+}
+
+/* Dark mode support - using class/attribute selectors */
+[data-theme="dark"] #leaderboard-btn-alltime,
+[data-theme="dark"] #leaderboard-btn-weekly,
+[data-theme="dark"] #leaderboard-btn-today,
+.dark-theme #leaderboard-btn-alltime,
+.dark-theme #leaderboard-btn-weekly,
+.dark-theme #leaderboard-btn-today,
+html.dark-theme #leaderboard-btn-alltime,
+html.dark-theme #leaderboard-btn-weekly,
+html.dark-theme #leaderboard-btn-today,
+body.dark-theme #leaderboard-btn-alltime,
+body.dark-theme #leaderboard-btn-weekly,
+body.dark-theme #leaderboard-btn-today {
+  background: rgba(0, 0, 0, 0.3) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="dark"] #leaderboard-btn-alltime:hover,
+[data-theme="dark"] #leaderboard-btn-alltime:focus,
+[data-theme="dark"] #leaderboard-btn-alltime:active,
+[data-theme="dark"] #leaderboard-btn-weekly:hover,
+[data-theme="dark"] #leaderboard-btn-weekly:focus,
+[data-theme="dark"] #leaderboard-btn-weekly:active,
+[data-theme="dark"] #leaderboard-btn-today:hover,
+[data-theme="dark"] #leaderboard-btn-today:focus,
+[data-theme="dark"] #leaderboard-btn-today:active,
+.dark-theme #leaderboard-btn-alltime:hover,
+.dark-theme #leaderboard-btn-alltime:focus,
+.dark-theme #leaderboard-btn-alltime:active,
+.dark-theme #leaderboard-btn-weekly:hover,
+.dark-theme #leaderboard-btn-weekly:focus,
+.dark-theme #leaderboard-btn-weekly:active,
+.dark-theme #leaderboard-btn-today:hover,
+.dark-theme #leaderboard-btn-today:focus,
+.dark-theme #leaderboard-btn-today:active,
+html.dark-theme #leaderboard-btn-alltime:hover,
+html.dark-theme #leaderboard-btn-alltime:focus,
+html.dark-theme #leaderboard-btn-alltime:active,
+html.dark-theme #leaderboard-btn-weekly:hover,
+html.dark-theme #leaderboard-btn-weekly:focus,
+html.dark-theme #leaderboard-btn-weekly:active,
+html.dark-theme #leaderboard-btn-today:hover,
+html.dark-theme #leaderboard-btn-today:focus,
+html.dark-theme #leaderboard-btn-today:active,
+body.dark-theme #leaderboard-btn-alltime:hover,
+body.dark-theme #leaderboard-btn-alltime:focus,
+body.dark-theme #leaderboard-btn-alltime:active,
+body.dark-theme #leaderboard-btn-weekly:hover,
+body.dark-theme #leaderboard-btn-weekly:focus,
+body.dark-theme #leaderboard-btn-weekly:active,
+body.dark-theme #leaderboard-btn-today:hover,
+body.dark-theme #leaderboard-btn-today:focus,
+body.dark-theme #leaderboard-btn-today:active {
+  background: rgba(0, 0, 0, 0.3) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="dark"] #leaderboard-btn-alltime.active,
+[data-theme="dark"] #leaderboard-btn-weekly.active,
+[data-theme="dark"] #leaderboard-btn-today.active,
+.dark-theme #leaderboard-btn-alltime.active,
+.dark-theme #leaderboard-btn-weekly.active,
+.dark-theme #leaderboard-btn-today.active,
+html.dark-theme #leaderboard-btn-alltime.active,
+html.dark-theme #leaderboard-btn-weekly.active,
+html.dark-theme #leaderboard-btn-today.active,
+body.dark-theme #leaderboard-btn-alltime.active,
+body.dark-theme #leaderboard-btn-weekly.active,
+body.dark-theme #leaderboard-btn-today.active {
+  background: rgba(0, 0, 0, 0.5) !important;
+  color: white !important;
+}
+
+/* Language-specific adjustments for tabs - MOBILE ONLY */
+@media (max-width: 768px) {
+  /* Indonesian - "Sepanjang waktu" is long */
+  html[lang="id"] #leaderboard-btn-alltime {
+    font-size: 10px;
+    padding: 10px 4px;
+  }
+
+  /* Arabic - RTL */
+  html[lang="ar"] #leaderboard-period-tabs {
+    direction: rtl;
+  }
+
+  html[lang="ar"] #leaderboard-btn-alltime,
+  html[lang="ar"] #leaderboard-btn-weekly,
+  html[lang="ar"] #leaderboard-btn-today {
+    font-size: 12px;
+    padding: 10px 6px;
+  }
+
+  /* German, Portuguese - longer text */
+  html[lang="de"] #leaderboard-btn-alltime,
+  html[lang="de"] #leaderboard-btn-weekly,
+  html[lang="de"] #leaderboard-btn-today,
+  html[lang="pt"] #leaderboard-btn-alltime,
+  html[lang="pt"] #leaderboard-btn-weekly,
+  html[lang="pt"] #leaderboard-btn-today {
+    font-size: 11px;
+    padding: 10px 4px;
+  }
+
+  /* Russian - longer text */
+  html[lang="ru"] #leaderboard-btn-alltime,
+  html[lang="ru"] #leaderboard-btn-weekly,
+  html[lang="ru"] #leaderboard-btn-today {
+    font-size: 10px;
+    padding: 10px 4px;
+  }
+
+  /* Hindi - larger font needed */
+  html[lang="hi"] #leaderboard-btn-alltime,
+  html[lang="hi"] #leaderboard-btn-weekly,
+  html[lang="hi"] #leaderboard-btn-today {
+    font-size: 11px;
+    padding: 10px 4px;
+  }
+
+  /* Japanese, Korean, Chinese - CJK characters */
+  html[lang="ja"] #leaderboard-btn-alltime,
+  html[lang="ja"] #leaderboard-btn-weekly,
+  html[lang="ja"] #leaderboard-btn-today,
+  html[lang="ko"] #leaderboard-btn-alltime,
+  html[lang="ko"] #leaderboard-btn-weekly,
+  html[lang="ko"] #leaderboard-btn-today,
+  html[lang="zh"] #leaderboard-btn-alltime,
+  html[lang="zh"] #leaderboard-btn-weekly,
+  html[lang="zh"] #leaderboard-btn-today {
+    font-size: 13px;
+    padding: 10px 8px;
+  }
+
+  /* French, Spanish, Italian, Turkish */
+  html[lang="fr"] #leaderboard-btn-alltime,
+  html[lang="fr"] #leaderboard-btn-weekly,
+  html[lang="fr"] #leaderboard-btn-today,
+  html[lang="es"] #leaderboard-btn-alltime,
+  html[lang="es"] #leaderboard-btn-weekly,
+  html[lang="es"] #leaderboard-btn-today,
+  html[lang="it"] #leaderboard-btn-alltime,
+  html[lang="it"] #leaderboard-btn-weekly,
+  html[lang="it"] #leaderboard-btn-today,
+  html[lang="tr"] #leaderboard-btn-alltime,
+  html[lang="tr"] #leaderboard-btn-weekly,
+  html[lang="tr"] #leaderboard-btn-today {
+    font-size: 12px;
+    padding: 10px 5px;
+  }
+}
+
+/* Legacy class selectors for backward compatibility */
+.leaderboard-tabs {
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.leaderboard-tab {
+  flex: 1;
+  padding: 10px 16px;
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: none !important;
+  white-space: nowrap;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  text-decoration: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+.leaderboard-tab:hover,
+.leaderboard-tab:focus,
+.leaderboard-tab:active,
+.leaderboard-tab:focus-visible,
+.leaderboard-tab:focus-within,
+.leaderboard-tab::before,
+.leaderboard-tab::after {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  transform: none !important;
+  filter: none !important;
+  content: none !important;
+}
+
+.leaderboard-tab.active {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
+}
+
+.leaderboard-tab.active:hover,
+.leaderboard-tab.active:focus,
+.leaderboard-tab.active:active,
+.leaderboard-tab.active:focus-visible,
+.leaderboard-tab.active:focus-within {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Table Header - 3 Column Grid */
+.leaderboard-table-header {
+  position: sticky;
+  top: 0;
+  background: var(--card-background);
+  padding: 12px 6px 12px 8px;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 48px 1fr 100px;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--light-text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.leaderboard-table-header > div:nth-child(1) {
+  text-align: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+}
+
+.leaderboard-table-header > div:nth-child(2) {
+  text-align: right;
+  padding-right: 20px;
+}
+
+html[lang="ar"] .leaderboard-table-header > div:nth-child(1) {
+  direction: rtl !important;
+}
+
+html[lang="ar"] .leaderboard-table-header > div:nth-child(2) {
+  direction: rtl !important;
+  text-align: left !important;
+  padding-left: 20px !important;
+  padding-right: 0 !important;
+}
+
+html[lang="ar"] .leaderboard-table-header > div:nth-child(3) {
+  direction: rtl !important;
+}
+
+.leaderboard-table-header > div:nth-child(3) {
+  text-align: center;
+  transform: translateX(8px);
+}
+
+/* Spanish language - move Rewards header to the left */
+html[lang="es"] .leaderboard-table-header > div:nth-child(3) {
+  transform: translateX(-2px);
+  font-size: 10px;
+}
+
+/* Spanish language - move Rank header 1px to the right */
+html[lang="es"] .leaderboard-table-header > div:nth-child(1) {
+  transform: translateX(1px);
+  font-size: 10px;
+}
+
+/* Spanish language - move Invites header 1px to the right */
+html[lang="es"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(14px);
+  font-size: 10px; 
+}
+
+/* French language - move Rewards header 4px to the left */
+html[lang="fr"] .leaderboard-table-header > div:nth-child(3) {
+  transform: translateX(-1px);
+  font-size: 10px;
+}
+
+/* French language - move Invites header 1px to the right */
+html[lang="fr"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(12px);
+  font-size: 10px;
+}
+
+html[lang="fr"] .leaderboard-table-header > div:nth-child(1) {
+  transform: translateX(4px);
+  font-size: 10px;
+}
+
+html[lang="it"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(-5px);
+  font-size: 10px;
+}
+
+html[lang="it"] .leaderboard-table-header > div:nth-child(1) {
+  transform: translateX(6px);
+  font-size: 10px;
+}
+
+html[lang="it"] .leaderboard-table-header > div:nth-child(3) {
+  transform: translateX(1px);
+  font-size: 10px;
+}
+
+html[lang="tr"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(10px);
+}
+
+html[lang="pt"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(4px);
+  font-size: 10px;
+}
+
+html[lang="pt"] .leaderboard-table-header > div:nth-child(1) {
+  transform: translateX(4px);
+  font-size: 10px;
+}
+
+html[lang="pt"] .leaderboard-table-header > div:nth-child(3) {
+  transform: translateX(-2px);
+  font-size: 10px;
+}
+
+html[lang="ko"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(-8px);
+}
+
+html[lang="ru"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(18px);
+  font-size: 10px;
+}
+
+html[lang="ru"] .leaderboard-table-header > div:nth-child(1) {
+  transform: translateX( px);
+  font-size: 10px;
+}
+
+html[lang="ru"] .leaderboard-table-header > div:nth-child(3) {
+  transform: translateX( px);
+  font-size: 10px; 
+}
+
+
+html[lang="id"] .leaderboard-table-header > div:nth-child(1) {
+  transform: translateX(10px);
+  font-size: 10px; 
+}
+
+html[lang="id"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(10px);
+  font-size: 10px;
+}
+
+html[lang="id"] .leaderboard-table-header > div:nth-child(3) {
+  transform: translateX(-2px);
+  font-size: 10px;
+}
+
+
+html[lang="pl"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(20px);
+}
+
+html[lang="zh"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(-8px);
+}
+
+
+/* German language - move Rewards header 4px to the left */
+html[lang="de"] .leaderboard-table-header > div:nth-child(3) {
+  transform: translateX(-1px);
+  font-size: 10px;
+}
+
+html[lang="de"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(14px);
+  font-size: 10px;
+}
+
+html[lang="de"] .leaderboard-table-header > div:nth-child(1) {
+  transform: translateX( px);
+  font-size: 10px;
+}
+
+/* تقريب الرقم نحو ACCESS في أجهزة الكمبيوتر - اللغة العربية فقط */
+@media (min-width: 769px) {
+  html[lang="ar"] .leaderboard-rewards {
+    transform: translateX(-8px) !important;
+  }
+
+  /* تحريك عنوان Rank نحو اليسار في اللغة العربية على أجهزة الكمبيوتر */
+  html[lang="ar"] .leaderboard-table-header > div:nth-child(1) {
+    transform: translateX(-7px) !important;
+  }
+
+
+  html[lang="it"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(-12px);
+  }
+
+  html[lang="zh"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(-15px);
+  }
+
+  html[lang="fr"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(-1px);
+  }
+
+  html[lang="ja"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(-15px);
+  }
+
+  html[lang="ko"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(-15px);
+  }
+
+  html[lang="pt"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(-2px);
+  }
+
+  html[lang="id"] .leaderboard-table-header > div:nth-child(2) {
+  transform: translateX(-2px);
+  }
+
+  
+  
+
+  /* تحريك الأرقام فقط نحو اليسار في أجهزة الكمبيوتر */
+  .leaderboard-rewards .reward-amount {
+    transform: translateX(-8px);
+  }
+}
+
+/* List Container - Scrollable */
+.leaderboard-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 5px 10px 10px 10px;
+}
+
+.leaderboard-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.leaderboard-list-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.leaderboard-list-container::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 10px;
+}
+
+.leaderboard-list-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
+}
+
+/* Leaderboard Item - 3 Column Grid */
+.leaderboard-item {
+  display: grid;
+  grid-template-columns: 48px 1fr 100px;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 8px 8px 4px;
+  margin-bottom: 8px;
+  background: rgba(139, 149, 255, 0.15);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+  border: none;
+  overflow: hidden;
+}
+
+.leaderboard-item:hover {
+  transform: translateX(3px);
+}
+
+/* Column 1: Rank Number - No Circle */
+.leaderboard-rank {
+  width: auto;
+  min-width: 30px;
+  height: auto;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  background: transparent;
+  color: var(--text-color);
+  box-shadow: none;
+  justify-self: start;
+  align-self: center;
+  text-align: center;
+  margin: 0;
+  margin-left: 8px !important;
+  padding: 0;
+}
+
+/* Top 3 Special Styling - Golden, Silver, Bronze Colors */
+.leaderboard-item:nth-child(1) .leaderboard-rank {
+  color: #ffd700;
+  font-size: 20px;
+  font-weight: 900;
+  text-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+}
+
+.leaderboard-item:nth-child(2) .leaderboard-rank {
+  color: #c0c0c0;
+  font-size: 19px;
+  font-weight: 900;
+  text-shadow: 0 2px 4px rgba(192, 192, 192, 0.3);
+}
+
+.leaderboard-item:nth-child(3) .leaderboard-rank {
+  color: #cd7f32;
+  font-size: 19px;
+  font-weight: 900;
+  text-shadow: 0 2px 4px rgba(205, 127, 50, 0.3);
+}
+
+/* Column 2: Transparent Capsule - Username + Invites */
+.leaderboard-user-invites {
+  background: transparent;
+  padding: 10px 18px 10px 12px;
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  box-shadow: none;
+}
+
+/* Dark theme: Keep transparent capsule */
+.dark-theme .leaderboard-user-invites {
+  background: transparent;
+  box-shadow: none;
+}
+
+.leaderboard-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.leaderboard-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: none;
+  flex-shrink: 0;
+  /* حماية من التنزيل */
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+}
+
+.leaderboard-username {
+  font-size: 15px;
+  font-weight: 600;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.leaderboard-invites {
+  font-size: 16px;
+  font-weight: 700;
+  color: #000;
+  flex-shrink: 0;
+  min-width: 30px;
+  text-align: center;
+  margin-left: 8px;
+}
+
+/* Column 3: Rewards - No Background */
+.leaderboard-rewards {
+  background: transparent;
+  color: var(--text-color);
+  padding: 8px 6px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: none;
+  justify-self: center;
+  min-width: 100px;
+  max-width: 120px;
+  overflow: visible;
+  text-overflow: clip;
+  transform: translateX(8px);
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  gap: 0;
+}
+
+.reward-amount {
+  flex: 1 1 auto;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.reward-unit {
+  flex: 0 0 auto;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.reward-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.leaderboard-rewards .access-label {
+  /* Not needed anymore - text is directly in the capsule */
+  display: none;
+}
+
+/* Empty State */
+.leaderboard-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--light-text);
+}
+
+.leaderboard-empty i {
+  font-size: 60px;
+  color: rgba(102, 126, 234, 0.3);
+  margin-bottom: 20px;
+}
+
+.leaderboard-empty p {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Loading State */
+.leaderboard-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--light-text);
+}
+
+.leaderboard-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(102, 126, 234, 0.2);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dark Theme Support */
+.dark-theme .leaderboard-content {
+  background: #1a1a2e;
+}
+
+.dark-theme .leaderboard-table-header {
+  background: #1a1a2e;
+  border-bottom-color: rgba(102, 126, 234, 0.3);
+}
+
+.dark-theme .leaderboard-item {
+  background: #16213e;
+  border-color: transparent;
+}
+
+.dark-theme .leaderboard-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+.dark-theme .leaderboard-username {
+  color: #ffffff;
+}
+
+.dark-theme .leaderboard-invites {
+  color: #ffffff;
+}
+
+.dark-theme .leaderboard-avatar {
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+/* RTL Support for Arabic */
+html[lang="ar"] .leaderboard-content {
+  direction: rtl;
+}
+
+html[lang="ar"] .leaderboard-item:hover {
+  transform: translateX(-10px);
+}
+
+html[lang="ar"] .leaderboard-user {
+  flex-direction: row-reverse;
+}
+
+html[lang="ar"] .leaderboard-title {
+  flex-direction: row-reverse;
+}
+
+/* Responsive Design */
+@media (max-width: 500px) {
+  .leaderboard-modal {
+    align-items: flex-start;
+    padding: 0;
+  }
+
+  .leaderboard-content {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  .leaderboard-user-invites {
+  background: transparent;
+  padding: 10px 18px 10px 14px;
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  box-shadow: none;
+  }
+
+  .leaderboard-item {
+    gap: 6px;
+    padding: 6px 0px 6px 3px;
+    grid-template-columns: 42px minmax(170px, 200px) 110px;
+  }
+
+  .leaderboard-rank {
+    width: auto;
+    min-width: 24px;
+    height: auto;
+    font-size: 15px;
+    margin-left: 6px;
+    justify-self: start;
+  }
+
+  .leaderboard-user-invites {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .leaderboard-avatar {
+    width: 46px;
+    height: 46px;
+    border: none;
+    /* حماية من التنزيل على الموبايل */
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+  }
+
+  .leaderboard-username {
+    font-size: 13px;
+    max-width: 160px;
+  }
+
+  .leaderboard-invites {
+    font-size: 14px;
+    margin-left: 6px;
+  }
+
+  .leaderboard-rewards {
+    font-size: 14px;
+    padding: 7px 5px;
+    min-width: auto;
+    max-width: 120px;
+    justify-self: center;
+    margin-left: 0;
+    transform: translateX(-3px);
+  }
+
+  .leaderboard-title {
+    font-size: 20px;
+  }
+
+  .leaderboard-tab {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+
+  /* تحريك نص ACCESS فقط إلى اليسار في اللغة العربية - الهواتف فقط */
+  html[lang="ar"] .leaderboard-rewards .reward-unit {
+    margin-left: 0px !important;
+  }
+
+  /* تقريب reward amount نحو اليسار (نحو الصورة) في اللغة العربية - الهواتف فقط */
+  html[lang="ar"] .leaderboard-rewards .reward-amount {
+    transform: translateX(-25px);
+  }
+
+  /* تحريك عنوان Invites نحو اليمين في اللغة العربية - الهواتف فقط */
+  html[lang="ar"] .leaderboard-table-header > div:nth-child(2) {
+    transform: translateX(9px) !important;
+  }
+}

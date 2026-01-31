@@ -1,0 +1,438 @@
+/* Referrals Page */
+.referral-card {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.referral-header {
+  margin-bottom: 20px;
+}
+
+.referral-header h3 {
+  font-size: 18px;
+}
+
+.referral-bonus-info {
+  background-color: rgba(226, 132, 74, 0.1);
+  border-radius: 6px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+
+}
+
+.bonusamount {
+  font-weight: 600;
+}
+
+
+.bonus-amount {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--secondary-color);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: linear-gradient(toright, var(--secondary-color), #f7b733);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 1px 2px rgba(0,00,0,0,0.1);
+}
+
+.bonus-amount span {
+  font-size: 20px;
+  fontweight: 400;
+
+}
+.bonus-amount .bonus-value {
+  font-size: 36px;
+  font-weight: 700;
+}
+
+
+.referral-bonus-logo {
+  width: 40px; height: 40px;
+margin-left: 2px;
+  border-radius: 50%;
+object-fit: contain;
+  vertical-align: middle;
+  filter: none !important;
+  -webkit-filter: none !important;
+  opacity: 1 !important;
+  background-color: transparent;
+  content: url("accessoire-app.png");
+}
+
+
+.bonus-text {
+
+  color: var(--light-text);
+}
+
+.referral-share {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 15px;
+  border-radius: 6px;
+}
+
+.share-label {
+  font-size: 14px;
+  color: var(--light-text);
+  margin-bottom: 10px;
+}
+
+.share-code {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--card-background);
+  padding: 10px 15px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+
+.referrals-list-container {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
+  padding: 20px;
+}
+
+.referrals-list-container .referrals-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.referrals-list-container h3 {
+  margin: 0;
+  font-size: 18px;
+  margin-right: auto;
+}
+
+.referrals-list-container .leaderboard-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  margin-right: -10px;
+}
+
+.referrals-list-container .leaderboard-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Spanish language - reduce button size for long text */
+html[lang="es"] .referrals-list-container .leaderboard-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+/* Russian language - reduce button size for long text */
+html[lang="ru"] .referrals-list-container .leaderboard-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+/* Polish language - reduce button size slightly */
+html[lang="pl"] .referrals-list-container .leaderboard-btn {
+  font-size: 13px;
+  padding: 7px 14px;
+}
+
+/* Spanish language - reduce heading size */
+html[lang="es"] .referrals-list-container h3 {
+  font-size: 16px;
+}
+
+.referrals-list {
+  list-style: none;
+}
+
+.referrals-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Ensure space between user info and status */
+  padding: 15px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.referrals-list li:last-child {
+  border-bottom: none;
+}
+
+.empty-referrals {
+  padding: 30px 0;
+  text-align: center;
+}
+
+.empty-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--light-text);
+}
+
+.empty-message i {
+  font-size: 28px;
+  margin-bottom: 10px;
+  opacity: 0.7;
+}
+
+
+
+#referrals-page .referral-icon {
+  font-size: 18px;
+  color: var(--secondary-color);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+  background-color: rgba(226, 132, 74, 0.1);
+  border-radius: 50%;
+  padding: 0;
+  position: relative;
+}
+
+#referrals-page .referral-icon::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.referral-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  /* حماية من التنزيل */
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+}
+
+.referral-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.referral-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.referral-name {
+  font-weight: 600;
+}
+
+.referral-email, .referral-date {
+  font-size: 0.8rem;
+  color: var(--lighter-text);
+}
+
+.referral-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  min-width: 100px; /* Set minimum width to ensure consistent space */
+}
+
+.copy-btn {
+  background: var(--primary-color);
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 10px;
+  transition: var(--transition-normal);
+  color: white;
+  margin-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  z-index: 5;
+  position: relative;
+  box-shadow: var(--shadow-md);
+  font-weight: 500;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.referral-status {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+  justify-content: flex-end; /* Ensure consistent right alignment */
+  width: 100%; /* Take full width of parent */
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.status-text {
+  font-size: 0.7rem;
+  color: var(--light-text);
+  font-weight: normal;
+  letter-spacing: 0.02em;
+}
+
+.activity-status-text {
+  font-size: 0.7rem;
+  color: var(--light-text);
+  font-weight: normal;
+  letter-spacing: 0.02em;
+}
+
+
+
+
+
+/* arabic */
+
+/* Arabic language specific alignment for Share Options text */
+html[lang="ar"] #referral-copy-modal .referral-copy-header h3 {
+  align-self: flex-end;
+  text-align: right;
+  font-size: 1.3rem !important;
+}
+
+
+html[lang="ar"] #referrals-page .share-label {
+  font-size: 14px;
+  color: var(--light-text);
+  margin-bottom: 10px;
+  align-self: flex-end;
+  text-align: right;
+}
+
+
+
+html[lang="ar"] #referrals-page .referrals-list-container h3 {
+   align-self: flex-start !important;
+    text-align: right !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+  }
+
+html[lang="ar"] #referrals-page .referrals-list-container .referrals-header {
+  flex-direction: row-reverse !important;
+  justify-content: flex-end !important;
+}
+
+html[lang="ar"] #referrals-page .referrals-list-container .leaderboard-btn {
+  order: 2;
+  margin-right: auto !important;
+  margin-left: 0 !important;
+}
+
+/* نقل صورة bonus logo لليسار في اللغة العربية - الترتيب الصحيح */
+html[lang="ar"] #referrals-page .referral-bonus-info .bonusamount {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+}
+
+html[lang="ar"] #referrals-page .referral-bonus-logo {
+  order: 1 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+html[lang="ar"] #referrals-page .bonus-value {
+  order: 2 !important;
+}
+
+html[lang="ar"] #referrals-page .bonusamount span:first-child {
+  order: 3 !important;
+}
+
+
+html[lang="ar"] #referrals-page .referral-header h3 {
+
+
+  align-self: flex-end !important;
+  text-align: right !important;
+}
+
+html[lang="ar"] .referral-label-text {
+   font-size: 0.7rem !important;
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-color);
+  }
+
+
+html[lang="ar"] .invite-label-text {
+   font-size: 0.8rem !important;
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-color);
+  }
+
+
+/* Arabic - keep icon centered, align text to right */
+html[lang="ar"] #referrals-page .empty-referrals {
+  display: flex !important;
+  justify-content: center !important;
+}
+
+html[lang="ar"] #referrals-page .empty-message {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+html[lang="ar"] #referrals-page .empty-message i {
+  display: block !important;
+  text-align: center !important;
+}
+
+html[lang="ar"] #referrals-page .empty-message p {
+  text-align: right !important;
+  direction: rtl !important;
+  width: 100% !important;
+  display: block !important;
+}

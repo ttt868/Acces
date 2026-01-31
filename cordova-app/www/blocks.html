@@ -1,0 +1,2721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="no">
+    <meta name="apple-mobile-web-app-capable" content="no">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Access Network Blocks | AccessScan</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Browse all blocks on Access Network blockchain. View block height, hash, timestamp, transactions count, and miner information on AccessScan explorer.">
+    <meta name="keywords" content="Access Network blocks, blockchain blocks, block explorer, crypto blocks, AccessScan blocks">
+    <link rel="canonical" href="https://accesschain.org/blocks.html">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://accesschain.org/blocks.html">
+    <meta property="og:title" content="Access Network Blocks | AccessScan">
+    <meta property="og:description" content="Browse all blocks on Access Network blockchain. View block details, transactions, and miner info.">
+    <meta property="og:image" content="https://accesschain.org/logo.png">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://accesschain.org/blocks.html">
+    <meta name="twitter:title" content="Access Network Blocks | AccessScan">
+    <meta name="twitter:description" content="Browse all blocks on Access Network blockchain.">
+    <meta name="twitter:image" content="https://accesschain.org/logo.png">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-code: #f6f8fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6c757d;
+            --border-color: #e1e8ed;
+            --accent-color: #0969da;
+            --accent-purple: #7c3aed;
+            --accent-blue: #3b82f6;
+            --footer-bg: #f8f9fa;
+            --footer-text: #333;
+            --search-bg: #ffffff;
+            --search-border: #e1e8ed;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-code: #1c2128;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+            --accent-color: #58a6ff;
+            --accent-purple: #8b95ff;
+            --accent-blue: #4da6ff;
+            --footer-bg: #161b22;
+            --footer-text: #e6edf3;
+            --search-bg: #0d1117;
+            --search-border: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 0 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-primary);
+            font-weight: 800;
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: -2px;
+        }
+
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            border: none;
+            background: none;
+            position: relative;
+            right: 10px;
+        }
+
+        .menu-toggle span {
+            width: 20px;
+            height: 2px;
+            background: var(--text-primary);
+            margin: 2px 0;
+            transition: 0.3s;
+        }
+
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sign-in-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .sign-in-btn.user-logged-in {
+                display: none !important;
+            }
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 0;
+            align-items: center;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+        }
+
+        .nav-item.active {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+            font-weight: 500;
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            min-width: 250px;
+            display: none;
+            z-index: 99999999;
+            padding: 8px 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            margin-top: 2px;
+        }
+
+        /* تعديل موضع قائمة More لتنبثق من اليسار */
+        .dropdown:last-child .dropdown-menu {
+            left: auto;
+            right: 0;
+        }
+
+        .dropdown.active .dropdown-menu {
+            display: block;
+            opacity: 1;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-purple);
+        }
+
+        /* Search Section */
+        .search-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0 25px 0;
+            text-align: center;
+        }
+
+        .search-container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: left !important;
+        }
+
+        .page-title-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .page-main-title {
+            font-size: 20px;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .api-docs-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 400;
+            transition: color 0.2s ease;
+        }
+
+        .api-docs-link:hover {
+            color: #0784c3;
+            text-decoration: none;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 0;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 18px 60px 18px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 44px;
+            height: 38px;
+        }
+
+        .back-button-container {
+            text-align: right;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            padding: 6px 14px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 400;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        /* Main Content */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .page-header {
+            background: var(--bg-primary);
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            box-shadow: 0 0.5px 1.2px rgba(0,0,0,0.07);
+            border: 1px solid var(--border-color);
+        }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Stats Cards - BSCScan Style */
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            padding: 16px;
+            border-radius: 6px;
+            box-shadow: 0 0.5px 1.2px rgba(0,0,0,0.07);
+            border: 1px solid var(--border-color);
+            text-align: left;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 500;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        /* Blocks Table */
+        .blocks-section {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            box-shadow: 0 0.5px 1.2px rgba(0,0,0,0.07);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .blocks-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .blocks-total {
+            font-size: 20px;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .blocks-range {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .table-controls {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-primary);
+            gap: 15px;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-primary);
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .download-btn:hover {
+            background: var(--bg-secondary);
+            border-color: #adb5bd;
+        }
+
+        .download-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .pagination-controls-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-info {
+            padding: 6px 12px;
+            border: 1px solid #d0d5dd;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 400;
+        }
+
+        .table-scroll-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .blocks-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        .blocks-table th {
+            background: var(--bg-primary);
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
+            text-transform: capitalize;
+            white-space: nowrap;
+        }
+
+        .blocks-table td {
+            padding: 16px 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+            vertical-align: middle;
+            color: var(--text-primary);
+        }
+
+        .blocks-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .blocks-table tbody tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .block-number {
+            color: #0784c3;
+            text-decoration: none;
+            font-weight: 400;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .block-number:hover {
+            color: #0056b3;
+        }
+
+        .validator-badge {
+            background: transparent;
+            color: #0784c3;
+            padding: 0;
+            border-radius: 0;
+            font-size: 13px;
+            font-weight: 400;
+            white-space: nowrap;
+        }
+
+        .age-text {
+            color: var(--text-secondary);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .reward-value {
+            font-weight: 400;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .gas-value {
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        /* Pagination */
+        .pagination {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .show-rows-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .show-rows-section select {
+            padding: 4px 8px;
+            border: 1px solid #d0d5dd;
+            border-radius: 4px;
+            font-size: 13px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        [data-theme="dark"] .show-rows-section select {
+            color: var(--text-primary);
+            border-color: #30363d;
+        }
+
+        [data-theme="dark"] .show-rows-section select option {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .pagination-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 400;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--bg-secondary);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .pagination-btn.active {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+            font-weight: 500;
+        }
+
+        [data-theme="dark"] .page-info {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .pagination-btn:not(:disabled) {
+            background: var(--bg-primary);
+            color: #ffffff;
+            border-color: #ffffff;
+        }
+
+        [data-theme="dark"] .pagination-btn:hover:not(:disabled) {
+            background: var(--bg-secondary);
+            border-color: #ffffff;
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .pagination-btn.active {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: var(--text-secondary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: var(--text-secondary) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--accent-purple);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Authentication Modal */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .auth-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative; /* Needed for absolute positioning of close button */
+        }
+
+        .auth-header {
+            padding: 30px 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .auth-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .auth-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .auth-form {
+            padding: 30px;
+        }
+
+        .google-btn {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .google-btn:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-1px);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 0;
+        }
+
+        .checkbox-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkmark {
+            height: 16px;
+            width: 16px;
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 2px;
+            margin-right: 8px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-container:hover input ~ .checkmark {
+            border-color: var(--accent-purple);
+        }
+
+        .checkbox-container input:checked ~ .checkmark {
+            background-color: var(--accent-purple);
+            border-color: var(--accent-purple);
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            left: 4px;
+            top: 1px;
+            width: 4px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .checkbox-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .success-message {
+            color: #28a745;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--footer-bg);
+            color: var(--footer-text);
+            padding: 40px 0 20px;
+            margin-top: 50px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer-link:hover {
+            color: var(--accent-color);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px;
+            height: 100vh;
+            height: 100dvh;
+            background: var(--bg-primary);
+            box-shadow: 2px 0 20px rgba(0,0,0,0.2);
+            z-index: 9999;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .mobile-menu.active {
+            left: 0;
+        }
+
+        .mobile-menu-header {
+            padding: 20px 20px 20px 0px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mobile-menu-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .mobile-menu-content {
+            padding: 20px 0;
+        }
+
+        .mobile-nav-item {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: 1px solid var(--bg-secondary);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .mobile-nav-item:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-purple);
+            padding-left: 25px;
+        }
+
+        .mobile-nav-item:active {
+            background: #e9ecef;
+            transform: scale(0.98);
+        }
+
+        .mobile-nav-section {
+            padding: 10px 20px;
+            font-weight: 600;
+            color: #c0c0c0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.5;
+        }
+
+        [data-theme="dark"] .mobile-nav-section {
+            color: #606060;
+            opacity: 0.6;
+        }
+
+        .mobile-user-section {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: -20px -20px 0 -20px;
+        }
+
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .mobile-user-details {
+            flex: 1;
+            min-width: 0;
+            padding-left: 8px;
+        }
+
+        .mobile-user-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 2px;
+            color: white;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mobile-user-email {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mobile-user-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .mobile-user-actions .mobile-nav-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 15px;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            border-bottom: none;
+            transition: background 0.3s ease;
+        }
+
+        .mobile-user-actions .mobile-nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-user-actions .mobile-nav-item i {
+            margin-right: 8px;
+            width: 16px;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: var(--bg-secondary);
+            margin: 15px 0;
+        }
+
+        .mobile-signin-section {
+            padding: 0 0 10px 0;
+        }
+
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            background: rgba(0,0,0,0.5);
+            z-index: 9998;
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+
+        .mobile-menu-overlay.active {
+            display: block;
+        }
+
+        body.mobile-menu-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Added styles for disabled buttons and placeholders */
+        .disabled-btn {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Styles for the "Coming Soon" tooltip */
+        .coming-soon-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background: #000000;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 10001;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .coming-soon-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #000000;
+        }
+
+        .coming-soon-tooltip.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-12px);
+        }
+
+        /* Wrapper for dropdown items that might be disabled */
+        .dropdown-item-wrapper {
+            position: relative;
+            display: block;
+        }
+
+        /* Wrapper for mobile nav items that might be disabled */
+        .mobile-nav-item-wrapper {
+            position: relative;
+            display: block;
+        }
+
+        /* Specific styling for disabled dropdown items */
+        .dropdown-item.disabled-btn {
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            background: var(--bg-secondary);
+        }
+
+        .dropdown-item.disabled-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border-bottom-color: transparent;
+        }
+
+        /* Specific styling for disabled mobile nav items */
+        .mobile-nav-item.disabled-btn {
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            background: var(--bg-secondary);
+        }
+
+        .mobile-nav-item.disabled-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            padding-left: 20px;
+        }
+
+        /* CSS for the close button in the authentication modal */
+        .auth-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-close:hover {
+            background: var(--bg-secondary);
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex;
+            }
+
+            .nav-content {
+                display: none;
+            }
+
+            .main-container {
+                padding: 10px;
+            }
+
+            .stats-section {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 12px;
+                min-height: 80px;
+            }
+
+            .stat-label {
+                font-size: 10px;
+            }
+
+            .stat-value {
+                font-size: 16px;
+            }
+
+            .blocks-table {
+                min-width: 1000px;
+            }
+
+            .blocks-table th {
+                padding: 12px 10px;
+                font-size: 11px;
+            }
+
+            .blocks-table td {
+                padding: 12px 10px;
+                font-size: 13px;
+            }
+
+            .table-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .download-btn {
+                align-self: flex-start;
+            }
+
+            .pagination-controls-top {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .pagination {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px 10px;
+            }
+
+            .show-rows-section {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .pagination-controls {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .pagination-btn {
+                padding: 6px 12px;
+                font-size: 13px;
+                min-width: 40px;
+            }
+
+            .page-info {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+
+            .download-btn {
+                font-size: 13px;
+                padding: 6px 12px;
+            }
+
+            .blocks-total {
+                font-size: 18px;
+            }
+
+            .blocks-range {
+                font-size: 13px;
+            }
+
+            .page-title-section {
+                margin-bottom: 15px;
+            }
+
+            .page-main-title {
+                font-size: 18px;
+            }
+
+            .api-docs-link {
+                font-size: 13px;
+            }
+
+            .back-button-container {
+                margin-top: 6px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-section {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+    </style>
+    <script>
+        // ✅ Apply theme IMMEDIATELY before page renders (prevents white flash)
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">A Scan Original</div>
+                </div>
+            </div>
+
+            <div class="right-section">
+                <a href="#" class="sign-in-btn" onclick="showAuthModal()" style="display: none;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                </a>
+                <button class="menu-toggle" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="access-explorer.html" class="nav-item">Home</a>
+            <div class="dropdown">
+                <a href="#" class="nav-item active" onclick="toggleDropdown(this, event)">Network ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="transactions.html" class="dropdown-item">Transactions</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Pending Transactions 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Contract Internal Transactions 🚫</a>
+                    </div>
+                    <a href="blocks.html" class="dropdown-item">View Blocks</a>
+                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Verified Contracts 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Validators ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Validators Leaderboard 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Validator Stats 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Tokens ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Top Tokens (ACCESS-20) 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Token Transfers (ACCESS-20) 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">NFTs ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Top NFTs 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Latest Trades 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Latest Transfers 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Latest Mints 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Resources ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Developers ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Input Data Decoder 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Unit Converter 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">CSV Export 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Account Balance Checker 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">More ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
+                    </div>
+                    <a href="gastracker.html" class="dropdown-item">Gas Tracker</a>
+                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Verify Contract 🚫</a>
+                    </div>
+                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <a href="#" class="dropdown-item" onclick="event.preventDefault(); toggleTheme();" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="desktop-theme-text">Light Mode</span>
+                        <span id="desktop-theme-icon">☀️</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">A Scan Original</div>
+                </div>
+            </div>
+            <button class="mobile-menu-close" onclick="toggleMobileMenu()">×</button>
+        </div>
+
+        <div class="mobile-menu-content">
+            <!-- User Profile Section for Mobile (Only shown when logged in) -->
+            <div class="mobile-user-section" id="mobileUserSection" style="display: none;">
+                <div class="mobile-user-info">
+                    <div class="mobile-user-details">
+                        <div class="mobile-user-name" id="mobileUserName">User Name</div>
+                        <div class="mobile-user-email" id="mobileUserEmail">user@example.com</div>
+                    </div>
+                </div>
+                <div class="mobile-user-actions">
+                    <a href="#" class="mobile-nav-item" onclick="showUserProfile()">
+                        <i class="fas fa-user"></i> My Profile
+                    </a>
+                    <a href="#" class="mobile-nav-item" onclick="logoutExplorer()">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+                <div class="mobile-menu-divider"></div>
+            </div>
+
+            <!-- Sign In Section for Mobile (Only shown when not logged in) -->
+            <div class="mobile-signin-section" id="mobileSigninSection">
+                <a href="#" class="mobile-nav-item" onclick="showAuthModal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                </a>
+                <div class="mobile-menu-divider"></div>
+            </div>
+
+            <a href="access-explorer.html" class="mobile-nav-item">Home</a>
+
+            <div class="mobile-nav-section">Network</div>
+            <a href="transactions.html" class="mobile-nav-item">Transactions</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Pending Transactions 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Contract Internal Transactions 🚫</a>
+            </div>
+            <a href="blocks.html" class="mobile-nav-item">View Blocks</a>
+            <a href="top-accounts.html" class="mobile-nav-item">Top Accounts</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Verified Contracts 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Validators</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Validators Leaderboard 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Validator Stats 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Tokens</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Top Tokens (ACCESS-20) 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Token Transfers (ACCESS-20) 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">NFTs</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Top NFTs 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Latest Trades 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Latest Transfers 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Latest Mints 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Resources</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Developers</div>
+            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Input Data Decoder 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Unit Converter 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">CSV Export 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Account Balance Checker 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">More</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
+            </div>
+            <a href="gastracker.html" class="mobile-nav-item">Gas Tracker</a>
+            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Verify Contract 🚫</a>
+            </div>
+            <a href="top-accounts.html" class="mobile-nav-item">Top Accounts</a>
+
+            <!-- Dark Mode Toggle Button -->
+            <div style="padding: 20px; margin-top: auto; border-top: 1px solid var(--border-color);">
+                <button onclick="toggleTheme()" style="width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-primary); font-weight: 500; transition: all 0.2s ease;">
+                    <span id="mobile-theme-icon" style="font-size: 18px;">☀️</span>
+                    <span id="mobile-theme-text">Light Mode</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search by Block Number / Hash / Address">
+                <button class="search-btn" onclick="performSearch()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="10" cy="10" r="7" stroke="white" stroke-width="2.5" fill="none"/>
+                        <line x1="16" y1="16" x2="21" y2="21" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <!-- Page Title with API -->
+        <div class="page-title-section">
+            <h1 class="page-main-title">Blocks</h1>
+            <a href="developer-api.html" class="api-docs-link">
+                &lt;/&gt; API
+            </a>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-label">Network Utilization (24H)</div>
+                <div class="stat-value" id="networkUtilization">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Block Size (24H)</div>
+                <div class="stat-value" id="blockSize">0 Bytes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Block Rewards (24H)</div>
+                <div class="stat-value" id="blockRewards">0 ACCESS</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Burnt Fees 🔥</div>
+                <div class="stat-value" id="burntFees">0 ACCESS</div>
+            </div>
+        </div>
+
+        <!-- Blocks Table -->
+        <div class="blocks-section">
+            <div class="section-header">
+                <div class="blocks-info">
+                    <div class="blocks-total">Total of <span id="totalBlocksDisplay">0</span> blocks</div>
+                    <div class="blocks-range">(Showing blocks between #<span id="startBlockNum">0</span> to #<span id="endBlockNum">0</span>)</div>
+                </div>
+            </div>
+
+            <div class="table-controls">
+                <button class="download-btn" onclick="downloadPageData()">
+                    <i class="fas fa-download"></i>
+                    Download Page Data
+                </button>
+                <div class="pagination-controls-top">
+                    <button class="pagination-btn" id="firstBtnTop" onclick="goToFirstPage()">First</button>
+                    <button class="pagination-btn" id="prevBtnTop" onclick="previousPage()">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="page-info" id="pageInfoTop">Page 1 of 1</span>
+                    <button class="pagination-btn" id="nextBtnTop" onclick="nextPage()">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button class="pagination-btn" id="lastBtnTop" onclick="goToLastPage()">Last</button>
+                </div>
+            </div>
+
+            <div class="table-scroll-container">
+                <table class="blocks-table">
+                    <thead>
+                        <tr>
+                            <th>Block</th>
+                            <th>Age</th>
+                            <th>Txn</th>
+                            <th>Validator</th>
+                            <th>Gas Used</th>
+                            <th>Gas Limit</th>
+                            <th>Reward</th>
+                            <th>Burnt Fees</th>
+                        </tr>
+                    </thead>
+                    <tbody id="blocksTableBody">
+                        <!-- Blocks will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="loadingIndicator" class="loading">
+                <div class="spinner"></div>
+                <p>Loading blocks...</p>
+            </div>
+
+            <div class="pagination" id="paginationSection" style="display: none;">
+                <div class="show-rows-section">
+                    Show rows:
+                    <select id="entriesPerPage" onchange="updateEntriesPerPage()">
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" id="firstBtn" onclick="goToFirstPage()">First</button>
+                    <button class="pagination-btn" id="prevBtn" onclick="previousPage()">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="page-info" id="pageInfo">Page 1 of 1</span>
+                    <button class="pagination-btn" id="nextBtn" onclick="nextPage()">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button class="pagination-btn" id="lastBtn" onclick="goToLastPage()">Last</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="about.html" class="footer-link">About</a>
+                <a href="faq.html" class="footer-link">FAQ</a>
+                <a href="developer-api.html" class="footer-link">API</a>
+                <a href="contact.html" class="footer-link">Contact Us</a>
+                <a href="terms-of-service.html" class="footer-link">Terms</a>
+            </div>
+            <p>&copy; 2025 AccessScan. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Google Sign In Modal -->
+    <div class="auth-modal" id="authModal" onclick="if(event.target === this) hideAuthModal()">
+        <div class="auth-container">
+            <button class="auth-close" onclick="hideAuthModal()">×</button>
+
+            <div class="auth-header">
+                <div class="auth-title">Sign In to AccessScan</div>
+                <div class="auth-subtitle">Access the network explorer with your Google account</div>
+            </div>
+
+            <div class="auth-form">
+                <button type="button" class="google-btn" onclick="triggerGoogleSignIn()">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continue with Google
+                </button>
+
+                <!-- Terms Checkbox -->
+                <div class="form-group" style="margin-top: 25px;">
+                    <label class="checkbox-container" style="cursor: pointer; display: flex; align-items: flex-start;">
+                        <input type="checkbox" id="termsCheckbox" required style="position: static; opacity: 1; width: 18px; height: 18px; margin-right: 10px; cursor: pointer; flex-shrink: 0;">
+                        <span style="flex: 1;">I agree to the <a href="terms-of-service.html" target="_blank" style="color: var(--accent-purple); text-decoration: underline;">Terms of Service</a>.</span>
+                    </label>
+                </div>
+
+                <div id="authMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let entriesPerPage = 50;
+        let totalBlocks = 0;
+        let realTotalBlocks = 0; // العدد الحقيقي من الشبكة
+        let allBlocks = [];
+
+        // Google OAuth Authentication System
+        let currentExplorerUser = null;
+        let explorerSessionToken = null;
+
+        // Google Client ID - loaded securely from server
+        let GOOGLE_CLIENT_ID = null;
+
+        // Load Google Client ID from secure server endpoint
+        async function loadGoogleClientId() {
+            try {
+                const response = await fetch('/api/oauth-config');
+                const data = await response.json();
+                if (data.success && data.clientId) {
+                    GOOGLE_CLIENT_ID = data.clientId;
+                    console.log('✅ Google OAuth configured securely');
+                } else {
+                    console.error('Failed to load Google Client ID:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading Google Client ID:', error);
+            }
+        }
+
+        // ✅ حفظ واستعادة حالة الـ Pagination من localStorage
+        function saveBlocksState() {
+            const state = {
+                currentPage: currentPage,
+                entriesPerPage: entriesPerPage,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('blocksPaginationState', JSON.stringify(state));
+            console.log('💾 Saved blocks state:', state);
+        }
+
+        function loadBlocksState() {
+            const savedState = localStorage.getItem('blocksPaginationState');
+            if (savedState) {
+                try {
+                    const state = JSON.parse(savedState);
+                    // استخدم الحالة المحفوظة إذا كانت حديثة (أقل من ساعة)
+                    const isRecent = (Date.now() - state.timestamp) < (60 * 60 * 1000);
+                    if (isRecent) {
+                        currentPage = state.currentPage || 1;
+                        entriesPerPage = state.entriesPerPage || 50;
+
+                        // تحديث القائمة المنسدلة
+                        const select = document.getElementById('entriesPerPage');
+                        if (select) {
+                            select.value = entriesPerPage;
+                        }
+
+                        console.log('✅ Restored blocks state:', state);
+                        return true;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Could not restore blocks state:', error);
+                }
+            }
+            return false;
+        }
+
+        // Load blocks on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load Google Client ID first
+            await loadGoogleClientId();
+
+            // Load session first
+            loadExplorerSession();
+
+            // Always call updateExplorerAuthUI to show/hide Sign In button
+            updateExplorerAuthUI();
+
+            // Check for OAuth callback
+            handleOAuthCallback();
+
+            // ✅ استعادة حالة الصفحة المحفوظة
+            loadBlocksState();
+
+            // Load blocks and real block count
+            loadBlocks();
+            fetchRealBlockCount();
+
+            // تحديث تلقائي كل 30 ثانية
+            setInterval(fetchRealBlockCount, 30000);
+        });
+
+        // جلب العدد الحقيقي للبلوكات من الشبكة
+        async function fetchRealBlockCount() {
+            try {
+                const response = await fetch('/api/explorer/stats', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success && result.data && result.data.latestBlock) {
+                        realTotalBlocks = result.data.latestBlock;
+                        console.log('✅ Real total blocks from network:', realTotalBlocks);
+
+                        // تحديث العرض
+                        document.getElementById('totalBlocksDisplay').textContent = realTotalBlocks.toLocaleString();
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching real block count:', error);
+            }
+        }
+
+        async function loadBlocks() {
+            try {
+                console.log('🔄 Loading blocks from API...');
+
+                const response = await fetch('/api/explorer/latest-blocks?limit=1000');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success && result.data && result.data.length > 0) {
+                    allBlocks = result.data;
+                    totalBlocks = allBlocks.length;
+
+                    // Update statistics
+                    updateBlockStatistics(allBlocks);
+
+                    displayBlocks();
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                    document.getElementById('paginationSection').style.display = 'flex';
+                } else {
+                    console.error('Failed to load blocks:', result.error || 'No blocks returned');
+                    document.getElementById('loadingIndicator').innerHTML = '<p>No blocks found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading blocks:', error);
+                document.getElementById('loadingIndicator').innerHTML = '<p>Error loading blocks: ' + error.message + '</p>';
+            }
+        }
+
+        function updateBlockStatistics(blocks) {
+            // Filter blocks from last 24 hours
+            const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+            const last24HourBlocks = blocks.filter(block => {
+                const blockTime = block.timestamp < 10000000000 ? block.timestamp * 1000 : block.timestamp;
+                return blockTime >= oneDayAgo;
+            });
+
+            if (last24HourBlocks.length === 0) {
+                return;
+            }
+
+            // Calculate Network Utilization (24H)
+            let totalGasUsed = 0;
+            let totalGasLimit = 0;
+            let totalBlockSize = 0;
+            let totalRewards = 0;
+            let totalBurntFees = 0;
+
+            last24HourBlocks.forEach(block => {
+                totalGasUsed += block.gasUsed || 0;
+                totalGasLimit += block.gasLimit || 30000000;
+                totalBlockSize += block.size || 0;
+                totalRewards += block.reward || 0;
+                // Burnt fees (if available in block data)
+                totalBurntFees += block.burntFees || 0;
+            });
+
+            // Network Utilization = (Total Gas Used / Total Gas Limit) * 100
+            const networkUtilization = totalGasLimit > 0 ? ((totalGasUsed / totalGasLimit) * 100).toFixed(1) : 0;
+            document.getElementById('networkUtilization').textContent = `${networkUtilization}%`;
+
+            // Average Block Size
+            const avgBlockSize = Math.round(totalBlockSize / last24HourBlocks.length);
+            document.getElementById('blockSize').textContent = formatBytes(avgBlockSize);
+
+            // Total Block Rewards (24H)
+            document.getElementById('blockRewards').textContent = `${totalRewards.toFixed(2)} ACCESS`;
+
+            // Burnt Fees
+            document.getElementById('burntFees').textContent = `${totalBurntFees.toFixed(2)} ACCESS`;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i)).toLocaleString() + ' ' + sizes[i];
+        }
+
+        function displayBlocks() {
+            const startIndex = (currentPage - 1) * entriesPerPage;
+            const endIndex = Math.min(startIndex + entriesPerPage, totalBlocks);
+            const blocksToDisplay = allBlocks.slice(startIndex, endIndex);
+
+            // Update total blocks display (use real total if available)
+            const displayTotal = realTotalBlocks > 0 ? realTotalBlocks : totalBlocks;
+            document.getElementById('totalBlocksDisplay').textContent = displayTotal.toLocaleString();
+
+            // Update block range (showing first and last block numbers)
+            if (blocksToDisplay.length > 0) {
+                const firstBlockNum = blocksToDisplay[0].index || blocksToDisplay[0].number;
+                const lastBlockNum = blocksToDisplay[blocksToDisplay.length - 1].index || blocksToDisplay[blocksToDisplay.length - 1].number;
+                document.getElementById('startBlockNum').textContent = Math.min(firstBlockNum, lastBlockNum).toLocaleString();
+                document.getElementById('endBlockNum').textContent = Math.max(firstBlockNum, lastBlockNum).toLocaleString();
+            }
+
+            const tableBody = document.getElementById('blocksTableBody');
+            tableBody.innerHTML = '';
+
+            blocksToDisplay.forEach(block => {
+                const row = document.createElement('tr');
+
+                const age = formatAge(block.timestamp);
+                const gasUsed = block.gasUsed || 0;
+                const gasLimit = block.gasLimit || 30000000;
+                const gasUsedPercent = ((gasUsed / gasLimit) * 100).toFixed(2);
+
+                // حساب عدد المعاملات الفعلي
+                let actualTxCount = 0;
+                if (block.transactions && Array.isArray(block.transactions)) {
+                    actualTxCount = block.transactions.length;
+                } else if (block.transactionCount) {
+                    actualTxCount = block.transactionCount;
+                }
+
+                row.innerHTML = `
+                    <td>
+                        <a href="block-details.html?number=${block.index || block.number}" class="block-number">
+                            ${block.index || block.number}
+                        </a>
+                    </td>
+                    <td class="age-text">${age}</td>
+                    <td>${actualTxCount}</td>
+                    <td>
+                        <span class="validator-badge">${block.validator || block.processor || 'AccessValidator'}</span>
+                    </td>
+                    <td class="gas-value">
+                        ${gasUsed.toLocaleString()} (${gasUsedPercent}%)
+                    </td>
+                    <td class="gas-value">${gasLimit.toLocaleString()}</td>
+                    <td class="reward-value">${(block.reward || 0).toFixed(8)} ACCESS</td>
+                    <td class="gas-value">0.00000000 ACCESS</td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+
+            updatePaginationInfo(startIndex, endIndex);
+            updatePagination(); // Ensure pagination buttons are updated
+            saveBlocksState(); // ✅ حفظ الحالة بعد التحديث
+        }
+
+        function formatAge(timestamp) {
+            // التأكد من أن timestamp بالميلي ثانية
+            if (!timestamp || timestamp === 0) {
+                return 'Just now';
+            }
+
+            // إذا كان timestamp بالثواني، حوله للميلي ثانية
+            if (timestamp < 10000000000) {
+                timestamp = timestamp * 1000;
+            }
+
+            const now = Date.now();
+            const diff = now - timestamp;
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+
+            // عدم عرض تواريخ غير منطقية (أكثر من سنة)
+            if (days > 365) {
+                return 'Long ago';
+            }
+
+            if (days > 0) return `${days}d ago`;
+            if (hours > 0) return `${hours}h ago`;
+            if (minutes > 0) return `${minutes}m ago`;
+            if (seconds > 0) return `${seconds}s ago`;
+            return 'Just now';
+        }
+
+        function updatePaginationInfo(startIndex, endIndex) {
+            const totalPages = Math.ceil(totalBlocks / entriesPerPage);
+
+            // Update top pagination
+            document.getElementById('pageInfoTop').textContent = `Page ${currentPage} of ${totalPages}`;
+
+            // Update bottom pagination
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(totalBlocks / entriesPerPage);
+
+            // Update page info displays
+            document.getElementById('pageInfoTop').textContent = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+
+            // Update button states for both top and bottom controls
+            const buttons = {
+                first: ['firstBtn', 'firstBtnTop'],
+                prev: ['prevBtn', 'prevBtnTop'],
+                next: ['nextBtn', 'nextBtnTop'],
+                last: ['lastBtn', 'lastBtnTop']
+            };
+
+            // First buttons
+            buttons.first.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.disabled = currentPage === 1;
+                }
+            });
+
+            // Previous buttons
+            buttons.prev.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = currentPage === 1;
+            });
+
+            // Next buttons
+            buttons.next.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = currentPage === totalPages;
+            });
+
+            // Last buttons
+            buttons.last.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.disabled = currentPage === totalPages;
+                }
+            });
+        }
+
+        function updateEntriesPerPage() {
+            const select = document.getElementById('entriesPerPage');
+            if (select) {
+                entriesPerPage = parseInt(select.value);
+            }
+            currentPage = 1;
+            displayBlocks();
+            saveBlocksState(); // ✅ حفظ الحالة الجديدة
+        }
+
+        function downloadPageData() {
+            const startIndex = (currentPage - 1) * entriesPerPage;
+            const endIndex = Math.min(startIndex + entriesPerPage, totalBlocks);
+            const blocksToDownload = allBlocks.slice(startIndex, endIndex);
+
+            // Create CSV content
+            let csvContent = 'Block,Age,Txn,Validator,Gas Used,Gas Limit,Reward,Burnt Fees\n';
+
+            blocksToDownload.forEach(block => {
+                const age = formatAge(block.timestamp);
+                const gasUsed = block.gasUsed || 0;
+                const gasLimit = block.gasLimit || 30000000;
+
+                let actualTxCount = 0;
+                if (block.transactions && Array.isArray(block.transactions)) {
+                    actualTxCount = block.transactions.length;
+                } else if (block.transactionCount) {
+                    actualTxCount = block.transactionCount;
+                }
+
+                csvContent += `${block.index || block.number},${age},${actualTxCount},${block.validator || block.processor || 'AccessValidator'},${gasUsed},${gasLimit},${(block.reward || 0).toFixed(8)} ACCESS,0.00000000 ACCESS\n`;
+            });
+
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `access_blocks_page_${currentPage}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Smooth scroll to table top
+        function scrollToTable() {
+            const tableSection = document.querySelector('.blocks-section');
+            if (tableSection) {
+                const offset = 20;
+                const elementPosition = tableSection.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        function goToPage(page) {
+            const totalPages = Math.ceil(totalBlocks / entriesPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                displayBlocks();
+                scrollToTable();
+            }
+        }
+
+        function goToFirstPage() {
+            currentPage = 1;
+            displayBlocks();
+            scrollToTable();
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                displayBlocks();
+                scrollToTable();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(totalBlocks / entriesPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayBlocks();
+                scrollToTable();
+            }
+        }
+
+        function goToLastPage() {
+            const totalPages = Math.ceil(totalBlocks / entriesPerPage);
+            currentPage = totalPages;
+            displayBlocks();
+            scrollToTable();
+        }
+
+        // Show Access Network Blocks API Information
+        function showBlocksAPIInfo() {
+            // Reserved for future API documentation page
+            /*
+            const apiInfo = `Access Network Blocks API
+
+Available Endpoints:
+• GET /api/explorer/latest-blocks?limit=N - Get latest blocks
+• GET /api/explorer/block/{number} - Get block by number
+• GET /api/blockchain/info - Network information
+• GET /api/explorer/stats - Network statistics
+
+Block Data Fields:
+• Block Number, Hash, Timestamp
+• Transactions count, Gas Used/Limit
+• Validator, Reward, Burnt Fees
+
+Network Details:
+• Chain ID: 22888 (0x5968)
+• Native Currency: ACCESS
+• Block Time: ~12 seconds
+
+This is Access Network's own API, completely independent from Ethereum/Etherscan.`;
+
+            alert(apiInfo);
+            */
+        }
+
+        // Search functionality - same logic as access-explorer.html
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+
+            if (!query) {
+                return;
+            }
+
+            console.log('🔍 Search query:', query);
+
+            // Clean the query
+            let cleanQuery = query;
+            if (cleanQuery.startsWith('0x')) {
+                cleanQuery = cleanQuery.substring(2);
+            }
+
+            // Detect search type based on length
+            if (cleanQuery.length === 64 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
+                // Transaction hash (64 hex chars)
+                console.log('✅ Detected: Transaction hash');
+                window.location.href = `transaction-details.html?hash=${cleanQuery}`;
+            } else if (cleanQuery.length === 40 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
+                // Ethereum address (40 hex chars)
+                console.log('✅ Detected: Address');
+                window.location.href = `address-details.html?address=0x${cleanQuery}`;
+            } else if (!isNaN(query)) {
+                // Block number
+                console.log('✅ Detected: Block number');
+                window.location.href = `block-details.html?number=${query}`;
+            } else {
+                alert('Invalid search query. Please enter a valid transaction hash, address, or block number.');
+            }
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.querySelector('.mobile-menu-overlay');
+            const body = document.body;
+
+            const isActive = menu.classList.contains('active');
+
+            if (isActive) {
+                menu.classList.remove('active');
+                overlay.classList.remove('active');
+                body.classList.remove('mobile-menu-open');
+                // Restore scroll position
+                const scrollY = body.style.top;
+                body.style.position = '';
+                body.style.top = '';
+                body.style.width = '';
+                body.style.height = '';
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            } else {
+                const scrollY = window.scrollY;
+                body.style.position = 'fixed';
+                body.style.top = `-${scrollY}px`;
+                body.style.width = '100%';
+                body.style.height = '100%';
+                body.classList.add('mobile-menu-open');
+                menu.classList.add('active');
+                overlay.classList.add('active');
+            }
+        }
+
+        function toggleDropdown(element, event) {
+            event.preventDefault();
+            const dropdown = element.parentElement;
+            const isCurrentlyActive = dropdown.classList.contains('active');
+
+            // إغلاق جميع القوائم المنسدلة الأخرى
+            document.querySelectorAll('.dropdown').forEach(d => {
+                if (d !== dropdown) {
+                    d.classList.remove('active');
+                }
+            });
+
+            // تبديل حالة القائمة الحالية
+            if (isCurrentlyActive) {
+                dropdown.classList.remove('active');
+            } else {
+                dropdown.classList.add('active');
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('mobileMenu');
+            const toggle = document.querySelector('.menu-toggle');
+
+            // Close mobile menu if click is outside of it and not on the toggle button
+            if (!menu.contains(event.target) && !toggle.contains(event.target)) {
+                if (menu.classList.contains('active')) {
+                    toggleMobileMenu();
+                }
+            }
+
+            // Close desktop dropdowns if click is outside of them
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown').forEach(dropdown => {
+                    dropdown.classList.remove('active');
+                });
+            }
+        });
+
+        // ==================== Authentication System ====================
+
+        function getRedirectUri() {
+            return window.location.origin + window.location.pathname;
+        }
+
+        function generateNonce() {
+            const array = new Uint8Array(16);
+            crypto.getRandomValues(array);
+            return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        function triggerGoogleSignIn() {
+            const termsCheckbox = document.getElementById('termsCheckbox');
+            if (!termsCheckbox.checked) {
+                showAuthMessage('Please accept the Terms of Service first.');
+                return;
+            }
+
+            sessionStorage.setItem('googleAuthInProgress', 'true');
+
+            // ✅ حفظ معاملات URL
+            const currentParams = window.location.search;
+            if (currentParams) {
+                sessionStorage.setItem('preAuthUrlParams', currentParams);
+                console.log('💾 Saved URL params:', currentParams);
+            }
+
+            const redirectUri = getRedirectUri();
+            const scope = 'openid email profile';
+            const responseType = 'token id_token';
+            const nonce = generateNonce();
+
+            sessionStorage.setItem('googleAuthNonce', nonce);
+
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
+                `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+                `&response_type=${encodeURIComponent(responseType)}` +
+                `&scope=${encodeURIComponent(scope)}` +
+                `&nonce=${encodeURIComponent(nonce)}`;
+
+            console.log('🔐 Redirecting to Google Sign-In...');
+            window.location.href = authUrl;
+        }
+
+        async function handleOAuthCallback() {
+            const hash = window.location.hash;
+            if (!hash || hash.length <= 1) {
+                return;
+            }
+
+            const authInProgress = sessionStorage.getItem('googleAuthInProgress');
+            if (!authInProgress) {
+                return;
+            }
+
+            console.log('🔍 Processing OAuth callback...');
+            sessionStorage.removeItem('googleAuthInProgress');
+
+            try {
+                const params = new URLSearchParams(hash.substring(1));
+                const idToken = params.get('id_token');
+
+                if (!idToken) {
+                    throw new Error('No ID token received');
+                }
+
+                // Decode ID Token
+                const base64Url = idToken.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+
+                const userInfo = JSON.parse(jsonPayload);
+
+                const savedNonce = sessionStorage.getItem('googleAuthNonce');
+                if (savedNonce && userInfo.nonce !== savedNonce) {
+                    throw new Error('Nonce mismatch - possible security issue');
+                }
+                sessionStorage.removeItem('googleAuthNonce');
+
+                const userData = {
+                    email: userInfo.email,
+                    name: userInfo.name,
+                    picture: userInfo.picture,
+                    sub: userInfo.sub // Google User ID
+                };
+
+                // ✅ Save user to database if they don't exist or update if needed
+                try {
+                    const response = await fetch('/api/auth/explorer-google', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: userData.email,
+                            name: userData.name,
+                            googleId: userData.sub,
+                            picture: userData.picture
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log('✅ User saved to database:', data.user.email);
+                        // The response might contain a session token or user details
+                        // For now, we just ensure the user exists.
+                    } else {
+                        console.error('❌ Error saving user to database:', data.message || 'Unknown error');
+                    }
+                } catch (dbError) {
+                    console.error('❌ Error communicating with authentication API:', dbError);
+                }
+
+                // Save session locally
+                saveExplorerSession(idToken, userData);
+                console.log('✅ Google sign in successful:', userData.name);
+
+                // ✅ استعادة معاملات URL
+                const savedParams = sessionStorage.getItem('preAuthUrlParams');
+                if (savedParams) {
+                    console.log('🔄 Restoring URL params:', savedParams);
+                    sessionStorage.removeItem('preAuthUrlParams');
+                    // Replace state to remove the hash and add back original params
+                    window.history.replaceState(null, '', window.location.pathname + savedParams);
+                } else {
+                    // If no params were saved, just remove the hash
+                    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                }
+
+                showAuthMessage('Successfully signed in with Google!', 'success');
+                setTimeout(() => {
+                    hideAuthModal();
+                }, 1500);
+
+            } catch (error) {
+                console.error('❌ Error processing OAuth callback:', error);
+                showAuthMessage('Sign in failed. Please try again.');
+                // Clean up history even on error
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        }
+
+        function loadExplorerSession() {
+            const sessionData = localStorage.getItem('explorerGoogleSession');
+            if (sessionData) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    const now = Date.now();
+                    const sessionAge = now - (session.timestamp || 0);
+                    const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+                    if (sessionAge < maxAge && session.token && session.user) {
+                        explorerSessionToken = session.token;
+                        currentExplorerUser = session.user;
+                        updateExplorerAuthUI();
+                        console.log('✅ Explorer session restored:', session.user.name);
+                        return true;
+                    } else {
+                        console.log('⚠️ Explorer session expired or invalid, clearing...');
+                        clearExplorerSession();
+                    }
+                } catch (error) {
+                    console.error('❌ Error loading explorer session:', error);
+                    clearExplorerSession();
+                }
+            }
+            return false;
+        }
+
+        function saveExplorerSession(token, user) {
+            explorerSessionToken = token;
+            currentExplorerUser = user;
+
+            const sessionData = {
+                token: token,
+                user: user,
+                timestamp: Date.now(),
+                loginMethod: 'google',
+                userAgent: navigator.userAgent,
+                lastActivity: Date.now()
+            };
+
+            localStorage.setItem('explorerGoogleSession', JSON.stringify(sessionData));
+            // Optionally save to sessionStorage for more immediate session management
+            sessionStorage.setItem('explorerGoogleBackup', JSON.stringify(sessionData));
+
+            updateExplorerAuthUI();
+            console.log('💾 Explorer session saved for:', user.name);
+        }
+
+        function clearExplorerSession() {
+            explorerSessionToken = null;
+            currentExplorerUser = null;
+            localStorage.removeItem('explorerGoogleSession');
+            sessionStorage.removeItem('explorerGoogleBackup');
+            updateExplorerAuthUI();
+            console.log('🗑️ Explorer session cleared completely');
+        }
+
+        function showUserProfile() {
+            alert('Profile page will be implemented soon');
+            toggleMobileMenu();
+        }
+
+        function updateExplorerAuthUI() {
+            const signInBtn = document.querySelector('.sign-in-btn');
+            const mobileUserSection = document.getElementById('mobileUserSection');
+            const mobileSigninSection = document.getElementById('mobileSigninSection');
+            const mobileUserName = document.getElementById('mobileUserName');
+            const mobileUserEmail = document.getElementById('mobileUserEmail');
+
+            if (currentExplorerUser) {
+                const displayName = currentExplorerUser.name || 'User';
+                const userEmail = currentExplorerUser.email || '';
+
+                // Update desktop Sign In button
+                signInBtn.className = 'sign-in-btn user-logged-in';
+                signInBtn.style.display = 'flex'; // Make sure it's visible
+                signInBtn.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                        <span style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${displayName}</span>
+                        <button onclick="logoutExplorer()" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px; cursor: pointer;">Logout</button>
+                    </div>
+                `;
+
+                // Update mobile menu sections
+                if (mobileUserSection && mobileSigninSection) {
+                    mobileUserSection.style.display = 'block';
+                    mobileSigninSection.style.display = 'none';
+                    if (mobileUserName) mobileUserName.textContent = displayName;
+                    if (mobileUserEmail) mobileUserEmail.textContent = userEmail;
+                }
+            } else {
+                // Update desktop Sign In button to show "Sign In"
+                signInBtn.className = 'sign-in-btn';
+                signInBtn.style.display = 'flex'; // Ensure it's visible
+                signInBtn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                `;
+
+                // Update mobile menu sections
+                if (mobileUserSection && mobileSigninSection) {
+                    mobileUserSection.style.display = 'none';
+                    mobileSigninSection.style.display = 'block';
+                }
+            }
+        }
+
+        function logoutExplorer() {
+            clearExplorerSession();
+
+            // Close mobile menu if it's open
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu && mobileMenu.classList.contains('active')) {
+                toggleMobileMenu();
+            }
+
+            // Optionally show a success message
+            showAuthMessage('Successfully signed out.', 'success');
+            setTimeout(() => {
+                clearAuthMessages(); // Clear message after a short delay
+            }, 2000);
+
+            console.log('👋 User logged out successfully');
+        }
+
+        function showAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function hideAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+            clearAuthMessages();
+        }
+
+        function handleModalClick(event) {
+            // Close modal when clicking on the overlay (outside the modal content)
+            if (event.target.id === 'authModal') {
+                hideAuthModal();
+            }
+        }
+
+        function clearAuthMessages() {
+            const messageDiv = document.getElementById('authMessage');
+            if (messageDiv) {
+                messageDiv.innerHTML = '';
+            }
+        }
+
+        function showAuthMessage(message, type = 'error') {
+            const messageDiv = document.getElementById('authMessage');
+            if (messageDiv) {
+                messageDiv.innerHTML = `<div class="${type}-message">${message}</div>`;
+            }
+        }
+
+        // Show "Coming Soon" tooltip for disabled buttons
+        function showComingSoon(event, element) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Remove any existing tooltips
+            const existingTooltips = document.querySelectorAll('.coming-soon-tooltip');
+            existingTooltips.forEach(t => t.remove());
+
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'coming-soon-tooltip';
+            tooltip.textContent = 'Coming Soon - Under Development';
+
+            // Get wrapper element
+            const wrapper = element.closest('.dropdown-item-wrapper') || element.closest('.mobile-nav-item-wrapper');
+            if (wrapper) {
+                wrapper.style.position = 'relative';
+                wrapper.appendChild(tooltip);
+
+                // Show tooltip
+                setTimeout(() => tooltip.classList.add('show'), 10);
+
+                // Hide after 2 seconds
+                setTimeout(() => {
+                    tooltip.classList.remove('show');
+                    setTimeout(() => tooltip.remove(), 300);
+                }, 2000);
+            }
+        }
+
+        // Theme toggle functionality
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            // Update icon and text in the desktop dropdown
+            const desktopThemeIcon = document.getElementById('desktop-theme-icon');
+            const desktopThemeText = document.getElementById('desktop-theme-text');
+            if (desktopThemeIcon && desktopThemeText) {
+                desktopThemeIcon.textContent = newTheme === 'light' ? '☀️' : '🌙';
+                desktopThemeText.textContent = newTheme === 'light' ? 'Light Mode' : 'Dark Mode';
+            }
+
+            // Update icon and text in the mobile menu
+            const mobileThemeIcon = document.getElementById('mobile-theme-icon');
+            const mobileThemeText = document.getElementById('mobile-theme-text');
+            if (mobileThemeIcon && mobileThemeText) {
+                mobileThemeIcon.textContent = newTheme === 'light' ? '☀️' : '🌙';
+                mobileThemeText.textContent = newTheme === 'light' ? 'Light Mode' : 'Dark Mode';
+            }
+        }
+    </script>
+</body>
+</html>
