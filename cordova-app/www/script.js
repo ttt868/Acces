@@ -12389,6 +12389,11 @@ if (totalCost > (currentBalance + precision)) {
   console.log('🔍 [DEBUG] window.location.origin:', window.location.origin);
   console.log('🔍 [DEBUG] window.getApiOrigin():', window.getApiOrigin ? window.getApiOrigin() : 'N/A');
   
+  // 🔍 DEBUG ALERT
+  if (window.IS_CORDOVA_APP) {
+    console.log('🔍 DEBUG ALERT: checkIfUserExists for', email);
+  }
+  
   // ⚡ Return cached data if available and not expired
   const now = Date.now();
   if (!forceRefresh && userDataCache.email === email && userDataCache.data && (now - userDataCache.timestamp) < userDataCache.TTL) {
@@ -12406,6 +12411,11 @@ if (totalCost > (currentBalance + precision)) {
 
     const response = await fetch(apiUrl);
     console.log('🔍 [DEBUG] checkIfUserExists response status:', response.status);
+    
+    // 🔍 DEBUG ALERT for Cordova
+    if (window.IS_CORDOVA_APP) {
+      console.log('🔍 DEBUG: Response status =', response.status);
+    }
 
     // Handle 404 as "user not found" rather than an error
     if (response.status === 404) {

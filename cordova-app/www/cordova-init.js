@@ -393,13 +393,31 @@ function overrideGoogleSignIn() {
                 console.log('📤 Calling handleGoogleSignIn with native data...');
                 console.log('📋 Fake credential payload:', fakePayload);
                 
+                // 🔍 DEBUG: Show alert with user data
+                alert('DEBUG: Google Sign-In OK!\nEmail: ' + userData.email + '\nName: ' + userData.name);
+                
                 // Call the existing handleGoogleSignIn from script.js
                 // This uses the same flow as web!
                 if (typeof window.handleGoogleSignIn === 'function') {
                     console.log('✅ handleGoogleSignIn found, calling it...');
+                    
+                    // 🔍 DEBUG: Test API call directly
+                    console.log('🔍 DEBUG: Testing API call to:', window.API_BASE_URL + '/api/user/' + userData.email);
+                    fetch(window.API_BASE_URL + '/api/user/' + encodeURIComponent(userData.email))
+                        .then(r => r.json())
+                        .then(data => {
+                            console.log('🔍 DEBUG: API Response:', JSON.stringify(data));
+                            alert('DEBUG: API Response\n' + JSON.stringify(data).substring(0, 200));
+                        })
+                        .catch(err => {
+                            console.error('🔍 DEBUG: API Error:', err);
+                            alert('DEBUG: API Error\n' + err.message);
+                        });
+                    
                     window.handleGoogleSignIn(fakeResponse);
                 } else {
                     console.warn('⚠️ handleGoogleSignIn not found, using direct approach...');
+                    alert('DEBUG: handleGoogleSignIn NOT FOUND!');
                     
                     // Direct approach: Set currentUser and call continueWithLogin
                     window.currentUser = {
