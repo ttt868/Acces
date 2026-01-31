@@ -37,6 +37,18 @@ jobs:
     - name: Accept Android SDK Licenses
       run: yes | sdkmanager --licenses || true
     
+    - name: Replace system Gradle with 7.6
+      run: |
+        echo '🔧 استبدال Gradle 9.3 بـ 7.6...'
+        sudo rm -rf /usr/share/gradle*
+        wget -q https://services.gradle.org/distributions/gradle-7.6-bin.zip -O /tmp/gradle.zip
+        sudo unzip -q /tmp/gradle.zip -d /opt/
+        sudo ln -sf /opt/gradle-7.6/bin/gradle /usr/bin/gradle
+        sudo ln -sf /opt/gradle-7.6/bin/gradle /usr/local/bin/gradle
+        echo "GRADLE_HOME=/opt/gradle-7.6" >> $GITHUB_ENV
+        echo "/opt/gradle-7.6/bin" >> $GITHUB_PATH
+        gradle --version
+    
     - name: Install Cordova CLI
       run: npm install -g cordova@12
     
