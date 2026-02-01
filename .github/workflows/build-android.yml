@@ -108,11 +108,18 @@ subprojects {
     }
     configurations.all {
         resolutionStrategy {
+            // Force compatible Google Play Services (plugin uses 15.0.1 which is incompatible)
+            force 'com.google.android.gms:play-services-base:18.2.0'
+            force 'com.google.android.gms:play-services-auth:20.7.0'
+            force 'com.google.android.gms:play-services-auth-api-phone:18.0.1'
+            // Force compatible AndroidX versions
             force 'androidx.core:core:1.9.0'
             force 'androidx.core:core-ktx:1.9.0'
-            force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.0'
-            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0'
-            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0'
+            force 'androidx.appcompat:appcompat:1.5.1'
+            // Force compatible Kotlin versions
+            force 'org.jetbrains.kotlin:kotlin-stdlib:1.7.21'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.21'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21'
         }
     }
 }
