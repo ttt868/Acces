@@ -110,9 +110,9 @@ jobs:
         echo "    }" >> platforms/android/build.gradle
         echo "    configurations.all {" >> platforms/android/build.gradle
         echo "        resolutionStrategy {" >> platforms/android/build.gradle
-        echo "            force 'androidx.core:core:1.9.0'" >> platforms/android/build.gradle
-        echo "            force 'androidx.core:core-ktx:1.9.0'" >> platforms/android/build.gradle
-        echo "            force 'androidx.appcompat:appcompat:1.5.1'" >> platforms/android/build.gradle
+        echo "            force 'androidx.core:core:1.12.0'" >> platforms/android/build.gradle
+        echo "            force 'androidx.core:core-ktx:1.12.0'" >> platforms/android/build.gradle
+        echo "            force 'androidx.appcompat:appcompat:1.6.1'" >> platforms/android/build.gradle
         echo "            force 'org.jetbrains.kotlin:kotlin-stdlib:1.7.21'" >> platforms/android/build.gradle
         echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.21'" >> platforms/android/build.gradle
         echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21'" >> platforms/android/build.gradle
