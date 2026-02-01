@@ -98,25 +98,46 @@ window.WebSocket = function(url, protocols) {
 };
 window.WebSocket.prototype = OriginalWebSocket.prototype;
 
+// ✅ Global error handler to prevent crashes
+window.onerror = function(message, source, lineno, colno, error) {
+    console.error('🚨 Global Error:', message, 'at', source, ':', lineno);
+    // Don't let errors crash the app
+    return true;
+};
+
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('🚨 Unhandled Promise Rejection:', event.reason);
+    // Prevent default handling
+    event.preventDefault();
+});
+
 // ✅ Device Ready
 document.addEventListener('deviceready', function() {
-    console.log('📱 Cordova is ready!');
-    
-    // StatusBar
-    if (window.StatusBar) {
-        StatusBar.backgroundColorByHexString('#1a1a2e');
-        StatusBar.styleLightContent();
+    try {
+        console.log('📱 Cordova is ready!');
+        
+        // StatusBar
+        if (window.StatusBar) {
+            try {
+                StatusBar.backgroundColorByHexString('#1a1a2e');
+                StatusBar.styleLightContent();
+            } catch (e) {
+                console.log('StatusBar error (non-fatal):', e);
+            }
+        }
+        
+        // Setup Google Sign-In
+        setupGoogleSignIn();
+        
+        // Setup Clipboard
+        setupClipboard();
+        
+        // Setup Local Notifications (safely - plugin may not exist)
+        setupNotifications();
+        
+    } catch (error) {
+        console.error('🚨 deviceready error:', error);
     }
-    
-    // Setup Google Sign-In
-    setupGoogleSignIn();
-    
-    // Setup Clipboard
-    setupClipboard();
-    
-    // Setup Local Notifications
-    setupNotifications();
-    
 }, false);
 
 // ✅ Setup Clipboard

@@ -74,14 +74,16 @@ jobs:
         echo '🔔 Removing local-notification plugin to avoid SDK compatibility issues...'
         cordova plugin remove cordova-plugin-local-notification 2>/dev/null || true
     
-    - name: Setup Fixed Debug Keystore
+    - name: Setup Release Keystore for Signing
       run: |
-        echo '🔑 Using fixed debug keystore for consistent SHA-1...'
+        echo '🔑 Setting up release keystore...'
         mkdir -p ~/.android
+        # Copy debug keystore
         cp cordova-app/keystores/debug.keystore ~/.android/debug.keystore
+        # Copy release keystore to cordova-app directory
         echo '=================================================='
-        echo 'FIXED SHA-1 (already registered in Google Cloud Console):'
-        echo 'SHA1: B3:DC:1A:86:7C:AC:0C:7D:E2:1B:80:46:3D:49:5D:5C:BB:32:E0:A5'
+        echo 'Release Keystore SHA-1 (register this in Google Cloud Console):'
+        keytool -list -v -keystore cordova-app/access-network.keystore -alias access-network -storepass Access2026Secure 2>/dev/null | grep SHA1 || true
         echo '=================================================='
         echo 'Package name: io.accessnetwork.app'
         echo '=================================================='
@@ -160,14 +162,21 @@ jobs:
         cordova build android --debug --verbose
         echo '✅ Debug APK built'
     
-    - name: Build Release APK
+    - name: Build Release APK (Signed)
       working-directory: cordova-app
       env:
         CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
       run: |
-        echo '🚧 Building Release APK...'
+        echo '🚧 Building Signed Release APK...'
+        echo '📋 Using keystore: access-network.keystore'
+        # Verify keystore exists
+        ls -la access-network.keystore
+        # Build with signing config
         cordova build android --release --buildConfig=build.json --verbose
-        echo '✅ Release APK built'
+        echo '✅ Release APK built and signed'
+        # Verify the APK was created
+        echo '📱 Checking output APKs:'
+        find platforms/android -name "*.apk" -type f -exec ls -la {} \;
     
     - name: List APK files
       run: |
