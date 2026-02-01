@@ -3636,6 +3636,9 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/users' && req.method === 'POST') {
       try {
         const userData = await parseRequestBody(req);
+        
+        // 📷 DEBUG: Log received avatar
+        console.log('📷 POST /api/users - Received avatar:', userData.avatar ? userData.avatar.substring(0, 80) + '...' : 'NULL/UNDEFINED');
 
         // ✅ SIMPLE CHECK: موجود في DB = موجود، غير موجود = جديد
         const existingUser = await pool.query(

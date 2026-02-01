@@ -407,7 +407,12 @@ function setupGoogleSignIn() {
             },
             function(userData) {
                 console.log('✅ Google Sign-In success:', userData.email);
-                console.log('📷 Raw userData from Google:', JSON.stringify(userData));
+                console.log('📷 Raw userData from Google (FULL):', JSON.stringify(userData, null, 2));
+                console.log('📷 userData.imageUrl:', userData.imageUrl);
+                console.log('📷 userData.image:', userData.image);
+                console.log('📷 userData.photoUrl:', userData.photoUrl);
+                console.log('📷 userData.picture:', userData.picture);
+                
                 document.getElementById('google-signin-loading')?.remove();
                 
                 // Clear old cache
@@ -417,15 +422,21 @@ function setupGoogleSignIn() {
                 // ✅ FIXED: Get profile picture from multiple possible fields
                 let profilePicture = '';
                 
-                // Try different possible field names
-                if (userData.imageUrl && userData.imageUrl.length > 10) {
+                // Try different possible field names - check ALL
+                if (userData.imageUrl && typeof userData.imageUrl === 'string' && userData.imageUrl.length > 10) {
                     profilePicture = userData.imageUrl;
+                    console.log('📷 Using imageUrl');
                 } else if (userData.image && userData.image.url) {
                     profilePicture = userData.image.url;
-                } else if (userData.photoUrl) {
+                    console.log('📷 Using image.url');
+                } else if (userData.photoUrl && typeof userData.photoUrl === 'string') {
                     profilePicture = userData.photoUrl;
-                } else if (userData.picture) {
+                    console.log('📷 Using photoUrl');
+                } else if (userData.picture && typeof userData.picture === 'string') {
                     profilePicture = userData.picture;
+                    console.log('📷 Using picture');
+                } else {
+                    console.log('📷 NO picture field found in userData!');
                 }
                 
                 console.log('📷 Extracted profile picture URL:', profilePicture);
