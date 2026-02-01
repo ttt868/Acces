@@ -37,10 +37,10 @@ jobs:
     - name: Accept Android SDK Licenses
       run: yes | sdkmanager --licenses || true
     
-    - name: Install Android Build Tools and SDK 34
+    - name: Install Android Build Tools and SDK 33+34
       run: |
-        echo '📦 Installing Build Tools and SDK 34...'
-        sdkmanager "build-tools;34.0.0" "platforms;android-34"
+        echo '📦 Installing Build Tools and SDK...'
+        sdkmanager "build-tools;33.0.2" "build-tools;34.0.0" "platforms;android-33" "platforms;android-34"
         echo '✅ Build Tools installed'
     
     - name: Replace system Gradle with 7.6.4
