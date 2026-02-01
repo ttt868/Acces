@@ -18,6 +18,7 @@
         },
         "tar": true,
         "sshpass": true,
-        "keytool": true
+        "keytool": true,
+        "gh": true
     }
 }

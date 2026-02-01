@@ -43,13 +43,9 @@
         <splash src="www/access-store-512nobg.png" density="port-xxxhdpi" />
         
         <preference name="android-minSdkVersion" value="24" />
-        <preference name="android-targetSdkVersion" value="34" />
-        <preference name="android-compileSdkVersion" value="34" />
+        <preference name="android-targetSdkVersion" value="33" />
+        <preference name="android-compileSdkVersion" value="33" />
         <preference name="AndroidXAppCompatVersion" value="1.6.1" />
-        <preference name="GradleVersion" value="8.4" />
-        <preference name="GradlePluginVersion" value="8.3.0" />
-        <preference name="GradlePluginKotlinVersion" value="1.9.10" />
-        <preference name="GradlePluginKotlinCodeStyle" value="official" />
         
         <!-- ✅ CRITICAL: Allow HTTP traffic (cleartext) for API server -->
         <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
