@@ -190,17 +190,99 @@ function setupNotifications() {
     }
 }
 
-// ✅ QR Code Scanner Function - Manual Input Fallback
+// ✅ QR Code Scanner Function using html5-qrcode
 window.scanQRCode = function() {
     return new Promise((resolve, reject) => {
-        // For now, use manual input since QRScanner plugin has compatibility issues
-        const address = prompt('Enter wallet address or scan QR code:');
-        if (address && address.trim()) {
-            console.log('📝 Address entered:', address);
-            resolve(address.trim());
-        } else {
-            reject('No address entered');
+        // Check if Html5Qrcode is available
+        if (typeof Html5Qrcode === 'undefined') {
+            console.error('❌ Html5Qrcode not loaded');
+            const address = prompt('QR Scanner not available. Enter address manually:');
+            if (address && address.trim()) {
+                resolve(address.trim());
+            } else {
+                reject('No address entered');
+            }
+            return;
         }
+        
+        // Create scanner modal
+        const modal = document.createElement('div');
+        modal.id = 'qr-scanner-modal';
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
+        
+        modal.innerHTML = `
+            <div style="color:#fff;text-align:center;margin-bottom:20px;">
+                <h2 style="margin:0 0 10px 0;">📷 Scan QR Code</h2>
+                <p style="margin:0;opacity:0.7;">Point camera at QR code</p>
+            </div>
+            <div id="qr-reader" style="width:100%;max-width:400px;border-radius:15px;overflow:hidden;"></div>
+            <button id="qr-cancel-btn" style="margin-top:20px;background:#ff4444;color:#fff;border:none;padding:15px 40px;border-radius:10px;font-size:16px;cursor:pointer;">
+                ✕ Cancel
+            </button>
+            <div style="margin-top:15px;">
+                <button id="qr-manual-btn" style="background:transparent;color:#fff;border:1px solid #fff;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;">
+                    📝 Enter manually
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        let html5QrCode = null;
+        
+        const cleanup = () => {
+            if (html5QrCode) {
+                html5QrCode.stop().catch(err => console.log('Stop error:', err));
+            }
+            modal.remove();
+        };
+        
+        // Cancel button
+        document.getElementById('qr-cancel-btn').onclick = () => {
+            cleanup();
+            reject('Cancelled');
+        };
+        
+        // Manual entry button
+        document.getElementById('qr-manual-btn').onclick = () => {
+            cleanup();
+            const address = prompt('Enter wallet address:');
+            if (address && address.trim()) {
+                resolve(address.trim());
+            } else {
+                reject('No address entered');
+            }
+        };
+        
+        // Start scanner
+        html5QrCode = new Html5Qrcode("qr-reader");
+        
+        html5QrCode.start(
+            { facingMode: "environment" },
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1
+            },
+            (decodedText) => {
+                console.log('✅ QR Scanned:', decodedText);
+                cleanup();
+                resolve(decodedText);
+            },
+            (errorMessage) => {
+                // Ignore scanning errors (happens continuously while scanning)
+            }
+        ).catch(err => {
+            console.error('❌ QR Scanner start error:', err);
+            cleanup();
+            // Fallback to manual entry
+            const address = prompt('Camera not available. Enter address manually:');
+            if (address && address.trim()) {
+                resolve(address.trim());
+            } else {
+                reject('Camera error: ' + err);
+            }
+        });
     });
 };
 
