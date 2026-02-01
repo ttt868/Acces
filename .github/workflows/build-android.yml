@@ -51,8 +51,8 @@ jobs:
         sudo unzip -q /tmp/gradle.zip -d /opt/
         sudo ln -sf /opt/gradle-7.6.4/bin/gradle /usr/bin/gradle
         sudo ln -sf /opt/gradle-7.6.4/bin/gradle /usr/local/bin/gradle
-        echo "GRADLE_HOME=/opt/gradle-7.6.4" >> \$GITHUB_ENV
-        echo "/opt/gradle-7.6.4/bin" >> \$GITHUB_PATH
+        echo "GRADLE_HOME=/opt/gradle-7.6.4" >> $GITHUB_ENV
+        echo "/opt/gradle-7.6.4/bin" >> $GITHUB_PATH
         gradle --version
     
     - name: Install Cordova CLI
@@ -94,6 +94,14 @@ jobs:
         cordova platform add android@12.0.1 --verbose
         echo '✅ Android platform added'
     
+    - name: Fix play-services-identity version in plugin
+      working-directory: cordova-app
+      run: |
+        echo '🔧 Fixing play-services-identity version...'
+        find platforms/android -name "*.gradle" -exec sed -i 's/play-services-identity:20\.7\.0/play-services-identity:18.1.0/g' {} \;
+        find platforms/android -name "*.gradle" -exec sed -i 's/play-services-identity:\$\{PLAY_SERVICES_VERSION\}/play-services-identity:18.1.0/g' {} \;
+        echo '✅ Fixed play-services-identity version'
+    
     - name: Force compatible dependency versions
       working-directory: cordova-app
       run: |
@@ -117,6 +125,7 @@ jobs:
         echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.22'" >> platforms/android/build.gradle
         echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22'" >> platforms/android/build.gradle
         echo "            force 'com.google.android.gms:play-services-auth:20.7.0'" >> platforms/android/build.gradle
+        echo "            force 'com.google.android.gms:play-services-identity:18.1.0'" >> platforms/android/build.gradle
         echo "            force 'com.google.android.gms:play-services-base:18.2.0'" >> platforms/android/build.gradle
         echo "        }" >> platforms/android/build.gradle
         echo "    }" >> platforms/android/build.gradle
