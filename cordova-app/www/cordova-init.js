@@ -254,7 +254,29 @@ function setupNotifications() {
 
 // ✅ QR Code Scanner Function using html5-qrcode
 window.scanQRCode = function() {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+        console.log('📷 Starting QR Scanner...');
+        
+        // ✅ First request camera permission explicitly
+        try {
+            console.log('📷 Requesting camera permission...');
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
+            });
+            // Stop the stream immediately - we just needed permission
+            stream.getTracks().forEach(track => track.stop());
+            console.log('✅ Camera permission granted');
+        } catch (permErr) {
+            console.error('❌ Camera permission denied:', permErr);
+            const address = prompt('📷 Camera access denied. Enter address manually:');
+            if (address && address.trim()) {
+                resolve(address.trim());
+            } else {
+                reject('Camera permission denied');
+            }
+            return;
+        }
+        
         // Check if Html5Qrcode is available
         if (typeof Html5Qrcode === 'undefined') {
             console.error('❌ Html5Qrcode not loaded');
@@ -277,7 +299,7 @@ window.scanQRCode = function() {
                 <h2 style="margin:0 0 10px 0;">📷 Scan QR Code</h2>
                 <p style="margin:0;opacity:0.7;">Point camera at QR code</p>
             </div>
-            <div id="qr-reader" style="width:100%;max-width:400px;border-radius:15px;overflow:hidden;"></div>
+            <div id="qr-reader" style="width:100%;max-width:400px;border-radius:15px;overflow:hidden;background:#222;min-height:300px;"></div>
             <button id="qr-cancel-btn" style="margin-top:20px;background:#ff4444;color:#fff;border:none;padding:15px 40px;border-radius:10px;font-size:16px;cursor:pointer;">
                 ✕ Cancel
             </button>
@@ -430,12 +452,24 @@ function setupGoogleSignIn() {
                 // Create fake JWT for handleGoogleSignIn
                 const payload = {
                     email: userData.email,
-                    name: userData.displayName,
+                    name: userData.displayName || userData.givenName || 'User',
                     picture: profilePicture,
                     sub: userData.userId
                 };
                 
-                const b64 = str => btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                console.log('📦 JWT Payload:', JSON.stringify(payload));
+                
+                // ✅ FIXED: btoa with Unicode support
+                const b64 = str => {
+                    try {
+                        // Handle Unicode characters
+                        const utf8 = unescape(encodeURIComponent(str));
+                        return btoa(utf8).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                    } catch(e) {
+                        console.error('btoa error:', e);
+                        return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                    }
+                };
                 const header = b64(JSON.stringify({alg: 'none', typ: 'JWT'}));
                 const body = b64(JSON.stringify(payload));
                 const fakeCredential = header + '.' + body + '.fake';
