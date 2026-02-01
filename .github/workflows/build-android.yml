@@ -43,16 +43,16 @@ jobs:
         sdkmanager "build-tools;33.0.2" "platforms;android-33"
         echo '✅ تم تثبيت Build Tools'
     
-    - name: Replace system Gradle with 7.6
+    - name: Replace system Gradle with 8.7
       run: |
-        echo '🔧 استبدال Gradle 9.3 بـ 7.6...'
+        echo '🔧 تثبيت Gradle 8.7...'
         sudo rm -rf /usr/share/gradle*
-        wget -q https://services.gradle.org/distributions/gradle-7.6-bin.zip -O /tmp/gradle.zip
+        wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -O /tmp/gradle.zip
         sudo unzip -q /tmp/gradle.zip -d /opt/
-        sudo ln -sf /opt/gradle-7.6/bin/gradle /usr/bin/gradle
-        sudo ln -sf /opt/gradle-7.6/bin/gradle /usr/local/bin/gradle
-        echo "GRADLE_HOME=/opt/gradle-7.6" >> $GITHUB_ENV
-        echo "/opt/gradle-7.6/bin" >> $GITHUB_PATH
+        sudo ln -sf /opt/gradle-8.7/bin/gradle /usr/bin/gradle
+        sudo ln -sf /opt/gradle-8.7/bin/gradle /usr/local/bin/gradle
+        echo "GRADLE_HOME=/opt/gradle-8.7" >> $GITHUB_ENV
+        echo "/opt/gradle-8.7/bin" >> $GITHUB_PATH
         gradle --version
     
     - name: Install Cordova CLI
@@ -81,37 +81,20 @@ jobs:
         echo 'Package name: io.accessnetwork.app'
         echo '=================================================='
 
-    - name: Add Android platform with Gradle 7.6
+    - name: Add Android platform with Gradle 8.7
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
       run: |
-        echo '📱 إضافة منصة Android...'
+        echo '📱 إضافة منصة Android 13...'
         cordova platform remove android 2>/dev/null || true
-        cordova platform add android@12.0.1 --verbose
-        echo '✅ تم إضافة منصة Android'
-    
-    - name: Fix dependency conflicts
-      working-directory: cordova-app
-      run: |
-        echo '🔧 إصلاح تعارضات المكتبات...'
-        # Force older error_prone_annotations version that works with AGP 7.4.2
-        echo "" >> platforms/android/app/build.gradle
-        echo "// Fix dependency conflicts for AGP 7.4.2" >> platforms/android/app/build.gradle
-        echo "configurations.all {" >> platforms/android/app/build.gradle
-        echo "    resolutionStrategy {" >> platforms/android/app/build.gradle
-        echo "        force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'" >> platforms/android/app/build.gradle
-        echo "        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22'" >> platforms/android/app/build.gradle
-        echo "        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'" >> platforms/android/app/build.gradle
-        echo "        force 'com.google.errorprone:error_prone_annotations:2.15.0'" >> platforms/android/app/build.gradle
-        echo "    }" >> platforms/android/app/build.gradle
-        echo "}" >> platforms/android/app/build.gradle
-        echo '✅ تم إصلاح التعارضات'
+        cordova platform add android@13.0.0 --verbose
+        echo '✅ تم إضافة منصة Android 13'
     
     - name: Build Debug APK
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
       run: |
         echo '🚧 بناء Debug APK...'
         cordova build android --debug --verbose
@@ -120,7 +103,7 @@ jobs:
     - name: Build Release APK
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
       run: |
         echo '🚧 بناء Release APK...'
         cordova build android --release --buildConfig=build.json --verbose
