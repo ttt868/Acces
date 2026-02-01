@@ -117,29 +117,7 @@ document.addEventListener('deviceready', function() {
     // Setup Local Notifications
     setupNotifications();
     
-    // Request Camera Permission for QR Scanner
-    requestCameraPermission();
-    
 }, false);
-
-// ✅ Request Camera Permission
-function requestCameraPermission() {
-    if (window.QRScanner) {
-        QRScanner.prepare(function(err, status) {
-            if (err) {
-                console.log('⚠️ Camera permission error:', err);
-            } else if (status.authorized) {
-                console.log('✅ Camera permission granted');
-            } else if (status.denied) {
-                console.log('❌ Camera permission denied');
-            } else {
-                console.log('📷 Camera permission requested');
-            }
-            // Hide scanner after permission check
-            if (window.QRScanner) QRScanner.destroy();
-        });
-    }
-}
 
 // ✅ Setup Clipboard
 function setupClipboard() {
@@ -212,90 +190,18 @@ function setupNotifications() {
     }
 }
 
-// ✅ QR Code Scanner Function (using QRScanner plugin)
+// ✅ QR Code Scanner Function - Manual Input Fallback
 window.scanQRCode = function() {
     return new Promise((resolve, reject) => {
-        if (window.QRScanner) {
-            // Use QRScanner plugin
-            QRScanner.prepare(function(err, status) {
-                if (err) {
-                    console.error('❌ QR Scanner prepare error:', err);
-                    // Fallback to prompt
-                    const address = prompt('Camera not available. Enter address manually:');
-                    if (address) resolve(address);
-                    else reject('Cancelled');
-                    return;
-                }
-                
-                if (status.authorized) {
-                    // Show scanner UI
-                    document.body.style.backgroundColor = 'transparent';
-                    document.getElementById('main-content')?.classList.add('qr-scanning');
-                    
-                    QRScanner.show(function() {
-                        console.log('📷 QR Scanner shown');
-                    });
-                    
-                    // Add close button
-                    const closeBtn = document.createElement('button');
-                    closeBtn.id = 'qr-close-btn';
-                    closeBtn.innerHTML = '✕ Close';
-                    closeBtn.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;background:#ff4444;color:#fff;border:none;padding:15px 25px;border-radius:10px;font-size:16px;';
-                    closeBtn.onclick = function() {
-                        QRScanner.hide();
-                        QRScanner.destroy();
-                        closeBtn.remove();
-                        document.body.style.backgroundColor = '';
-                        document.getElementById('main-content')?.classList.remove('qr-scanning');
-                        reject('Cancelled');
-                    };
-                    document.body.appendChild(closeBtn);
-                    
-                    QRScanner.scan(function(err, text) {
-                        closeBtn.remove();
-                        document.body.style.backgroundColor = '';
-                        document.getElementById('main-content')?.classList.remove('qr-scanning');
-                        
-                        QRScanner.hide();
-                        QRScanner.destroy();
-                        
-                        if (err) {
-                            console.error('❌ QR Scan error:', err);
-                            reject(err);
-                        } else {
-                            console.log('✅ QR Scanned:', text);
-                            resolve(text);
-                        }
-                    });
-                } else if (status.denied) {
-                    // Permission denied - show settings
-                    QRScanner.openSettings();
-                    reject('Camera permission denied');
-                } else {
-                    reject('Camera not authorized');
-                }
-            });
+        // For now, use manual input since QRScanner plugin has compatibility issues
+        const address = prompt('Enter wallet address or scan QR code:');
+        if (address && address.trim()) {
+            console.log('📝 Address entered:', address);
+            resolve(address.trim());
         } else {
-            // Fallback: prompt user to enter manually
-            const address = prompt('QR Scanner not available. Enter wallet address:');
-            if (address) {
-                resolve(address);
-            } else {
-                reject('No address entered');
-            }
+            reject('No address entered');
         }
     });
-};
-
-// ✅ Cancel QR Scan
-window.cancelQRScan = function() {
-    if (window.QRScanner) {
-        QRScanner.hide();
-        QRScanner.destroy();
-        document.body.style.backgroundColor = '';
-        document.getElementById('main-content')?.classList.remove('qr-scanning');
-        document.getElementById('qr-close-btn')?.remove();
-    }
 };
 
 // ✅ Google Sign-In Setup

@@ -87,11 +87,8 @@
     <!-- ✅ StatusBar Plugin -->
     <plugin name="cordova-plugin-statusbar" spec="^4.0.0" />
     
-    <!-- ✅ Camera Plugin for QR Code scanning -->
+    <!-- ✅ Camera Plugin -->
     <plugin name="cordova-plugin-camera" spec="^8.0.0" />
-    
-    <!-- ✅ QR Scanner Plugin -->
-    <plugin name="cordova-plugin-qrscanner" spec="^3.0.1" />
     
     <!-- ✅ Clipboard Plugin -->
     <plugin name="cordova-clipboard" spec="^1.3.0" />
