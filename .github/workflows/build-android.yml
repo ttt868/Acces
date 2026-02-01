@@ -94,10 +94,10 @@ jobs:
         cordova platform add android@13.0.0 --verbose
         echo '✅ تم إضافة منصة Android'
     
-    - name: Force compatible dependency versions
+    - name: Force compatible dependency versions and fix color resource issue
       working-directory: cordova-app
       run: |
-        echo '🔧 إصلاح تعارض المكتبات...'
+        echo '🔧 إصلاح تعارض المكتبات وإصلاح مشكلة الألوان...'
         echo "" >> platforms/android/build.gradle
         echo "// Force compatible versions for SDK 34 and cordova-android 13" >> platforms/android/build.gradle
         echo "subprojects {" >> platforms/android/build.gradle
@@ -116,9 +116,16 @@ jobs:
         echo "            force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.24'" >> platforms/android/build.gradle
         echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24'" >> platforms/android/build.gradle
         echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.24'" >> platforms/android/build.gradle
+        echo "            // Force newer play-services-base that fixes Invalid color issue with AGP 8.x" >> platforms/android/build.gradle
+        echo "            force 'com.google.android.gms:play-services-base:18.5.0'" >> platforms/android/build.gradle
+        echo "            force 'com.google.android.gms:play-services-auth:21.2.0'" >> platforms/android/build.gradle
+        echo "            force 'com.google.android.gms:play-services-identity:18.1.0'" >> platforms/android/build.gradle
         echo "        }" >> platforms/android/build.gradle
         echo "    }" >> platforms/android/build.gradle
         echo "}" >> platforms/android/build.gradle
+        echo "" >> platforms/android/gradle.properties
+        echo "# Disable AAPT2 strict resource validation to fix Invalid color error with Play Services" >> platforms/android/gradle.properties
+        echo "android.enableResourceOptimizations=false" >> platforms/android/gradle.properties
         echo '✅ تم إصلاح التعارضات'
     
     - name: Build Debug APK
