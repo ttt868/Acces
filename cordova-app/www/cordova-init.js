@@ -205,17 +205,31 @@ function setupGoogleSignIn() {
             },
             function(userData) {
                 console.log('✅ Google Sign-In success:', userData.email);
+                console.log('📷 User image URL:', userData.imageUrl);
                 document.getElementById('google-signin-loading')?.remove();
                 
                 // Clear old cache
                 localStorage.removeItem('accessoireUser');
                 localStorage.removeItem('accessoireUserData');
                 
+                // ✅ Get profile picture with fallback
+                let profilePicture = userData.imageUrl || userData.image?.url || '';
+                // Make sure we get high quality image
+                if (profilePicture && profilePicture.includes('googleusercontent.com')) {
+                    profilePicture = profilePicture.replace(/=s\d+-c/, '=s200-c');
+                }
+                // Default avatar if no picture
+                const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzY2NiI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgM2MxLjY2IDAgMyAxLjM0IDMgM3MtMS4zNCAzLTMgMy0zLTEuMzQtMy0zIDEuMzQtMyAzLTN6bTAgMTQuMmMtMi41IDAtNC43MS0xLjI4LTYtMy4yMi4wMy0xLjk5IDQtMy4wOCA2LTMuMDggMS45OSAwIDUuOTcgMS4wOSA2IDMuMDgtMS4yOSAxLjk0LTMuNSAzLjIyLTYgMy4yMnoiLz48L3N2Zz4=';
+                
+                if (!profilePicture) {
+                    profilePicture = DEFAULT_AVATAR;
+                }
+                
                 // Create fake JWT for handleGoogleSignIn
                 const payload = {
                     email: userData.email,
                     name: userData.displayName,
-                    picture: userData.imageUrl,
+                    picture: profilePicture,
                     sub: userData.userId
                 };
                 
