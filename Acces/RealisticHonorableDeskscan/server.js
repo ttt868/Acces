@@ -17,7 +17,7 @@ import { startReEngagementScheduler } from './re-engagement-notifications.js';
 // ============================================================================
 // 📦 إصدار الملفات - غير هذا الرقم فقط لتحديث كل الملفات
 // ============================================================================
-const ASSETS_VERSION = '15.7';
+const ASSETS_VERSION = '15.8';
 
 // ============================================================================
 // 🛡️ NEVER DIE PROTECTION - السيرفر لا يسقط أبداً!
@@ -1545,6 +1545,25 @@ const server = http.createServer(async (req, res) => {
     } catch (err) {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       res.end('Sitemap not found');
+      return;
+    }
+  }
+
+  // 📢 ADS.TXT - مهم جداً لـ Google AdSense - يجب أن يكون قابلاً للزحف
+  if (pathname === '/ads.txt') {
+    const adsPath = path.join(__dirname, 'ads.txt');
+    try {
+      const adsContent = fs.readFileSync(adsPath, 'utf8');
+      res.writeHead(200, { 
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'public, max-age=86400',
+        'X-Robots-Tag': 'noarchive'
+      });
+      res.end(adsContent);
+      return;
+    } catch (err) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('ads.txt not found');
       return;
     }
   }

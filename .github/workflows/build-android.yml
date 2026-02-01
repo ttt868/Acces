@@ -91,6 +91,17 @@ jobs:
         cordova platform add android@13.0.0 --verbose
         echo '✅ تم إضافة منصة Android 13'
     
+    - name: Fix Google Play Services version for AGP 8.x
+      working-directory: cordova-app
+      run: |
+        echo '🔧 تحديث إصدار Google Play Services...'
+        # Fix old play-services-base version in plugin
+        sed -i 's/com.google.android.gms:play-services-base:15.0.1/com.google.android.gms:play-services-base:18.2.0/g' platforms/android/app/build.gradle
+        sed -i 's/com.google.android.gms:play-services-auth:16.0.1/com.google.android.gms:play-services-auth:20.7.0/g' platforms/android/app/build.gradle
+        # Also check CordovaLib
+        sed -i 's/com.google.android.gms:play-services-base:15.0.1/com.google.android.gms:play-services-base:18.2.0/g' platforms/android/CordovaLib/build.gradle 2>/dev/null || true
+        echo '✅ تم تحديث Google Play Services'
+    
     - name: Build Debug APK
       working-directory: cordova-app
       env:
