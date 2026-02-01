@@ -37,10 +37,10 @@ jobs:
     - name: Accept Android SDK Licenses
       run: yes | sdkmanager --licenses || true
     
-    - name: Install Android Build Tools and SDK 33
+    - name: Install Android Build Tools and SDK 34
       run: |
-        echo '📦 Installing Build Tools and SDK 33...'
-        sdkmanager "build-tools;33.0.2" "platforms;android-33"
+        echo '📦 Installing Build Tools and SDK 34...'
+        sdkmanager "build-tools;34.0.0" "platforms;android-34"
         echo '✅ Build Tools installed'
     
     - name: Replace system Gradle with 7.6.4
@@ -62,7 +62,7 @@ jobs:
       working-directory: cordova-app
       run: npm install
     
-    - name: Install Cordova Plugins
+    - name: Install Cordova Plugins (without local-notification)
       working-directory: cordova-app
       run: |
         echo '🔌 Installing Cordova plugins...'
@@ -71,6 +71,8 @@ jobs:
           --variable WEB_APPLICATION_CLIENT_ID="586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com" \
           --variable REVERSED_CLIENT_ID="com.googleusercontent.apps.586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn" \
           --variable PLAY_SERVICES_VERSION="20.7.0"
+        echo '🔔 Removing local-notification plugin to avoid SDK compatibility issues...'
+        cordova plugin remove cordova-plugin-local-notification 2>/dev/null || true
     
     - name: Setup Fixed Debug Keystore
       run: |
@@ -94,6 +96,13 @@ jobs:
         cordova platform add android@12.0.1 --verbose
         echo '✅ Android platform added'
     
+    - name: Remove local-notification from platform
+      working-directory: cordova-app
+      run: |
+        echo '🔧 Removing local-notification plugin from platform...'
+        rm -rf platforms/android/app/src/main/java/de/appplant 2>/dev/null || true
+        echo '✅ Removed local-notification'
+    
     - name: Fix play-services-identity version in plugin
       working-directory: cordova-app
       run: |
@@ -107,19 +116,19 @@ jobs:
       run: |
         echo '🔧 Fixing library conflicts...'
         echo "" >> platforms/android/build.gradle
-        echo "// Force compatible versions for SDK 33 and cordova-android 12" >> platforms/android/build.gradle
+        echo "// Force compatible versions for SDK 34 and cordova-android 12" >> platforms/android/build.gradle
         echo "subprojects {" >> platforms/android/build.gradle
         echo "    afterEvaluate { project ->" >> platforms/android/build.gradle
         echo "        if (project.hasProperty('android')) {" >> platforms/android/build.gradle
         echo "            project.android {" >> platforms/android/build.gradle
-        echo "                compileSdkVersion 33" >> platforms/android/build.gradle
+        echo "                compileSdkVersion 34" >> platforms/android/build.gradle
         echo "            }" >> platforms/android/build.gradle
         echo "        }" >> platforms/android/build.gradle
         echo "    }" >> platforms/android/build.gradle
         echo "    configurations.all {" >> platforms/android/build.gradle
         echo "        resolutionStrategy {" >> platforms/android/build.gradle
-        echo "            force 'androidx.core:core:1.9.0'" >> platforms/android/build.gradle
-        echo "            force 'androidx.core:core-ktx:1.9.0'" >> platforms/android/build.gradle
+        echo "            force 'androidx.core:core:1.12.0'" >> platforms/android/build.gradle
+        echo "            force 'androidx.core:core-ktx:1.12.0'" >> platforms/android/build.gradle
         echo "            force 'androidx.appcompat:appcompat:1.6.1'" >> platforms/android/build.gradle
         echo "            force 'org.jetbrains.kotlin:kotlin-stdlib:1.7.22'" >> platforms/android/build.gradle
         echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.22'" >> platforms/android/build.gradle
