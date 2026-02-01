@@ -201,7 +201,8 @@ function setupGoogleSignIn() {
             {
                 scopes: 'profile email',
                 webClientId: window.GOOGLE_CLIENT_ID_WEB,
-                offline: false
+                offline: false,
+                prompt: 'select_account'
             },
             function(userData) {
                 console.log('✅ Google Sign-In success:', userData.email);
@@ -268,11 +269,30 @@ function setupGoogleSignIn() {
     console.log('✅ Google Sign-In ready');
 }
 
-// ✅ Google Sign-Out
+// ✅ Google Sign-Out - MUST disconnect to show account picker next time
 window.nativeGoogleSignOut = function() {
     return new Promise(resolve => {
         if (window.plugins?.googleplus) {
-            window.plugins.googleplus.disconnect(() => resolve(), () => resolve());
+            // Use disconnect() to fully sign out and force account picker on next login
+            window.plugins.googleplus.disconnect(
+                function() {
+                    console.log('✅ Google disconnect success - will show account picker next time');
+                    // Also try logout for extra safety
+                    window.plugins.googleplus.logout(
+                        function() {
+                            console.log('✅ Google logout success');
+                            resolve();
+                        },
+                        function() {
+                            resolve();
+                        }
+                    );
+                },
+                function() {
+                    // Try logout as fallback
+                    window.plugins.googleplus.logout(() => resolve(), () => resolve());
+                }
+            );
         } else {
             resolve();
         }

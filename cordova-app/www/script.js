@@ -14404,24 +14404,10 @@ window.cancelProfileChanges = cancelProfileChanges;
     document.documentElement.classList.add('user-not-logged-in');
     document.documentElement.classList.add('app-ready');
 
-    // 📱 Cordova: Don't reload - show login UI directly
-    if (window.IS_CORDOVA_APP) {
-      console.log('📱 Cordova: Showing login UI without reload');
-      // Show auth section
-      const authSection = document.getElementById('auth-section');
-      if (authSection) authSection.style.display = 'flex';
-      // Hide main content
-      const mainContent = document.getElementById('main-content');
-      if (mainContent) mainContent.style.display = 'none';
-      // Hide dashboard if visible
-      const dashboard = document.getElementById('dashboard');
-      if (dashboard) dashboard.style.display = 'none';
-    } else {
-      // Web: reload page
-      setTimeout(() => {
-        window.location.reload();
-      }, 300);
-    }
+    // 📱 Both Cordova and Web: reload page to reset state completely
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
   });
 
   document.getElementById('logout-cancel').addEventListener('click', function() {
