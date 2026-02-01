@@ -37,22 +37,22 @@ jobs:
     - name: Accept Android SDK Licenses
       run: yes | sdkmanager --licenses || true
     
-    - name: Install Android Build Tools and SDK 34
+    - name: Install Android Build Tools and SDK 33
       run: |
-        echo '📦 تثبيت Build Tools و SDK 34...'
-        sdkmanager "build-tools;34.0.0" "platforms;android-34"
-        echo '✅ تم تثبيت Build Tools'
+        echo '📦 Installing Build Tools and SDK 33...'
+        sdkmanager "build-tools;33.0.2" "platforms;android-33"
+        echo '✅ Build Tools installed'
     
-    - name: Replace system Gradle with 8.7
+    - name: Replace system Gradle with 7.6.4
       run: |
-        echo '🔧 تثبيت Gradle 8.7...'
+        echo '🔧 Installing Gradle 7.6.4...'
         sudo rm -rf /usr/share/gradle*
-        wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -O /tmp/gradle.zip
+        wget -q https://services.gradle.org/distributions/gradle-7.6.4-bin.zip -O /tmp/gradle.zip
         sudo unzip -q /tmp/gradle.zip -d /opt/
-        sudo ln -sf /opt/gradle-8.7/bin/gradle /usr/bin/gradle
-        sudo ln -sf /opt/gradle-8.7/bin/gradle /usr/local/bin/gradle
-        echo "GRADLE_HOME=/opt/gradle-8.7" >> $GITHUB_ENV
-        echo "/opt/gradle-8.7/bin" >> $GITHUB_PATH
+        sudo ln -sf /opt/gradle-7.6.4/bin/gradle /usr/bin/gradle
+        sudo ln -sf /opt/gradle-7.6.4/bin/gradle /usr/local/bin/gradle
+        echo "GRADLE_HOME=/opt/gradle-7.6.4" >> \$GITHUB_ENV
+        echo "/opt/gradle-7.6.4/bin" >> \$GITHUB_PATH
         gradle --version
     
     - name: Install Cordova CLI
@@ -70,7 +70,7 @@ jobs:
         cordova plugin add cordova-plugin-googleplus@8.5.2 --save \
           --variable WEB_APPLICATION_CLIENT_ID="586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com" \
           --variable REVERSED_CLIENT_ID="com.googleusercontent.apps.586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn" \
-          --variable PLAY_SERVICES_VERSION="18.1.0"
+          --variable PLAY_SERVICES_VERSION="20.7.0"
     
     - name: Setup Fixed Debug Keystore
       run: |
@@ -84,71 +84,66 @@ jobs:
         echo 'Package name: io.accessnetwork.app'
         echo '=================================================='
 
-    - name: Add Android platform (cordova-android 13.0.0)
+    - name: Add Android platform (cordova-android 12.0.1)
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
       run: |
-        echo '📱 إضافة منصة Android 13.0.0...'
+        echo '📱 Adding Android platform 12.0.1...'
         cordova platform remove android 2>/dev/null || true
-        cordova platform add android@13.0.0 --verbose
-        echo '✅ تم إضافة منصة Android'
+        cordova platform add android@12.0.1 --verbose
+        echo '✅ Android platform added'
     
-    - name: Force compatible dependency versions and fix color resource issue
+    - name: Force compatible dependency versions
       working-directory: cordova-app
       run: |
-        echo '🔧 إصلاح تعارض المكتبات وإصلاح مشكلة الألوان...'
+        echo '🔧 Fixing library conflicts...'
         echo "" >> platforms/android/build.gradle
-        echo "// Force compatible versions for SDK 34 and cordova-android 13" >> platforms/android/build.gradle
+        echo "// Force compatible versions for SDK 33 and cordova-android 12" >> platforms/android/build.gradle
         echo "subprojects {" >> platforms/android/build.gradle
         echo "    afterEvaluate { project ->" >> platforms/android/build.gradle
         echo "        if (project.hasProperty('android')) {" >> platforms/android/build.gradle
         echo "            project.android {" >> platforms/android/build.gradle
-        echo "                compileSdkVersion 34" >> platforms/android/build.gradle
+        echo "                compileSdkVersion 33" >> platforms/android/build.gradle
         echo "            }" >> platforms/android/build.gradle
         echo "        }" >> platforms/android/build.gradle
         echo "    }" >> platforms/android/build.gradle
         echo "    configurations.all {" >> platforms/android/build.gradle
         echo "        resolutionStrategy {" >> platforms/android/build.gradle
-        echo "            force 'androidx.core:core:1.12.0'" >> platforms/android/build.gradle
-        echo "            force 'androidx.core:core-ktx:1.12.0'" >> platforms/android/build.gradle
+        echo "            force 'androidx.core:core:1.9.0'" >> platforms/android/build.gradle
+        echo "            force 'androidx.core:core-ktx:1.9.0'" >> platforms/android/build.gradle
         echo "            force 'androidx.appcompat:appcompat:1.6.1'" >> platforms/android/build.gradle
-        echo "            force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.24'" >> platforms/android/build.gradle
-        echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24'" >> platforms/android/build.gradle
-        echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.24'" >> platforms/android/build.gradle
-        echo "            // Force newer play-services-base that fixes Invalid color issue with AGP 8.x" >> platforms/android/build.gradle
-        echo "            force 'com.google.android.gms:play-services-base:18.5.0'" >> platforms/android/build.gradle
-        echo "            force 'com.google.android.gms:play-services-auth:21.2.0'" >> platforms/android/build.gradle
-        echo "            force 'com.google.android.gms:play-services-identity:18.1.0'" >> platforms/android/build.gradle
+        echo "            force 'org.jetbrains.kotlin:kotlin-stdlib:1.7.22'" >> platforms/android/build.gradle
+        echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.22'" >> platforms/android/build.gradle
+        echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22'" >> platforms/android/build.gradle
+        echo "            force 'com.google.android.gms:play-services-auth:20.7.0'" >> platforms/android/build.gradle
+        echo "            force 'com.google.android.gms:play-services-base:18.2.0'" >> platforms/android/build.gradle
         echo "        }" >> platforms/android/build.gradle
         echo "    }" >> platforms/android/build.gradle
         echo "}" >> platforms/android/build.gradle
-        echo "" >> platforms/android/gradle.properties
-        echo "# Disable AAPT2 strict resource validation to fix Invalid color error with Play Services" >> platforms/android/gradle.properties
-        echo "android.enableResourceOptimizations=false" >> platforms/android/gradle.properties
-        echo '✅ تم إصلاح التعارضات'
+        echo '✅ Library conflicts fixed'
     
     - name: Build Debug APK
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
       run: |
-        echo '🚧 بناء Debug APK...'
+        echo '🚧 Building Debug APK...'
         cordova build android --debug --verbose
-        echo '✅ تم بناء Debug APK'
+        echo '✅ Debug APK built'
     
     - name: Build Release APK
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
       run: |
-        echo '🚧 بناء Release APK...'
+        echo '🚧 Building Release APK...'
         cordova build android --release --buildConfig=build.json --verbose
-        echo '✅ تم بناء Release APK'
+        echo '✅ Release APK built'
     
     - name: List APK files
       run: |
-        echo "📱 ملفات APK المُنتجة:"
+        echo "📱 Generated APK files:"
         find cordova-app/platforms/android -name "*.apk" -type f 2>/dev/null || echo "No APK found"
     
     - name: Upload Debug APK
