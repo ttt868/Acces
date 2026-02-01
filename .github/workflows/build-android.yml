@@ -98,31 +98,27 @@ jobs:
       working-directory: cordova-app
       run: |
         echo '🔧 إصلاح تعارض المكتبات...'
-        cat >> platforms/android/build.gradle << 'GRADLEOF'
-
-// Force compatible versions for SDK 33
-subprojects {
-    afterEvaluate { project ->
-        if (project.hasProperty('android')) {
-            project.android {
-                compileSdkVersion 33
-            }
-        }
-    }
-    configurations.all {
-        resolutionStrategy {
-            // Force compatible AndroidX versions for SDK 33
-            force 'androidx.core:core:1.9.0'
-            force 'androidx.core:core-ktx:1.9.0'
-            force 'androidx.appcompat:appcompat:1.5.1'
-            // Force compatible Kotlin versions
-            force 'org.jetbrains.kotlin:kotlin-stdlib:1.7.21'
-            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.21'
-            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21'
-        }
-    }
-}
-GRADLEOF
+        echo "" >> platforms/android/build.gradle
+        echo "// Force compatible versions for SDK 33" >> platforms/android/build.gradle
+        echo "subprojects {" >> platforms/android/build.gradle
+        echo "    afterEvaluate { project ->" >> platforms/android/build.gradle
+        echo "        if (project.hasProperty('android')) {" >> platforms/android/build.gradle
+        echo "            project.android {" >> platforms/android/build.gradle
+        echo "                compileSdkVersion 33" >> platforms/android/build.gradle
+        echo "            }" >> platforms/android/build.gradle
+        echo "        }" >> platforms/android/build.gradle
+        echo "    }" >> platforms/android/build.gradle
+        echo "    configurations.all {" >> platforms/android/build.gradle
+        echo "        resolutionStrategy {" >> platforms/android/build.gradle
+        echo "            force 'androidx.core:core:1.9.0'" >> platforms/android/build.gradle
+        echo "            force 'androidx.core:core-ktx:1.9.0'" >> platforms/android/build.gradle
+        echo "            force 'androidx.appcompat:appcompat:1.5.1'" >> platforms/android/build.gradle
+        echo "            force 'org.jetbrains.kotlin:kotlin-stdlib:1.7.21'" >> platforms/android/build.gradle
+        echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.21'" >> platforms/android/build.gradle
+        echo "            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.21'" >> platforms/android/build.gradle
+        echo "        }" >> platforms/android/build.gradle
+        echo "    }" >> platforms/android/build.gradle
+        echo "}" >> platforms/android/build.gradle
         echo '✅ تم إصلاح التعارضات'
     
     - name: Build Debug APK
