@@ -171,17 +171,19 @@ jobs:
         echo '📋 Using keystore: access-network.keystore'
         # Verify keystore exists
         ls -la access-network.keystore
-        # Build with signing config
-        cordova build android --release --buildConfig=build.json --verbose
+        # Build APK (not AAB) with packageType flag
+        cordova build android --release --buildConfig=build.json -- --packageType=apk --verbose
         echo '✅ Release APK built and signed'
         # Verify the APK was created
-        echo '📱 Checking output APKs:'
-        find platforms/android -name "*.apk" -type f -exec ls -la {} \;
+        echo '📱 Checking output files:'
+        find platforms/android -name "*.apk" -o -name "*.aab" -type f 2>/dev/null | head -10
     
     - name: List APK files
       run: |
         echo "📱 Generated APK files:"
         find cordova-app/platforms/android -name "*.apk" -type f 2>/dev/null || echo "No APK found"
+        echo "📦 Generated AAB files:"
+        find cordova-app/platforms/android -name "*.aab" -type f 2>/dev/null || echo "No AAB found"
     
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
@@ -196,5 +198,13 @@ jobs:
       with:
         name: access-network-release-apk
         path: cordova-app/platforms/android/app/build/outputs/apk/release/*.apk
+        if-no-files-found: warn
+        retention-days: 30
+    
+    - name: Upload Release AAB (for Google Play)
+      uses: actions/upload-artifact@v4
+      with:
+        name: access-network-release-aab
+        path: cordova-app/platforms/android/app/build/outputs/bundle/release/*.aab
         if-no-files-found: warn
         retention-days: 30
