@@ -140,29 +140,59 @@ document.addEventListener('deviceready', function() {
     }
 }, false);
 
-// ✅ Setup Clipboard
+// ✅ Setup Clipboard with permission request
 function setupClipboard() {
-    if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
-        console.log('✅ Clipboard plugin ready');
-        
-        // Override navigator.clipboard for compatibility
-        window.pasteFromClipboard = function() {
-            return new Promise((resolve, reject) => {
+    console.log('📋 Setting up clipboard...');
+    
+    // ✅ IMPROVED: pasteFromClipboard with fallback
+    window.pasteFromClipboard = function() {
+        return new Promise((resolve, reject) => {
+            // Try Cordova plugin first
+            if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
+                console.log('📋 Using Cordova clipboard plugin');
                 cordova.plugins.clipboard.paste(
                     function(text) {
-                        console.log('📋 Pasted from clipboard');
-                        resolve(text);
+                        console.log('📋 Pasted from clipboard:', text ? text.substring(0, 20) + '...' : 'empty');
+                        resolve(text || '');
                     },
                     function(err) {
-                        console.error('❌ Clipboard paste error:', err);
-                        reject(err);
+                        console.error('❌ Cordova clipboard paste error:', err);
+                        // Fallback to web API
+                        tryWebClipboard(resolve, reject);
                     }
                 );
-            });
-        };
-        
-        window.copyToClipboard = function(text) {
-            return new Promise((resolve, reject) => {
+            } else {
+                // Try web clipboard API
+                tryWebClipboard(resolve, reject);
+            }
+        });
+    };
+    
+    // Web Clipboard API fallback
+    function tryWebClipboard(resolve, reject) {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            navigator.clipboard.readText()
+                .then(text => {
+                    console.log('📋 Web clipboard read success');
+                    resolve(text || '');
+                })
+                .catch(err => {
+                    console.error('❌ Web clipboard error:', err);
+                    // Last resort: prompt
+                    const text = prompt('📋 Paste your address here:');
+                    resolve(text || '');
+                });
+        } else {
+            // Prompt as fallback
+            const text = prompt('📋 Paste your address here:');
+            resolve(text || '');
+        }
+    }
+    
+    // ✅ copyToClipboard with fallback
+    window.copyToClipboard = function(text) {
+        return new Promise((resolve, reject) => {
+            if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
                 cordova.plugins.clipboard.copy(
                     text,
                     function() {
@@ -171,12 +201,23 @@ function setupClipboard() {
                     },
                     function(err) {
                         console.error('❌ Clipboard copy error:', err);
-                        reject(err);
+                        // Try web fallback
+                        if (navigator.clipboard) {
+                            navigator.clipboard.writeText(text).then(resolve).catch(reject);
+                        } else {
+                            reject(err);
+                        }
                     }
                 );
-            });
-        };
-    }
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(resolve).catch(reject);
+            } else {
+                reject(new Error('Clipboard not available'));
+            }
+        });
+    };
+    
+    console.log('✅ Clipboard functions ready');
 }
 
 // ✅ Setup Local Notifications
@@ -318,6 +359,16 @@ function setupGoogleSignIn() {
             return;
         }
         
+        // ✅ IMPORTANT: Disconnect first to ensure account picker shows
+        try {
+            await new Promise((resolve) => {
+                window.plugins.googleplus.disconnect(() => resolve(), () => resolve());
+            });
+            console.log('✅ Disconnected previous session');
+        } catch(e) {
+            console.log('No previous session to disconnect');
+        }
+        
         // Loading indicator
         const loading = document.createElement('div');
         loading.id = 'google-signin-loading';
@@ -334,25 +385,46 @@ function setupGoogleSignIn() {
             },
             function(userData) {
                 console.log('✅ Google Sign-In success:', userData.email);
-                console.log('📷 User image URL:', userData.imageUrl);
+                console.log('📷 Raw userData from Google:', JSON.stringify(userData));
                 document.getElementById('google-signin-loading')?.remove();
                 
                 // Clear old cache
                 localStorage.removeItem('accessoireUser');
                 localStorage.removeItem('accessoireUserData');
                 
-                // ✅ Get profile picture with fallback
-                let profilePicture = userData.imageUrl || userData.image?.url || '';
+                // ✅ FIXED: Get profile picture from multiple possible fields
+                let profilePicture = '';
+                
+                // Try different possible field names
+                if (userData.imageUrl && userData.imageUrl.length > 10) {
+                    profilePicture = userData.imageUrl;
+                } else if (userData.image && userData.image.url) {
+                    profilePicture = userData.image.url;
+                } else if (userData.photoUrl) {
+                    profilePicture = userData.photoUrl;
+                } else if (userData.picture) {
+                    profilePicture = userData.picture;
+                }
+                
+                console.log('📷 Extracted profile picture URL:', profilePicture);
+                
                 // Make sure we get high quality image
                 if (profilePicture && profilePicture.includes('googleusercontent.com')) {
+                    // Request larger size (200px)
                     profilePicture = profilePicture.replace(/=s\d+-c/, '=s200-c');
+                    if (!profilePicture.includes('=s')) {
+                        profilePicture += '=s200-c';
+                    }
                 }
-                // Default avatar - SAME as server.js
+                
+                // Default avatar SVG - SAME as server.js
                 const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
                 
-                if (!profilePicture) {
+                if (!profilePicture || profilePicture.length < 10) {
                     profilePicture = DEFAULT_AVATAR;
-                    console.log('📷 Using default avatar');
+                    console.log('📷 No valid image URL, using default avatar');
+                } else {
+                    console.log('📷 Using Google profile picture:', profilePicture.substring(0, 50) + '...');
                 }
                 
                 // Create fake JWT for handleGoogleSignIn
