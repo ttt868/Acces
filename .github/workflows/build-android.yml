@@ -37,22 +37,22 @@ jobs:
     - name: Accept Android SDK Licenses
       run: yes | sdkmanager --licenses || true
     
-    - name: Install Android Build Tools
+    - name: Install Android Build Tools and SDK 33
       run: |
-        echo '📦 تثبيت Build Tools 33.0.2...'
+        echo '📦 تثبيت Build Tools و SDK 33...'
         sdkmanager "build-tools;33.0.2" "platforms;android-33"
         echo '✅ تم تثبيت Build Tools'
     
-    - name: Replace system Gradle with 8.7
+    - name: Replace system Gradle with 7.6
       run: |
-        echo '🔧 تثبيت Gradle 8.7...'
+        echo '🔧 تثبيت Gradle 7.6...'
         sudo rm -rf /usr/share/gradle*
-        wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -O /tmp/gradle.zip
+        wget -q https://services.gradle.org/distributions/gradle-7.6-bin.zip -O /tmp/gradle.zip
         sudo unzip -q /tmp/gradle.zip -d /opt/
-        sudo ln -sf /opt/gradle-8.7/bin/gradle /usr/bin/gradle
-        sudo ln -sf /opt/gradle-8.7/bin/gradle /usr/local/bin/gradle
-        echo "GRADLE_HOME=/opt/gradle-8.7" >> $GITHUB_ENV
-        echo "/opt/gradle-8.7/bin" >> $GITHUB_PATH
+        sudo ln -sf /opt/gradle-7.6/bin/gradle /usr/bin/gradle
+        sudo ln -sf /opt/gradle-7.6/bin/gradle /usr/local/bin/gradle
+        echo "GRADLE_HOME=/opt/gradle-7.6" >> $GITHUB_ENV
+        echo "/opt/gradle-7.6/bin" >> $GITHUB_PATH
         gradle --version
     
     - name: Install Cordova CLI
@@ -81,31 +81,48 @@ jobs:
         echo 'Package name: io.accessnetwork.app'
         echo '=================================================='
 
-    - name: Add Android platform with Gradle 8.7
+    - name: Add Android platform (cordova-android 12.0.1)
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6-bin.zip
       run: |
-        echo '📱 إضافة منصة Android 13...'
+        echo '📱 إضافة منصة Android 12.0.1...'
         cordova platform remove android 2>/dev/null || true
-        cordova platform add android@13.0.0 --verbose
-        echo '✅ تم إضافة منصة Android 13'
+        cordova platform add android@12.0.1 --verbose
+        echo '✅ تم إضافة منصة Android'
     
-    - name: Fix Google Play Services version for AGP 8.x
+    - name: Force compatible dependency versions
       working-directory: cordova-app
       run: |
-        echo '🔧 تحديث إصدار Google Play Services...'
-        # Fix old play-services-base version in plugin
-        sed -i 's/com.google.android.gms:play-services-base:15.0.1/com.google.android.gms:play-services-base:18.2.0/g' platforms/android/app/build.gradle
-        sed -i 's/com.google.android.gms:play-services-auth:16.0.1/com.google.android.gms:play-services-auth:20.7.0/g' platforms/android/app/build.gradle
-        # Also check CordovaLib
-        sed -i 's/com.google.android.gms:play-services-base:15.0.1/com.google.android.gms:play-services-base:18.2.0/g' platforms/android/CordovaLib/build.gradle 2>/dev/null || true
-        echo '✅ تم تحديث Google Play Services'
+        echo '🔧 إصلاح تعارض المكتبات...'
+        cat >> platforms/android/build.gradle << 'GRADLEOF'
+
+// Force compatible versions for SDK 33 and cordova-plugin-googleplus
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                compileSdkVersion 33
+            }
+        }
+    }
+    configurations.all {
+        resolutionStrategy {
+            force 'androidx.core:core:1.9.0'
+            force 'androidx.core:core-ktx:1.9.0'
+            force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.0'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0'
+        }
+    }
+}
+GRADLEOF
+        echo '✅ تم إصلاح التعارضات'
     
     - name: Build Debug APK
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6-bin.zip
       run: |
         echo '🚧 بناء Debug APK...'
         cordova build android --debug --verbose
@@ -114,7 +131,7 @@ jobs:
     - name: Build Release APK
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6-bin.zip
       run: |
         echo '🚧 بناء Release APK...'
         cordova build android --release --buildConfig=build.json --verbose
