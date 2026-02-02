@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <!-- Cordova API Path Converter - FINAL FIX -->
+    <!-- Cordova API Path Converter - ENHANCED -->
     <script>
     (function() {
         var API_BASE_URL = 'https://accesschain.org';
@@ -10,53 +10,28 @@
         function fixApiUrl(url) {
             if (typeof url !== 'string') return url;
             if (url.startsWith(API_BASE_URL)) return url;
-            if (url.startsWith('/api/')) return API_BASE_URL + url;
-            if (url.startsWith('/rpc/')) return API_BASE_URL + url;
-            if (url.startsWith('/network/')) return API_BASE_URL + url;
-            
-            // http://localhost/api/... (Cordova WebView)
-            if (url.includes('localhost') && url.includes('/api/')) {
-                return API_BASE_URL + url.substring(url.indexOf('/api/'));
+            if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                return API_BASE_URL + url;
             }
-            if (url.includes('localhost') && url.includes('/rpc/')) {
-                return API_BASE_URL + url.substring(url.indexOf('/rpc/'));
-            }
-            if (url.includes('localhost') && url.includes('/network/')) {
-                return API_BASE_URL + url.substring(url.indexOf('/network/'));
-            }
-            
-            // file:// URLs
             if (url.includes('/api/')) return API_BASE_URL + url.substring(url.indexOf('/api/'));
             if (url.includes('/rpc/')) return API_BASE_URL + url.substring(url.indexOf('/rpc/'));
             if (url.includes('/network/')) return API_BASE_URL + url.substring(url.indexOf('/network/'));
-            
             return url;
         }
         
         var originalFetch = window.fetch;
         window.fetch = function(url, options) {
-            var finalUrl = url;
-            if (typeof url === 'string') {
-                finalUrl = fixApiUrl(url);
-                if (finalUrl !== url) console.log('[API]', url, '->', finalUrl);
-            } else if (url instanceof Request) {
-                var fixed = fixApiUrl(url.url);
-                if (fixed !== url.url) {
-                    console.log('[API]', url.url, '->', fixed);
-                    finalUrl = new Request(fixed, url);
-                }
-            }
+            var finalUrl = (typeof url === 'string') ? fixApiUrl(url) :
+                (url instanceof Request && fixApiUrl(url.url) !== url.url) ? new Request(fixApiUrl(url.url), url) : url;
             return originalFetch.call(this, finalUrl, options);
         };
         
         var originalXHROpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url) {
-            var fixed = fixApiUrl(url);
-            if (fixed !== url) console.log('[XHR]', url, '->', fixed);
-            return originalXHROpen.apply(this, [method, fixed].concat(Array.prototype.slice.call(arguments, 2)));
+            return originalXHROpen.apply(this, [method, fixApiUrl(url)].concat(Array.prototype.slice.call(arguments, 2)));
         };
         
-        console.log('✅ API Interceptor ready:', API_BASE_URL);
+        console.log('[Cordova] API ready:', API_BASE_URL);
     })();
     </script>
     <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; connect-src * https://accesschain.org wss://accesschain.org http://localhost:* https://*; img-src * 'self' data: blob: https:; style-src * 'self' 'unsafe-inline'; font-src * 'self' data:;">
@@ -2041,139 +2016,53 @@
             loadTransactionData(txHash);
         }
 
-        // Load REAL transaction data from network
+        // Load REAL transaction data from network - SIMPLIFIED
         async function loadTransactionData(txHash) {
-            try {
-                if (!txHash) {
-                    console.error('No transaction hash provided');
-                    showTransactionNotFound();
-                    return;
-                }
-
-                console.log('🔍 Loading REAL transaction data for hash:', txHash);
-
-                const baseUrl = window.location.origin;
-                const endpoints = [
-                  `/api/network/transaction/${txHash}`,
-                  `${baseUrl}/api/network/transaction/${txHash}`,
-                  `/api/explorer/transaction/${txHash}`,
-                  `${baseUrl}/api/explorer/transaction/${txHash}`
-                ];
-
-                for (const endpoint of endpoints) {
-                  try {
-                    console.log(`🔍 Trying endpoint: ${endpoint}`);
-                    const response = await fetch(endpoint, {
-                      method: 'GET',
-                      headers: {
-                        'Accept': 'application/json',
-                        'Cache-Control': 'no-cache'
-                      }
-                    });
-
-                    if (response.ok) {
-                      const contentType = response.headers.get('content-type');
-                      console.log(`📄 Content-Type: ${contentType}`);
-
-                      if (contentType && contentType.includes('application/json')) {
-                        try {
-                          const data = await response.json();
-                          console.log('📦 Response data:', data);
-
-                          if (data && (data.success || data.result || data.transaction)) {
-                            const txData = data.transaction || data.result || data;
-                            console.log('✅ Found REAL transaction data:', txData);
-                            console.log('🔍 NONCE DEBUG:', {
-                              'txData.nonce': txData.nonce,
-                              'txData.transactionNonce': txData.transactionNonce,
-                              'data.data.nonce': data.data?.nonce,
-                              'original_data': data
-                            });
-                            displayRealTransactionData(txData);
-                            return;
-                          }
-                        } catch (jsonError) {
-                          console.warn(`❌ JSON parse error for ${endpoint}:`, jsonError);
-                        }
-                      } else {
-                        const text = await response.text();
-                        console.warn(`❌ Non-JSON response from ${endpoint}:`, text.substring(0, 200));
-                      }
-                    } else {
-                      console.warn(`❌ HTTP ${response.status} from ${endpoint}`);
-                    }
-                  } catch (endpointError) {
-                    console.warn(`⚠️ Endpoint ${endpoint} failed:`, endpointError);
-                    continue;
-                  }
-                }
-
-                try {
-                    const rpcResponse = await fetch('https://accesschain.org/rpc', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            jsonrpc: '2.0',
-                            method: 'eth_getTransactionByHash',
-                            params: [txHash],
-                            id: 1
-                        })
-                    });
-
-                    if (rpcResponse.ok) {
-                        const contentType = rpcResponse.headers.get('content-type');
-                        if (contentType && contentType.includes('application/json')) {
-                            const rpcData = await rpcResponse.json();
-                            if (rpcData.result) {
-                                console.log('✅ Found transaction via RPC:', rpcData.result);
-                                displayRPCTransactionData(rpcData.result);
-                                return;
-                            }
-                        }
-                    }
-                } catch (rpcError) {
-                    console.warn('⚠️ RPC method failed:', rpcError);
-                }
-
-                try {
-                    const knownTx = getKnownTransactionData(txHash);
-                    if (knownTx) {
-                        console.log('✅ Found transaction in known data:', knownTx);
-                        displayRealTransactionData(knownTx);
-                        return;
-                    }
-                } catch (knownError) {
-                    console.warn('⚠️ Known transaction lookup failed:', knownError);
-                }
-
-                try {
-                  console.log('🔍 Searching network data files for transaction...');
-                  const foundTransaction = await searchNetworkFiles(txHash);
-                  if (foundTransaction) {
-                    console.log('✅ Found transaction in network files:', foundTransaction);
-                    displayRealTransactionData(foundTransaction);
-                    return;
-                  }
-
-                  const alternativeTransaction = await searchAlternativeFiles(txHash);
-                  if (alternativeTransaction) {
-                    console.log('✅ Found transaction in alternative files:', alternativeTransaction);
-                    displayRealTransactionData(alternativeTransaction);
-                    return;
-                  }
-                } catch (fileError) {
-                    console.warn('⚠️ Network file search failed:', fileError);
-                }
-
-                console.error('❌ Transaction not found in network or cache');
+            if (!txHash) {
                 showTransactionNotFound();
-
-            } catch (error) {
-                console.error('❌ Critical error loading transaction:', error);
-                showTransactionError();
+                return;
             }
+
+            console.log('[TX] Loading:', txHash);
+
+            try {
+                // Simple direct fetch - Interceptor will fix URL
+                const response = await fetch('/api/network/transaction/' + txHash);
+                const result = await response.json();
+                
+                console.log('[TX] Result:', result);
+                
+                if (result && (result.success || result.transaction || result.result)) {
+                    const txData = result.transaction || result.result || result;
+                    displayRealTransactionData(txData);
+                    return;
+                }
+            } catch (e) {
+                console.log('[TX] Primary API failed:', e.message);
+            }
+
+            // Try RPC as fallback
+            try {
+                const rpcResponse = await fetch('https://accesschain.org/rpc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        method: 'eth_getTransactionByHash',
+                        params: [txHash],
+                        id: 1
+                    })
+                });
+                const rpcData = await rpcResponse.json();
+                if (rpcData.result) {
+                    displayRPCTransactionData(rpcData.result);
+                    return;
+                }
+            } catch (e) {
+                console.log('[TX] RPC failed:', e.message);
+            }
+
+            showTransactionNotFound();
         }
 
         // Direct transaction data for known transaction (fallback)

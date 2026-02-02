@@ -2373,13 +2373,13 @@
                 if (result.success && result.data) {
                     const data = result.data;
                     document.getElementById('totalTransactions').textContent = (data.totalTransactions || 0).toLocaleString();
-                    document.getElementById('currentTps').textContent = parseFloat(data.tps || 0).toFixed(1);
+                    document.getElementById('tps').textContent = '(' + parseFloat(data.tps || 0).toFixed(1) + ' TPS)';
                     document.getElementById('latestBlock').textContent = (data.latestBlock || 0).toLocaleString();
-                    document.getElementById('blockTime').innerHTML = '(' + (data.blockTime || 1) + 's)';
-                    console.log('✅ Stats loaded:', data);
+                    document.getElementById('blockTime').textContent = '(' + (data.blockTime || 1) + 's)';
+                    console.log('[Stats] Loaded:', data);
                 }
             } catch (error) {
-                console.error('❌ Stats error:', error);
+                console.error('[Stats] Error:', error);
             }
         }
 
