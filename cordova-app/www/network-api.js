@@ -927,7 +927,12 @@ export async function handleNetworkAPI(req, res, pathname, method) {
               gasLimit: 30000000,
               size: Math.max(1024, JSON.stringify(currentBlockTx).length),
               difficulty: 1,
-              parentHash: parentHash
+              parentHash: parentHash,
+              stateRoot: '0x' + crypto.createHash('sha256').update('state_' + blockIndex).digest('hex'),
+              transactionsRoot: '0x' + crypto.createHash('sha256').update('txroot_' + blockIndex + '_' + currentBlockTx.length).digest('hex'),
+              receiptsRoot: '0x' + crypto.createHash('sha256').update('receipts_' + blockIndex).digest('hex'),
+              nonce: '0x0000000000000000',
+              extraData: '0x'
             };
 
             latestBlocks.push(block);
