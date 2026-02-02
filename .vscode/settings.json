@@ -19,6 +19,7 @@
         "tar": true,
         "sshpass": true,
         "keytool": true,
-        "gh": true
+        "gh": true,
+        "cp": true
     }
 }
