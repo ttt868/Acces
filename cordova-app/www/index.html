@@ -768,7 +768,7 @@ document.addEventListener('balanceUpdated', function(event) {
       }
       
       try {
-        const response = await fetch('/api/oauth-config');
+        const response = await fetch('https://accesschain.org/api/oauth-config');
         const config = await response.json();
         if (config.success) {
           window.GOOGLE_CLIENT_ID = config.clientId;

@@ -1648,7 +1648,7 @@
         // Load Google Client ID from server
         async function loadGoogleClientId() {
             try {
-                const response = await fetch('/api/oauth-config');
+                const response = await fetch('https://accesschain.org/api/oauth-config');
                 const data = await response.json();
                 if (data.success && data.clientId) {
                     GOOGLE_CLIENT_ID = data.clientId;
@@ -1743,7 +1743,7 @@
                 };
 
                 try {
-                    const response = await fetch('/api/auth/explorer-google', {
+                    const response = await fetch('https://accesschain.org/api/auth/explorer-google', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -1945,7 +1945,7 @@
             const message = document.getElementById('message').value;
 
             try {
-                const response = await fetch('/api/contact', {
+                const response = await fetch('https://accesschain.org/api/contact', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ subject, name, email, message })

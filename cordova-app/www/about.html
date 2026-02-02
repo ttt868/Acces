@@ -1409,7 +1409,7 @@
         // Load Google Client ID from secure server endpoint
         async function loadGoogleClientId() {
             try {
-                const response = await fetch('/api/oauth-config');
+                const response = await fetch('https://accesschain.org/api/oauth-config');
                 const data = await response.json();
                 if (data.success && data.clientId) {
                     GOOGLE_CLIENT_ID = data.clientId;
@@ -1526,7 +1526,7 @@
 
                 // Save user to database
                 try {
-                    const response = await fetch('/api/auth/explorer-google', {
+                    const response = await fetch('https://accesschain.org/api/auth/explorer-google', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
