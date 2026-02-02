@@ -8186,11 +8186,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     // Update all UI elements with current user data
     if (profileName) profileName.textContent = user.name || 'User';
     if (profileEmail) profileEmail.textContent = user.email || '';
-    // Default avatar SVG
+
+    // Default avatar SVG (gray placeholder)
     const defaultAvatarSvg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
 
     if (profileAvatar) {
-      // Add cache-busting parameter for images to prevent browser caching the old image
+      // Use real avatar or default SVG
       const avatarUrl = user.avatar || defaultAvatarSvg;
       const cacheBuster = `?t=${Date.now()}`;
 
@@ -8206,6 +8207,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     // Also update user avatar on mobile header if it exists
     const mobileAvatar = document.getElementById('mobile-user-avatar');
     if (mobileAvatar) {
+      // Use real avatar or default SVG
       const avatarUrl = user.avatar || defaultAvatarSvg;
       const cacheBuster = `?t=${Date.now()}`;
 
@@ -8222,6 +8224,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     const dashboardUserName = document.getElementById('dashboard-user-name');
     
     if (dashboardAvatar) {
+      // Use real avatar or default SVG
       const avatarUrl = user.avatar || defaultAvatarSvg;
       const cacheBuster = `?t=${Date.now()}`;
 
