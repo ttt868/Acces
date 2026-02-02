@@ -11,7 +11,7 @@
                         document.URL.indexOf('localhost') === -1;
         
         if (isCordova) {
-            var API_BASE_URL = 'https://accesschain.org';
+            var API_BASE_URL = 'http://89.167.14.197:3000';
             var originalFetch = window.fetch;
             
             window.fetch = function(url, options) {
