@@ -407,6 +407,11 @@ function setupGoogleSignIn() {
             },
             function(userData) {
                 console.log('✅ Google Sign-In success:', userData.email);
+                console.log('📷 Raw userData from Google (FULL):', JSON.stringify(userData, null, 2));
+                console.log('📷 userData.imageUrl:', userData.imageUrl);
+                console.log('📷 userData.image:', userData.image);
+                console.log('📷 userData.photoUrl:', userData.photoUrl);
+                console.log('📷 userData.picture:', userData.picture);
                 
                 document.getElementById('google-signin-loading')?.remove();
                 
@@ -414,63 +419,68 @@ function setupGoogleSignIn() {
                 localStorage.removeItem('accessoireUser');
                 localStorage.removeItem('accessoireUserData');
                 
-                // ✅ Get profile picture - simple and direct
-                let profilePicture = userData.imageUrl || '';
+                // ✅ FIXED: Get profile picture from multiple possible fields
+                let profilePicture = '';
                 
-                // Try alternative fields if imageUrl is empty
-                if (!profilePicture && userData.image && userData.image.url) {
+                // Try different possible field names - check ALL
+                if (userData.imageUrl && typeof userData.imageUrl === 'string' && userData.imageUrl.length > 10) {
+                    profilePicture = userData.imageUrl;
+                    console.log('📷 Using imageUrl');
+                } else if (userData.image && userData.image.url) {
                     profilePicture = userData.image.url;
-                }
-                if (!profilePicture && userData.photoUrl) {
+                    console.log('📷 Using image.url');
+                } else if (userData.photoUrl && typeof userData.photoUrl === 'string') {
                     profilePicture = userData.photoUrl;
+                    console.log('📷 Using photoUrl');
+                } else if (userData.picture && typeof userData.picture === 'string') {
+                    profilePicture = userData.picture;
+                    console.log('📷 Using picture');
+                } else {
+                    console.log('📷 NO picture field found in userData!');
                 }
                 
-                console.log('📷 Profile picture from Google:', profilePicture || 'NONE');
+                console.log('📷 Extracted profile picture URL:', profilePicture);
                 
                 // Make sure we get high quality image
                 if (profilePicture && profilePicture.includes('googleusercontent.com')) {
+                    // Request larger size (200px)
                     profilePicture = profilePicture.replace(/=s\d+-c/, '=s200-c');
                     if (!profilePicture.includes('=s')) {
                         profilePicture += '=s200-c';
                     }
                 }
                 
-                // Default avatar SVG - SAME as profile page (gray #c6c6c6)
+                // Default avatar SVG - SAME as server.js
                 const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
                 
-                if (!profilePicture) {
+                if (!profilePicture || profilePicture.length < 10) {
                     profilePicture = DEFAULT_AVATAR;
-                    console.log('📷 Using default avatar (Google provided none)');
+                    console.log('📷 No valid image URL, using default avatar');
+                } else {
+                    console.log('📷 Using Google profile picture:', profilePicture.substring(0, 50) + '...');
                 }
                 
-                // Get display name
-                const displayName = userData.displayName || userData.givenName || userData.email.split('@')[0];
-                
-                // Create JWT payload - use simple ASCII-safe encoding
+                // Create fake JWT for handleGoogleSignIn
                 const payload = {
                     email: userData.email,
-                    name: displayName,
+                    name: userData.displayName || userData.givenName || 'User',
                     picture: profilePicture,
-                    sub: userData.userId || userData.email
+                    sub: userData.userId
                 };
                 
-                console.log('📦 JWT Payload - email:', payload.email, 'name:', payload.name, 'picture:', payload.picture ? payload.picture.substring(0, 50) + '...' : 'NONE');
+                console.log('📦 JWT Payload:', JSON.stringify(payload));
                 
-                // Simple base64 encoding - avoid Unicode issues by using encodeURIComponent
+                // ✅ FIXED: btoa with Unicode support
                 const b64 = str => {
                     try {
-                        return btoa(unescape(encodeURIComponent(str)))
-                            .replace(/\+/g, '-')
-                            .replace(/\//g, '_')
-                            .replace(/=+$/, '');
+                        // Handle Unicode characters
+                        const utf8 = unescape(encodeURIComponent(str));
+                        return btoa(utf8).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
                     } catch(e) {
                         console.error('btoa error:', e);
-                        // Fallback: replace non-ASCII chars
-                        const ascii = str.replace(/[^\x00-\x7F]/g, '?');
-                        return btoa(ascii).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                        return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
                     }
                 };
-                
                 const header = b64(JSON.stringify({alg: 'none', typ: 'JWT'}));
                 const body = b64(JSON.stringify(payload));
                 const fakeCredential = header + '.' + body + '.fake';
