@@ -212,97 +212,36 @@ function setupGoogleSignIn() {
                 localStorage.removeItem('accessoireUser');
                 localStorage.removeItem('accessoireUserData');
                 
-                // Default SVG avatar
-                const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3k9IjEyIiByPSI3IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTEwIDMwYzAtNSA0LTggMTAtOHMxMCAzIDEwIDh2MWMwIDEtMSAyLTIgMmgtMTZjLTEgMC0yIC0xLTItMnYtMXoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
+                // ✅ FINAL: Always use SVG in Cordova - Google pictures don't work
+                const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
                 
-                // ✅ Function to proceed with login after getting picture
-                const proceedWithLogin = (finalPicture) => {
-                    // Create fake JWT for handleGoogleSignIn
-                    const payload = {
-                        email: userData.email,
-                        name: userData.displayName,
-                        picture: finalPicture,
-                        sub: userData.userId
-                    };
-                    
-                    console.log('📷 Final payload picture:', finalPicture ? finalPicture.substring(0, 60) : 'SVG');
-                    
-                    // UTF-8 safe base64 encoding
-                    const b64 = str => {
-                        try {
-                            return btoa(unescape(encodeURIComponent(str)))
-                                .replace(/\+/g, '-')
-                                .replace(/\//g, '_')
-                                .replace(/=+$/, '');
-                        } catch (e) {
-                            console.error('Base64 encoding error:', e);
-                            return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-                        }
-                    };
-                    const header = b64(JSON.stringify({alg: 'none', typ: 'JWT'}));
-                    const body = b64(JSON.stringify(payload));
-                    const fakeCredential = header + '.' + body + '.fake';
-                    
-                    if (typeof window.handleGoogleSignIn === 'function') {
-                        window.handleGoogleSignIn({ credential: fakeCredential, select_by: 'cordova' });
-                    } else {
-                        console.error('❌ handleGoogleSignIn not found');
-                        alert('Login error. Please try again.');
-                    }
+                // Create fake JWT for handleGoogleSignIn
+                const payload = {
+                    email: userData.email,
+                    name: userData.displayName,
+                    picture: DEFAULT_AVATAR,
+                    sub: userData.userId
                 };
                 
-                // ✅ Try to get Google image from plugin first
-                let profilePicture = '';
-                
-                const imageSources = [
-                    userData.imageUrl,
-                    userData.picture,
-                    userData.photoUrl,
-                    userData.image?.url,
-                    userData.image,
-                    userData.profilePicture,
-                    userData.photo
-                ];
-                
-                for (const source of imageSources) {
-                    if (source && typeof source === 'string' && source.startsWith('http')) {
-                        profilePicture = source.replace(/=s\d+-c/, '=s200-c').replace(/\?sz=\d+/, '?sz=200');
-                        console.log('📷 Found Google image from plugin:', profilePicture);
-                        break;
+                // UTF-8 safe base64 encoding
+                const b64 = str => {
+                    try {
+                        return btoa(unescape(encodeURIComponent(str)))
+                            .replace(/\+/g, '-')
+                            .replace(/\//g, '_')
+                            .replace(/=+$/, '');
+                    } catch (e) {
+                        return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
                     }
-                }
+                };
+                const header = b64(JSON.stringify({alg: 'none', typ: 'JWT'}));
+                const body = b64(JSON.stringify(payload));
+                const fakeCredential = header + '.' + body + '.fake';
                 
-                // ✅ If plugin gave image, use it immediately
-                if (profilePicture) {
-                    proceedWithLogin(profilePicture);
-                    return;
-                }
-                
-                // ✅ No image from plugin - try Google UserInfo API
-                console.log('📷 No image from plugin, trying Google UserInfo API...');
-                const accessToken = userData.accessToken || userData.oauthToken;
-                
-                if (accessToken) {
-                    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                        headers: { 'Authorization': 'Bearer ' + accessToken }
-                    })
-                    .then(r => r.json())
-                    .then(info => {
-                        if (info.picture && info.picture.startsWith('http')) {
-                            console.log('📷 Got image from UserInfo API:', info.picture);
-                            proceedWithLogin(info.picture.replace(/=s\d+-c/, '=s200-c'));
-                        } else {
-                            console.log('📷 UserInfo API has no picture, using SVG');
-                            proceedWithLogin(DEFAULT_AVATAR);
-                        }
-                    })
-                    .catch(e => {
-                        console.log('📷 UserInfo API failed:', e, 'using SVG');
-                        proceedWithLogin(DEFAULT_AVATAR);
-                    });
+                if (typeof window.handleGoogleSignIn === 'function') {
+                    window.handleGoogleSignIn({ credential: fakeCredential, select_by: 'cordova' });
                 } else {
-                    console.log('📷 No accessToken, using SVG');
-                    proceedWithLogin(DEFAULT_AVATAR);
+                    alert('Login error. Please try again.');
                 }
             },
             function(error) {
