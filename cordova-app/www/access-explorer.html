@@ -2628,6 +2628,7 @@
 
                 if (transactionsResponse.ok) {
                     const transactionsData = await transactionsResponse.json();
+                    if (window.debugLog) window.debugLog('API response: success=' + transactionsData.success + ', data=' + (transactionsData.data ? transactionsData.data.length : 'null'));
                     if (transactionsData.success && transactionsData.data && transactionsData.data.length > 0) {
                         console.log('✅ Got transactions from transactions API:', transactionsData.data.length);
 
@@ -2682,6 +2683,7 @@
 
             } catch (error) {
                 console.error('❌ Error in fetchRealNetworkTransactions:', error);
+                if (window.debugLog) window.debugLog('FETCH ERROR: ' + error.message);
                 const container = document.getElementById('latestTransactions');
                 container.innerHTML = `
                     <div style="padding: 40px; text-align: center; color: var(--text-secondary);">
@@ -2776,9 +2778,13 @@
         // Display ONLY real transactions - NO minimum requirement
         function displayTransactions(transactions, forceUpdate = false) {
             const container = document.getElementById('latestTransactions');
+            
+            // DEBUG
+            if (window.debugLog) window.debugLog('displayTransactions called: ' + (transactions ? transactions.length : 0) + ' txs');
 
             if (!transactions || transactions.length === 0) {
                 console.log('ℹ️ No real transactions to display');
+                if (window.debugLog) window.debugLog('No transactions!');
                 container.innerHTML = `
                     <div style="padding: 40px; text-align: center; color: var(--text-secondary);">
                         <h3 style="margin-bottom: 15px; color: var(--text-primary);">No Transactions Yet</h3>
