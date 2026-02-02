@@ -1762,74 +1762,53 @@
             }, 10000);
         }
 
-        // Load block details from URL parameters
+        // Load block details from URL parameters - SIMPLIFIED
         async function loadBlockDetails() {
-            try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const blockNumber = urlParams.get('number');
-                const blockHash = urlParams.get('hash');
+            const urlParams = new URLSearchParams(window.location.search);
+            // Support multiple URL formats: ?block=, ?number=, ?hash=
+            const blockNumber = urlParams.get('block') || urlParams.get('number');
+            const blockHash = urlParams.get('hash');
 
-                console.log('Loading block details:', { blockNumber, blockHash });
+            console.log('[Block] Loading:', blockNumber || blockHash);
 
-                if (!blockNumber && !blockHash) {
-                    showError('No block identifier provided');
-                    return;
-                }
-
-                // Try to load from localStorage first
-                const savedBlockData = localStorage.getItem('selectedBlockData');
-                if (savedBlockData) {
-                    try {
-                        const parsed = JSON.parse(savedBlockData);
-                        if (parsed.number == blockNumber || parsed.hash === blockHash) {
-                            blockData = parsed.data;
-                            displayBlockDetails(blockData, blockNumber, blockHash);
-                            return;
-                        }
-                    } catch (e) {
-                        console.warn('Failed to parse saved block data');
-                    }
-                }
-
-                // Fetch from API
-                await fetchBlockFromAPI(blockNumber, blockHash);
-
-            } catch (error) {
-                console.error('Error loading block details:', error);
-                showError('Failed to load block details');
+            if (!blockNumber && !blockHash) {
+                showError('No block identifier provided');
+                return;
             }
+
+            // Direct simple fetch
+            await fetchBlockFromAPI(blockNumber, blockHash);
         }
 
-        // Fetch block data from API - SIMPLIFIED
+        // Fetch block data from API - SUPER SIMPLE
         async function fetchBlockFromAPI(blockNumber, blockHash) {
-            console.log('[Block] Fetching:', blockNumber || blockHash);
+            const blockId = blockNumber || blockHash;
+            console.log('[Block] Fetching:', blockId);
 
+            // Try direct API
             try {
-                // Try direct API first
-                const response = await fetch('/api/explorer/block/' + (blockNumber || blockHash));
+                const response = await fetch('https://accesschain.org/api/explorer/block/' + blockId);
                 const data = await response.json();
                 
-                if (data.success && (data.data || data.block)) {
-                    blockData = data.data || data.block;
-                    displayBlockDetails(blockData, blockNumber, blockHash);
+                if (data.success && data.data) {
+                    displayBlockDetails(data.data);
                     return;
                 }
             } catch (e) {
-                console.log('[Block] Direct API failed, trying latest-blocks...');
+                console.log('[Block] Direct failed:', e.message);
             }
 
             // Fallback: Search in latest-blocks
             try {
-                const response = await fetch('/api/explorer/latest-blocks?limit=100');
+                const response = await fetch('https://accesschain.org/api/explorer/latest-blocks?limit=200');
                 const result = await response.json();
                 
                 if (result.success && result.data) {
                     const found = result.data.find(b => 
-                        b.number == blockNumber || b.hash === blockHash
+                        b.number == blockNumber || b.index == blockNumber || b.hash === blockHash
                     );
                     if (found) {
-                        blockData = found;
-                        displayBlockDetails(found, blockNumber, blockHash);
+                        displayBlockDetails(found);
                         return;
                     }
                 }
@@ -1840,107 +1819,61 @@
             showError('Block not found');
         }
 
-        // Display block details
-        function displayBlockDetails(block, blockNumber, blockHash) {
-            try {
-                // Hide loading, show details
-                document.getElementById('loadingState').style.display = 'none';
-                document.getElementById('errorState').style.display = 'none';
-                document.getElementById('blockDetails').style.display = 'block';
+        // Display block details - SIMPLIFIED
+        function displayBlockDetails(block) {
+            // Hide loading, show details
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'none';
+            document.getElementById('blockDetails').style.display = 'block';
 
-                // Set basic block info
-                const number = block.number || block.index || blockNumber || 0;
-                const hash = block.hash || blockHash || 'N/A';
-                const validator = block.validator || block.miner || 'Block Validator';
+            // Basic info
+            const number = block.number || block.index || 0;
+            const hash = block.hash || 'N/A';
+            const validator = block.validator || block.miner || 'Block Validator';
 
-                // Calculate time ago
-                let timestamp = block.timestamp || Date.now();
-                if (timestamp > 1e12) {
-                    timestamp = Math.floor(timestamp / 1000);
-                }
-                const timeAgo = getRealTimeAgo(timestamp);
-                const dateTime = new Date(timestamp * 1000).toLocaleString('en-US', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                });
+            // Timestamp
+            let timestamp = block.timestamp || Date.now();
+            if (timestamp > 1e12) timestamp = Math.floor(timestamp / 1000);
+            
+            const dateTime = new Date(timestamp * 1000).toLocaleString('en-US', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+            });
 
-                // Set header info
-                document.getElementById('blockNumber').textContent = number.toLocaleString();
-                document.getElementById('blockValidator').textContent = validator;
-                document.getElementById('blockTime').textContent = timeAgo;
+            // Transaction count
+            let txCount = Array.isArray(block.transactions) ? block.transactions.length : (block.transactionCount || 0);
 
-                // تعيين القيم التفصيلية
-                document.getElementById('blockHeight').textContent = number.toLocaleString();
-                document.getElementById('blockTimestamp').textContent = dateTime;
+            // Gas
+            const gasUsed = block.gasUsed || (txCount * 21000);
+            const gasLimit = block.gasLimit || 30000000;
+            const gasPercent = ((gasUsed / gasLimit) * 100).toFixed(2);
 
-                // عدد المعاملات الحقيقي
-                let txCount = 0;
-                if (Array.isArray(block.transactions)) {
-                    txCount = block.transactions.length;
-                } else {
-                    txCount = block.transactionCount || block.transactions || 0;
-                }
-                document.getElementById('transactionCount').textContent = txCount.toLocaleString();
+            // Set all values
+            document.getElementById('blockNumber').textContent = number.toLocaleString();
+            document.getElementById('blockValidator').textContent = validator;
+            document.getElementById('blockTime').textContent = getRealTimeAgo(timestamp);
+            document.getElementById('blockHeight').textContent = number.toLocaleString();
+            document.getElementById('blockTimestamp').textContent = dateTime;
+            document.getElementById('transactionCount').textContent = txCount.toLocaleString();
+            document.getElementById('blockMiner').textContent = validator;
+            document.getElementById('blockReward').textContent = (block.reward || 0.25).toFixed(8) + ' ACCESS';
+            document.getElementById('blockDifficulty').textContent = (block.difficulty || 1).toLocaleString();
+            document.getElementById('totalDifficulty').textContent = (block.totalDifficulty || (number + 1)).toLocaleString();
+            document.getElementById('blockSize').textContent = (block.size || 1024).toLocaleString() + ' bytes';
+            document.getElementById('gasUsed').textContent = gasUsed.toLocaleString() + ' (' + gasPercent + '%)';
+            document.getElementById('gasLimit').textContent = gasLimit.toLocaleString();
+            document.getElementById('burntFees').textContent = '0.00000000 ACCESS';
+            document.getElementById('extraData').textContent = block.extraData || '0x';
+            document.getElementById('blockHash').textContent = hash;
+            document.getElementById('parentHash').textContent = block.parentHash || block.previousHash || '0x' + '0'.repeat(64);
+            document.getElementById('stateRoot').textContent = block.stateRoot || hash;
+            document.getElementById('transactionsRoot').textContent = block.transactionsRoot || block.merkleRoot || hash;
+            document.getElementById('receiptsRoot').textContent = block.receiptsRoot || hash;
+            document.getElementById('blockNonce').textContent = block.nonce || '0x0000000000000000';
 
-                // Validated By (Miner)
-                document.getElementById('blockMiner').textContent = validator;
-
-                // Block Reward
-                const reward = block.reward || 0.25;
-                document.getElementById('blockReward').textContent = reward.toFixed(8) + ' ACCESS';
-
-                // Difficulty and Total Difficulty
-                const difficulty = block.difficulty || 1;
-                document.getElementById('blockDifficulty').textContent = difficulty.toLocaleString();
-
-                const totalDifficulty = block.totalDifficulty || ((number + 1) * difficulty);
-                document.getElementById('totalDifficulty').textContent = totalDifficulty.toLocaleString();
-
-                // Block Size
-                const blockSize = block.size || (Array.isArray(block.transactions) && block.transactions.length > 0 ?
-                    Math.max(1024, JSON.stringify(block.transactions).length) : 1024);
-                document.getElementById('blockSize').textContent = blockSize.toLocaleString() + ' bytes';
-
-                // Gas Information
-                const gasUsed = block.gasUsed || (txCount * 21000);
-                const gasLimit = block.gasLimit || 30000000;
-                const gasPercentage = gasLimit > 0 ? ((gasUsed / gasLimit) * 100).toFixed(2) : '0.00';
-                document.getElementById('gasUsed').textContent = gasUsed.toLocaleString() + ' (' + gasPercentage + '%)';
-                document.getElementById('gasLimit').textContent = gasLimit.toLocaleString();
-
-                // Burnt Fees (calculate from gas used and gas price)
-                const gasPrice = 0.00002;
-                const burntFees = (gasUsed * gasPrice) / 1000000000000000000;
-                document.getElementById('burntFees').textContent = burntFees.toFixed(8) + ' ACCESS';
-
-                // Extra Data
-                const extraData = block.extraData || '0x';
-                document.getElementById('extraData').textContent = extraData;
-
-                // Hashes
-                document.getElementById('blockHash').textContent = hash;
-                document.getElementById('parentHash').textContent = block.parentHash || block.previousHash || '0x0000000000000000000000000000000000000000000000000000000000000000';
-
-                // More Details Section
-                document.getElementById('stateRoot').textContent = block.stateRoot || hash;
-                document.getElementById('transactionsRoot').textContent = block.transactionsRoot || block.transactionRoot || hash;
-                document.getElementById('receiptsRoot').textContent = block.receiptsRoot || hash;
-                document.getElementById('blockNonce').textContent = block.nonce || '0x0000000000000000';
-
-                // Load transactions
-                displayTransactions(block.transactions || []);
-
-                console.log('✅ Block details displayed successfully');
-
-            } catch (error) {
-                console.error('Error displaying block details:', error);
-                showError('Failed to display block details');
-            }
+            // Display transactions
+            displayTransactions(block.transactions || []);
+            console.log('[Block] Displayed:', number);
         }
 
         // Toggle More Details section
