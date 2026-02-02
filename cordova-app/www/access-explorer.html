@@ -2,76 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Cordova API Path Converter - ENHANCED -->
+    <!-- Cordova API Path Converter - FINAL FIX -->
     <script>
     (function() {
         var API_BASE_URL = 'http://89.167.14.197:3000';
         
-        // Helper to fix URL
         function fixApiUrl(url) {
             if (typeof url !== 'string') return url;
             
-            // Already absolute API URL
+            // Already our API server
             if (url.startsWith(API_BASE_URL)) return url;
             
-            // Relative API paths
-            if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
-                return API_BASE_URL + url;
-            }
+            // Direct relative paths
+            if (url.startsWith('/api/')) return API_BASE_URL + url;
+            if (url.startsWith('/rpc/')) return API_BASE_URL + url;
+            if (url.startsWith('/network/')) return API_BASE_URL + url;
             
-            // file:// or other schemes with API path
-            if (url.includes('/api/')) {
+            // http://localhost/api/... (Cordova WebView)
+            if (url.includes('localhost') && url.includes('/api/')) {
                 return API_BASE_URL + url.substring(url.indexOf('/api/'));
             }
-            if (url.includes('/rpc/')) {
+            if (url.includes('localhost') && url.includes('/rpc/')) {
                 return API_BASE_URL + url.substring(url.indexOf('/rpc/'));
             }
-            if (url.includes('/network/')) {
+            if (url.includes('localhost') && url.includes('/network/')) {
                 return API_BASE_URL + url.substring(url.indexOf('/network/'));
             }
+            
+            // file:// URLs
+            if (url.includes('/api/')) return API_BASE_URL + url.substring(url.indexOf('/api/'));
+            if (url.includes('/rpc/')) return API_BASE_URL + url.substring(url.indexOf('/rpc/'));
+            if (url.includes('/network/')) return API_BASE_URL + url.substring(url.indexOf('/network/'));
             
             return url;
         }
         
-        // Override fetch
+        // Override fetch IMMEDIATELY
         var originalFetch = window.fetch;
         window.fetch = function(url, options) {
-            var finalUrl;
-            
+            var finalUrl = url;
             if (typeof url === 'string') {
                 finalUrl = fixApiUrl(url);
+                if (finalUrl !== url) console.log('[API]', url, '->', finalUrl);
             } else if (url instanceof Request) {
-                var fixedUrl = fixApiUrl(url.url);
-                if (fixedUrl !== url.url) {
-                    finalUrl = new Request(fixedUrl, url);
-                } else {
-                    finalUrl = url;
+                var fixed = fixApiUrl(url.url);
+                if (fixed !== url.url) {
+                    console.log('[API]', url.url, '->', fixed);
+                    finalUrl = new Request(fixed, url);
                 }
-            } else {
-                finalUrl = url;
-            }
-            
-            if (finalUrl !== url && typeof finalUrl === 'string') {
-                console.log('[Cordova] fetch:', finalUrl);
             }
             return originalFetch.call(this, finalUrl, options);
         };
         
-        // Override XMLHttpRequest
+        // Override XHR
         var originalXHROpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url) {
-            var finalUrl = fixApiUrl(url);
-            if (finalUrl !== url) {
-                console.log('[Cordova] XHR:', finalUrl);
-            }
-            return originalXHROpen.apply(this, [method, finalUrl].concat(Array.prototype.slice.call(arguments, 2)));
+            var fixed = fixApiUrl(url);
+            if (fixed !== url) console.log('[XHR]', url, '->', fixed);
+            return originalXHROpen.apply(this, [method, fixed].concat(Array.prototype.slice.call(arguments, 2)));
         };
         
-        console.log('[Cordova] API converter ready - Base:', API_BASE_URL);
+        console.log('✅ API Interceptor ready:', API_BASE_URL);
     })();
     </script>
-    <!-- CSP for Cordova -->
-    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; connect-src * http://89.167.14.197:3000 ws://89.167.14.197:3000 https://*; img-src * 'self' data: blob: https:; style-src * 'self' 'unsafe-inline'; font-src * 'self' data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; connect-src * http://89.167.14.197:3000 ws://89.167.14.197:3000 http://localhost:* https://*; img-src * 'self' data: blob: https:; style-src * 'self' 'unsafe-inline'; font-src * 'self' data:;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="no">
     <meta name="apple-mobile-web-app-capable" content="no">
