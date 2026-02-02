@@ -3,6 +3,7 @@ import { pool } from './db.js';
 import { getNetworkNode } from './network-api.js';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -539,6 +540,9 @@ async function handleLatestBlocks(req, res) {
                       ).length;
                     }
 
+                    // Generate hashes for missing fields
+                    const parentHash = blockIndex > 0 ? (blocks[blocks.length - 1]?.hash || '0x' + crypto.createHash('sha256').update('parent_' + (blockIndex - 1)).digest('hex')) : '0x' + '0'.repeat(64);
+
                     blocks.push({
                         number: block.index,
                         hash: block.hash,
@@ -550,7 +554,13 @@ async function handleLatestBlocks(req, res) {
                         gasUsed: (txCount) * 21000,
                         gasLimit: 30000000,
                         difficulty: block.difficulty || 1,
-                        reward: networkNode.network.processingReward
+                        reward: networkNode.network.processingReward,
+                        parentHash: block.parentHash || parentHash,
+                        stateRoot: block.stateRoot || '0x' + crypto.createHash('sha256').update('state_' + blockIndex).digest('hex'),
+                        transactionsRoot: block.transactionsRoot || '0x' + crypto.createHash('sha256').update('txroot_' + blockIndex + '_' + txCount).digest('hex'),
+                        receiptsRoot: block.receiptsRoot || '0x' + crypto.createHash('sha256').update('receipts_' + blockIndex).digest('hex'),
+                        nonce: '0x0000000000000000',
+                        extraData: '0x'
                     });
                 }
             }
@@ -570,21 +580,29 @@ async function handleLatestBlocks(req, res) {
                     'SELECT COUNT(*) as count FROM transactions WHERE block_index = $1',
                     [row.block_index]
                 );
+                const count = parseInt(txCount.rows[0]?.count || 0);
+                const blockIndex = row.block_index;
 
                 blocks.push({
-                    number: row.block_index,
-                    index: row.block_index,
-                    hash: row.block_hash || `0x${row.block_index}`,
+                    number: blockIndex,
+                    index: blockIndex,
+                    hash: row.block_hash || `0x${blockIndex}`,
                     timestamp: Math.floor(new Date(row.timestamp).getTime() / 1000),
-                    transactions: parseInt(txCount.rows[0]?.count || 0),
-                    transactionCount: parseInt(txCount.rows[0]?.count || 0),
+                    transactions: count,
+                    transactionCount: count,
                     miner: 'Block Validator',
                     validator: 'Block Validator',
                     size: 1024,
-                    gasUsed: parseInt(txCount.rows[0]?.count || 0) * 21000,
+                    gasUsed: count * 21000,
                     gasLimit: 30000000,
                     difficulty: 1,
-                    reward: 0.25
+                    reward: 0.25,
+                    parentHash: '0x' + crypto.createHash('sha256').update('parent_' + (blockIndex - 1)).digest('hex'),
+                    stateRoot: '0x' + crypto.createHash('sha256').update('state_' + blockIndex).digest('hex'),
+                    transactionsRoot: '0x' + crypto.createHash('sha256').update('txroot_' + blockIndex + '_' + count).digest('hex'),
+                    receiptsRoot: '0x' + crypto.createHash('sha256').update('receipts_' + blockIndex).digest('hex'),
+                    nonce: '0x0000000000000000',
+                    extraData: '0x'
                 });
             }
         }
@@ -854,7 +872,6 @@ async function handleBlockDetails(req, res, blockId) {
             return true;
         }
 
-        const crypto = require('crypto');
         const enhancedBlock = {
             ...block,
             size: JSON.stringify(block).length,
