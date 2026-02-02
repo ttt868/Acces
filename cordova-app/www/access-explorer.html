@@ -2,7 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- API URLs are now hardcoded to https://accesschain.org -->
+    <!-- Cordova API Path Converter - ENHANCED -->
+    <script>
+    (function() {
+        var API_BASE_URL = 'https://accesschain.org';
+        
+        function fixApiUrl(url) {
+            if (typeof url !== 'string') return url;
+            if (url.startsWith(API_BASE_URL)) return url;
+            if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                return API_BASE_URL + url;
+            }
+            if (url.includes('/api/')) return API_BASE_URL + url.substring(url.indexOf('/api/'));
+            if (url.includes('/rpc/')) return API_BASE_URL + url.substring(url.indexOf('/rpc/'));
+            if (url.includes('/network/')) return API_BASE_URL + url.substring(url.indexOf('/network/'));
+            return url;
+        }
+        
+        var originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            var finalUrl = (typeof url === 'string') ? fixApiUrl(url) :
+                (url instanceof Request && fixApiUrl(url.url) !== url.url) ? new Request(fixApiUrl(url.url), url) : url;
+            return originalFetch.call(this, finalUrl, options);
+        };
+        
+        var originalXHROpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url) {
+            return originalXHROpen.apply(this, [method, fixApiUrl(url)].concat(Array.prototype.slice.call(arguments, 2)));
+        };
+        
+        console.log('[Cordova] API ready:', API_BASE_URL);
+    })();
+    </script>
     <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; connect-src * https://accesschain.org wss://accesschain.org http://localhost:* https://*; img-src * 'self' data: blob: https:; style-src * 'self' 'unsafe-inline'; font-src * 'self' data:;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="no">
