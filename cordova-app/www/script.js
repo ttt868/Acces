@@ -7971,6 +7971,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         // Always force a fresh data load from server when restoring session
         userData._requiresRefresh = true;
         userData._forceUpdate = true; // Add flag to force fresh profile data
+        
+        // ✅ FIX: Ensure avatar has default value if missing (for old sessions)
+        if (!userData.avatar) {
+          userData.avatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+        }
+        
         return userData;
       } catch (e) {
         console.error('Failed to parse saved user session:', e);
