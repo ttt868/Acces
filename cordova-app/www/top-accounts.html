@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Cordova API Path Converter - FINAL FIX -->
+    <!-- Cordova API Path Converter - ENHANCED -->
     <script>
     (function() {
         var API_BASE_URL = 'https://accesschain.org';
@@ -10,53 +10,28 @@
         function fixApiUrl(url) {
             if (typeof url !== 'string') return url;
             if (url.startsWith(API_BASE_URL)) return url;
-            if (url.startsWith('/api/')) return API_BASE_URL + url;
-            if (url.startsWith('/rpc/')) return API_BASE_URL + url;
-            if (url.startsWith('/network/')) return API_BASE_URL + url;
-            
-            // http://localhost/api/... (Cordova WebView)
-            if (url.includes('localhost') && url.includes('/api/')) {
-                return API_BASE_URL + url.substring(url.indexOf('/api/'));
+            if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                return API_BASE_URL + url;
             }
-            if (url.includes('localhost') && url.includes('/rpc/')) {
-                return API_BASE_URL + url.substring(url.indexOf('/rpc/'));
-            }
-            if (url.includes('localhost') && url.includes('/network/')) {
-                return API_BASE_URL + url.substring(url.indexOf('/network/'));
-            }
-            
-            // file:// URLs
             if (url.includes('/api/')) return API_BASE_URL + url.substring(url.indexOf('/api/'));
             if (url.includes('/rpc/')) return API_BASE_URL + url.substring(url.indexOf('/rpc/'));
             if (url.includes('/network/')) return API_BASE_URL + url.substring(url.indexOf('/network/'));
-            
             return url;
         }
         
         var originalFetch = window.fetch;
         window.fetch = function(url, options) {
-            var finalUrl = url;
-            if (typeof url === 'string') {
-                finalUrl = fixApiUrl(url);
-                if (finalUrl !== url) console.log('[API]', url, '->', finalUrl);
-            } else if (url instanceof Request) {
-                var fixed = fixApiUrl(url.url);
-                if (fixed !== url.url) {
-                    console.log('[API]', url.url, '->', fixed);
-                    finalUrl = new Request(fixed, url);
-                }
-            }
+            var finalUrl = (typeof url === 'string') ? fixApiUrl(url) :
+                (url instanceof Request && fixApiUrl(url.url) !== url.url) ? new Request(fixApiUrl(url.url), url) : url;
             return originalFetch.call(this, finalUrl, options);
         };
         
         var originalXHROpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url) {
-            var fixed = fixApiUrl(url);
-            if (fixed !== url) console.log('[XHR]', url, '->', fixed);
-            return originalXHROpen.apply(this, [method, fixed].concat(Array.prototype.slice.call(arguments, 2)));
+            return originalXHROpen.apply(this, [method, fixApiUrl(url)].concat(Array.prototype.slice.call(arguments, 2)));
         };
         
-        console.log('✅ API Interceptor ready:', API_BASE_URL);
+        console.log('[Cordova] API ready:', API_BASE_URL);
     })();
     </script>
     <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; connect-src * https://accesschain.org wss://accesschain.org http://localhost:* https://*; img-src * 'self' data: blob: https:; style-src * 'self' 'unsafe-inline'; font-src * 'self' data:;">
