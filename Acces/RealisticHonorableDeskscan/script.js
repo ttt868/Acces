@@ -8448,15 +8448,21 @@ function initializeGoogleSignIn() {
       }).join(''));
       const payload = JSON.parse(jsonPayload);
       
-      // Extract user information
+      // Default avatar SVG - used if no picture provided
+      const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iIzY2NjZmZiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTQiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNOCAzMmMwLTYgNS0xMCAxMi0xMHMxMiA0IDEyIDEwdjJjMCAxLTEgMi0yIDJoLTIwYy0xIDAtMi0xLTItMnYtMnoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
+      
+      // Extract user information - use picture or default avatar
+      const avatarUrl = payload.picture || DEFAULT_AVATAR;
+      
       currentUser = {
         email: payload.email,
         name: payload.name,
-        avatar: payload.picture,
+        avatar: avatarUrl,
         token: credential
       };
 
       console.log('Google Sign-in successful:', currentUser.email);
+      console.log('📷 Avatar URL:', avatarUrl ? avatarUrl.substring(0, 60) + '...' : 'NONE');
 
       // Check for referral code from input field
       const referralInput = document.getElementById('referral-code');
