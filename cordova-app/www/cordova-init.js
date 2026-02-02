@@ -205,23 +205,53 @@ function setupGoogleSignIn() {
             },
             function(userData) {
                 console.log('✅ Google Sign-In success:', userData.email);
-                console.log('📷 User image URL:', userData.imageUrl);
+                console.log('📷 Full userData object:', JSON.stringify(userData, null, 2));
                 document.getElementById('google-signin-loading')?.remove();
                 
                 // Clear old cache
                 localStorage.removeItem('accessoireUser');
                 localStorage.removeItem('accessoireUserData');
                 
-                // ✅ Get profile picture with fallback
-                let profilePicture = userData.imageUrl || userData.image?.url || '';
-                // Make sure we get high quality image
-                if (profilePicture && profilePicture.includes('googleusercontent.com')) {
-                    profilePicture = profilePicture.replace(/=s\d+-c/, '=s200-c');
+                // ✅ ENHANCED: Extract profile picture from ALL possible sources
+                // Google Plus plugin returns image in different fields depending on version/platform
+                let profilePicture = '';
+                
+                // Try all possible image sources from Google Plus plugin
+                const imageSources = [
+                    userData.imageUrl,                    // Standard field
+                    userData.picture,                     // Some versions use this
+                    userData.photoUrl,                    // Android sometimes uses this
+                    userData.image?.url,                  // Nested object format
+                    userData.image,                       // Direct image field
+                    userData.profilePicture,              // Alternative name
+                    userData.avatar,                      // Another alternative
+                    userData.photo                        // iOS sometimes uses this
+                ];
+                
+                // Find first valid image URL
+                for (const source of imageSources) {
+                    if (source && typeof source === 'string' && source.startsWith('http')) {
+                        profilePicture = source;
+                        console.log('📷 Found image from source:', source);
+                        break;
+                    }
                 }
+                
+                // Make sure we get high quality image (change size parameter)
+                if (profilePicture) {
+                    // Remove size restrictions to get original size
+                    profilePicture = profilePicture.replace(/=s\d+-c/, '=s200-c');
+                    profilePicture = profilePicture.replace(/\/s\d+-c\//, '/s200-c/');
+                    // Also handle ?sz=XX format
+                    profilePicture = profilePicture.replace(/\?sz=\d+/, '?sz=200');
+                    console.log('📷 Final profile picture URL:', profilePicture);
+                }
+                
                 // Default avatar if no picture - SAME gray SVG as server
                 const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
                 
                 if (!profilePicture) {
+                    console.log('⚠️ No image found in userData, using default avatar');
                     profilePicture = DEFAULT_AVATAR;
                 }
                 

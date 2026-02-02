@@ -7947,15 +7947,17 @@ window.addEventListener('load', applyArabicCssIfNeeded);
  // Save minimal user session data - only what's needed to keep user logged in
   function saveUserSession(user) {
     if (user) {
-      // Save only essential authentication data
+      // Save essential authentication data INCLUDING avatar
+      // ✅ FIXED: Now includes name and avatar for proper session restoration
       const minimalUserData = {
         id: user.id,
         email: user.email,
-        token: user.token
-        // Don't store name or avatar in localStorage to ensure fresh data on login
+        token: user.token,
+        name: user.name || 'User',
+        avatar: user.avatar || ''
       };
       localStorage.setItem('accessoireUser', JSON.stringify(minimalUserData));
-      console.log('Saved minimal user session for:', minimalUserData.email);
+      console.log('Saved user session for:', minimalUserData.email, 'with avatar:', !!minimalUserData.avatar);
     }
   }
 
