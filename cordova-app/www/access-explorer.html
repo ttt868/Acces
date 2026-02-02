@@ -69,28 +69,46 @@
             var debugDiv = document.createElement('div');
             debugDiv.id = 'api-debug';
             debugDiv.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;font-size:10px;padding:5px;z-index:99999;max-height:150px;overflow:auto;font-family:monospace;';
-            debugDiv.innerHTML = 'API Debug: Testing...';
+            debugDiv.innerHTML = 'API Debug V2...';
             document.body.appendChild(debugDiv);
             
-            function log(msg) {
+            window.debugLog = function(msg) {
                 debugDiv.innerHTML += '<br>' + msg;
                 debugDiv.scrollTop = debugDiv.scrollHeight;
-            }
+                console.log('[DEBUG]', msg);
+            };
             
-            log('URL origin: ' + window.location.origin);
-            log('Testing API...');
+            window.debugLog('URL: ' + window.location.origin);
             
-            fetch('https://accesschain.org/api/explorer/stats')
+            // Test 1: Direct URL
+            window.debugLog('Test1: Direct URL...');
+            fetch('https://accesschain.org/api/explorer/latest-transactions?limit=10')
                 .then(function(r) { 
-                    log('Status: ' + r.status);
+                    window.debugLog('Test1 Status: ' + r.status);
                     return r.json(); 
                 })
                 .then(function(data) { 
-                    log('SUCCESS: transactions=' + data.data.totalTransactions);
+                    window.debugLog('Test1 OK: ' + (data.data ? data.data.length : 0) + ' txs');
                 })
                 .catch(function(err) { 
-                    log('ERROR: ' + err.message);
+                    window.debugLog('Test1 ERR: ' + err.message);
                 });
+            
+            // Test 2: Relative URL (should be intercepted)
+            setTimeout(function() {
+                window.debugLog('Test2: Relative /api/...');
+                fetch('/api/explorer/latest-transactions?limit=10')
+                    .then(function(r) { 
+                        window.debugLog('Test2 Status: ' + r.status);
+                        return r.json(); 
+                    })
+                    .then(function(data) { 
+                        window.debugLog('Test2 OK: ' + (data.data ? data.data.length : 0) + ' txs');
+                    })
+                    .catch(function(err) { 
+                        window.debugLog('Test2 ERR: ' + err.message);
+                    });
+            }, 1000);
         });
     })();
     </script>
