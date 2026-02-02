@@ -63,6 +63,35 @@
         };
         
         console.log('✅ API Interceptor ready:', API_BASE_URL);
+        
+        // DEBUG: Test API immediately
+        window.addEventListener('load', function() {
+            var debugDiv = document.createElement('div');
+            debugDiv.id = 'api-debug';
+            debugDiv.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;font-size:10px;padding:5px;z-index:99999;max-height:150px;overflow:auto;font-family:monospace;';
+            debugDiv.innerHTML = 'API Debug: Testing...';
+            document.body.appendChild(debugDiv);
+            
+            function log(msg) {
+                debugDiv.innerHTML += '<br>' + msg;
+                debugDiv.scrollTop = debugDiv.scrollHeight;
+            }
+            
+            log('URL origin: ' + window.location.origin);
+            log('Testing API...');
+            
+            fetch('http://89.167.14.197:3000/api/explorer/stats')
+                .then(function(r) { 
+                    log('Status: ' + r.status);
+                    return r.json(); 
+                })
+                .then(function(data) { 
+                    log('SUCCESS: transactions=' + data.data.totalTransactions);
+                })
+                .catch(function(err) { 
+                    log('ERROR: ' + err.message);
+                });
+        });
     })();
     </script>
     <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; connect-src * http://89.167.14.197:3000 ws://89.167.14.197:3000 http://localhost:* https://*; img-src * 'self' data: blob: https:; style-src * 'self' 'unsafe-inline'; font-src * 'self' data:;">
