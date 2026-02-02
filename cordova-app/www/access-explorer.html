@@ -2,10 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Cordova API Path Converter - FINAL FIX -->
+    <!-- Cordova API Path Converter - FINAL FIX V4 -->
     <script>
     (function() {
         var API_BASE_URL = 'https://accesschain.org';
+        var debugLogs = [];
+        
+        function log(msg) {
+            debugLogs.push(msg);
+            console.log('[API-FIX]', msg);
+        }
         
         function fixApiUrl(url) {
             if (typeof url !== 'string') return url;
@@ -14,12 +20,13 @@
             if (url.startsWith(API_BASE_URL)) return url;
             
             // Direct relative paths
-            if (url.startsWith('/api/')) return API_BASE_URL + url;
-            if (url.startsWith('/rpc/')) return API_BASE_URL + url;
-            if (url.startsWith('/network/')) return API_BASE_URL + url;
+            if (url.startsWith('/api/')) { log('FIX: ' + url); return API_BASE_URL + url; }
+            if (url.startsWith('/rpc/')) { log('FIX: ' + url); return API_BASE_URL + url; }
+            if (url.startsWith('/network/')) { log('FIX: ' + url); return API_BASE_URL + url; }
             
             // http://localhost/api/... (Cordova WebView)
             if (url.includes('localhost') && url.includes('/api/')) {
+                log('FIX localhost: ' + url);
                 return API_BASE_URL + url.substring(url.indexOf('/api/'));
             }
             if (url.includes('localhost') && url.includes('/rpc/')) {
@@ -43,15 +50,16 @@
             var finalUrl = url;
             if (typeof url === 'string') {
                 finalUrl = fixApiUrl(url);
-                if (finalUrl !== url) console.log('[API]', url, '->', finalUrl);
             } else if (url instanceof Request) {
                 var fixed = fixApiUrl(url.url);
                 if (fixed !== url.url) {
-                    console.log('[API]', url.url, '->', fixed);
                     finalUrl = new Request(fixed, url);
                 }
             }
-            return originalFetch.call(this, finalUrl, options);
+            return originalFetch.call(this, finalUrl, options).catch(function(err) {
+                log('FAIL: ' + (typeof url === 'string' ? url : url.url) + ' -> ' + err.message);
+                throw err;
+            });
         };
         
         // Override XHR
@@ -64,12 +72,15 @@
         
         console.log('✅ API Interceptor ready:', API_BASE_URL);
         
+        // Expose debugLogs for the debug panel
+        window.getApiLogs = function() { return debugLogs; };
+        
         // DEBUG: Test API immediately
         window.addEventListener('load', function() {
             var debugDiv = document.createElement('div');
             debugDiv.id = 'api-debug';
-            debugDiv.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;font-size:10px;padding:5px;z-index:99999;max-height:150px;overflow:auto;font-family:monospace;';
-            debugDiv.innerHTML = 'API Debug V2...';
+            debugDiv.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;font-size:10px;padding:5px;z-index:99999;max-height:200px;overflow:auto;font-family:monospace;';
+            debugDiv.innerHTML = 'API Debug V4 - Showing ALL requests...';
             document.body.appendChild(debugDiv);
             
             window.debugLog = function(msg) {
@@ -78,37 +89,17 @@
                 console.log('[DEBUG]', msg);
             };
             
+            // Show interceptor logs every 2 seconds
+            setInterval(function() {
+                var logs = window.getApiLogs ? window.getApiLogs() : [];
+                if (logs.length > 0) {
+                    logs.forEach(function(l) { window.debugLog(l); });
+                    logs.length = 0; // Clear
+                }
+            }, 2000);
+            
             window.debugLog('URL: ' + window.location.origin);
-            
-            // Test 1: Direct URL
-            window.debugLog('Test1: Direct URL...');
-            fetch('https://accesschain.org/api/explorer/latest-transactions?limit=10')
-                .then(function(r) { 
-                    window.debugLog('Test1 Status: ' + r.status);
-                    return r.json(); 
-                })
-                .then(function(data) { 
-                    window.debugLog('Test1 OK: ' + (data.data ? data.data.length : 0) + ' txs');
-                })
-                .catch(function(err) { 
-                    window.debugLog('Test1 ERR: ' + err.message);
-                });
-            
-            // Test 2: Relative URL (should be intercepted)
-            setTimeout(function() {
-                window.debugLog('Test2: Relative /api/...');
-                fetch('/api/explorer/latest-transactions?limit=10')
-                    .then(function(r) { 
-                        window.debugLog('Test2 Status: ' + r.status);
-                        return r.json(); 
-                    })
-                    .then(function(data) { 
-                        window.debugLog('Test2 OK: ' + (data.data ? data.data.length : 0) + ' txs');
-                    })
-                    .catch(function(err) { 
-                        window.debugLog('Test2 ERR: ' + err.message);
-                    });
-            }, 1000);
+            window.debugLog('Waiting for API calls...');
         });
     })();
     </script>
