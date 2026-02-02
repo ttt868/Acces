@@ -2,6 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Cordova API Path Converter -->
+    <script>
+    (function() {
+        var isCordova = typeof window.cordova !== 'undefined' || 
+                        document.URL.indexOf('file://') === 0 || 
+                        document.URL.indexOf('localhost') === -1;
+        
+        if (isCordova) {
+            var API_BASE_URL = 'https://accesschain.org';
+            var originalFetch = window.fetch;
+            
+            window.fetch = function(url, options) {
+                if (typeof url === 'string') {
+                    if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                        url = API_BASE_URL + url;
+                        console.log('[Cordova] Converted fetch URL:', url);
+                    }
+                }
+                return originalFetch.call(this, url, options);
+            };
+            
+            var originalXHROpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url) {
+                if (typeof url === 'string') {
+                    if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                        url = API_BASE_URL + url;
+                        console.log('[Cordova] Converted XHR URL:', url);
+                    }
+                }
+                return originalXHROpen.apply(this, [method, url].concat(Array.prototype.slice.call(arguments, 2)));
+            };
+            console.log('[Cordova] API path converter initialized for explorer page');
+        }
+    })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="no">
     <meta name="apple-mobile-web-app-capable" content="no">
