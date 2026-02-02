@@ -2,37 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Cordova API Path Converter -->
+    <!-- Cordova API Path Converter - ENHANCED -->
     <script>
     (function() {
-        // Always convert API paths in Cordova app
         var API_BASE_URL = 'http://89.167.14.197:3000';
+        
+        // Helper to fix URL
+        function fixApiUrl(url) {
+            if (typeof url !== 'string') return url;
+            
+            // Already absolute API URL
+            if (url.startsWith(API_BASE_URL)) return url;
+            
+            // Relative API paths
+            if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                return API_BASE_URL + url;
+            }
+            
+            // file:// or other schemes with API path
+            if (url.includes('/api/')) {
+                return API_BASE_URL + url.substring(url.indexOf('/api/'));
+            }
+            if (url.includes('/rpc/')) {
+                return API_BASE_URL + url.substring(url.indexOf('/rpc/'));
+            }
+            if (url.includes('/network/')) {
+                return API_BASE_URL + url.substring(url.indexOf('/network/'));
+            }
+            
+            return url;
+        }
         
         // Override fetch
         var originalFetch = window.fetch;
         window.fetch = function(url, options) {
-            var finalUrl = url;
+            var finalUrl;
             
-            // Handle string URLs
             if (typeof url === 'string') {
-                if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
-                    finalUrl = API_BASE_URL + url;
-                } else if (url.indexOf('file://') !== -1 && (url.indexOf('/api/') !== -1 || url.indexOf('/rpc/') !== -1)) {
-                    // Handle file:// URLs with API paths
-                    var idx = url.indexOf('/api/') !== -1 ? url.indexOf('/api/') : url.indexOf('/rpc/');
-                    finalUrl = API_BASE_URL + url.substring(idx);
+                finalUrl = fixApiUrl(url);
+            } else if (url instanceof Request) {
+                var fixedUrl = fixApiUrl(url.url);
+                if (fixedUrl !== url.url) {
+                    finalUrl = new Request(fixedUrl, url);
+                } else {
+                    finalUrl = url;
                 }
-            }
-            // Handle Request objects
-            else if (url instanceof Request) {
-                var reqUrl = url.url;
-                if (reqUrl.startsWith('/api/') || reqUrl.startsWith('/rpc/') || reqUrl.startsWith('/network/')) {
-                    finalUrl = new Request(API_BASE_URL + reqUrl, url);
-                }
+            } else {
+                finalUrl = url;
             }
             
-            if (finalUrl !== url) {
-                console.log('[Cordova] fetch:', typeof finalUrl === 'string' ? finalUrl : finalUrl.url);
+            if (finalUrl !== url && typeof finalUrl === 'string') {
+                console.log('[Cordova] fetch:', finalUrl);
             }
             return originalFetch.call(this, finalUrl, options);
         };
@@ -40,22 +60,14 @@
         // Override XMLHttpRequest
         var originalXHROpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url) {
-            var finalUrl = url;
-            if (typeof url === 'string') {
-                if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
-                    finalUrl = API_BASE_URL + url;
-                } else if (url.indexOf('file://') !== -1 && (url.indexOf('/api/') !== -1 || url.indexOf('/rpc/') !== -1)) {
-                    var idx = url.indexOf('/api/') !== -1 ? url.indexOf('/api/') : url.indexOf('/rpc/');
-                    finalUrl = API_BASE_URL + url.substring(idx);
-                }
-            }
+            var finalUrl = fixApiUrl(url);
             if (finalUrl !== url) {
                 console.log('[Cordova] XHR:', finalUrl);
             }
             return originalXHROpen.apply(this, [method, finalUrl].concat(Array.prototype.slice.call(arguments, 2)));
         };
         
-        console.log('[Cordova] API converter active - Base:', API_BASE_URL);
+        console.log('[Cordova] API converter ready - Base:', API_BASE_URL);
     })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
