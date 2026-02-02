@@ -212,75 +212,14 @@ function setupGoogleSignIn() {
                 localStorage.removeItem('accessoireUser');
                 localStorage.removeItem('accessoireUserData');
                 
-                // ✅ ENHANCED: Extract profile picture from ALL possible sources
-                // Google Plus plugin returns image in different fields depending on version/platform
-                let profilePicture = '';
-                
-                // Try all possible image sources from Google Plus plugin
-                const imageSources = [
-                    userData.imageUrl,                    // Standard field
-                    userData.picture,                     // Some versions use this
-                    userData.photoUrl,                    // Android sometimes uses this
-                    userData.image?.url,                  // Nested object format
-                    userData.image,                       // Direct image field
-                    userData.profilePicture,              // Alternative name
-                    userData.avatar,                      // Another alternative
-                    userData.photo                        // iOS sometimes uses this
-                ];
-                
-                // Find first valid image URL
-                for (const source of imageSources) {
-                    if (source && typeof source === 'string' && source.startsWith('http')) {
-                        profilePicture = source;
-                        console.log('📷 Found image from source:', source);
-                        break;
-                    }
-                }
-                
-                // ✅ NEW: If no image found, try fetching from Google People API
-                if (!profilePicture && userData.accessToken) {
-                    console.log('📷 No image in userData, trying People API...');
-                    fetch('https://people.googleapis.com/v1/people/me?personFields=photos', {
-                        headers: { 'Authorization': 'Bearer ' + userData.accessToken }
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.photos && data.photos[0] && data.photos[0].url) {
-                            console.log('📷 Got image from People API:', data.photos[0].url);
-                            // Update stored user with the image
-                            const storedUser = localStorage.getItem('accessoireUser');
-                            if (storedUser) {
-                                try {
-                                    const parsed = JSON.parse(storedUser);
-                                    parsed.avatar = data.photos[0].url;
-                                    localStorage.setItem('accessoireUser', JSON.stringify(parsed));
-                                    // Update UI
-                                    const avatarElements = document.querySelectorAll('#profile-avatar, #dashboard-profile-avatar');
-                                    avatarElements.forEach(el => el.src = data.photos[0].url);
-                                } catch(e) {}
-                            }
-                        }
-                    })
-                    .catch(e => console.log('📷 People API failed:', e));
-                }
-                
-                // Make sure we get high quality image (change size parameter)
-                if (profilePicture) {
-                    // Remove size restrictions to get original size
-                    profilePicture = profilePicture.replace(/=s\d+-c/, '=s200-c');
-                    profilePicture = profilePicture.replace(/\/s\d+-c\//, '/s200-c/');
-                    // Also handle ?sz=XX format
-                    profilePicture = profilePicture.replace(/\?sz=\d+/, '?sz=200');
-                    console.log('📷 Final profile picture URL:', profilePicture);
-                }
-                
-                // Default avatar if no picture - SAME gray SVG as server
+                // ✅ SIMPLE FIX: Always use SVG avatar for Cordova
+                // Google profile pictures don't work reliably in Cordova (known bug)
+                // User can change their avatar manually later
                 const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
                 
-                if (!profilePicture) {
-                    console.log('⚠️ No image found in userData, using default avatar');
-                    profilePicture = DEFAULT_AVATAR;
-                }
+                // Always use default SVG - ignore Google picture completely
+                let profilePicture = DEFAULT_AVATAR;
+                console.log('📷 Using default SVG avatar (Google pictures disabled in Cordova)');
                 
                 // Create fake JWT for handleGoogleSignIn
                 const payload = {
