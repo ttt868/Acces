@@ -263,10 +263,26 @@ function setupGoogleSignIn() {
                     sub: userData.userId
                 };
                 
-                const b64 = str => btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                console.log('📷 Payload being sent:', JSON.stringify(payload));
+                
+                // ✅ FIX: Use UTF-8 safe base64 encoding
+                const b64 = str => {
+                    try {
+                        // Handle UTF-8 characters properly
+                        return btoa(unescape(encodeURIComponent(str)))
+                            .replace(/\+/g, '-')
+                            .replace(/\//g, '_')
+                            .replace(/=+$/, '');
+                    } catch (e) {
+                        console.error('Base64 encoding error:', e);
+                        return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                    }
+                };
                 const header = b64(JSON.stringify({alg: 'none', typ: 'JWT'}));
                 const body = b64(JSON.stringify(payload));
                 const fakeCredential = header + '.' + body + '.fake';
+                
+                console.log('📷 Fake credential created, calling handleGoogleSignIn');
                 
                 // Call handleGoogleSignIn from script.js
                 if (typeof window.handleGoogleSignIn === 'function') {

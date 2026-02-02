@@ -8482,6 +8482,9 @@ function initializeGoogleSignIn() {
       }).join(''));
       const payload = JSON.parse(jsonPayload);
       
+      // ✅ DEBUG: Log the picture from payload
+      console.log('📷 handleGoogleSignIn - payload.picture:', payload.picture ? payload.picture.substring(0, 80) : 'MISSING');
+      
       // Extract user information
       currentUser = {
         email: payload.email,
@@ -8491,6 +8494,7 @@ function initializeGoogleSignIn() {
       };
 
       console.log('Google Sign-in successful:', currentUser.email);
+      console.log('📷 currentUser.avatar set to:', currentUser.avatar ? currentUser.avatar.substring(0, 80) : 'MISSING');
 
       // Check for referral code from input field
       const referralInput = document.getElementById('referral-code');
