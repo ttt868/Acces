@@ -2303,10 +2303,10 @@
 
             initializeExplorer();
 
-            // Initial load
-            loadNetworkStats();
-            loadLatestTransactions();
-            loadLatestBlocks();
+            // Initial load with staggered timing to avoid race conditions
+            setTimeout(() => loadNetworkStats(), 100);
+            setTimeout(() => loadLatestTransactions(), 200);
+            setTimeout(() => loadLatestBlocks(), 300);
 
             // Start polling for updates after a delay
             setTimeout(() => {
