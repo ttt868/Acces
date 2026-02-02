@@ -1800,40 +1800,44 @@
             }
         }
 
-        // Fetch block data from API
+        // Fetch block data from API - SIMPLIFIED
         async function fetchBlockFromAPI(blockNumber, blockHash) {
+            console.log('[Block] Fetching:', blockNumber || blockHash);
+
             try {
-                let endpoint;
-                if (blockNumber) {
-                    endpoint = `/api/explorer/block/${blockNumber}`;
-                } else if (blockHash) {
-                    endpoint = `/api/explorer/block/${blockHash}`;
-                }
-
-                console.log('🔍 Fetching block from:', endpoint);
-
-                const response = await fetch(endpoint);
-                if (!response.ok) {
-                    throw new Error('Block not found');
-                }
-
+                // Try direct API first
+                const response = await fetch('/api/explorer/block/' + (blockNumber || blockHash));
                 const data = await response.json();
-                console.log('📦 Block data received:', data);
-
-                if (data.success && data.data) {
-                    blockData = data.data;
+                
+                if (data.success && (data.data || data.block)) {
+                    blockData = data.data || data.block;
                     displayBlockDetails(blockData, blockNumber, blockHash);
-                } else if (data.success && data.block) {
-                    blockData = data.block;
-                    displayBlockDetails(blockData, blockNumber, blockHash);
-                } else {
-                    showError('Block not found');
+                    return;
                 }
-
-            } catch (error) {
-                console.error('Error fetching block:', error);
-                showError('Block not found or network error');
+            } catch (e) {
+                console.log('[Block] Direct API failed, trying latest-blocks...');
             }
+
+            // Fallback: Search in latest-blocks
+            try {
+                const response = await fetch('/api/explorer/latest-blocks?limit=100');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    const found = result.data.find(b => 
+                        b.number == blockNumber || b.hash === blockHash
+                    );
+                    if (found) {
+                        blockData = found;
+                        displayBlockDetails(found, blockNumber, blockHash);
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('[Block] Fallback failed:', e.message);
+            }
+
+            showError('Block not found');
         }
 
         // Display block details
