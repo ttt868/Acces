@@ -2,62 +2,39 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <!-- Cordova API Path Converter -->
+    <!-- Cordova API Path Converter - ENHANCED -->
     <script>
     (function() {
-        // Always convert API paths in Cordova app
         var API_BASE_URL = 'http://89.167.14.197:3000';
         
-        // Override fetch
+        function fixApiUrl(url) {
+            if (typeof url !== 'string') return url;
+            if (url.startsWith(API_BASE_URL)) return url;
+            if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                return API_BASE_URL + url;
+            }
+            if (url.includes('/api/')) return API_BASE_URL + url.substring(url.indexOf('/api/'));
+            if (url.includes('/rpc/')) return API_BASE_URL + url.substring(url.indexOf('/rpc/'));
+            if (url.includes('/network/')) return API_BASE_URL + url.substring(url.indexOf('/network/'));
+            return url;
+        }
+        
         var originalFetch = window.fetch;
         window.fetch = function(url, options) {
-            var finalUrl = url;
-            
-            // Handle string URLs
-            if (typeof url === 'string') {
-                if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
-                    finalUrl = API_BASE_URL + url;
-                } else if (url.indexOf('file://') !== -1 && (url.indexOf('/api/') !== -1 || url.indexOf('/rpc/') !== -1)) {
-                    // Handle file:// URLs with API paths
-                    var idx = url.indexOf('/api/') !== -1 ? url.indexOf('/api/') : url.indexOf('/rpc/');
-                    finalUrl = API_BASE_URL + url.substring(idx);
-                }
-            }
-            // Handle Request objects
-            else if (url instanceof Request) {
-                var reqUrl = url.url;
-                if (reqUrl.startsWith('/api/') || reqUrl.startsWith('/rpc/') || reqUrl.startsWith('/network/')) {
-                    finalUrl = new Request(API_BASE_URL + reqUrl, url);
-                }
-            }
-            
-            if (finalUrl !== url) {
-                console.log('[Cordova] fetch:', typeof finalUrl === 'string' ? finalUrl : finalUrl.url);
-            }
+            var finalUrl = (typeof url === 'string') ? fixApiUrl(url) : 
+                (url instanceof Request && fixApiUrl(url.url) !== url.url) ? new Request(fixApiUrl(url.url), url) : url;
             return originalFetch.call(this, finalUrl, options);
         };
         
-        // Override XMLHttpRequest
         var originalXHROpen = XMLHttpRequest.prototype.open;
         XMLHttpRequest.prototype.open = function(method, url) {
-            var finalUrl = url;
-            if (typeof url === 'string') {
-                if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
-                    finalUrl = API_BASE_URL + url;
-                } else if (url.indexOf('file://') !== -1 && (url.indexOf('/api/') !== -1 || url.indexOf('/rpc/') !== -1)) {
-                    var idx = url.indexOf('/api/') !== -1 ? url.indexOf('/api/') : url.indexOf('/rpc/');
-                    finalUrl = API_BASE_URL + url.substring(idx);
-                }
-            }
-            if (finalUrl !== url) {
-                console.log('[Cordova] XHR:', finalUrl);
-            }
-            return originalXHROpen.apply(this, [method, finalUrl].concat(Array.prototype.slice.call(arguments, 2)));
+            return originalXHROpen.apply(this, [method, fixApiUrl(url)].concat(Array.prototype.slice.call(arguments, 2)));
         };
         
-        console.log('[Cordova] API converter active - Base:', API_BASE_URL);
+        console.log('[Cordova] API ready:', API_BASE_URL);
     })();
     </script>
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; connect-src * http://89.167.14.197:3000 ws://89.167.14.197:3000 https://*; img-src * 'self' data: blob: https:; style-src * 'self' 'unsafe-inline'; font-src * 'self' data:;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="no">
     <meta name="apple-mobile-web-app-capable" content="no">
