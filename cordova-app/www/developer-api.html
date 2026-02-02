@@ -3142,7 +3142,7 @@ if data['success']:
             closeConfirmModal();
 
             try {
-                const response = await fetch(`/api/explorer/api-keys/${keyId}`, {
+                const response = await fetch(`https://accesschain.org/api/explorer/api-keys/${keyId}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -3222,7 +3222,7 @@ if data['success']:
             if (!confirm('Are you sure you want to delete this API token?')) return;
 
             try {
-                const response = await fetch(`/api/explorer/api-tokens/${tokenId}`, {
+                const response = await fetch(`https://accesschain.org/api/explorer/api-tokens/${tokenId}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${explorerSessionToken}`

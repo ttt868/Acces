@@ -2988,7 +2988,7 @@
                     const blockNumber = latestBlockNumber - i;
 
                     try {
-                        const blockResponse = await fetch(`/api/network/block/${blockNumber}`, {
+                        const blockResponse = await fetch(`https://accesschain.org/api/network/block/${blockNumber}`, {
                             method: 'GET',
                             headers: { 'Accept': 'application/json' }
                         });
@@ -3061,7 +3061,7 @@
                 const blockNumber = latestNumber - i;
 
                 try {
-                    const blockResponse = await fetch(`/api/network/block/${blockNumber}`, {
+                    const blockResponse = await fetch(`https://accesschain.org/api/network/block/${blockNumber}`, {
                         method: 'GET',
                         headers: { 'Accept': 'application/json' }
                     });
@@ -3464,7 +3464,7 @@
                 }
 
                 // If not found in recent transactions, try API search
-                const searchResponse = await fetch(`/api/network/transaction/${encodeURIComponent(partialHash)}`);
+                const searchResponse = await fetch(`https://accesschain.org/api/network/transaction/${encodeURIComponent(partialHash)}`);
                 if (searchResponse.ok) {
                     const searchData = await response.json(); // Corrected: response.json()
                     if (searchData.success && searchData.transaction) {
