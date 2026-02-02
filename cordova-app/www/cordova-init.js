@@ -199,9 +199,9 @@ function setupGoogleSignIn() {
         
         window.plugins.googleplus.login(
             {
-                scopes: 'profile email',
+                scopes: 'profile email https://www.googleapis.com/auth/userinfo.profile',
                 webClientId: window.GOOGLE_CLIENT_ID_WEB,
-                offline: false
+                offline: true
             },
             function(userData) {
                 console.log('✅ Google Sign-In success:', userData.email);
@@ -235,6 +235,33 @@ function setupGoogleSignIn() {
                         console.log('📷 Found image from source:', source);
                         break;
                     }
+                }
+                
+                // ✅ NEW: If no image found, try fetching from Google People API
+                if (!profilePicture && userData.accessToken) {
+                    console.log('📷 No image in userData, trying People API...');
+                    fetch('https://people.googleapis.com/v1/people/me?personFields=photos', {
+                        headers: { 'Authorization': 'Bearer ' + userData.accessToken }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.photos && data.photos[0] && data.photos[0].url) {
+                            console.log('📷 Got image from People API:', data.photos[0].url);
+                            // Update stored user with the image
+                            const storedUser = localStorage.getItem('accessoireUser');
+                            if (storedUser) {
+                                try {
+                                    const parsed = JSON.parse(storedUser);
+                                    parsed.avatar = data.photos[0].url;
+                                    localStorage.setItem('accessoireUser', JSON.stringify(parsed));
+                                    // Update UI
+                                    const avatarElements = document.querySelectorAll('#profile-avatar, #dashboard-profile-avatar');
+                                    avatarElements.forEach(el => el.src = data.photos[0].url);
+                                } catch(e) {}
+                            }
+                        }
+                    })
+                    .catch(e => console.log('📷 People API failed:', e));
                 }
                 
                 // Make sure we get high quality image (change size parameter)
