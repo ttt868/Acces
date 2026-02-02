@@ -212,14 +212,40 @@ function setupGoogleSignIn() {
                 localStorage.removeItem('accessoireUser');
                 localStorage.removeItem('accessoireUserData');
                 
-                // ✅ SIMPLE FIX: Always use SVG avatar for Cordova
-                // Google profile pictures don't work reliably in Cordova (known bug)
-                // User can change their avatar manually later
-                const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+                // Default SVG avatar
+                const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3k9IjEyIiByPSI3IiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTEwIDMwYzAtNSA0LTggMTAtOHMxMCAzIDEwIDh2MWMwIDEtMSAyLTIgMmgtMTZjLTEgMC0yIC0xLTItMnYtMXoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
                 
-                // Always use default SVG - ignore Google picture completely
-                let profilePicture = DEFAULT_AVATAR;
-                console.log('📷 Using default SVG avatar (Google pictures disabled in Cordova)');
+                // ✅ Try to get Google image first, fallback to SVG
+                let profilePicture = '';
+                
+                // Check all possible image sources from Google Plus plugin
+                const imageSources = [
+                    userData.imageUrl,
+                    userData.picture,
+                    userData.photoUrl,
+                    userData.image?.url,
+                    userData.image,
+                    userData.profilePicture,
+                    userData.photo
+                ];
+                
+                for (const source of imageSources) {
+                    if (source && typeof source === 'string' && source.startsWith('http')) {
+                        profilePicture = source;
+                        console.log('📷 Found Google image:', source);
+                        break;
+                    }
+                }
+                
+                // If no Google image found, use SVG
+                if (!profilePicture) {
+                    profilePicture = DEFAULT_AVATAR;
+                    console.log('📷 No Google image, using SVG default');
+                } else {
+                    // Improve image quality
+                    profilePicture = profilePicture.replace(/=s\d+-c/, '=s200-c');
+                    profilePicture = profilePicture.replace(/\?sz=\d+/, '?sz=200');
+                }
                 
                 // Create fake JWT for handleGoogleSignIn
                 const payload = {
