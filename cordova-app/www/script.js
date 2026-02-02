@@ -8052,8 +8052,16 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         updateUserCoins(userData.coins || 0);
         updateReferralCode(userData.referralCode);
 
-        // Set current user data directly from server
+        // ✅ FIX: Preserve avatar if server returns null/empty
+        // Keep original avatar from Google if server has no avatar
+        const preservedAvatar = currentUser.avatar;
         currentUser = {...currentUser, ...userData};
+        
+        // If server returned null/empty avatar but we had one, keep it
+        if (!currentUser.avatar && preservedAvatar) {
+          currentUser.avatar = preservedAvatar;
+          console.log('📷 Preserved original avatar from Google');
+        }
 
         // Explicitly update UI with the fresh data immediately
         updateUserInfo(currentUser);
@@ -8090,7 +8098,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           const retryData = await checkIfUserExists(email);
           if (retryData) {
             console.log('Retry successful, updating with fresh data');
+            // ✅ FIX: Preserve avatar
+            const preservedAvatar = currentUser.avatar;
             currentUser = {...currentUser, ...retryData};
+            if (!currentUser.avatar && preservedAvatar) {
+              currentUser.avatar = preservedAvatar;
+            }
             updateUserInfo(currentUser);
             updateUserCoins(retryData.coins || 0);
             updateReferralCode(retryData.referralCode);
@@ -8113,8 +8126,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         updateUserCoins(existingUser.coins || 0);
         updateReferralCode(existingUser.referralCode);
 
-        // Merge with current user data
+        // ✅ FIX: Preserve avatar when merging
+        const preservedAvatar = currentUser.avatar;
         const updatedUser = {...currentUser, ...existingUser};
+        if (!updatedUser.avatar && preservedAvatar) {
+          updatedUser.avatar = preservedAvatar;
+        }
         currentUser = updatedUser;
 
         // Update UI explicitly again
@@ -8149,7 +8166,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           if (result && result.user) {
             console.log('✅ New user created with ID:', result.user.id);
             // Update currentUser with the new ID
+            // ✅ FIX: Preserve avatar from Google
+            const preservedAvatar = currentUser.avatar;
             currentUser = {...currentUser, ...result.user, id: result.user.id};
+            if (!currentUser.avatar && preservedAvatar) {
+              currentUser.avatar = preservedAvatar;
+            }
             saveUserSession(currentUser);
           }
         } catch (createError) {
@@ -8287,8 +8309,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
             dashboardUserName.textContent = userData.name;
           }
 
-          // Update current user data
+          // ✅ FIX: Preserve avatar if server returns null/empty
+          const preservedAvatar = currentUser.avatar;
           currentUser = {...currentUser, ...userData};
+          if (!currentUser.avatar && preservedAvatar) {
+            currentUser.avatar = preservedAvatar;
+          }
           delete currentUser._forceUpdate;
           delete currentUser._requiresRefresh;
 
@@ -8489,7 +8515,12 @@ function initializeGoogleSignIn() {
         console.log('⚡ Fast login: User has cached session, showing app immediately');
         // دمج البيانات المخزنة مع بيانات Google
         if (cachedUserData) {
+          // ✅ FIX: Preserve avatar from Google if cache has no avatar
+          const preservedAvatar = currentUser.avatar;
           currentUser = {...currentUser, ...cachedUserData};
+          if (!currentUser.avatar && preservedAvatar) {
+            currentUser.avatar = preservedAvatar;
+          }
         }
         continueWithLogin(currentUser, referralCode);
         return;
@@ -8526,7 +8557,12 @@ function initializeGoogleSignIn() {
         } else {
           // ✅ Existing user - merge data immediately before continuing
           console.log('⚡ User exists, merging data before login');
+          // ✅ FIX: Preserve avatar from Google
+          const preservedAvatar = currentUser.avatar;
           currentUser = {...currentUser, ...result};
+          if (!currentUser.avatar && preservedAvatar) {
+            currentUser.avatar = preservedAvatar;
+          }
           continueWithLogin(currentUser, referralCode);
         }
       }).catch(error => {
@@ -12344,7 +12380,12 @@ if (totalCost > (currentBalance + precision)) {
         // User exists, update UI with their data
         updateUserCoins(existingUser.coins || 0);
         updateReferralCode(existingUser.referralCode);
+        // ✅ FIX: Preserve avatar
+        const preservedAvatar = currentUser.avatar;
         currentUser = {...currentUser, ...existingUser};
+        if (!currentUser.avatar && preservedAvatar) {
+          currentUser.avatar = preservedAvatar;
+        }
 
         // Also load their referrals
         loadUserReferrals(existingUser.id);
@@ -12357,7 +12398,12 @@ if (totalCost > (currentBalance + precision)) {
           const responseData = await createUser(user, null, referralCode);
           if (responseData && responseData.user) {
             console.log('✅ Create user completed in processLogin, ID:', responseData.user.id);
+            // ✅ FIX: Preserve avatar from Google
+            const preservedAvatar = currentUser.avatar;
             currentUser = {...currentUser, ...responseData.user, id: responseData.user.id};
+            if (!currentUser.avatar && preservedAvatar) {
+              currentUser.avatar = preservedAvatar;
+            }
             saveUserSession(currentUser);
           }
         } catch (err) {
