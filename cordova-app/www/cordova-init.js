@@ -98,276 +98,85 @@ window.WebSocket = function(url, protocols) {
 };
 window.WebSocket.prototype = OriginalWebSocket.prototype;
 
-// ✅ Global error handler to prevent crashes
-window.onerror = function(message, source, lineno, colno, error) {
-    console.error('🚨 Global Error:', message, 'at', source, ':', lineno);
-    // Don't let errors crash the app
-    return true;
-};
-
-window.addEventListener('unhandledrejection', function(event) {
-    console.error('🚨 Unhandled Promise Rejection:', event.reason);
-    // Prevent default handling
-    event.preventDefault();
-});
-
 // ✅ Device Ready
 document.addEventListener('deviceready', function() {
-    try {
-        console.log('📱 Cordova is ready!');
-        
-        // StatusBar
-        if (window.StatusBar) {
-            try {
-                StatusBar.backgroundColorByHexString('#1a1a2e');
-                StatusBar.styleLightContent();
-            } catch (e) {
-                console.log('StatusBar error (non-fatal):', e);
-            }
-        }
-        
-        // Setup Google Sign-In
-        setupGoogleSignIn();
-        
-        // Setup Clipboard
-        setupClipboard();
-        
-        // Setup Local Notifications (safely - plugin may not exist)
-        setupNotifications();
-        
-    } catch (error) {
-        console.error('🚨 deviceready error:', error);
+    console.log('📱 Cordova is ready!');
+    
+    // StatusBar
+    if (window.StatusBar) {
+        StatusBar.backgroundColorByHexString('#1a1a2e');
+        StatusBar.styleLightContent();
+    }
+    
+    // Setup Google Sign-In
+    setupGoogleSignIn();
+    
+    // Request notification permission (web API)
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+            console.log('📱 Notification permission:', permission);
+        });
     }
 }, false);
 
-// ✅ Setup Clipboard with permission request
-function setupClipboard() {
-    console.log('📋 Setting up clipboard...');
-    
-    // ✅ IMPROVED: pasteFromClipboard with fallback
-    window.pasteFromClipboard = function() {
-        return new Promise((resolve, reject) => {
-            // Try Cordova plugin first
-            if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
-                console.log('📋 Using Cordova clipboard plugin');
-                cordova.plugins.clipboard.paste(
-                    function(text) {
-                        console.log('📋 Pasted from clipboard:', text ? text.substring(0, 20) + '...' : 'empty');
-                        resolve(text || '');
-                    },
-                    function(err) {
-                        console.error('❌ Cordova clipboard paste error:', err);
-                        // Fallback to web API
-                        tryWebClipboard(resolve, reject);
-                    }
-                );
-            } else {
-                // Try web clipboard API
-                tryWebClipboard(resolve, reject);
-            }
-        });
-    };
-    
-    // Web Clipboard API fallback
-    function tryWebClipboard(resolve, reject) {
-        if (navigator.clipboard && navigator.clipboard.readText) {
-            navigator.clipboard.readText()
-                .then(text => {
-                    console.log('📋 Web clipboard read success');
-                    resolve(text || '');
-                })
-                .catch(err => {
-                    console.error('❌ Web clipboard error:', err);
-                    // Last resort: prompt
-                    const text = prompt('📋 Paste your address here:');
-                    resolve(text || '');
-                });
-        } else {
-            // Prompt as fallback
-            const text = prompt('📋 Paste your address here:');
-            resolve(text || '');
-        }
-    }
-    
-    // ✅ copyToClipboard with fallback
-    window.copyToClipboard = function(text) {
-        return new Promise((resolve, reject) => {
-            if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
-                cordova.plugins.clipboard.copy(
-                    text,
-                    function() {
-                        console.log('✅ Copied to clipboard');
-                        resolve();
-                    },
-                    function(err) {
-                        console.error('❌ Clipboard copy error:', err);
-                        // Try web fallback
-                        if (navigator.clipboard) {
-                            navigator.clipboard.writeText(text).then(resolve).catch(reject);
-                        } else {
-                            reject(err);
-                        }
-                    }
-                );
-            } else if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(resolve).catch(reject);
-            } else {
-                reject(new Error('Clipboard not available'));
-            }
-        });
-    };
-    
-    console.log('✅ Clipboard functions ready');
-}
-
-// ✅ Setup Local Notifications
-function setupNotifications() {
-    if (window.cordova && window.cordova.plugins && window.cordova.plugins.notification && window.cordova.plugins.notification.local) {
-        const notification = window.cordova.plugins.notification.local;
-        
-        // Request permission
-        notification.hasPermission(function(granted) {
-            if (!granted) {
-                notification.requestPermission(function(granted) {
-                    console.log(granted ? '✅ Notification permission granted' : '❌ Notification permission denied');
-                });
-            } else {
-                console.log('✅ Notification permission already granted');
-            }
-        });
-        
-        // Helper function to show notification
-        window.showLocalNotification = function(title, message, id) {
-            notification.schedule({
-                id: id || Date.now(),
-                title: title,
-                text: message,
-                foreground: true,
-                smallIcon: 'res://ic_notification',
-                icon: 'res://icon'
-            });
-        };
-        
-        console.log('✅ Local notifications ready');
-    }
-}
-
-// ✅ QR Code Scanner Function using html5-qrcode
+// ✅ QR Code Scanner Function (using BarcodeScanner plugin)
 window.scanQRCode = function() {
-    return new Promise(async (resolve, reject) => {
-        console.log('📷 Starting QR Scanner...');
-        
-        // ✅ First request camera permission explicitly
-        try {
-            console.log('📷 Requesting camera permission...');
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' } 
-            });
-            // Stop the stream immediately - we just needed permission
-            stream.getTracks().forEach(track => track.stop());
-            console.log('✅ Camera permission granted');
-        } catch (permErr) {
-            console.error('❌ Camera permission denied:', permErr);
-            const address = prompt('📷 Camera access denied. Enter address manually:');
-            if (address && address.trim()) {
-                resolve(address.trim());
-            } else {
-                reject('Camera permission denied');
-            }
-            return;
-        }
-        
-        // Check if Html5Qrcode is available
-        if (typeof Html5Qrcode === 'undefined') {
-            console.error('❌ Html5Qrcode not loaded');
-            const address = prompt('QR Scanner not available. Enter address manually:');
-            if (address && address.trim()) {
-                resolve(address.trim());
-            } else {
-                reject('No address entered');
-            }
-            return;
-        }
-        
-        // Create scanner modal
-        const modal = document.createElement('div');
-        modal.id = 'qr-scanner-modal';
-        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
-        
-        modal.innerHTML = `
-            <div style="color:#fff;text-align:center;margin-bottom:20px;">
-                <h2 style="margin:0 0 10px 0;">📷 Scan QR Code</h2>
-                <p style="margin:0;opacity:0.7;">Point camera at QR code</p>
-            </div>
-            <div id="qr-reader" style="width:100%;max-width:400px;border-radius:15px;overflow:hidden;background:#222;min-height:300px;"></div>
-            <button id="qr-cancel-btn" style="margin-top:20px;background:#ff4444;color:#fff;border:none;padding:15px 40px;border-radius:10px;font-size:16px;cursor:pointer;">
-                ✕ Cancel
-            </button>
-            <div style="margin-top:15px;">
-                <button id="qr-manual-btn" style="background:transparent;color:#fff;border:1px solid #fff;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;">
-                    📝 Enter manually
-                </button>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        let html5QrCode = null;
-        
-        const cleanup = () => {
-            if (html5QrCode) {
-                html5QrCode.stop().catch(err => console.log('Stop error:', err));
-            }
-            modal.remove();
-        };
-        
-        // Cancel button
-        document.getElementById('qr-cancel-btn').onclick = () => {
-            cleanup();
-            reject('Cancelled');
-        };
-        
-        // Manual entry button
-        document.getElementById('qr-manual-btn').onclick = () => {
-            cleanup();
-            const address = prompt('Enter wallet address:');
-            if (address && address.trim()) {
-                resolve(address.trim());
+    return new Promise((resolve, reject) => {
+        if (window.cordova && window.cordova.plugins && window.cordova.plugins.barcodeScanner) {
+            cordova.plugins.barcodeScanner.scan(
+                function(result) {
+                    if (result.cancelled) {
+                        reject('Scan cancelled');
+                    } else {
+                        console.log('✅ QR Scanned:', result.text);
+                        resolve(result.text);
+                    }
+                },
+                function(error) {
+                    console.error('❌ QR Scan error:', error);
+                    reject(error);
+                },
+                {
+                    preferFrontCamera: false,
+                    showFlipCameraButton: true,
+                    showTorchButton: true,
+                    torchOn: false,
+                    saveHistory: false,
+                    prompt: "Scan QR Code",
+                    resultDisplayDuration: 0,
+                    formats: "QR_CODE",
+                    orientation: "portrait",
+                    disableAnimations: true,
+                    disableSuccessBeep: false
+                }
+            );
+        } else {
+            // Fallback: prompt user to enter manually
+            const address = prompt('QR Scanner not available. Enter wallet address:');
+            if (address) {
+                resolve(address);
             } else {
                 reject('No address entered');
             }
-        };
-        
-        // Start scanner
-        html5QrCode = new Html5Qrcode("qr-reader");
-        
-        html5QrCode.start(
-            { facingMode: "environment" },
-            {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1
-            },
-            (decodedText) => {
-                console.log('✅ QR Scanned:', decodedText);
-                cleanup();
-                resolve(decodedText);
-            },
-            (errorMessage) => {
-                // Ignore scanning errors (happens continuously while scanning)
-            }
-        ).catch(err => {
-            console.error('❌ QR Scanner start error:', err);
-            cleanup();
-            // Fallback to manual entry
-            const address = prompt('Camera not available. Enter address manually:');
-            if (address && address.trim()) {
-                resolve(address.trim());
-            } else {
-                reject('Camera error: ' + err);
-            }
-        });
+        }
     });
+};
+
+// ✅ Paste from Clipboard helper
+window.pasteFromClipboard = async function() {
+    try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            return await navigator.clipboard.readText();
+        } else if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
+            return new Promise((resolve, reject) => {
+                cordova.plugins.clipboard.paste(resolve, reject);
+            });
+        }
+        return '';
+    } catch (e) {
+        console.error('❌ Clipboard read error:', e);
+        return '';
+    }
 };
 
 // ✅ Google Sign-In Setup
@@ -381,16 +190,6 @@ function setupGoogleSignIn() {
             return;
         }
         
-        // ✅ IMPORTANT: Disconnect first to ensure account picker shows
-        try {
-            await new Promise((resolve) => {
-                window.plugins.googleplus.disconnect(() => resolve(), () => resolve());
-            });
-            console.log('✅ Disconnected previous session');
-        } catch(e) {
-            console.log('No previous session to disconnect');
-        }
-        
         // Loading indicator
         const loading = document.createElement('div');
         loading.id = 'google-signin-loading';
@@ -402,75 +201,39 @@ function setupGoogleSignIn() {
             {
                 scopes: 'profile email',
                 webClientId: window.GOOGLE_CLIENT_ID_WEB,
-                offline: false,
-                prompt: 'select_account'
+                offline: false
             },
             function(userData) {
                 console.log('✅ Google Sign-In success:', userData.email);
-                
+                console.log('📷 User image URL:', userData.imageUrl);
                 document.getElementById('google-signin-loading')?.remove();
                 
                 // Clear old cache
                 localStorage.removeItem('accessoireUser');
                 localStorage.removeItem('accessoireUserData');
                 
-                // ✅ Get profile picture - simple and direct
-                let profilePicture = userData.imageUrl || '';
-                
-                // Try alternative fields if imageUrl is empty
-                if (!profilePicture && userData.image && userData.image.url) {
-                    profilePicture = userData.image.url;
-                }
-                if (!profilePicture && userData.photoUrl) {
-                    profilePicture = userData.photoUrl;
-                }
-                
-                console.log('📷 Profile picture from Google:', profilePicture || 'NONE');
-                
+                // ✅ Get profile picture with fallback
+                let profilePicture = userData.imageUrl || userData.image?.url || '';
                 // Make sure we get high quality image
                 if (profilePicture && profilePicture.includes('googleusercontent.com')) {
                     profilePicture = profilePicture.replace(/=s\d+-c/, '=s200-c');
-                    if (!profilePicture.includes('=s')) {
-                        profilePicture += '=s200-c';
-                    }
                 }
-                
-                // Default avatar SVG - SAME as profile page (gray #c6c6c6)
+                // Default avatar if no picture - SAME gray SVG as server
                 const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
                 
                 if (!profilePicture) {
                     profilePicture = DEFAULT_AVATAR;
-                    console.log('📷 Using default avatar (Google provided none)');
                 }
                 
-                // Get display name
-                const displayName = userData.displayName || userData.givenName || userData.email.split('@')[0];
-                
-                // Create JWT payload - use simple ASCII-safe encoding
+                // Create fake JWT for handleGoogleSignIn
                 const payload = {
                     email: userData.email,
-                    name: displayName,
+                    name: userData.displayName,
                     picture: profilePicture,
-                    sub: userData.userId || userData.email
+                    sub: userData.userId
                 };
                 
-                console.log('📦 JWT Payload - email:', payload.email, 'name:', payload.name, 'picture:', payload.picture ? payload.picture.substring(0, 50) + '...' : 'NONE');
-                
-                // Simple base64 encoding - avoid Unicode issues by using encodeURIComponent
-                const b64 = str => {
-                    try {
-                        return btoa(unescape(encodeURIComponent(str)))
-                            .replace(/\+/g, '-')
-                            .replace(/\//g, '_')
-                            .replace(/=+$/, '');
-                    } catch(e) {
-                        console.error('btoa error:', e);
-                        // Fallback: replace non-ASCII chars
-                        const ascii = str.replace(/[^\x00-\x7F]/g, '?');
-                        return btoa(ascii).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-                    }
-                };
-                
+                const b64 = str => btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
                 const header = b64(JSON.stringify({alg: 'none', typ: 'JWT'}));
                 const body = b64(JSON.stringify(payload));
                 const fakeCredential = header + '.' + body + '.fake';
@@ -505,30 +268,11 @@ function setupGoogleSignIn() {
     console.log('✅ Google Sign-In ready');
 }
 
-// ✅ Google Sign-Out - MUST disconnect to show account picker next time
+// ✅ Google Sign-Out
 window.nativeGoogleSignOut = function() {
     return new Promise(resolve => {
         if (window.plugins?.googleplus) {
-            // Use disconnect() to fully sign out and force account picker on next login
-            window.plugins.googleplus.disconnect(
-                function() {
-                    console.log('✅ Google disconnect success - will show account picker next time');
-                    // Also try logout for extra safety
-                    window.plugins.googleplus.logout(
-                        function() {
-                            console.log('✅ Google logout success');
-                            resolve();
-                        },
-                        function() {
-                            resolve();
-                        }
-                    );
-                },
-                function() {
-                    // Try logout as fallback
-                    window.plugins.googleplus.logout(() => resolve(), () => resolve());
-                }
-            );
+            window.plugins.googleplus.disconnect(() => resolve(), () => resolve());
         } else {
             resolve();
         }
