@@ -21,6 +21,8 @@
   <!-- Cordova -->
   <script src="cordova.js"></script>
   <script src="cordova-init.js"></script>
+  <!-- Base URL for Cordova/Web detection -->
+  <script src="base-url.js"></script>
   <!-- 🔒 منع وميض الرصيد - تغيير النص فوراً -->
   <script>
     window.balanceHiddenOnLoad = localStorage.getItem('balanceHidden') === 'true';
@@ -3197,14 +3199,14 @@ Access-Network is a digital rewards platform combining innovation, community fea
 
     <script>
       // Access Network configuration for wallet connection
-      // روابط ديناميكية تتأقلم مع أي دومين
-      const currentOrigin = window.location.origin;
+      // Always use official domain - NOT localhost
+      const currentOrigin = 'https://accesschain.org';
       const accessNetworkConfig = {
         chainId: '0x5968',
         chainName: 'Access Network',
         nativeCurrency: { name: 'ACCESS', symbol: 'ACCESS', decimals: 18 },
-        rpcUrls: [currentOrigin + '/rpc'],
-        blockExplorerUrls: [currentOrigin + '/transaction-details.html?hash=']
+        rpcUrls: ['https://accesschain.org/rpc'],
+        blockExplorerUrls: ['https://accesschain.org/transaction-details.html?hash=']
       };
 
       function openWalletConnectModal() {
@@ -3216,7 +3218,7 @@ Access-Network is a digital rewards platform combining innovation, community fea
         }
 
         // Show wallet selection modal
-        const currentUrl = encodeURIComponent(window.location.origin + '/add-network.html');
+        const currentUrl = encodeURIComponent('https://accesschain.org/add-network.html');
         
         const modal = document.createElement('div');
         modal.id = 'wallet-connect-modal';

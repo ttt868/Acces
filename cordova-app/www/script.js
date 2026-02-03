@@ -8,6 +8,31 @@ function fetchWithTimeout(url, options = {}, timeout = 15000) {
   ]);
 }
 
+// ✅ Universal Share Function - Works on Web & Cordova
+window.universalShare = async function(options) {
+  const { title, text, url } = options;
+  
+  // 1. Try Cordova Social Sharing Plugin first
+  if (window.plugins && window.plugins.socialsharing) {
+    return new Promise((resolve, reject) => {
+      window.plugins.socialsharing.shareWithOptions({
+        message: text,
+        subject: title,
+        url: url
+      }, resolve, reject);
+    });
+  }
+  
+  // 2. Try Web Share API
+  if (navigator.share) {
+    return navigator.share({ title, text, url });
+  }
+  
+  // 3. Fallback - copy to clipboard
+  await navigator.clipboard.writeText(url);
+  throw new Error('COPIED'); // Signal that we copied instead of shared
+};
+
 // Global formatNumberSmart function (must be before DOMContentLoaded)
 // 1000 → 1,000.00 | 1 → 1.00 | 0 → 0.00 | 0.5 → 0.50 | 2.1 → 2.10
 window.formatNumberSmart = function(number) {
@@ -2342,91 +2367,52 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     const inviteLink = document.getElementById('invite-link-input').value;
 
     try {
-      // Try native sharing on mobile first
-      if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        await navigator.share({
-          title: 'Join AccessoireDigital',
-          text: 'Join me on AccessoireDigital and start processing digital assets!',
-          url: inviteLink
-        });
-        console.log('Link shared successfully');
+      // ✅ Use universal share (Cordova plugin + Web Share API + fallback)
+      await window.universalShare({
+        title: 'Join Access Network',
+        text: 'Join me on Access Network and start earning ACCESS coins!',
+        url: inviteLink
+      });
+      console.log('Link shared successfully');
+      return;
+    } catch (e) {
+      // If COPIED, show copy feedback
+      if (e.message === 'COPIED' || e.name === 'AbortError') {
+        // Show success feedback
+        const copyBtn = document.querySelector('.dashboard-copy-invite-btn, .copy-invite-btn');
+        if (copyBtn) {
+          const originalContent = Array.from(copyBtn.childNodes).map(node => node.cloneNode(true));
+          copyBtn.textContent = '';
+          const checkIcon = document.createElement('i');
+          checkIcon.className = 'fas fa-check';
+          const textSpan = document.createElement('span');
+          textSpan.textContent = 'Copied';
+          copyBtn.appendChild(checkIcon);
+          copyBtn.appendChild(document.createTextNode(' '));
+          copyBtn.appendChild(textSpan);
+          copyBtn.style.background = '#4CAF50';
+
+          setTimeout(() => {
+            copyBtn.textContent = '';
+            originalContent.forEach(node => copyBtn.appendChild(node));
+            copyBtn.style.background = '';
+          }, 2000);
+        }
+        if (typeof showNotification === 'function') {
+          showNotification('Invite link copied successfully!', 'success');
+        }
         return;
       }
-
-      // Fallback to clipboard
-      await navigator.clipboard.writeText(inviteLink);
-
-      // Show success feedback ط¨ط§ط³طھط®ط¯ط§ظ… ظƒظ„ط§ط³ Dashboard ط§ظ„طµط­ظٹط­
-      const copyBtn = document.querySelector('.dashboard-copy-invite-btn, .copy-invite-btn');
-      if (copyBtn) {
-        // Store original content safely
-        const originalContent = Array.from(copyBtn.childNodes).map(node => node.cloneNode(true));
-
-        // Secure: Update button with safe DOM methods
-        copyBtn.textContent = '';
-        const checkIcon = document.createElement('i');
-        checkIcon.className = 'fas fa-check';
-        const textSpan = document.createElement('span');
-        textSpan.textContent = 'Copied';
-        copyBtn.appendChild(checkIcon);
-        copyBtn.appendChild(document.createTextNode(' '));
-        copyBtn.appendChild(textSpan);
-        copyBtn.style.background = '#4CAF50';
-
-        setTimeout(() => {
-          copyBtn.textContent = '';
-          originalContent.forEach(node => copyBtn.appendChild(node));
-          copyBtn.style.background = '';
-        }, 2000);
-      }
-
-      // Show notification
-      if (typeof showNotification === 'function') {
-        showNotification('Invite link copied successfully!', 'success');
-      }
-
-    } catch (error) {
-      console.error('Error copying/sharing link:', error);
-
-      // Alternative copy method
-      const textArea = document.createElement('textarea');
-      textArea.value = inviteLink;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-
-      // Show success message
-      const copyBtn = document.querySelector('.dashboard-copy-invite-btn, .copy-invite-btn');
-      if (copyBtn) {
-        // Store original content safely
-        const originalContent = Array.from(copyBtn.childNodes).map(node => node.cloneNode(true));
-        
-        // Secure: Update button with safe DOM methods
-        copyBtn.textContent = '';
-        const checkIcon = document.createElement('i');
-        checkIcon.className = 'fas fa-check';
-        const textSpan = document.createElement('span');
-        textSpan.textContent = 'Copied';
-        copyBtn.appendChild(checkIcon);
-        copyBtn.appendChild(document.createTextNode(' '));
-        copyBtn.appendChild(textSpan);
-        copyBtn.style.background = '#4CAF50';
-
-        setTimeout(() => {
-          copyBtn.textContent = '';
-          originalContent.forEach(node => copyBtn.appendChild(node));
-          copyBtn.style.background = '';
-        }, 2000);
-      }
-
-      if (typeof showNotification === 'function') {
-        showNotification('Link copied successfully!', 'success');
-      }
+      console.error('Share error:', e);
     }
   };
 
-
+  window.closeInviteModal = function() {
+    const modal = document.getElementById('invite-modal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  };
 
   // Referral Invitation System - Complete Implementation
   class ReferralInvitationSystem {
@@ -2758,6 +2744,40 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     console.log('Dashboard invite button clicked - handling with proper user gesture:', inviteLink);
 
+    // ✅ Try Cordova Social Sharing Plugin first
+    if (window.plugins && window.plugins.socialsharing) {
+      try {
+        await new Promise((resolve, reject) => {
+          window.plugins.socialsharing.shareWithOptions({
+            message: 'Join me on Access Network and start earning ACCESS coins!',
+            subject: 'Join Access Network',
+            url: inviteLink
+          }, resolve, reject);
+        });
+        console.log('Shared via Cordova plugin');
+        return;
+      } catch (e) {
+        console.log('Cordova share cancelled or failed:', e);
+      }
+    }
+
+    // ✅ Try Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join Access Network',
+          text: 'Join me on Access Network and start earning ACCESS coins!',
+          url: inviteLink
+        });
+        if (typeof showNotification === 'function') {
+          showNotification('Invite link shared successfully!', 'success');
+        }
+        return;
+      } catch (e) {
+        console.log('Web share cancelled or failed:', e);
+      }
+    }
+
     // Function to show modal with invite link for manual copy
     const showInviteLinkModal = () => {
       // Check if dark theme is active
@@ -3001,6 +3021,40 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
     console.log('REFERRALS: Enhanced modal with Dashboard-style fallback:', inviteLink);
+
+    // ✅ Try Cordova Social Sharing Plugin first
+    if (window.plugins && window.plugins.socialsharing) {
+      try {
+        await new Promise((resolve, reject) => {
+          window.plugins.socialsharing.shareWithOptions({
+            message: 'Join me on Access Network and start earning ACCESS coins!',
+            subject: 'Join Access Network',
+            url: inviteLink
+          }, resolve, reject);
+        });
+        console.log('REFERRALS: Shared via Cordova plugin');
+        return;
+      } catch (e) {
+        console.log('REFERRALS: Cordova share cancelled or failed:', e);
+      }
+    }
+
+    // ✅ Try Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join Access Network',
+          text: 'Join me on Access Network and start earning ACCESS coins!',
+          url: inviteLink
+        });
+        if (typeof showNotification === 'function') {
+          showNotification('Invite link shared successfully!', 'success');
+        }
+        return;
+      } catch (e) {
+        console.log('REFERRALS: Web share cancelled or failed:', e);
+      }
+    }
 
     // Function to show modal with invite link for manual copy (same as Dashboard)
     const showReferralInviteLinkModal = () => {
@@ -3324,7 +3378,41 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     console.log('ULTRA-ENHANCED copyReferralCodeOnly - SUPERIOR preservation system:', inviteLink);
 
-    // طھط·ط¨ظٹظ‚ ظ†ط¸ط§ظ… ط­ظپط¸ ظ…طھط·ظˆط± ط¬ط¯ط§ظ‹ - ظٹظپظˆظ‚ Dashboard ط¨ظ…ط±ط§ط­ظ„
+    // ✅ Try Cordova Social Sharing Plugin first
+    if (window.plugins && window.plugins.socialsharing) {
+      try {
+        await new Promise((resolve, reject) => {
+          window.plugins.socialsharing.shareWithOptions({
+            message: 'Join me on Access Network and start earning ACCESS coins!',
+            subject: 'Join Access Network',
+            url: inviteLink
+          }, resolve, reject);
+        });
+        console.log('copyReferralCodeOnly: Shared via Cordova plugin');
+        return;
+      } catch (e) {
+        console.log('copyReferralCodeOnly: Cordova share cancelled or failed:', e);
+      }
+    }
+
+    // ✅ Try Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join Access Network',
+          text: 'Join me on Access Network and start earning ACCESS coins!',
+          url: inviteLink
+        });
+        if (typeof showNotification === 'function') {
+          showNotification('Invite link shared successfully!', 'success');
+        }
+        return;
+      } catch (e) {
+        console.log('copyReferralCodeOnly: Web share cancelled or failed:', e);
+      }
+    }
+
+    // Fallback: Copy to clipboard
     try {
       // QUAD-REDUNDANT storage system - ط£ظ‚ظˆظ‰ ط¨ظƒط«ظٹط± ظ…ظ† Dashboard
       localStorage.setItem('pendingReferralCode', referralCode);
@@ -3538,7 +3626,43 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     console.log('ULTRA-ENHANCED shareReferralLink - MAXIMUM preservation power:', inviteLink);
 
-    // ظ†ط¸ط§ظ… ط­ظپط¸ ظ…طھط·ظˆط± ظ„ظ„ط؛ط§ظٹط© - ظٹظپظˆظ‚ Dashboard ط¨ظ‚ظˆط© ظ‡ط§ط¦ظ„ط©
+    // ✅ Try Cordova Social Sharing Plugin first
+    if (window.plugins && window.plugins.socialsharing) {
+      try {
+        await new Promise((resolve, reject) => {
+          window.plugins.socialsharing.shareWithOptions({
+            message: 'Join me on Access Network and start earning ACCESS coins!',
+            subject: 'Join Access Network',
+            url: inviteLink
+          }, resolve, reject);
+        });
+        console.log('shareReferralLink: Shared via Cordova plugin');
+        if (typeof closeReferralCopyModal === 'function') closeReferralCopyModal();
+        return;
+      } catch (e) {
+        console.log('shareReferralLink: Cordova share cancelled or failed:', e);
+      }
+    }
+
+    // ✅ Try Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join Access Network',
+          text: 'Join me on Access Network and start earning ACCESS coins!',
+          url: inviteLink
+        });
+        if (typeof showNotification === 'function') {
+          showNotification('Invite link shared successfully!', 'success');
+        }
+        if (typeof closeReferralCopyModal === 'function') closeReferralCopyModal();
+        return;
+      } catch (e) {
+        console.log('shareReferralLink: Web share cancelled or failed:', e);
+      }
+    }
+
+    // Fallback: Copy to clipboard and show modal
     try {
       // PENTA-REDUNDANT storage system - ط£ظ‚ظˆظ‰ ظ†ط¸ط§ظ… ط­ظپط¸ ظ…ظ…ظƒظ†
       localStorage.setItem('pendingReferralCode', referralCode);
@@ -3736,7 +3860,41 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     console.log('ULTRA-ENHANCED Profile invite - SUPREME preservation system:', inviteLink);
 
-    // ظ†ط¸ط§ظ… ط­ظپط¸ ط®ط§ط±ظ‚ - ط£ظ‚ظˆظ‰ ظ…ظ† ط£ظٹ ط´ظٹط، ظ…ظˆط¬ظˆط¯
+    // ✅ Try Cordova Social Sharing Plugin first
+    if (window.plugins && window.plugins.socialsharing) {
+      try {
+        await new Promise((resolve, reject) => {
+          window.plugins.socialsharing.shareWithOptions({
+            message: 'Join me on Access Network and start earning ACCESS coins!',
+            subject: 'Join Access Network',
+            url: inviteLink
+          }, resolve, reject);
+        });
+        console.log('Profile: Shared via Cordova plugin');
+        return;
+      } catch (e) {
+        console.log('Profile: Cordova share cancelled or failed:', e);
+      }
+    }
+
+    // ✅ Try Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join Access Network',
+          text: 'Join me on Access Network and start earning ACCESS coins!',
+          url: inviteLink
+        });
+        if (typeof showNotification === 'function') {
+          showNotification('Invite link shared successfully!', 'success');
+        }
+        return;
+      } catch (e) {
+        console.log('Profile: Web share cancelled or failed:', e);
+      }
+    }
+
+    // Fallback: Storage and modal
     try {
       // HEXA-REDUNDANT storage system - ظ†ط¸ط§ظ… ط³ط§ط¯ط³ ط§ظ„ط§ط­طھظٹط§ط·ظٹ
       localStorage.setItem('pendingReferralCode', referralCode);
