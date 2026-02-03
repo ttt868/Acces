@@ -15,8 +15,9 @@ window.universalShare = async function(options) {
   // 1. Try Cordova Social Sharing Plugin first
   if (window.plugins && window.plugins.socialsharing) {
     return new Promise((resolve, reject) => {
+      // ✅ FIX: Include URL in message - some apps (Messenger) ignore separate 'url' parameter
       window.plugins.socialsharing.shareWithOptions({
-        message: text,
+        message: `${text}\n\n${url}`,
         subject: title,
         url: url
       }, resolve, reject);
@@ -2915,10 +2916,12 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
         let shareCompleted = false;
         
         await new Promise((resolve) => {
+          // ✅ FIX: Include the URL IN the message so all apps show it correctly
+          // Some apps (like Messenger) ignore the separate 'url' parameter
           window.plugins.socialsharing.shareWithOptions({
-            message: 'Join me on Access Network and start earning ACCESS coins!',
+            message: `Join me on Access Network and start earning ACCESS coins!\n\n${inviteLink}`,
             subject: 'Join Access Network',
-            url: inviteLink
+            url: inviteLink  // Keep url for apps that support it (will show link twice but ensures it works)
           }, function(result) {
             // Success callback - check if actually shared
             console.log('Social sharing result:', result);
@@ -3360,8 +3363,9 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     if (window.plugins && window.plugins.socialsharing) {
       try {
         await new Promise((resolve, reject) => {
+          // ✅ FIX: Include URL in message - some apps (Messenger) ignore separate 'url' parameter
           window.plugins.socialsharing.shareWithOptions({
-            message: 'Join me on Access Network and start earning ACCESS coins!',
+            message: `Join me on Access Network and start earning ACCESS coins!\n\n${inviteLink}`,
             subject: 'Join Access Network',
             url: inviteLink
           }, resolve, reject);
@@ -3608,8 +3612,9 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     if (window.plugins && window.plugins.socialsharing) {
       try {
         await new Promise((resolve, reject) => {
+          // ✅ FIX: Include URL in message - some apps (Messenger) ignore separate 'url' parameter
           window.plugins.socialsharing.shareWithOptions({
-            message: 'Join me on Access Network and start earning ACCESS coins!',
+            message: `Join me on Access Network and start earning ACCESS coins!\n\n${inviteLink}`,
             subject: 'Join Access Network',
             url: inviteLink
           }, resolve, reject);
@@ -3842,8 +3847,9 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     if (window.plugins && window.plugins.socialsharing) {
       try {
         await new Promise((resolve, reject) => {
+          // ✅ FIX: Include URL in message - some apps (Messenger) ignore separate 'url' parameter
           window.plugins.socialsharing.shareWithOptions({
-            message: 'Join me on Access Network and start earning ACCESS coins!',
+            message: `Join me on Access Network and start earning ACCESS coins!\n\n${inviteLink}`,
             subject: 'Join Access Network',
             url: inviteLink
           }, resolve, reject);
