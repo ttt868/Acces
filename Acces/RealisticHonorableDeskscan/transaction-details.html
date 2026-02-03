@@ -1659,34 +1659,12 @@
             </div>
         </div>
 
-        <!-- Transaction Logs -->
-        <div class="details-card">
+        <!-- Transaction Logs - Hidden: Access Network doesn't have smart contract logs yet -->
+        <div class="details-card" id="transactionLogs" style="display: none;">
             <div class="card-header">Transaction Logs</div>
             <div class="card-body">
-                <div class="logs-section">
-                    <div class="log-item">
-                        <div class="log-header">Log 0</div>
-                        <div class="log-detail">
-                            <strong>Address:</strong>
-                            <span class="log-value">0x0000000000000000000000000000000000000000</span>
-                        </div>
-                        <div class="log-detail">
-                            <strong>Topic 0:</strong>
-                            <span class="log-value">0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef</span>
-                        </div>
-                        <div class="log-detail">
-                            <strong>Topic 1:</strong>
-                            <span class="log-value">0x000000000000000000000000d82b3ae10ed3423f481e0bc6a00b1355eb4af8ed</span>
-                        </div>
-                        <div class="log-detail">
-                            <strong>Topic 2:</strong>
-                            <span class="log-value">0x000000000000000000000000fa9759642c27675cf89aa0b04d2ebd70cbc87b18</span>
-                        </div>
-                        <div class="log-detail">
-                            <strong>Data:</strong>
-                            <span class="log-value">0x0000000000000000000000000000000000000000000000000918a86f26d37800</span>
-                        </div>
-                    </div>
+                <div class="logs-section" id="logsContainer">
+                    <p style="color: var(--text-secondary); text-align: center;">No logs for this transaction</p>
                 </div>
             </div>
         </div>
