@@ -20,6 +20,7 @@
         "sshpass": true,
         "keytool": true,
         "gh": true,
-        "cp": true
+        "cp": true,
+        "cordova": true
     }
 }
