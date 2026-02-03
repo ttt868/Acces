@@ -277,4 +277,116 @@ window.nativeGoogleSignOut = function() {
     });
 };
 
+// ✅ Deep Links Handler - لمعالجة روابط الدعوة
+document.addEventListener('deviceready', function() {
+    // Subscribe to deep links
+    if (window.IonicDeeplink) {
+        window.IonicDeeplink.route({
+            '/': {
+                target: 'index',
+                parent: 'index'
+            }
+        }, function(match) {
+            // Deep link matched
+            console.log('🔗 Deep link matched:', match);
+            handleDeepLinkInvite(match.$link);
+        }, function(nomatch) {
+            // No match but still a deep link
+            console.log('🔗 Deep link no match, checking URL:', nomatch);
+            if (nomatch.$link && nomatch.$link.url) {
+                handleDeepLinkInvite(nomatch.$link);
+            }
+        });
+    }
+    
+    // Also handle Universal Links (cordova-plugin-deeplinks)
+    if (window.universalLinks) {
+        window.universalLinks.subscribe('deepLinkHandler', function(eventData) {
+            console.log('🔗 Universal link received:', eventData);
+            handleDeepLinkInvite(eventData);
+        });
+    }
+}, false);
+
+// Function to handle invite code from deep link
+function handleDeepLinkInvite(linkData) {
+    try {
+        let inviteCode = null;
+        let url = linkData.url || linkData;
+        
+        console.log('🔗 Processing deep link:', url);
+        
+        // Extract invite code from URL
+        if (typeof url === 'string') {
+            const urlObj = new URL(url);
+            inviteCode = urlObj.searchParams.get('invite');
+        } else if (linkData.queryString) {
+            const params = new URLSearchParams(linkData.queryString);
+            inviteCode = params.get('invite');
+        }
+        
+        if (inviteCode) {
+            console.log('🎉 Invite code found from deep link:', inviteCode);
+            
+            // Save invite code - same as web version
+            localStorage.setItem('pendingReferralCode', inviteCode);
+            sessionStorage.setItem('currentInviteCode', inviteCode);
+            
+            // Backup with timestamp
+            const inviteBackup = {
+                code: inviteCode,
+                timestamp: Date.now(),
+                source: 'deep_link_cordova',
+                userLoggedIn: false
+            };
+            localStorage.setItem('inviteCodeBackup', JSON.stringify(inviteBackup));
+            
+            // Try to fill referral input if exists
+            const referralInput = document.querySelector('#referral-code');
+            if (referralInput) {
+                referralInput.value = inviteCode;
+                referralInput.dispatchEvent(new Event('input', { bubbles: true }));
+                referralInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            
+            // Show notification
+            if (typeof showNotification === 'function') {
+                showNotification('Referral code applied: ' + inviteCode, 'success');
+            }
+            
+            console.log('✅ Invite code saved successfully');
+        }
+    } catch (error) {
+        console.error('Error processing deep link:', error);
+    }
+}
+
+// Also check for invite code in localStorage on app start (recovered from previous session)
+document.addEventListener('deviceready', function() {
+    setTimeout(function() {
+        const savedInviteCode = localStorage.getItem('pendingReferralCode') || 
+                               sessionStorage.getItem('currentInviteCode');
+        
+        if (savedInviteCode) {
+            console.log('📦 Found saved invite code:', savedInviteCode);
+            
+            // Try to fill referral input if exists and empty
+            const referralInput = document.querySelector('#referral-code');
+            if (referralInput && !referralInput.value) {
+                referralInput.value = savedInviteCode;
+                referralInput.dispatchEvent(new Event('input', { bubbles: true }));
+                referralInput.dispatchEvent(new Event('change', { bubbles: true }));
+                
+                // Visual feedback
+                referralInput.style.borderColor = '#10B981';
+                referralInput.style.backgroundColor = '#ECFDF5';
+                setTimeout(() => {
+                    referralInput.style.borderColor = '';
+                    referralInput.style.backgroundColor = '';
+                }, 2000);
+            }
+        }
+    }, 1500);
+}, false);
+
 console.log('📱 Cordova Init complete');

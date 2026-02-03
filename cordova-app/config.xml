@@ -103,4 +103,19 @@
     <plugin name="cordova-clipboard" spec="^1.3.0" />
     
     <!-- Note: Local Notifications removed due to SDK 34 compatibility issues -->
+    
+    <!-- ✅ Deep Links Configuration for Invite System -->
+    <universal-links>
+        <host name="accesschain.org" scheme="https">
+            <path url="/" />
+            <path url="/*" />
+        </host>
+        <host name="www.accesschain.org" scheme="https">
+            <path url="/" />
+            <path url="/*" />
+        </host>
+    </universal-links>
+    
+    <!-- ✅ Custom URL Scheme for accessnetwork:// links -->
+    <preference name="AndroidLaunchMode" value="singleTask" />
 </widget>
