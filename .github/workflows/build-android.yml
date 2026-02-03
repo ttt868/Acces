@@ -208,3 +208,4 @@ jobs:
         path: cordova-app/platforms/android/app/build/outputs/bundle/release/*.aab
         if-no-files-found: warn
         retention-days: 30
+
