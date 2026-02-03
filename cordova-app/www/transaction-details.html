@@ -2016,7 +2016,7 @@
             loadTransactionData(txHash);
         }
 
-        // Load REAL transaction data from network - SIMPLIFIED
+        // Load REAL transaction data from network - SUPER SIMPLIFIED
         async function loadTransactionData(txHash) {
             if (!txHash) {
                 showTransactionNotFound();
@@ -2025,23 +2025,41 @@
 
             console.log('[TX] Loading:', txHash);
 
+            // Try direct transaction API first
             try {
-                // Simple direct fetch - Interceptor will fix URL
-                const response = await fetch('/api/network/transaction/' + txHash);
+                const response = await fetch('https://accesschain.org/api/network/transaction/' + txHash);
                 const result = await response.json();
                 
-                console.log('[TX] Result:', result);
-                
-                if (result && (result.success || result.transaction || result.result)) {
-                    const txData = result.transaction || result.result || result;
-                    displayRealTransactionData(txData);
+                if (result && (result.success || result.transaction)) {
+                    displayRealTransactionData(result.transaction || result);
                     return;
                 }
             } catch (e) {
-                console.log('[TX] Primary API failed:', e.message);
+                console.log('[TX] Direct API failed:', e.message);
             }
 
-            // Try RPC as fallback
+            // Fallback: Search in latest transactions (last 500)
+            try {
+                const response = await fetch('https://accesschain.org/api/explorer/latest-transactions?limit=500');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    const found = result.data.find(tx => 
+                        tx.hash === txHash || 
+                        tx.txId === txHash ||
+                        tx.transactionHash === txHash
+                    );
+                    if (found) {
+                        console.log('[TX] Found in latest-transactions:', found);
+                        displayRealTransactionData(found);
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('[TX] Fallback failed:', e.message);
+            }
+
+            // Try RPC as last resort
             try {
                 const rpcResponse = await fetch('https://accesschain.org/rpc', {
                     method: 'POST',
