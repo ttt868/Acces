@@ -1,0 +1,8 @@
+                const response = await fetch(|| window.location.origin) + '/api/oauth-config');
+                    const response = await fetch(|| window.location.origin) + '/api/auth/explorer-google', {
+                const response = await fetch(|| window.location.origin) + '/api/network/transaction/' + txHash);
+                const response = await fetch(|| window.location.origin) + '/api/explorer/latest-transactions?limit=500');
+                || window.location.origin) + '/api/network/block/latest'
+                const response = await fetch(|| window.location.origin) + '/api/oauth-config');
+                const response = await fetch(|| window.location.origin) + '/api/explorer/block/' + blockId);
+                const response = await fetch(|| window.location.origin) + '/api/explorer/latest-blocks?limit=200');
