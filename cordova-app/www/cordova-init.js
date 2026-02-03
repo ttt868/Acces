@@ -8,14 +8,23 @@ window.API_BASE_URL = 'http://89.167.14.197:3000';
 window.WS_BASE_URL = 'ws://89.167.14.197:3000';
 window.IS_CORDOVA_APP = true;
 
+// ✅ Share URL - for invite links (different from API!)
+window.SHARE_BASE_URL = 'https://accesschain.org';
+
 // Google Sign-In
 window.GOOGLE_CLIENT_ID_WEB = '586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com';
 
 console.log('📱 Cordova Init - API:', window.API_BASE_URL);
+console.log('📱 Cordova Init - Share URL:', window.SHARE_BASE_URL);
 
-// ✅ CRITICAL: Helper to get correct API origin
+// ✅ CRITICAL: Helper to get correct API origin (for API calls)
 window.getApiOrigin = function() {
     return window.API_BASE_URL;
+};
+
+// ✅ NEW: Helper to get share URL (for invite links)
+window.getShareOrigin = function() {
+    return window.SHARE_BASE_URL;
 };
 
 // ✅ CRITICAL: Override fetch IMMEDIATELY

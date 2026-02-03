@@ -1170,7 +1170,7 @@ Users can process once every 24 hours to collect 0.25 Points.
 5. Security
 Enterprise-grade security with encrypted user accounts and secure benefit processing.
 
-For more information, visit our platform at: ${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}
+For more information, visit our platform at: ${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}
       `.trim();
 
       // Create and download the file
@@ -2351,7 +2351,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     }
 
     const modal = document.getElementById('invite-modal-overlay');
-    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+    const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -2498,7 +2498,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     generateInviteLink() {
       // Use current site domain (adapts to any domain)
-      const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+      const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
       const referralCode = currentUser.referral_code;
       return `${baseUrl}?invite=${referralCode}`;
     }
@@ -2738,7 +2738,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+    const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -3028,7 +3028,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+    const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -3350,7 +3350,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+    const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -3598,7 +3598,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+    const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -3832,7 +3832,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+    const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -8879,7 +8879,7 @@ function initializeGoogleSignIn() {
       let serverWalletData = null;
 
       try {
-        const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/wallet-key/${currentUser.id}`);
+        const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/wallet-key/${currentUser.id}`);
         if (response.ok) {
           serverWalletData = await response.json();
           console.log("Retrieved wallet key from server");
@@ -9413,7 +9413,7 @@ function initializeGoogleSignIn() {
       try {
         console.log(`Saving QR code to server, attempt ${4-retries}/3`);
 
-        const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/qrcode/save`, {
+        const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/qrcode/save`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -10573,7 +10573,7 @@ window.copyAccountAddress = function() {
   // Fetch wallet info from server
   async function fetchWalletInfoFromServer(walletAddress) {
     try {
-      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/wallet/${walletAddress}`);
+      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/wallet/${walletAddress}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -10592,7 +10592,7 @@ window.copyAccountAddress = function() {
   // Sync wallet balance with server
   async function syncBalanceWithServer(userId, balance) {
     try {
-      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/sync-balance`, {
+      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/sync-balance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, balance })
@@ -11105,7 +11105,7 @@ if (totalCost > (currentBalance + precision)) {
   // Fetch recipient from server database
   async function fetchRecipientFromServer(walletAddress) {
     try {
-      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/wallet/${walletAddress}`);
+      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/wallet/${walletAddress}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -11127,7 +11127,7 @@ if (totalCost > (currentBalance + precision)) {
   async function fetchUserById(userId) {
     try {
       // Use a request to get user data by ID
-      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/id/${userId}`);
+      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/id/${userId}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -11146,7 +11146,7 @@ if (totalCost > (currentBalance + precision)) {
   // Update user coins on server
   async function updateUserCoinsOnServer(userId, newCoins) {
     try {
-      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/update-coins`, {
+      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/update-coins`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, coins: newCoins })
@@ -11174,7 +11174,7 @@ if (totalCost > (currentBalance + precision)) {
         hash: transactionData.hash?.substring(0, 10) + '...'
       });
 
-      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/transaction/record`, {
+      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/transaction/record`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(transactionData)
@@ -11242,7 +11242,7 @@ if (totalCost > (currentBalance + precision)) {
     try {
       // Make a request to check if the wallet address exists on any user
       console.log(`Checking server for wallet address: ${address}`);
-      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/wallet/${address}`);
+      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/wallet/${address}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -11429,7 +11429,7 @@ if (totalCost > (currentBalance + precision)) {
 
         try {
           console.log(`Trying to fetch transactions from: ${endpoint}`);
-          const tempResponse = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}${endpoint}`);
+          const tempResponse = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}${endpoint}`);
 
           if (tempResponse.ok) {
             response = tempResponse;
@@ -11446,14 +11446,14 @@ if (totalCost > (currentBalance + precision)) {
       if (!response && currentUser.wallet && currentUser.wallet.publicAddress) {
         try {
           // Check endpoint API status
-          const apiCheckResponse = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/wallet/`);
+          const apiCheckResponse = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/wallet/`);
           console.log(`API check response status:`, apiCheckResponse.status);
 
           // Try to use wallet address directly
           const walletEndpoint = `/api/wallet/${currentUser.wallet.publicAddress}`;
           console.log(`Last attempt using wallet directly: ${walletEndpoint}`);
 
-          const walletResponse = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}${walletEndpoint}`);
+          const walletResponse = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}${walletEndpoint}`);
           if (walletResponse.ok) {
             response = walletResponse;
             successEndpoint = walletEndpoint;
@@ -12111,7 +12111,7 @@ if (totalCost > (currentBalance + precision)) {
 
     try {
       console.log("Fetching transactions from server for user:", currentUser.id);
-      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/${currentUser.id}/transactions`);
+      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/${currentUser.id}/transactions`);
 
       if (!response.ok) {
         throw new Error(`Server returned status: ${response.status}`);
@@ -12582,7 +12582,7 @@ if (totalCost > (currentBalance + precision)) {
 
   try {
     // 🔧 CORDOVA FIX: Use getApiOrigin() for API calls
-    const origin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+    const origin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
     const apiUrl = `${origin}/api/user/${encodeURIComponent(email)}`;
     console.log('Checking if user exists at:', apiUrl);
 
@@ -12677,7 +12677,7 @@ if (totalCost > (currentBalance + precision)) {
       console.log('📦 User data being sent to server:', userData);
 
       // 🔧 CORDOVA FIX: Use getApiOrigin() for API calls
-      const origin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+      const origin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
       
       // Send the create request
       const response = await fetch(`${origin}/api/users`, {
@@ -12802,7 +12802,7 @@ if (totalCost > (currentBalance + precision)) {
   // Load user referrals from database
   async function loadUserReferrals(userId) {
     try {
-      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/referrals/${userId}`);
+      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/referrals/${userId}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -13793,7 +13793,7 @@ window.cancelProfileChanges = cancelProfileChanges;
            try {
              console.log(`Trying endpoint ${i+1}/${endpoints.length}: ${endpoint.method} ${endpoint.url}`);
 
-             const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}${endpoint.url}`, {
+             const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}${endpoint.url}`, {
                method: endpoint.method,
                headers: {
                  'Content-Type': 'application/json'
@@ -15126,7 +15126,7 @@ window.cancelProfileChanges = cancelProfileChanges;
   // Add function to update lastPayout in the database
   async function updateLastPayout(userId) {
     try {
-      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/users/${userId}/lastpayout`, {
+      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/users/${userId}/lastpayout`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
