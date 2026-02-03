@@ -2,24 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  
+  <!-- ✅ CRITICAL: Content Security Policy - Allow HTTP API connections -->
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; connect-src * https://accesschain.org wss://accesschain.org https://*; img-src * 'self' data: blob: https:; style-src * 'self' 'unsafe-inline'; font-src * 'self' data:;">
+  
+  <!-- ✅ CRASH PREVENTION: Global error handler -->
+  <script>
+    window.onerror = function(msg, url, line, col, error) {
+      console.error('ERROR:', msg, url, line);
+      return true; // Prevent crash
+    };
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('PROMISE ERROR:', e.reason);
+      e.preventDefault();
+    });
+  </script>
+  
+  <!-- Cordova -->
+  <script src="cordova.js"></script>
+  <script src="cordova-init.js"></script>
   <!-- 🔒 منع وميض الرصيد - تغيير النص فوراً -->
   <script>
     window.balanceHiddenOnLoad = localStorage.getItem('balanceHidden') === 'true';
-  </script>
-  <!-- 🔒 منع وميض الصورة - تحميل الصورة من localStorage فوراً -->
-  <script>
-    (function() {
-      try {
-        var userData = localStorage.getItem('currentUser');
-        if (userData) {
-          var user = JSON.parse(userData);
-          if (user && user.avatar) {
-            window.userAvatarOnLoad = user.avatar;
-            window.userNameOnLoad = user.name || 'User';
-          }
-        }
-      } catch(e) {}
-    })();
+    // انتظار Cordova
+    document.addEventListener('deviceready', function() {
+      console.log('✅ Cordova جاهز!');
+    }, false);
   </script>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta http-equiv="Content-Language" content="ar,en,fr,es,de,tr,it,hi,zh,ja,ko,pt,ru,id,pl">
@@ -87,6 +95,26 @@
    <link rel="stylesheet" href="network-style.css">
   <link rel="stylesheet" href="referrals-style.css">
   <link rel="stylesheet" href="leaderboard-style.css">
+
+  <!-- Cordova App Styles -->
+  <style id="cordova-app-styles">
+    /* Cordova app adjustments - ensure proper viewport */
+    html.cordova-app body {
+      /* No extra padding needed - let the app use full screen */
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* Prevent content from going behind navigation bars */
+    html.cordova-app #app-container {
+      min-height: 100vh;
+    }
+  </style>
+  <script>
+    // Add cordova-app class when running in Cordova
+    if (window.IS_CORDOVA_APP || typeof cordova !== 'undefined' || document.URL.indexOf('http://') === -1) {
+      document.documentElement.classList.add('cordova-app');
+    }
+  </script>
 
   <!-- Instant Auth & Language Check - ZERO FLASH Professional Solution -->
   <style id="instant-auth-styles">
@@ -169,8 +197,8 @@
   </script>
 
   
-  <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Google Identity Services - DISABLED FOR CORDOVA, using native plugin instead -->
+  <!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
 
   <!-- Enhanced headers for Google Identity Services with proper FedCM handling -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
@@ -634,16 +662,27 @@ document.addEventListener('balanceUpdated', function(event) {
     }
 
     // Handle sign out decision
-    function handleSignOut(confirmed) {
+    async function handleSignOut(confirmed) {
       const modal = document.getElementById('signOutModal');
       modal.style.display = 'none';
 
       if (confirmed) {
+        // 📱 Cordova: Sign out from Google natively (with disconnect for account picker)
+        if (window.IS_CORDOVA_APP && typeof window.nativeGoogleSignOut === 'function') {
+          try {
+            console.log('📱 Signing out from Google (Cordova)...');
+            await window.nativeGoogleSignOut();
+            console.log('✅ Google Sign-Out complete');
+          } catch (e) {
+            console.warn('⚠️ Google Sign-Out error:', e);
+          }
+        }
+
         // Clear stored data
         localStorage.clear();
         sessionStorage.clear();
 
-        // Sign out from Google Identity Services
+        // Sign out from Google Identity Services (for web)
         if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
           google.accounts.id.disableAutoSelect();
         }
@@ -653,8 +692,15 @@ document.addEventListener('balanceUpdated', function(event) {
       }
     }
 
-    // Initialize Google Identity Services
+    // Initialize Google Identity Services - DISABLED FOR CORDOVA
+    // Cordova uses native Google Plus plugin instead
     function initGoogleIdentityServices() {
+      // Skip if running in Cordova - we use native plugin
+      if (window.IS_CORDOVA_APP) {
+        console.log("📱 Cordova detected - skipping web Google Identity Services");
+        return true;
+      }
+      
       if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
         console.log("Google Identity Services loaded successfully");
 
@@ -697,7 +743,8 @@ document.addEventListener('balanceUpdated', function(event) {
     // No direct initialization needed here - loadGoogleOAuthConfig() handles it
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Google Identity Services - DISABLED FOR CORDOVA -->
+  <!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
 
   <!-- Additional icons for referral system -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -711,10 +758,17 @@ document.addEventListener('balanceUpdated', function(event) {
 
 
   <script>
-    // Load Google OAuth configuration dynamically
+    // Load Google OAuth configuration dynamically - MODIFIED FOR CORDOVA
     async function loadGoogleOAuthConfig() {
+      // Skip for Cordova - we use native plugin with pre-configured client IDs
+      if (window.IS_CORDOVA_APP) {
+        console.log('📱 Cordova detected - using native Google Sign-In, skipping OAuth config');
+        window.GOOGLE_CLIENT_ID = window.GOOGLE_CLIENT_ID_WEB;
+        return;
+      }
+      
       try {
-        const response = await fetch('/api/oauth-config');
+        const response = await fetch('https://accesschain.org/api/oauth-config');
         const config = await response.json();
         if (config.success) {
           window.GOOGLE_CLIENT_ID = config.clientId;
@@ -734,6 +788,9 @@ document.addEventListener('balanceUpdated', function(event) {
     loadGoogleOAuthConfig();
 
     window.signInWithGoogle = function() {
+      // For Cordova, the native signInWithGoogle is set up by cordova-init.js
+      // This function will be overridden by cordova-init.js
+      
       if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
         try {
           console.log('Using enhanced Google sign-in with FedCM-safe configuration');
@@ -882,6 +939,9 @@ document.addEventListener('balanceUpdated', function(event) {
     src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"
     crossorigin="anonymous"
   ></script>
+  
+  <!-- HTML5 QR Code Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
   
@@ -1090,10 +1150,9 @@ document.addEventListener('balanceUpdated', function(event) {
         <div class="dashboard-header">
           <div class="dashboard-user-section">
             <div class="dashboard-user-avatar">
-              <img id="dashboard-profile-avatar" alt="" class="dashboard-avatar-img" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';">
-              <script>document.getElementById('dashboard-profile-avatar').src = window.userAvatarOnLoad || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';</script>
+              <img id="dashboard-profile-avatar" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==" alt="" class="dashboard-avatar-img" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';">
             </div>
-            <div class="dashboard-user-name" id="dashboard-user-name"><script>document.write(window.userNameOnLoad || 'User');</script></div>
+            <div class="dashboard-user-name" id="dashboard-user-name">User</div>
           </div>
 
           <div class="dashboard-action-icons">
@@ -1445,8 +1504,7 @@ document.addEventListener('balanceUpdated', function(event) {
 
            <!-- Avatar first -->
            <div class="avatar-container" id="avatar-container">
-             <img id="profile-avatar" alt="" class="profile-avatar" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';">
-             <script>document.getElementById('profile-avatar').src = window.userAvatarOnLoad || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';</script>
+             <img id="profile-avatar" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==" alt="" class="profile-avatar" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';">
              <div class="camera-icon-badge">
                <i class="fas fa-camera"></i>
              </div>
@@ -3139,14 +3197,14 @@ Access-Network is a digital rewards platform combining innovation, community fea
 
     <script>
       // Access Network configuration for wallet connection
-      // روابط ديناميكية تتأقلم مع أي دومين
-      const currentOrigin = window.location.origin;
+      // Always use official domain - NOT localhost
+      const currentOrigin = 'https://accesschain.org';
       const accessNetworkConfig = {
         chainId: '0x5968',
         chainName: 'Access Network',
         nativeCurrency: { name: 'ACCESS', symbol: 'ACCESS', decimals: 18 },
-        rpcUrls: [currentOrigin + '/rpc'],
-        blockExplorerUrls: [currentOrigin + '/transaction-details.html?hash=']
+        rpcUrls: ['https://accesschain.org/rpc'],
+        blockExplorerUrls: ['https://accesschain.org/transaction-details.html?hash=']
       };
 
       function openWalletConnectModal() {
@@ -3158,7 +3216,7 @@ Access-Network is a digital rewards platform combining innovation, community fea
         }
 
         // Show wallet selection modal
-        const currentUrl = encodeURIComponent(window.location.origin + '/add-network.html');
+        const currentUrl = encodeURIComponent('https://accesschain.org/add-network.html');
         
         const modal = document.createElement('div');
         modal.id = 'wallet-connect-modal';
