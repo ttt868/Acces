@@ -474,3 +474,4 @@ document.addEventListener('deviceready', function() {
 }, false);
 
 console.log('📱 Cordova Init complete');
+// Build trigger: Tue Feb  3 14:52:12 UTC 2026
