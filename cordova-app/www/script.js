@@ -2405,50 +2405,14 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       }
       console.error('Share error:', e);
     }
-      }
-
-    } catch (error) {
-      console.error('Error copying/sharing link:', error);
-
-      // Alternative copy method
-      const textArea = document.createElement('textarea');
-      textArea.value = inviteLink;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-
-      // Show success message
-      const copyBtn = document.querySelector('.dashboard-copy-invite-btn, .copy-invite-btn');
-      if (copyBtn) {
-        // Store original content safely
-        const originalContent = Array.from(copyBtn.childNodes).map(node => node.cloneNode(true));
-        
-        // Secure: Update button with safe DOM methods
-        copyBtn.textContent = '';
-        const checkIcon = document.createElement('i');
-        checkIcon.className = 'fas fa-check';
-        const textSpan = document.createElement('span');
-        textSpan.textContent = 'Copied';
-        copyBtn.appendChild(checkIcon);
-        copyBtn.appendChild(document.createTextNode(' '));
-        copyBtn.appendChild(textSpan);
-        copyBtn.style.background = '#4CAF50';
-
-        setTimeout(() => {
-          copyBtn.textContent = '';
-          originalContent.forEach(node => copyBtn.appendChild(node));
-          copyBtn.style.background = '';
-        }, 2000);
-      }
-
-      if (typeof showNotification === 'function') {
-        showNotification('Link copied successfully!', 'success');
-      }
-    }
   };
 
-
+  window.closeInviteModal = function() {
+    const modal = document.getElementById('invite-modal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  };
 
   // Referral Invitation System - Complete Implementation
   class ReferralInvitationSystem {
