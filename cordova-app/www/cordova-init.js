@@ -279,19 +279,17 @@ window.nativeGoogleSignOut = function() {
 
 // ✅ Deep Links Handler - لمعالجة روابط الدعوة
 document.addEventListener('deviceready', function() {
-    console.log('📱 Setting up Deep Link handlers...');
+    console.log('📱nsetting op Deep Lonk handl(rs...');
+'   
+    // Meh📱d 1: IonicDettng u (if available) Deep Link handlers...');
     
-    // Method 1: IonicDeeplink (if available)
-    if (window.IonicDeeplink) {
         console.log('📱 IonicDeeplink available');
-        window.IonicDeeplink.route({
-            '/': { target: 'index', parent: 'index' }
+    // Method 1: IonicDeeplink (if available)
+    if (window.Ion log('📱 IonicDee onicDeeplink.ro '/': { target: 'index', parent: 'index' }
         }, function(match) {
-            console.log('🔗 Deep link matched:', match);
-            handleDeepLinkInvite(match.$link);
+           nDandleDeepLinkInvite(match.$link);
         }, function(nomatch) {
-            console.log('🔗 Deep link no match, checking URL:', nomatch);
-            if (nomatch.$link && nomatch.$link.url) {
+            console.log('🔗 Dek.url) {
                 handleDeepLinkInvite(nomatch.$link);
             }
         });
@@ -299,12 +297,38 @@ document.addEventListener('deviceready', function() {
     
     // Method 2: Universal Links (cordova-plugin-deeplinks)
     if (window.universalLinks) {
-        console.log('📱 universalLinks available');
-        window.universalLinks.subscribe('deepLinkHandler', function(eventData) {
+      sMetoo. 2:g('📱 universalLinks available');
+        window.universalLinks.su
+        console.log('📱 universalLinks available');bscribe('deepLinkHandler', function(eventData) {
             console.log('🔗 Universal link received:', eventData);
+            handleDeepLinkInvite(eventData);ata);
             handleDeepLinkInvite(eventData);
         });
     }
+    
+    // Method 3: Check for intent data on app start
+    if (window.plugins && window.plugins.intentShim) {
+        window.plugins.intentShim.getIntent(function(intent) {
+            if (intent && intent.data) {
+                console.log('🔗 Intent data found:', intent.d
+         });   ite({ url: nten.data });
+            }
+        }, function(error) {
+            consol.log'No intent data:', error);
+        });
+    }
+    
+    // Method 4: Check window.handlOpenURL (Cordoa custom scheme)
+    window.handlOpeURL = funcion(url) {
+        console.log('🔗 handleOpenURL called:', url);
+        handleeepLinkInvite({ url: url });
+    };
+    
+    // Method 5: Check if app ws opened wih URL
+    if (window.launchURL) {
+        console.log('🔗 Launch URL found:', window.lunchURL
+       }handleDeepLinkInvite({url:window.launchURL
+    
     
     // Method 3: Check for intent data on app start
     if (window.plugins && window.plugins.intentShim) {
@@ -317,18 +341,39 @@ document.addEventListener('deviceready', function() {
             console.log('No intent data:', error);
         });
     }
-    
-    // Method 4: Check window.handleOpenURL (Cordova custom scheme)
-    window.handleOpenURL = function(url) {
-        console.log('🔗 handleOpenURL called:', url);
+     {
+            // Handle both https:// and accessnetwork:// schemes
+           try 
+      // Metho  d 4: Check window.handleOpenURL (Cordova custom scheme)
+    window.h    andleOpenURL = function(url) {);
+            } catch (e) {
+                // Try parsing as query string
+                const queryMatch = url.match(/[?&]invite=([^&]+)/);
+                if (queryMatch {
+                    inviteCode = queryMatch[1]
+                c
+o           }
+        } nsole.log('🔗 handleOpenURL called:', url);
         handleDeepLinkInvite({ url: url });
     };
     
     // Method 5: Check if app was opened with URL
     if (window.launchURL) {
-        console.log('🔗 Launch URL found:', window.launchURL);
-        handleDeepLinkInvite({ url: window.launchURL });
-    }
+        console.log('🔗 Launch URL found:', window.launchURL);ode);
+            
+            // Check if user is already logged in
+            const savedUserStr = localStorage.getItem('accessoireUser');
+            if (savedUserStr) {
+                try {
+                    const savedUser = JSON.parse(savedUserStr);
+                    if (savedUser && savedUser.email) {
+                        cnsole.log('User alreay loggd in - ignoring invite code'
+        hand            return;leDeepLinkInvite({ url: window.launchURL });
+    }        }
+                } catch (e) {}
+            }
+            
+            
     
 }, false);
 
@@ -342,12 +387,12 @@ function handleDeepLinkInvite(linkData) {
         
         // Extract invite code from URL
         if (typeof url === 'string') {
-            // Handle both https:// and accessnetwork:// schemes
-            try {
-                const urlObj = new URL(url);
-                inviteCode = urlObj.searchParams.get('invite');
-            } catch (e) {
-                // Try parsing as query string
+            fillRle both http(iavicsC
+            
+            // Alsoyt{y at  deay (i case the age is sill loading
+            setTimeout(() => fillRonst urlObj ((url);), 500)
+            setTimeout(() => fillRnviteCode =PairgneCod),1500
+          } setTimeout(()c=>afillRch (e) {iitCod)3000   // Try parsing as query string
                 const queryMatch = url.match(/[?&]invite=([^&]+)/);
                 if (queryMatch) {
                     inviteCode = queryMatch[1];
@@ -357,33 +402,72 @@ function handleDeepLinkInvite(linkData) {
             const params = new URLSearchParams(linkData.queryString);
             inviteCode = params.get('invite');
         }
+        processing dee link:', err);
+    }
+}
+
+// Helper function to fill referral input
+funtion fillRefrralInput(inviteCode) {
+    cont referralInput = document.querySelector('#referral-code');
+    if (referralInput && !referralInput.value) {
+        conole.log('📝 Filling referral input with:', inviteCode);
+        referralInput.value = viteCode;
         
+        // Triger events
+       referralInput.ispatchEvent(new Event('input', { bubbles: true }));
+        rfrralInut.dispatchEvent(new Event('change', { bubbles: true }));
+       referraInput.dspatchEvent(ew Event('eyup', { bubbles true }));
+        
+        // Mark as filled
+        referralInput.setAttribute('data-user-filled', 'true');
+        referralInput.setAttribute('data-invite-source 'deep_link_cordova');
+        
+        // Visual feedback
+        referralInput.style.borderColor = '#10B981';
+        referralInput.style.backgroundColor= '#ECFDF5';
+        stTimeout(() => {
+            eferalInput.style.bderColor = '';
+            referralInput.style.backgroundColor = '';
+        }, 3000
         if (inviteCode) {
             console.log('🎉 Invite code found from deep link:', inviteCode);
             
             // Check if user is already logged in
             const savedUserStr = localStorage.getItem('accessoireUser');
-            if (savedUserStr) {
-                try {
-                    const savedUser = JSON.parse(savedUserStr);
-                    if (savedUser && savedUser.email) {
-                        console.log('User already logged in - ignoring invite code');
-                        return;
-                    }
-                } catch (e) {}
-            }
-            
-            // Save invite code - same as web version
-            localStorage.setItem('pendingReferralCode', inviteCode);
-            sessionStorage.setItem('currentInviteCode', inviteCode);
-            
-            // Backup with timestamp
-            const inviteBackup = {
-                code: inviteCode,
-                timestamp: Date.now(),
-                source: 'deep_link_cordova',
-                userLoggedIn: false
-            };
+            if (savedUserSt
+        // Check if user is already logged inr) {
+                UsrStraccssorUs');
+        if (sveUsrStr{
+            try {
+     const savedc= sS s.vedUsvr = JSON.paSst(saUsrStr
+                         User && sa  oUsnr.emailsole.log('User already logged in - ignoring invite code');
+                                rUserulnggein - clering stors);
+                   loclStorage.remotem('pedngRferral'
+                    sessionStorage.removeItem('currentInviteCode');        }
+             cc     (ocaeSto ag{.emoveItem('vieCodeBackup');
+                  rurn;
+               }
+            } ctch() {}
+        }
+        
+        }svedvieCodelalSoag.gItempndingReC || 
+                              sssioSoag.gtItem('cueInitCode';
+        
+    // Sie (svvedtevioeCode) {
+            consoled-og('📦 Fo nd savsdainviteecode:',  as web version)
+            fillRStorage.setI((pngdIeC ieCode);
+       C}de{
+           s//eTrystosiocovSt foom brckup
+            coest backsmD('a = localStoragv.gotIeem',ivvittCodBackp'
+            if (backupData){
+            /try/{
+ Bkh            conscoa = ackupJSON.parse(backupData)
+                    const isRoceiC = (Daenow() - p.timestamp) < 300000;// minutes
+                    if (itRecinm && backup.code && !backup.usarLmggedInanow(),
+                     souconsole.log('📦rRecov ded i_vicd ca, fmbackup:, backup.code)
+                    userfillRoggedIn: fa(up.ce);
+                  }
+            }; catch(e {}
             localStorage.setItem('inviteCodeBackup', JSON.stringify(inviteBackup));
             
             // Try to fill referral input if exists
@@ -474,4 +558,3 @@ document.addEventListener('deviceready', function() {
 }, false);
 
 console.log('📱 Cordova Init complete');
-// Build trigger: Tue Feb  3 14:52:12 UTC 2026

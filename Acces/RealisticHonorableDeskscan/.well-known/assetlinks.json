@@ -14,5 +14,13 @@
       "package_name": "io.accessnetwork.app",
       "sha256_cert_fingerprints": ["D6:9E:C3:70:2D:06:1D:BA:B3:BA:31:68:85:02:0E:A5:6E:11:4C:DE:6B:13:37:88:D3:8B:5A:0E:38:91:CB:68"]
     }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.accessnetwork.app",
+      "sha256_cert_fingerprints": ["D6:9E:C3:70:2D:06:1D:BA:B3:BA:31:68:85:02:0E:A5:6E:11:4C:DE:6B:13:37:88:D3:8B:5A:0E:38:91:CB:68"]
+    }
   }
 ]
