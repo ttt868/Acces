@@ -2744,40 +2744,6 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     console.log('Dashboard invite button clicked - handling with proper user gesture:', inviteLink);
 
-    // ✅ Try Cordova Social Sharing Plugin first
-    if (window.plugins && window.plugins.socialsharing) {
-      try {
-        await new Promise((resolve, reject) => {
-          window.plugins.socialsharing.shareWithOptions({
-            message: 'Join me on Access Network and start earning ACCESS coins!',
-            subject: 'Join Access Network',
-            url: inviteLink
-          }, resolve, reject);
-        });
-        console.log('Shared via Cordova plugin');
-        return;
-      } catch (e) {
-        console.log('Cordova share cancelled or failed:', e);
-      }
-    }
-
-    // ✅ Try Web Share API
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Join Access Network',
-          text: 'Join me on Access Network and start earning ACCESS coins!',
-          url: inviteLink
-        });
-        if (typeof showNotification === 'function') {
-          showNotification('Invite link shared successfully!', 'success');
-        }
-        return;
-      } catch (e) {
-        console.log('Web share cancelled or failed:', e);
-      }
-    }
-
     // Function to show modal with invite link for manual copy
     const showInviteLinkModal = () => {
       // Check if dark theme is active
@@ -2944,12 +2910,50 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     };
 
     try {
+      // ✅ CORDOVA: Try Social Sharing Plugin first (handles cancel properly)
+      if (window.plugins && window.plugins.socialsharing) {
+        let shareCompleted = false;
+        
+        await new Promise((resolve) => {
+          window.plugins.socialsharing.shareWithOptions({
+            message: 'Join me on Access Network and start earning ACCESS coins!',
+            subject: 'Join Access Network',
+            url: inviteLink
+          }, function(result) {
+            // Success callback - check if actually shared
+            console.log('Social sharing result:', result);
+            if (result && result.completed) {
+              shareCompleted = true;
+              if (typeof showNotification === 'function') {
+                showNotification(translator.translate('Invite link shared successfully!'), 'success');
+              }
+            }
+            resolve();
+          }, function(error) {
+            // Error/cancel callback
+            console.log('Social sharing cancelled or failed:', error);
+            resolve();
+          });
+        });
+        
+        // If share was completed, we're done
+        if (shareCompleted) {
+          console.log('Link shared successfully via Cordova Social Sharing');
+          return;
+        }
+        
+        // If cancelled, show the modal as fallback
+        console.log('Share cancelled - showing modal as fallback');
+        showInviteLinkModal();
+        return;
+      }
+      
       // Try native sharing first (only on mobile and with proper user gesture)
       if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         try {
           await navigator.share({
-            title: 'Join AccessoireDigital',
-            text: 'Join me on AccessoireDigital and start processing digital assets!',
+            title: 'Join Access Network',
+            text: 'Join me on Access Network and start earning ACCESS coins!',
             url: inviteLink
           });
 
@@ -2961,7 +2965,9 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
           return;
         } catch (shareError) {
           console.log('Native sharing cancelled or failed:', shareError.message);
-          // Continue to other methods
+          // Show modal as fallback
+          showInviteLinkModal();
+          return;
         }
       }
 
@@ -3002,12 +3008,18 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
   // ظˆط¸ظٹظپط© ظ†ط³ط® ط§ظ„ط±ط§ط¨ط· ط§ظ„ظ…طھظˆط§ظپظ‚ط© ظ…ط¹ Dashboard
   window.copyInviteLink = async function() {
-    // ط§ط³طھط®ط¯ط§ظ… ظ†ظپط³ ظ…ظ†ط·ظ‚ showInviteModal ط§ظ„ظ…ط­ط³ظ†
+    // استخدام نفس منطق showInviteModal المحسن
     return window.showInviteModal();
   };
 
   // Enhanced Referral Copy Modal Functions - ULTRA-ADVANCED preservation system
   window.showReferralCopyModal = async function() {
+    // استخدام نفس منطق showInviteModal
+    return window.showInviteModal();
+  };
+
+  // Legacy function - redirects to showInviteModal
+  window.showReferralCopyModalLegacy = async function() {
     if (!currentUser || !currentUser.referral_code) {
       console.error('No user or referral code available');
       if (typeof showNotification === 'function') {
@@ -3021,40 +3033,6 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
     console.log('REFERRALS: Enhanced modal with Dashboard-style fallback:', inviteLink);
-
-    // ✅ Try Cordova Social Sharing Plugin first
-    if (window.plugins && window.plugins.socialsharing) {
-      try {
-        await new Promise((resolve, reject) => {
-          window.plugins.socialsharing.shareWithOptions({
-            message: 'Join me on Access Network and start earning ACCESS coins!',
-            subject: 'Join Access Network',
-            url: inviteLink
-          }, resolve, reject);
-        });
-        console.log('REFERRALS: Shared via Cordova plugin');
-        return;
-      } catch (e) {
-        console.log('REFERRALS: Cordova share cancelled or failed:', e);
-      }
-    }
-
-    // ✅ Try Web Share API
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Join Access Network',
-          text: 'Join me on Access Network and start earning ACCESS coins!',
-          url: inviteLink
-        });
-        if (typeof showNotification === 'function') {
-          showNotification('Invite link shared successfully!', 'success');
-        }
-        return;
-      } catch (e) {
-        console.log('REFERRALS: Web share cancelled or failed:', e);
-      }
-    }
 
     // Function to show modal with invite link for manual copy (same as Dashboard)
     const showReferralInviteLinkModal = () => {
