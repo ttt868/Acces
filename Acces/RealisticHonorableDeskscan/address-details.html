@@ -1,42 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="base-url.js"></script>
     <meta charset="UTF-8">
-    <!-- Cordova API Path Converter -->
+    <!-- Cordova API Path Converter - ENHANCED -->
     <script>
     (function() {
-        var isCordova = typeof window.cordova !== 'undefined' || 
-                        document.URL.indexOf('file://') === 0 || 
-                        document.URL.indexOf('localhost') === -1;
+        var API_BASE_URL = 'https://accesschain.org';
         
-        if (isCordova) {
-            var API_BASE_URL = 'https://accesschain.org';
-            var originalFetch = window.fetch;
-            
-            window.fetch = function(url, options) {
-                if (typeof url === 'string') {
-                    if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
-                        url = API_BASE_URL + url;
-                        console.log('[Cordova] Converted fetch URL:', url);
-                    }
-                }
-                return originalFetch.call(this, url, options);
-            };
-            
-            var originalXHROpen = XMLHttpRequest.prototype.open;
-            XMLHttpRequest.prototype.open = function(method, url) {
-                if (typeof url === 'string') {
-                    if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
-                        url = API_BASE_URL + url;
-                        console.log('[Cordova] Converted XHR URL:', url);
-                    }
-                }
-                return originalXHROpen.apply(this, [method, url].concat(Array.prototype.slice.call(arguments, 2)));
-            };
-            console.log('[Cordova] API path converter initialized for explorer page');
+        function fixApiUrl(url) {
+            if (typeof url !== 'string') return url;
+            if (url.startsWith(API_BASE_URL)) return url;
+            if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                return API_BASE_URL + url;
+            }
+            if (url.includes('/api/')) return API_BASE_URL + url.substring(url.indexOf('/api/'));
+            if (url.includes('/rpc/')) return API_BASE_URL + url.substring(url.indexOf('/rpc/'));
+            if (url.includes('/network/')) return API_BASE_URL + url.substring(url.indexOf('/network/'));
+            return url;
         }
+        
+        var originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            var finalUrl = (typeof url === 'string') ? fixApiUrl(url) : 
+                (url instanceof Request && fixApiUrl(url.url) !== url.url) ? new Request(fixApiUrl(url.url), url) : url;
+            return originalFetch.call(this, finalUrl, options);
+        };
+        
+        var originalXHROpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url) {
+            return originalXHROpen.apply(this, [method, fixApiUrl(url)].concat(Array.prototype.slice.call(arguments, 2)));
+        };
+        
+        console.log('[Cordova] API ready:', API_BASE_URL);
     })();
     </script>
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; connect-src * https://accesschain.org wss://accesschain.org https://*; img-src * 'self' data: blob: https:; style-src * 'self' 'unsafe-inline'; font-src * 'self' data:;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="no">
     <meta name="apple-mobile-web-app-capable" content="no">
@@ -2124,7 +2123,7 @@
 
                 // Get token holdings from blockchain API
                 try {
-                    const response = await fetch(`/api/explorer/address/${address}/tokens`);
+                    const response = await fetch(`https://accesschain.org/api/explorer/address/${address}/tokens`);
                     const data = await response.json();
 
                     if (data.success && data.tokens && data.tokens.length > 0) {
@@ -2227,7 +2226,7 @@
         async function loadAddressBalance(address) {
             try {
                 console.log('🔍 Fetching address data from:', `/api/explorer/address/${address}`);
-                const response = await fetch(`/api/explorer/address/${address}`);
+                const response = await fetch(`https://accesschain.org/api/explorer/address/${address}`);
                 const data = await response.json();
 
                 console.log('📦 Address data received:', data);
@@ -2310,7 +2309,7 @@
         async function loadAddressTransactions(address, page = 1, append = false) {
             try {
                 console.log('🔍 Fetching transactions for address:', address, 'page:', page);
-                const response = await fetch(`/api/explorer/address/${address}?page=${page}&limit=25`);
+                const response = await fetch(`https://accesschain.org/api/explorer/address/${address}?page=${page}&limit=25`);
                 const data = await response.json();
 
                 console.log('📦 Transactions data received:', data);
@@ -2749,7 +2748,7 @@
         // Load Google Client ID from secure server endpoint
         async function loadGoogleClientId() {
             try {
-                const response = await fetch('/api/oauth-config');
+                const response = await fetch('https://accesschain.org/api/oauth-config');
                 const data = await response.json();
                 if (data.success && data.clientId) {
                     GOOGLE_CLIENT_ID = data.clientId;
@@ -2870,7 +2869,7 @@
 
                 // ✅ Save user to database
                 try {
-                    const response = await fetch('/api/auth/explorer-google', {
+                    const response = await fetch('https://accesschain.org/api/auth/explorer-google', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({

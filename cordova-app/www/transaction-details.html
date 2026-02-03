@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
+    <script src="base-url.js"></script>
     <meta charset="UTF-8">
     <!-- Cordova API Path Converter - ENHANCED -->
     <script>
@@ -2599,8 +2600,7 @@
         // Get current network height for accurate confirmations
         async function getCurrentBlockHeight() {
             const endpoints = [
-                '/api/network/block/latest',
-                window.location.origin + '/api/network/block/latest'
+                'https://accesschain.org/api/network/block/latest'
             ];
 
             for (const endpoint of endpoints) {

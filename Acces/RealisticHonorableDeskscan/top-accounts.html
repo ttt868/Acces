@@ -1,42 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="base-url.js"></script>
     <meta charset="UTF-8">
-    <!-- Cordova API Path Converter -->
+    <!-- Cordova API Path Converter - ENHANCED -->
     <script>
     (function() {
-        var isCordova = typeof window.cordova !== 'undefined' || 
-                        document.URL.indexOf('file://') === 0 || 
-                        document.URL.indexOf('localhost') === -1;
+        var API_BASE_URL = 'https://accesschain.org';
         
-        if (isCordova) {
-            var API_BASE_URL = 'https://accesschain.org';
-            var originalFetch = window.fetch;
-            
-            window.fetch = function(url, options) {
-                if (typeof url === 'string') {
-                    if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
-                        url = API_BASE_URL + url;
-                        console.log('[Cordova] Converted fetch URL:', url);
-                    }
-                }
-                return originalFetch.call(this, url, options);
-            };
-            
-            var originalXHROpen = XMLHttpRequest.prototype.open;
-            XMLHttpRequest.prototype.open = function(method, url) {
-                if (typeof url === 'string') {
-                    if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
-                        url = API_BASE_URL + url;
-                        console.log('[Cordova] Converted XHR URL:', url);
-                    }
-                }
-                return originalXHROpen.apply(this, [method, url].concat(Array.prototype.slice.call(arguments, 2)));
-            };
-            console.log('[Cordova] API path converter initialized for explorer page');
+        function fixApiUrl(url) {
+            if (typeof url !== 'string') return url;
+            if (url.startsWith(API_BASE_URL)) return url;
+            if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                return API_BASE_URL + url;
+            }
+            if (url.includes('/api/')) return API_BASE_URL + url.substring(url.indexOf('/api/'));
+            if (url.includes('/rpc/')) return API_BASE_URL + url.substring(url.indexOf('/rpc/'));
+            if (url.includes('/network/')) return API_BASE_URL + url.substring(url.indexOf('/network/'));
+            return url;
         }
+        
+        var originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            var finalUrl = (typeof url === 'string') ? fixApiUrl(url) :
+                (url instanceof Request && fixApiUrl(url.url) !== url.url) ? new Request(fixApiUrl(url.url), url) : url;
+            return originalFetch.call(this, finalUrl, options);
+        };
+        
+        var originalXHROpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url) {
+            return originalXHROpen.apply(this, [method, fixApiUrl(url)].concat(Array.prototype.slice.call(arguments, 2)));
+        };
+        
+        console.log('[Cordova] API ready:', API_BASE_URL);
     })();
     </script>
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content: blob:; script-src * 'self' 'unsafe-inline' 'unsafe-eval'; connect-src * https://accesschain.org wss://accesschain.org http://localhost:* https://*; img-src * 'self' data: blob: https:; style-src * 'self' 'unsafe-inline'; font-src * 'self' data:;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="no">
     <meta name="apple-mobile-web-app-capable" content="no">
@@ -2387,7 +2386,7 @@
         // Load Google Client ID from secure server endpoint
         async function loadGoogleClientId() {
             try {
-                const response = await fetch('/api/oauth-config');
+                const response = await fetch('https://accesschain.org/api/oauth-config');
                 const data = await response.json();
                 if (data.success && data.clientId) {
                     GOOGLE_CLIENT_ID = data.clientId;
@@ -2948,69 +2947,45 @@
         // TOP ACCOUNTS SPECIFIC FUNCTIONS
         // ==========================================================================
 
-        // Load top accounts from API
+        // SIMPLE: Load top accounts from API
         async function loadTopAccounts() {
             const loadingIndicator = document.getElementById('loadingIndicator');
             const paginationSection = document.getElementById('paginationSection');
-
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'block';
-            }
-            if (paginationSection) {
-                paginationSection.style.display = 'none';
-            }
+            
+            if (loadingIndicator) loadingIndicator.style.display = 'block';
+            if (paginationSection) paginationSection.style.display = 'none';
 
             try {
-                console.log(`🔍 Loading top accounts - Page ${currentPage}, Limit ${entriesPerPage}`);
-
-                // Fetch from the API endpoint for top accounts
-                const response = await fetch(`/api/explorer/top-accounts?limit=${entriesPerPage}&page=${currentPage}`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Cache-Control': 'no-cache'
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('✅ API Response:', data);
-
-                    if (data.success && data.data && Array.isArray(data.data.accounts)) {
-                        allAccounts = data.data.accounts;
-                        totalAccounts = data.data.total || 0;
-                        totalSupply = parseFloat(data.data.totalSupply || 0);
-                        totalPages = Math.ceil(totalAccounts / entriesPerPage);
-
-                        console.log(`✅ Successfully loaded ${allAccounts.length} accounts for page ${currentPage}`);
-                        console.log(`📊 Total accounts: ${totalAccounts}, Total pages: ${totalPages}`);
-                    } else {
-                        console.log('ℹ️ No accounts found or invalid data format.');
-                        allAccounts = [];
-                        totalAccounts = 0;
-                        totalSupply = 0;
-                        totalPages = 1;
-                    }
+                const response = await fetch('https://accesschain.org/api/explorer/top-accounts?limit=' + entriesPerPage + '&page=' + currentPage);
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                
+                const data = await response.json();
+                console.log('✅ API Response:', data);
+                
+                if (data.success && data.data && Array.isArray(data.data.accounts)) {
+                    allAccounts = data.data.accounts;
+                    totalAccounts = data.data.total || 0;
+                    totalSupply = parseFloat(data.data.totalSupply || 0);
+                    totalPages = Math.ceil(totalAccounts / entriesPerPage);
+                    console.log('✅ Loaded ' + allAccounts.length + ' accounts');
                 } else {
-                    console.error('❌ Failed to fetch top accounts. Status:', response.status);
-                    throw new Error(`API request failed with status ${response.status}`);
+                    allAccounts = [];
+                    totalAccounts = 0;
+                    totalSupply = 0;
+                    totalPages = 1;
                 }
 
                 displayAccountsInTable();
                 updatePaginationUI();
                 loadAccountStats();
-
-                if (paginationSection) {
-                    paginationSection.style.display = 'flex';
-                }
+                
+                if (paginationSection) paginationSection.style.display = 'flex';
 
             } catch (error) {
-                console.error('❌ Error loading top accounts:', error);
-                showError('Failed to load top accounts. Please try again later.');
+                console.error('❌ Error:', error);
+                showError('Failed to load top accounts: ' + error.message);
             } finally {
-                if (loadingIndicator) {
-                    loadingIndicator.style.display = 'none';
-                }
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
             }
         }
 
