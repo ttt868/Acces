@@ -279,19 +279,17 @@ window.nativeGoogleSignOut = function() {
 
 // ✅ Deep Links Handler - لمعالجة روابط الدعوة
 document.addEventListener('deviceready', function() {
-    // Subscribe to deep links
+    console.log('📱 Setting up Deep Link handlers...');
+    
+    // Method 1: IonicDeeplink (if available)
     if (window.IonicDeeplink) {
+        console.log('📱 IonicDeeplink available');
         window.IonicDeeplink.route({
-            '/': {
-                target: 'index',
-                parent: 'index'
-            }
+            '/': { target: 'index', parent: 'index' }
         }, function(match) {
-            // Deep link matched
             console.log('🔗 Deep link matched:', match);
             handleDeepLinkInvite(match.$link);
         }, function(nomatch) {
-            // No match but still a deep link
             console.log('🔗 Deep link no match, checking URL:', nomatch);
             if (nomatch.$link && nomatch.$link.url) {
                 handleDeepLinkInvite(nomatch.$link);
@@ -299,13 +297,39 @@ document.addEventListener('deviceready', function() {
         });
     }
     
-    // Also handle Universal Links (cordova-plugin-deeplinks)
+    // Method 2: Universal Links (cordova-plugin-deeplinks)
     if (window.universalLinks) {
+        console.log('📱 universalLinks available');
         window.universalLinks.subscribe('deepLinkHandler', function(eventData) {
             console.log('🔗 Universal link received:', eventData);
             handleDeepLinkInvite(eventData);
         });
     }
+    
+    // Method 3: Check for intent data on app start
+    if (window.plugins && window.plugins.intentShim) {
+        window.plugins.intentShim.getIntent(function(intent) {
+            if (intent && intent.data) {
+                console.log('🔗 Intent data found:', intent.data);
+                handleDeepLinkInvite({ url: intent.data });
+            }
+        }, function(error) {
+            console.log('No intent data:', error);
+        });
+    }
+    
+    // Method 4: Check window.handleOpenURL (Cordova custom scheme)
+    window.handleOpenURL = function(url) {
+        console.log('🔗 handleOpenURL called:', url);
+        handleDeepLinkInvite({ url: url });
+    };
+    
+    // Method 5: Check if app was opened with URL
+    if (window.launchURL) {
+        console.log('🔗 Launch URL found:', window.launchURL);
+        handleDeepLinkInvite({ url: window.launchURL });
+    }
+    
 }, false);
 
 // Function to handle invite code from deep link
@@ -318,8 +342,17 @@ function handleDeepLinkInvite(linkData) {
         
         // Extract invite code from URL
         if (typeof url === 'string') {
-            const urlObj = new URL(url);
-            inviteCode = urlObj.searchParams.get('invite');
+            // Handle both https:// and accessnetwork:// schemes
+            try {
+                const urlObj = new URL(url);
+                inviteCode = urlObj.searchParams.get('invite');
+            } catch (e) {
+                // Try parsing as query string
+                const queryMatch = url.match(/[?&]invite=([^&]+)/);
+                if (queryMatch) {
+                    inviteCode = queryMatch[1];
+                }
+            }
         } else if (linkData.queryString) {
             const params = new URLSearchParams(linkData.queryString);
             inviteCode = params.get('invite');
@@ -327,6 +360,18 @@ function handleDeepLinkInvite(linkData) {
         
         if (inviteCode) {
             console.log('🎉 Invite code found from deep link:', inviteCode);
+            
+            // Check if user is already logged in
+            const savedUserStr = localStorage.getItem('accessoireUser');
+            if (savedUserStr) {
+                try {
+                    const savedUser = JSON.parse(savedUserStr);
+                    if (savedUser && savedUser.email) {
+                        console.log('User already logged in - ignoring invite code');
+                        return;
+                    }
+                } catch (e) {}
+            }
             
             // Save invite code - same as web version
             localStorage.setItem('pendingReferralCode', inviteCode);
@@ -342,12 +387,12 @@ function handleDeepLinkInvite(linkData) {
             localStorage.setItem('inviteCodeBackup', JSON.stringify(inviteBackup));
             
             // Try to fill referral input if exists
-            const referralInput = document.querySelector('#referral-code');
-            if (referralInput) {
-                referralInput.value = inviteCode;
-                referralInput.dispatchEvent(new Event('input', { bubbles: true }));
-                referralInput.dispatchEvent(new Event('change', { bubbles: true }));
-            }
+            fillReferralInput(inviteCode);
+            
+            // Also try after a delay (in case the page is still loading)
+            setTimeout(() => fillReferralInput(inviteCode), 500);
+            setTimeout(() => fillReferralInput(inviteCode), 1500);
+            setTimeout(() => fillReferralInput(inviteCode), 3000);
             
             // Show notification
             if (typeof showNotification === 'function') {
@@ -361,29 +406,68 @@ function handleDeepLinkInvite(linkData) {
     }
 }
 
+// Helper function to fill referral input
+function fillReferralInput(inviteCode) {
+    const referralInput = document.querySelector('#referral-code');
+    if (referralInput && !referralInput.value) {
+        console.log('📝 Filling referral input with:', inviteCode);
+        referralInput.value = inviteCode;
+        
+        // Trigger events
+        referralInput.dispatchEvent(new Event('input', { bubbles: true }));
+        referralInput.dispatchEvent(new Event('change', { bubbles: true }));
+        referralInput.dispatchEvent(new Event('keyup', { bubbles: true }));
+        
+        // Mark as filled
+        referralInput.setAttribute('data-user-filled', 'true');
+        referralInput.setAttribute('data-invite-source', 'deep_link_cordova');
+        
+        // Visual feedback
+        referralInput.style.borderColor = '#10B981';
+        referralInput.style.backgroundColor = '#ECFDF5';
+        setTimeout(() => {
+            referralInput.style.borderColor = '';
+            referralInput.style.backgroundColor = '';
+        }, 3000);
+    }
+}
+
 // Also check for invite code in localStorage on app start (recovered from previous session)
 document.addEventListener('deviceready', function() {
     setTimeout(function() {
+        // Check if user is already logged in
+        const savedUserStr = localStorage.getItem('accessoireUser');
+        if (savedUserStr) {
+            try {
+                const savedUser = JSON.parse(savedUserStr);
+                if (savedUser && savedUser.email) {
+                    console.log('User logged in - clearing stored invite codes');
+                    localStorage.removeItem('pendingReferralCode');
+                    sessionStorage.removeItem('currentInviteCode');
+                    localStorage.removeItem('inviteCodeBackup');
+                    return;
+                }
+            } catch (e) {}
+        }
+        
         const savedInviteCode = localStorage.getItem('pendingReferralCode') || 
                                sessionStorage.getItem('currentInviteCode');
         
         if (savedInviteCode) {
             console.log('📦 Found saved invite code:', savedInviteCode);
-            
-            // Try to fill referral input if exists and empty
-            const referralInput = document.querySelector('#referral-code');
-            if (referralInput && !referralInput.value) {
-                referralInput.value = savedInviteCode;
-                referralInput.dispatchEvent(new Event('input', { bubbles: true }));
-                referralInput.dispatchEvent(new Event('change', { bubbles: true }));
-                
-                // Visual feedback
-                referralInput.style.borderColor = '#10B981';
-                referralInput.style.backgroundColor = '#ECFDF5';
-                setTimeout(() => {
-                    referralInput.style.borderColor = '';
-                    referralInput.style.backgroundColor = '';
-                }, 2000);
+            fillReferralInput(savedInviteCode);
+        } else {
+            // Try to recover from backup
+            const backupData = localStorage.getItem('inviteCodeBackup');
+            if (backupData) {
+                try {
+                    const backup = JSON.parse(backupData);
+                    const isRecent = (Date.now() - backup.timestamp) < 300000; // 5 minutes
+                    if (isRecent && backup.code && !backup.userLoggedIn) {
+                        console.log('📦 Recovered invite code from backup:', backup.code);
+                        fillReferralInput(backup.code);
+                    }
+                } catch (e) {}
             }
         }
     }, 1500);

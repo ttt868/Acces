@@ -6,5 +6,13 @@
       "package_name": "org.accesschain.twa",
       "sha256_cert_fingerprints": ["BB:5B:40:E0:2A:1E:9B:6F:16:3D:3D:EF:22:73:9F:DD:51:BF:6B:54:21:61:8E:18:BE:6B:85:94:79:4E:0E:8E"]
     }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.accessnetwork.app",
+      "sha256_cert_fingerprints": ["D6:9E:C3:70:2D:06:1D:BA:B3:BA:31:68:85:02:0E:A5:6E:11:4C:DE:6B:13:37:88:D3:8B:5A:0E:38:91:CB:68"]
+    }
   }
 ]

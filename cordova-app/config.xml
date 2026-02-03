@@ -118,4 +118,24 @@
     
     <!-- ✅ Custom URL Scheme for accessnetwork:// links -->
     <preference name="AndroidLaunchMode" value="singleTask" />
+    
+    <!-- ✅ Android Intent Filter for Deep Links -->
+    <platform name="android">
+        <config-file parent="/manifest/application/activity[@android:name='MainActivity']" target="AndroidManifest.xml" xmlns:android="http://schemas.android.com/apk/res/android">
+            <!-- Intent filter for https://accesschain.org links -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="accesschain.org" />
+            </intent-filter>
+            <!-- Intent filter for custom scheme accessnetwork:// -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="accessnetwork" />
+            </intent-filter>
+        </config-file>
+    </platform>
 </widget>
