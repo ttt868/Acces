@@ -8,32 +8,6 @@ function fetchWithTimeout(url, options = {}, timeout = 15000) {
   ]);
 }
 
-// ✅ Universal Share Function - Works on Web & Cordova
-window.universalShare = async function(options) {
-  const { title, text, url } = options;
-  
-  // 1. Try Cordova Social Sharing Plugin first
-  if (window.plugins && window.plugins.socialsharing) {
-    return new Promise((resolve, reject) => {
-      // ✅ FIX: Include URL in message - some apps (Messenger) ignore separate 'url' parameter
-      window.plugins.socialsharing.shareWithOptions({
-        message: `${text}\n\n${url}`,
-        subject: title,
-        url: url
-      }, resolve, reject);
-    });
-  }
-  
-  // 2. Try Web Share API
-  if (navigator.share) {
-    return navigator.share({ title, text, url });
-  }
-  
-  // 3. Fallback - copy to clipboard
-  await navigator.clipboard.writeText(url);
-  throw new Error('COPIED'); // Signal that we copied instead of shared
-};
-
 // Global formatNumberSmart function (must be before DOMContentLoaded)
 // 1000 → 1,000.00 | 1 → 1.00 | 0 → 0.00 | 0.5 → 0.50 | 2.1 → 2.10
 window.formatNumberSmart = function(number) {
@@ -2368,52 +2342,91 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     const inviteLink = document.getElementById('invite-link-input').value;
 
     try {
-      // ✅ Use universal share (Cordova plugin + Web Share API + fallback)
-      await window.universalShare({
-        title: 'Join Access Network',
-        text: 'Join me on Access Network and start earning ACCESS coins!',
-        url: inviteLink
-      });
-      console.log('Link shared successfully');
-      return;
-    } catch (e) {
-      // If COPIED, show copy feedback
-      if (e.message === 'COPIED' || e.name === 'AbortError') {
-        // Show success feedback
-        const copyBtn = document.querySelector('.dashboard-copy-invite-btn, .copy-invite-btn');
-        if (copyBtn) {
-          const originalContent = Array.from(copyBtn.childNodes).map(node => node.cloneNode(true));
-          copyBtn.textContent = '';
-          const checkIcon = document.createElement('i');
-          checkIcon.className = 'fas fa-check';
-          const textSpan = document.createElement('span');
-          textSpan.textContent = 'Copied';
-          copyBtn.appendChild(checkIcon);
-          copyBtn.appendChild(document.createTextNode(' '));
-          copyBtn.appendChild(textSpan);
-          copyBtn.style.background = '#4CAF50';
-
-          setTimeout(() => {
-            copyBtn.textContent = '';
-            originalContent.forEach(node => copyBtn.appendChild(node));
-            copyBtn.style.background = '';
-          }, 2000);
-        }
-        if (typeof showNotification === 'function') {
-          showNotification('Invite link copied successfully!', 'success');
-        }
+      // Try native sharing on mobile first
+      if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        await navigator.share({
+          title: 'Join AccessoireDigital',
+          text: 'Join me on AccessoireDigital and start processing digital assets!',
+          url: inviteLink
+        });
+        console.log('Link shared successfully');
         return;
       }
-      console.error('Share error:', e);
+
+      // Fallback to clipboard
+      await navigator.clipboard.writeText(inviteLink);
+
+      // Show success feedback ط¨ط§ط³طھط®ط¯ط§ظ… ظƒظ„ط§ط³ Dashboard ط§ظ„طµط­ظٹط­
+      const copyBtn = document.querySelector('.dashboard-copy-invite-btn, .copy-invite-btn');
+      if (copyBtn) {
+        // Store original content safely
+        const originalContent = Array.from(copyBtn.childNodes).map(node => node.cloneNode(true));
+
+        // Secure: Update button with safe DOM methods
+        copyBtn.textContent = '';
+        const checkIcon = document.createElement('i');
+        checkIcon.className = 'fas fa-check';
+        const textSpan = document.createElement('span');
+        textSpan.textContent = 'Copied';
+        copyBtn.appendChild(checkIcon);
+        copyBtn.appendChild(document.createTextNode(' '));
+        copyBtn.appendChild(textSpan);
+        copyBtn.style.background = '#4CAF50';
+
+        setTimeout(() => {
+          copyBtn.textContent = '';
+          originalContent.forEach(node => copyBtn.appendChild(node));
+          copyBtn.style.background = '';
+        }, 2000);
+      }
+
+      // Show notification
+      if (typeof showNotification === 'function') {
+        showNotification('Invite link copied successfully!', 'success');
+      }
+
+    } catch (error) {
+      console.error('Error copying/sharing link:', error);
+
+      // Alternative copy method
+      const textArea = document.createElement('textarea');
+      textArea.value = inviteLink;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+
+      // Show success message
+      const copyBtn = document.querySelector('.dashboard-copy-invite-btn, .copy-invite-btn');
+      if (copyBtn) {
+        // Store original content safely
+        const originalContent = Array.from(copyBtn.childNodes).map(node => node.cloneNode(true));
+        
+        // Secure: Update button with safe DOM methods
+        copyBtn.textContent = '';
+        const checkIcon = document.createElement('i');
+        checkIcon.className = 'fas fa-check';
+        const textSpan = document.createElement('span');
+        textSpan.textContent = 'Copied';
+        copyBtn.appendChild(checkIcon);
+        copyBtn.appendChild(document.createTextNode(' '));
+        copyBtn.appendChild(textSpan);
+        copyBtn.style.background = '#4CAF50';
+
+        setTimeout(() => {
+          copyBtn.textContent = '';
+          originalContent.forEach(node => copyBtn.appendChild(node));
+          copyBtn.style.background = '';
+        }, 2000);
+      }
+
+      if (typeof showNotification === 'function') {
+        showNotification('Link copied successfully!', 'success');
+      }
     }
   };
 
-  window.closeInviteModal = function() {
-    const modal = document.getElementById('invite-modal');
-    if (modal) {
-      modal.style.display = 'none';
-    }
-  };
+
 
   // Referral Invitation System - Complete Implementation
   class ReferralInvitationSystem {
@@ -2745,40 +2758,6 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     console.log('Dashboard invite button clicked - handling with proper user gesture:', inviteLink);
 
-    // ✅ Try Cordova Social Sharing Plugin first
-    if (window.plugins && window.plugins.socialsharing) {
-      try {
-        await new Promise((resolve, reject) => {
-          window.plugins.socialsharing.shareWithOptions({
-            message: 'Join me on Access Network and start earning ACCESS coins!',
-            subject: 'Join Access Network',
-            url: inviteLink
-          }, resolve, reject);
-        });
-        console.log('Shared via Cordova plugin');
-        return;
-      } catch (e) {
-        console.log('Cordova share cancelled or failed:', e);
-      }
-    }
-
-    // ✅ Try Web Share API
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Join Access Network',
-          text: 'Join me on Access Network and start earning ACCESS coins!',
-          url: inviteLink
-        });
-        if (typeof showNotification === 'function') {
-          showNotification('Invite link shared successfully!', 'success');
-        }
-        return;
-      } catch (e) {
-        console.log('Web share cancelled or failed:', e);
-      }
-    }
-
     // Function to show modal with invite link for manual copy
     const showInviteLinkModal = () => {
       // Check if dark theme is active
@@ -3022,40 +3001,6 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
     console.log('REFERRALS: Enhanced modal with Dashboard-style fallback:', inviteLink);
-
-    // ✅ Try Cordova Social Sharing Plugin first
-    if (window.plugins && window.plugins.socialsharing) {
-      try {
-        await new Promise((resolve, reject) => {
-          window.plugins.socialsharing.shareWithOptions({
-            message: 'Join me on Access Network and start earning ACCESS coins!',
-            subject: 'Join Access Network',
-            url: inviteLink
-          }, resolve, reject);
-        });
-        console.log('REFERRALS: Shared via Cordova plugin');
-        return;
-      } catch (e) {
-        console.log('REFERRALS: Cordova share cancelled or failed:', e);
-      }
-    }
-
-    // ✅ Try Web Share API
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Join Access Network',
-          text: 'Join me on Access Network and start earning ACCESS coins!',
-          url: inviteLink
-        });
-        if (typeof showNotification === 'function') {
-          showNotification('Invite link shared successfully!', 'success');
-        }
-        return;
-      } catch (e) {
-        console.log('REFERRALS: Web share cancelled or failed:', e);
-      }
-    }
 
     // Function to show modal with invite link for manual copy (same as Dashboard)
     const showReferralInviteLinkModal = () => {
@@ -3379,41 +3324,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     console.log('ULTRA-ENHANCED copyReferralCodeOnly - SUPERIOR preservation system:', inviteLink);
 
-    // ✅ Try Cordova Social Sharing Plugin first
-    if (window.plugins && window.plugins.socialsharing) {
-      try {
-        await new Promise((resolve, reject) => {
-          window.plugins.socialsharing.shareWithOptions({
-            message: 'Join me on Access Network and start earning ACCESS coins!',
-            subject: 'Join Access Network',
-            url: inviteLink
-          }, resolve, reject);
-        });
-        console.log('copyReferralCodeOnly: Shared via Cordova plugin');
-        return;
-      } catch (e) {
-        console.log('copyReferralCodeOnly: Cordova share cancelled or failed:', e);
-      }
-    }
-
-    // ✅ Try Web Share API
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Join Access Network',
-          text: 'Join me on Access Network and start earning ACCESS coins!',
-          url: inviteLink
-        });
-        if (typeof showNotification === 'function') {
-          showNotification('Invite link shared successfully!', 'success');
-        }
-        return;
-      } catch (e) {
-        console.log('copyReferralCodeOnly: Web share cancelled or failed:', e);
-      }
-    }
-
-    // Fallback: Copy to clipboard
+    // طھط·ط¨ظٹظ‚ ظ†ط¸ط§ظ… ط­ظپط¸ ظ…طھط·ظˆط± ط¬ط¯ط§ظ‹ - ظٹظپظˆظ‚ Dashboard ط¨ظ…ط±ط§ط­ظ„
     try {
       // QUAD-REDUNDANT storage system - ط£ظ‚ظˆظ‰ ط¨ظƒط«ظٹط± ظ…ظ† Dashboard
       localStorage.setItem('pendingReferralCode', referralCode);
@@ -3627,43 +3538,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     console.log('ULTRA-ENHANCED shareReferralLink - MAXIMUM preservation power:', inviteLink);
 
-    // ✅ Try Cordova Social Sharing Plugin first
-    if (window.plugins && window.plugins.socialsharing) {
-      try {
-        await new Promise((resolve, reject) => {
-          window.plugins.socialsharing.shareWithOptions({
-            message: 'Join me on Access Network and start earning ACCESS coins!',
-            subject: 'Join Access Network',
-            url: inviteLink
-          }, resolve, reject);
-        });
-        console.log('shareReferralLink: Shared via Cordova plugin');
-        if (typeof closeReferralCopyModal === 'function') closeReferralCopyModal();
-        return;
-      } catch (e) {
-        console.log('shareReferralLink: Cordova share cancelled or failed:', e);
-      }
-    }
-
-    // ✅ Try Web Share API
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Join Access Network',
-          text: 'Join me on Access Network and start earning ACCESS coins!',
-          url: inviteLink
-        });
-        if (typeof showNotification === 'function') {
-          showNotification('Invite link shared successfully!', 'success');
-        }
-        if (typeof closeReferralCopyModal === 'function') closeReferralCopyModal();
-        return;
-      } catch (e) {
-        console.log('shareReferralLink: Web share cancelled or failed:', e);
-      }
-    }
-
-    // Fallback: Copy to clipboard and show modal
+    // ظ†ط¸ط§ظ… ط­ظپط¸ ظ…طھط·ظˆط± ظ„ظ„ط؛ط§ظٹط© - ظٹظپظˆظ‚ Dashboard ط¨ظ‚ظˆط© ظ‡ط§ط¦ظ„ط©
     try {
       // PENTA-REDUNDANT storage system - ط£ظ‚ظˆظ‰ ظ†ط¸ط§ظ… ط­ظپط¸ ظ…ظ…ظƒظ†
       localStorage.setItem('pendingReferralCode', referralCode);
@@ -3861,41 +3736,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     console.log('ULTRA-ENHANCED Profile invite - SUPREME preservation system:', inviteLink);
 
-    // ✅ Try Cordova Social Sharing Plugin first
-    if (window.plugins && window.plugins.socialsharing) {
-      try {
-        await new Promise((resolve, reject) => {
-          window.plugins.socialsharing.shareWithOptions({
-            message: 'Join me on Access Network and start earning ACCESS coins!',
-            subject: 'Join Access Network',
-            url: inviteLink
-          }, resolve, reject);
-        });
-        console.log('Profile: Shared via Cordova plugin');
-        return;
-      } catch (e) {
-        console.log('Profile: Cordova share cancelled or failed:', e);
-      }
-    }
-
-    // ✅ Try Web Share API
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Join Access Network',
-          text: 'Join me on Access Network and start earning ACCESS coins!',
-          url: inviteLink
-        });
-        if (typeof showNotification === 'function') {
-          showNotification('Invite link shared successfully!', 'success');
-        }
-        return;
-      } catch (e) {
-        console.log('Profile: Web share cancelled or failed:', e);
-      }
-    }
-
-    // Fallback: Storage and modal
+    // ظ†ط¸ط§ظ… ط­ظپط¸ ط®ط§ط±ظ‚ - ط£ظ‚ظˆظ‰ ظ…ظ† ط£ظٹ ط´ظٹط، ظ…ظˆط¬ظˆط¯
     try {
       // HEXA-REDUNDANT storage system - ظ†ط¸ط§ظ… ط³ط§ط¯ط³ ط§ظ„ط§ط­طھظٹط§ط·ظٹ
       localStorage.setItem('pendingReferralCode', referralCode);
@@ -8106,17 +7947,15 @@ window.addEventListener('load', applyArabicCssIfNeeded);
  // Save minimal user session data - only what's needed to keep user logged in
   function saveUserSession(user) {
     if (user) {
-      // Save essential authentication data INCLUDING avatar
-      // ✅ FIXED: Now includes name and avatar for proper session restoration
+      // Save only essential authentication data
       const minimalUserData = {
         id: user.id,
         email: user.email,
-        token: user.token,
-        name: user.name || 'User',
-        avatar: user.avatar || ''
+        token: user.token
+        // Don't store name or avatar in localStorage to ensure fresh data on login
       };
       localStorage.setItem('accessoireUser', JSON.stringify(minimalUserData));
-      console.log('Saved user session for:', minimalUserData.email, 'with avatar:', !!minimalUserData.avatar);
+      console.log('Saved minimal user session for:', minimalUserData.email);
     }
   }
 
@@ -8130,12 +7969,6 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         // Always force a fresh data load from server when restoring session
         userData._requiresRefresh = true;
         userData._forceUpdate = true; // Add flag to force fresh profile data
-        
-        // ✅ FIX: Ensure avatar has default value if missing (for old sessions)
-        if (!userData.avatar) {
-          userData.avatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
-        }
-        
         return userData;
       } catch (e) {
         console.error('Failed to parse saved user session:', e);
@@ -8217,16 +8050,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         updateUserCoins(userData.coins || 0);
         updateReferralCode(userData.referralCode);
 
-        // ✅ FIX: Preserve avatar if server returns null/empty
-        // Keep original avatar from Google if server has no avatar
-        const preservedAvatar = currentUser.avatar;
+        // Set current user data directly from server
         currentUser = {...currentUser, ...userData};
-        
-        // If server returned null/empty avatar but we had one, keep it
-        if (!currentUser.avatar && preservedAvatar) {
-          currentUser.avatar = preservedAvatar;
-          console.log('📷 Preserved original avatar from Google');
-        }
 
         // Explicitly update UI with the fresh data immediately
         updateUserInfo(currentUser);
@@ -8263,12 +8088,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           const retryData = await checkIfUserExists(email);
           if (retryData) {
             console.log('Retry successful, updating with fresh data');
-            // ✅ FIX: Preserve avatar
-            const preservedAvatar = currentUser.avatar;
             currentUser = {...currentUser, ...retryData};
-            if (!currentUser.avatar && preservedAvatar) {
-              currentUser.avatar = preservedAvatar;
-            }
             updateUserInfo(currentUser);
             updateUserCoins(retryData.coins || 0);
             updateReferralCode(retryData.referralCode);
@@ -8291,12 +8111,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         updateUserCoins(existingUser.coins || 0);
         updateReferralCode(existingUser.referralCode);
 
-        // ✅ FIX: Preserve avatar when merging
-        const preservedAvatar = currentUser.avatar;
+        // Merge with current user data
         const updatedUser = {...currentUser, ...existingUser};
-        if (!updatedUser.avatar && preservedAvatar) {
-          updatedUser.avatar = preservedAvatar;
-        }
         currentUser = updatedUser;
 
         // Update UI explicitly again
@@ -8331,12 +8147,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           if (result && result.user) {
             console.log('✅ New user created with ID:', result.user.id);
             // Update currentUser with the new ID
-            // ✅ FIX: Preserve avatar from Google
-            const preservedAvatar = currentUser.avatar;
             currentUser = {...currentUser, ...result.user, id: result.user.id};
-            if (!currentUser.avatar && preservedAvatar) {
-              currentUser.avatar = preservedAvatar;
-            }
             saveUserSession(currentUser);
           }
         } catch (createError) {
@@ -8474,12 +8285,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
             dashboardUserName.textContent = userData.name;
           }
 
-          // ✅ FIX: Preserve avatar if server returns null/empty
-          const preservedAvatar = currentUser.avatar;
+          // Update current user data
           currentUser = {...currentUser, ...userData};
-          if (!currentUser.avatar && preservedAvatar) {
-            currentUser.avatar = preservedAvatar;
-          }
           delete currentUser._forceUpdate;
           delete currentUser._requiresRefresh;
 
@@ -8641,9 +8448,6 @@ function initializeGoogleSignIn() {
       }).join(''));
       const payload = JSON.parse(jsonPayload);
       
-      // ✅ DEBUG: Log the picture from payload
-      console.log('📷 handleGoogleSignIn - payload.picture:', payload.picture ? payload.picture.substring(0, 80) : 'MISSING');
-      
       // Extract user information
       currentUser = {
         email: payload.email,
@@ -8653,7 +8457,6 @@ function initializeGoogleSignIn() {
       };
 
       console.log('Google Sign-in successful:', currentUser.email);
-      console.log('📷 currentUser.avatar set to:', currentUser.avatar ? currentUser.avatar.substring(0, 80) : 'MISSING');
 
       // Check for referral code from input field
       const referralInput = document.getElementById('referral-code');
@@ -8684,12 +8487,7 @@ function initializeGoogleSignIn() {
         console.log('⚡ Fast login: User has cached session, showing app immediately');
         // دمج البيانات المخزنة مع بيانات Google
         if (cachedUserData) {
-          // ✅ FIX: Preserve avatar from Google if cache has no avatar
-          const preservedAvatar = currentUser.avatar;
           currentUser = {...currentUser, ...cachedUserData};
-          if (!currentUser.avatar && preservedAvatar) {
-            currentUser.avatar = preservedAvatar;
-          }
         }
         continueWithLogin(currentUser, referralCode);
         return;
@@ -8726,12 +8524,7 @@ function initializeGoogleSignIn() {
         } else {
           // ✅ Existing user - merge data immediately before continuing
           console.log('⚡ User exists, merging data before login');
-          // ✅ FIX: Preserve avatar from Google
-          const preservedAvatar = currentUser.avatar;
           currentUser = {...currentUser, ...result};
-          if (!currentUser.avatar && preservedAvatar) {
-            currentUser.avatar = preservedAvatar;
-          }
           continueWithLogin(currentUser, referralCode);
         }
       }).catch(error => {
@@ -12549,12 +12342,7 @@ if (totalCost > (currentBalance + precision)) {
         // User exists, update UI with their data
         updateUserCoins(existingUser.coins || 0);
         updateReferralCode(existingUser.referralCode);
-        // ✅ FIX: Preserve avatar
-        const preservedAvatar = currentUser.avatar;
         currentUser = {...currentUser, ...existingUser};
-        if (!currentUser.avatar && preservedAvatar) {
-          currentUser.avatar = preservedAvatar;
-        }
 
         // Also load their referrals
         loadUserReferrals(existingUser.id);
@@ -12567,12 +12355,7 @@ if (totalCost > (currentBalance + precision)) {
           const responseData = await createUser(user, null, referralCode);
           if (responseData && responseData.user) {
             console.log('✅ Create user completed in processLogin, ID:', responseData.user.id);
-            // ✅ FIX: Preserve avatar from Google
-            const preservedAvatar = currentUser.avatar;
             currentUser = {...currentUser, ...responseData.user, id: responseData.user.id};
-            if (!currentUser.avatar && preservedAvatar) {
-              currentUser.avatar = preservedAvatar;
-            }
             saveUserSession(currentUser);
           }
         } catch (err) {
