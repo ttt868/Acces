@@ -2326,7 +2326,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     }
 
     const modal = document.getElementById('invite-modal-overlay');
-    const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
+    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -2512,7 +2512,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     generateInviteLink() {
       // Use current site domain (adapts to any domain)
-      const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
+      const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
       const referralCode = currentUser.referral_code;
       return `${baseUrl}?invite=${referralCode}`;
     }
@@ -2752,7 +2752,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
+    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -2996,7 +2996,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
+    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -3318,7 +3318,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
+    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -3532,7 +3532,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
+    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -3730,7 +3730,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
+    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -7947,15 +7947,17 @@ window.addEventListener('load', applyArabicCssIfNeeded);
  // Save minimal user session data - only what's needed to keep user logged in
   function saveUserSession(user) {
     if (user) {
-      // Save only essential authentication data
+      // Save essential authentication data INCLUDING avatar
+      // ✅ FIXED: Now includes name and avatar for proper session restoration
       const minimalUserData = {
         id: user.id,
         email: user.email,
-        token: user.token
-        // Don't store name or avatar in localStorage to ensure fresh data on login
+        token: user.token,
+        name: user.name || 'User',
+        avatar: user.avatar || ''
       };
       localStorage.setItem('accessoireUser', JSON.stringify(minimalUserData));
-      console.log('Saved minimal user session for:', minimalUserData.email);
+      console.log('Saved user session for:', minimalUserData.email, 'with avatar:', !!minimalUserData.avatar);
     }
   }
 
@@ -7969,6 +7971,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         // Always force a fresh data load from server when restoring session
         userData._requiresRefresh = true;
         userData._forceUpdate = true; // Add flag to force fresh profile data
+        
+        // ✅ FIX: Ensure avatar has default value if missing (for old sessions)
+        if (!userData.avatar) {
+          userData.avatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+        }
+        
         return userData;
       } catch (e) {
         console.error('Failed to parse saved user session:', e);
@@ -8050,8 +8058,16 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         updateUserCoins(userData.coins || 0);
         updateReferralCode(userData.referralCode);
 
-        // Set current user data directly from server
+        // ✅ FIX: Preserve avatar if server returns null/empty
+        // Keep original avatar from Google if server has no avatar
+        const preservedAvatar = currentUser.avatar;
         currentUser = {...currentUser, ...userData};
+        
+        // If server returned null/empty avatar but we had one, keep it
+        if (!currentUser.avatar && preservedAvatar) {
+          currentUser.avatar = preservedAvatar;
+          console.log('📷 Preserved original avatar from Google');
+        }
 
         // Explicitly update UI with the fresh data immediately
         updateUserInfo(currentUser);
@@ -8088,7 +8104,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           const retryData = await checkIfUserExists(email);
           if (retryData) {
             console.log('Retry successful, updating with fresh data');
+            // ✅ FIX: Preserve avatar
+            const preservedAvatar = currentUser.avatar;
             currentUser = {...currentUser, ...retryData};
+            if (!currentUser.avatar && preservedAvatar) {
+              currentUser.avatar = preservedAvatar;
+            }
             updateUserInfo(currentUser);
             updateUserCoins(retryData.coins || 0);
             updateReferralCode(retryData.referralCode);
@@ -8111,8 +8132,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         updateUserCoins(existingUser.coins || 0);
         updateReferralCode(existingUser.referralCode);
 
-        // Merge with current user data
+        // ✅ FIX: Preserve avatar when merging
+        const preservedAvatar = currentUser.avatar;
         const updatedUser = {...currentUser, ...existingUser};
+        if (!updatedUser.avatar && preservedAvatar) {
+          updatedUser.avatar = preservedAvatar;
+        }
         currentUser = updatedUser;
 
         // Update UI explicitly again
@@ -8147,7 +8172,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           if (result && result.user) {
             console.log('✅ New user created with ID:', result.user.id);
             // Update currentUser with the new ID
+            // ✅ FIX: Preserve avatar from Google
+            const preservedAvatar = currentUser.avatar;
             currentUser = {...currentUser, ...result.user, id: result.user.id};
+            if (!currentUser.avatar && preservedAvatar) {
+              currentUser.avatar = preservedAvatar;
+            }
             saveUserSession(currentUser);
           }
         } catch (createError) {
@@ -8285,8 +8315,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
             dashboardUserName.textContent = userData.name;
           }
 
-          // Update current user data
+          // ✅ FIX: Preserve avatar if server returns null/empty
+          const preservedAvatar = currentUser.avatar;
           currentUser = {...currentUser, ...userData};
+          if (!currentUser.avatar && preservedAvatar) {
+            currentUser.avatar = preservedAvatar;
+          }
           delete currentUser._forceUpdate;
           delete currentUser._requiresRefresh;
 
@@ -8448,6 +8482,9 @@ function initializeGoogleSignIn() {
       }).join(''));
       const payload = JSON.parse(jsonPayload);
       
+      // ✅ DEBUG: Log the picture from payload
+      console.log('📷 handleGoogleSignIn - payload.picture:', payload.picture ? payload.picture.substring(0, 80) : 'MISSING');
+      
       // Extract user information
       currentUser = {
         email: payload.email,
@@ -8457,6 +8494,7 @@ function initializeGoogleSignIn() {
       };
 
       console.log('Google Sign-in successful:', currentUser.email);
+      console.log('📷 currentUser.avatar set to:', currentUser.avatar ? currentUser.avatar.substring(0, 80) : 'MISSING');
 
       // Check for referral code from input field
       const referralInput = document.getElementById('referral-code');
@@ -8487,7 +8525,12 @@ function initializeGoogleSignIn() {
         console.log('⚡ Fast login: User has cached session, showing app immediately');
         // دمج البيانات المخزنة مع بيانات Google
         if (cachedUserData) {
+          // ✅ FIX: Preserve avatar from Google if cache has no avatar
+          const preservedAvatar = currentUser.avatar;
           currentUser = {...currentUser, ...cachedUserData};
+          if (!currentUser.avatar && preservedAvatar) {
+            currentUser.avatar = preservedAvatar;
+          }
         }
         continueWithLogin(currentUser, referralCode);
         return;
@@ -8524,7 +8567,12 @@ function initializeGoogleSignIn() {
         } else {
           // ✅ Existing user - merge data immediately before continuing
           console.log('⚡ User exists, merging data before login');
+          // ✅ FIX: Preserve avatar from Google
+          const preservedAvatar = currentUser.avatar;
           currentUser = {...currentUser, ...result};
+          if (!currentUser.avatar && preservedAvatar) {
+            currentUser.avatar = preservedAvatar;
+          }
           continueWithLogin(currentUser, referralCode);
         }
       }).catch(error => {
@@ -12342,7 +12390,12 @@ if (totalCost > (currentBalance + precision)) {
         // User exists, update UI with their data
         updateUserCoins(existingUser.coins || 0);
         updateReferralCode(existingUser.referralCode);
+        // ✅ FIX: Preserve avatar
+        const preservedAvatar = currentUser.avatar;
         currentUser = {...currentUser, ...existingUser};
+        if (!currentUser.avatar && preservedAvatar) {
+          currentUser.avatar = preservedAvatar;
+        }
 
         // Also load their referrals
         loadUserReferrals(existingUser.id);
@@ -12355,7 +12408,12 @@ if (totalCost > (currentBalance + precision)) {
           const responseData = await createUser(user, null, referralCode);
           if (responseData && responseData.user) {
             console.log('✅ Create user completed in processLogin, ID:', responseData.user.id);
+            // ✅ FIX: Preserve avatar from Google
+            const preservedAvatar = currentUser.avatar;
             currentUser = {...currentUser, ...responseData.user, id: responseData.user.id};
+            if (!currentUser.avatar && preservedAvatar) {
+              currentUser.avatar = preservedAvatar;
+            }
             saveUserSession(currentUser);
           }
         } catch (err) {
