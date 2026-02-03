@@ -1171,7 +1171,7 @@ Users can process once every 24 hours to collect 0.25 Points.
 5. Security
 Enterprise-grade security with encrypted user accounts and secure benefit processing.
 
-For more information, visit our platform at: ${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}
+For more information, visit our platform at: ${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}
       `.trim();
 
       // Create and download the file
@@ -2745,6 +2745,40 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     console.log('Dashboard invite button clicked - handling with proper user gesture:', inviteLink);
 
+    // ✅ Try Cordova Social Sharing Plugin first
+    if (window.plugins && window.plugins.socialsharing) {
+      try {
+        await new Promise((resolve, reject) => {
+          window.plugins.socialsharing.shareWithOptions({
+            message: 'Join me on Access Network and start earning ACCESS coins!',
+            subject: 'Join Access Network',
+            url: inviteLink
+          }, resolve, reject);
+        });
+        console.log('Shared via Cordova plugin');
+        return;
+      } catch (e) {
+        console.log('Cordova share cancelled or failed:', e);
+      }
+    }
+
+    // ✅ Try Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join Access Network',
+          text: 'Join me on Access Network and start earning ACCESS coins!',
+          url: inviteLink
+        });
+        if (typeof showNotification === 'function') {
+          showNotification('Invite link shared successfully!', 'success');
+        }
+        return;
+      } catch (e) {
+        console.log('Web share cancelled or failed:', e);
+      }
+    }
+
     // Function to show modal with invite link for manual copy
     const showInviteLinkModal = () => {
       // Check if dark theme is active
@@ -2911,52 +2945,12 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     };
 
     try {
-      // ✅ CORDOVA: Try Social Sharing Plugin first (handles cancel properly)
-      if (window.plugins && window.plugins.socialsharing) {
-        let shareCompleted = false;
-        
-        await new Promise((resolve) => {
-          // ✅ FIX: Include the URL IN the message so all apps show it correctly
-          // Some apps (like Messenger) ignore the separate 'url' parameter
-          window.plugins.socialsharing.shareWithOptions({
-            message: `Join me on Access Network and start earning ACCESS coins!\n\n${inviteLink}`,
-            subject: 'Join Access Network',
-            url: inviteLink  // Keep url for apps that support it (will show link twice but ensures it works)
-          }, function(result) {
-            // Success callback - check if actually shared
-            console.log('Social sharing result:', result);
-            if (result && result.completed) {
-              shareCompleted = true;
-              if (typeof showNotification === 'function') {
-                showNotification(translator.translate('Invite link shared successfully!'), 'success');
-              }
-            }
-            resolve();
-          }, function(error) {
-            // Error/cancel callback
-            console.log('Social sharing cancelled or failed:', error);
-            resolve();
-          });
-        });
-        
-        // If share was completed, we're done
-        if (shareCompleted) {
-          console.log('Link shared successfully via Cordova Social Sharing');
-          return;
-        }
-        
-        // If cancelled, show the modal as fallback
-        console.log('Share cancelled - showing modal as fallback');
-        showInviteLinkModal();
-        return;
-      }
-      
       // Try native sharing first (only on mobile and with proper user gesture)
       if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         try {
           await navigator.share({
-            title: 'Join Access Network',
-            text: 'Join me on Access Network and start earning ACCESS coins!',
+            title: 'Join AccessoireDigital',
+            text: 'Join me on AccessoireDigital and start processing digital assets!',
             url: inviteLink
           });
 
@@ -2968,9 +2962,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
           return;
         } catch (shareError) {
           console.log('Native sharing cancelled or failed:', shareError.message);
-          // Show modal as fallback
-          showInviteLinkModal();
-          return;
+          // Continue to other methods
         }
       }
 
@@ -3011,18 +3003,12 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
   // ظˆط¸ظٹظپط© ظ†ط³ط® ط§ظ„ط±ط§ط¨ط· ط§ظ„ظ…طھظˆط§ظپظ‚ط© ظ…ط¹ Dashboard
   window.copyInviteLink = async function() {
-    // استخدام نفس منطق showInviteModal المحسن
+    // ط§ط³طھط®ط¯ط§ظ… ظ†ظپط³ ظ…ظ†ط·ظ‚ showInviteModal ط§ظ„ظ…ط­ط³ظ†
     return window.showInviteModal();
   };
 
   // Enhanced Referral Copy Modal Functions - ULTRA-ADVANCED preservation system
   window.showReferralCopyModal = async function() {
-    // استخدام نفس منطق showInviteModal
-    return window.showInviteModal();
-  };
-
-  // Legacy function - redirects to showInviteModal
-  window.showReferralCopyModalLegacy = async function() {
     if (!currentUser || !currentUser.referral_code) {
       console.error('No user or referral code available');
       if (typeof showNotification === 'function') {
@@ -3036,6 +3022,40 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
     console.log('REFERRALS: Enhanced modal with Dashboard-style fallback:', inviteLink);
+
+    // ✅ Try Cordova Social Sharing Plugin first
+    if (window.plugins && window.plugins.socialsharing) {
+      try {
+        await new Promise((resolve, reject) => {
+          window.plugins.socialsharing.shareWithOptions({
+            message: 'Join me on Access Network and start earning ACCESS coins!',
+            subject: 'Join Access Network',
+            url: inviteLink
+          }, resolve, reject);
+        });
+        console.log('REFERRALS: Shared via Cordova plugin');
+        return;
+      } catch (e) {
+        console.log('REFERRALS: Cordova share cancelled or failed:', e);
+      }
+    }
+
+    // ✅ Try Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join Access Network',
+          text: 'Join me on Access Network and start earning ACCESS coins!',
+          url: inviteLink
+        });
+        if (typeof showNotification === 'function') {
+          showNotification('Invite link shared successfully!', 'success');
+        }
+        return;
+      } catch (e) {
+        console.log('REFERRALS: Web share cancelled or failed:', e);
+      }
+    }
 
     // Function to show modal with invite link for manual copy (same as Dashboard)
     const showReferralInviteLinkModal = () => {
@@ -3363,9 +3383,8 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     if (window.plugins && window.plugins.socialsharing) {
       try {
         await new Promise((resolve, reject) => {
-          // ✅ FIX: Include URL in message - some apps (Messenger) ignore separate 'url' parameter
           window.plugins.socialsharing.shareWithOptions({
-            message: `Join me on Access Network and start earning ACCESS coins!\n\n${inviteLink}`,
+            message: 'Join me on Access Network and start earning ACCESS coins!',
             subject: 'Join Access Network',
             url: inviteLink
           }, resolve, reject);
@@ -3612,9 +3631,8 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     if (window.plugins && window.plugins.socialsharing) {
       try {
         await new Promise((resolve, reject) => {
-          // ✅ FIX: Include URL in message - some apps (Messenger) ignore separate 'url' parameter
           window.plugins.socialsharing.shareWithOptions({
-            message: `Join me on Access Network and start earning ACCESS coins!\n\n${inviteLink}`,
+            message: 'Join me on Access Network and start earning ACCESS coins!',
             subject: 'Join Access Network',
             url: inviteLink
           }, resolve, reject);
@@ -3847,9 +3865,8 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     if (window.plugins && window.plugins.socialsharing) {
       try {
         await new Promise((resolve, reject) => {
-          // ✅ FIX: Include URL in message - some apps (Messenger) ignore separate 'url' parameter
           window.plugins.socialsharing.shareWithOptions({
-            message: `Join me on Access Network and start earning ACCESS coins!\n\n${inviteLink}`,
+            message: 'Join me on Access Network and start earning ACCESS coins!',
             subject: 'Join Access Network',
             url: inviteLink
           }, resolve, reject);
@@ -8885,7 +8902,7 @@ function initializeGoogleSignIn() {
       let serverWalletData = null;
 
       try {
-        const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/wallet-key/${currentUser.id}`);
+        const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/wallet-key/${currentUser.id}`);
         if (response.ok) {
           serverWalletData = await response.json();
           console.log("Retrieved wallet key from server");
@@ -9419,7 +9436,7 @@ function initializeGoogleSignIn() {
       try {
         console.log(`Saving QR code to server, attempt ${4-retries}/3`);
 
-        const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/qrcode/save`, {
+        const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/qrcode/save`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -10579,7 +10596,7 @@ window.copyAccountAddress = function() {
   // Fetch wallet info from server
   async function fetchWalletInfoFromServer(walletAddress) {
     try {
-      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/wallet/${walletAddress}`);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/wallet/${walletAddress}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -10598,7 +10615,7 @@ window.copyAccountAddress = function() {
   // Sync wallet balance with server
   async function syncBalanceWithServer(userId, balance) {
     try {
-      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/sync-balance`, {
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/sync-balance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, balance })
@@ -11111,7 +11128,7 @@ if (totalCost > (currentBalance + precision)) {
   // Fetch recipient from server database
   async function fetchRecipientFromServer(walletAddress) {
     try {
-      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/wallet/${walletAddress}`);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/wallet/${walletAddress}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -11133,7 +11150,7 @@ if (totalCost > (currentBalance + precision)) {
   async function fetchUserById(userId) {
     try {
       // Use a request to get user data by ID
-      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/id/${userId}`);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/id/${userId}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -11152,7 +11169,7 @@ if (totalCost > (currentBalance + precision)) {
   // Update user coins on server
   async function updateUserCoinsOnServer(userId, newCoins) {
     try {
-      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/update-coins`, {
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/update-coins`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, coins: newCoins })
@@ -11180,7 +11197,7 @@ if (totalCost > (currentBalance + precision)) {
         hash: transactionData.hash?.substring(0, 10) + '...'
       });
 
-      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/transaction/record`, {
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/transaction/record`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(transactionData)
@@ -11248,7 +11265,7 @@ if (totalCost > (currentBalance + precision)) {
     try {
       // Make a request to check if the wallet address exists on any user
       console.log(`Checking server for wallet address: ${address}`);
-      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/wallet/${address}`);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/wallet/${address}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -11435,7 +11452,7 @@ if (totalCost > (currentBalance + precision)) {
 
         try {
           console.log(`Trying to fetch transactions from: ${endpoint}`);
-          const tempResponse = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}${endpoint}`);
+          const tempResponse = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}${endpoint}`);
 
           if (tempResponse.ok) {
             response = tempResponse;
@@ -11452,14 +11469,14 @@ if (totalCost > (currentBalance + precision)) {
       if (!response && currentUser.wallet && currentUser.wallet.publicAddress) {
         try {
           // Check endpoint API status
-          const apiCheckResponse = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/wallet/`);
+          const apiCheckResponse = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/wallet/`);
           console.log(`API check response status:`, apiCheckResponse.status);
 
           // Try to use wallet address directly
           const walletEndpoint = `/api/wallet/${currentUser.wallet.publicAddress}`;
           console.log(`Last attempt using wallet directly: ${walletEndpoint}`);
 
-          const walletResponse = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}${walletEndpoint}`);
+          const walletResponse = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}${walletEndpoint}`);
           if (walletResponse.ok) {
             response = walletResponse;
             successEndpoint = walletEndpoint;
@@ -12117,7 +12134,7 @@ if (totalCost > (currentBalance + precision)) {
 
     try {
       console.log("Fetching transactions from server for user:", currentUser.id);
-      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/user/${currentUser.id}/transactions`);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/${currentUser.id}/transactions`);
 
       if (!response.ok) {
         throw new Error(`Server returned status: ${response.status}`);
@@ -12588,7 +12605,7 @@ if (totalCost > (currentBalance + precision)) {
 
   try {
     // 🔧 CORDOVA FIX: Use getApiOrigin() for API calls
-    const origin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
+    const origin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const apiUrl = `${origin}/api/user/${encodeURIComponent(email)}`;
     console.log('Checking if user exists at:', apiUrl);
 
@@ -12683,7 +12700,7 @@ if (totalCost > (currentBalance + precision)) {
       console.log('📦 User data being sent to server:', userData);
 
       // 🔧 CORDOVA FIX: Use getApiOrigin() for API calls
-      const origin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : (typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin));
+      const origin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
       
       // Send the create request
       const response = await fetch(`${origin}/api/users`, {
@@ -12808,7 +12825,7 @@ if (totalCost > (currentBalance + precision)) {
   // Load user referrals from database
   async function loadUserReferrals(userId) {
     try {
-      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/referrals/${userId}`);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/referrals/${userId}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -13799,7 +13816,7 @@ window.cancelProfileChanges = cancelProfileChanges;
            try {
              console.log(`Trying endpoint ${i+1}/${endpoints.length}: ${endpoint.method} ${endpoint.url}`);
 
-             const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}${endpoint.url}`, {
+             const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}${endpoint.url}`, {
                method: endpoint.method,
                headers: {
                  'Content-Type': 'application/json'
@@ -15132,7 +15149,7 @@ window.cancelProfileChanges = cancelProfileChanges;
   // Add function to update lastPayout in the database
   async function updateLastPayout(userId) {
     try {
-      const response = await fetch(`${(typeof getShareOrigin !== "undefined" ? getShareOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin))}/api/users/${userId}/lastpayout`, {
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/users/${userId}/lastpayout`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

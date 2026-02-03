@@ -790,54 +790,9 @@ document.addEventListener('balanceUpdated', function(event) {
     loadGoogleOAuthConfig();
 
     window.signInWithGoogle = function() {
-      // ✅ CORDOVA: cordova-init.js already set up signInWithGoogle with native plugin
-      // If it's already defined and working, use it
-      if (window.IS_CORDOVA_APP) {
-        console.log('📱 Cordova detected - signInWithGoogle should be from cordova-init.js');
-        // cordova-init.js will override this function with the native one
-        // If we get here, it means cordova-init.js hasn't loaded yet
-        // Wait and try again
-        setTimeout(() => {
-          if (typeof window.plugins !== 'undefined' && window.plugins.googleplus) {
-            console.log('📱 Google Plus plugin found, calling login directly');
-            window.plugins.googleplus.login(
-              {
-                scopes: 'profile email',
-                webClientId: window.GOOGLE_CLIENT_ID_WEB,
-                offline: true
-              },
-              function(userData) {
-                console.log('✅ Native sign-in success:', userData.email);
-                // Create fake JWT for handleGoogleSignIn
-                const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
-                const payload = {
-                  email: userData.email,
-                  name: userData.displayName,
-                  picture: DEFAULT_AVATAR,
-                  sub: userData.userId
-                };
-                const b64 = str => btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-                const header = b64(JSON.stringify({alg: 'none', typ: 'JWT'}));
-                const body = b64(JSON.stringify(payload));
-                const fakeCredential = header + '.' + body + '.fake';
-                if (typeof window.handleGoogleSignIn === 'function') {
-                  window.handleGoogleSignIn({ credential: fakeCredential, select_by: 'cordova' });
-                }
-              },
-              function(error) {
-                console.error('❌ Native sign-in error:', error);
-                alert('Sign-in failed: ' + String(error));
-              }
-            );
-          } else {
-            console.error('Google Plus plugin not available');
-            alert('Google Sign-In not available. Please restart the app.');
-          }
-        }, 500);
-        return;
-      }
+      // For Cordova, the native signInWithGoogle is set up by cordova-init.js
+      // This function will be overridden by cordova-init.js
       
-      // WEB: Use Google Identity Services
       if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
         try {
           console.log('Using enhanced Google sign-in with FedCM-safe configuration');
