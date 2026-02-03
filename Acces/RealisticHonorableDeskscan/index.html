@@ -3199,14 +3199,14 @@ Access-Network is a digital rewards platform combining innovation, community fea
 
     <script>
       // Access Network configuration for wallet connection
-      // Always use official domain - NOT localhost
-      const currentOrigin = 'https://accesschain.org';
+      // Use BASE_URL from base-url.js (dynamic for web, fixed for Cordova)
+      const currentOrigin = window.BASE_URL || window.location.origin;
       const accessNetworkConfig = {
         chainId: '0x5968',
         chainName: 'Access Network',
         nativeCurrency: { name: 'ACCESS', symbol: 'ACCESS', decimals: 18 },
-        rpcUrls: ['https://accesschain.org/rpc'],
-        blockExplorerUrls: ['https://accesschain.org/transaction-details.html?hash=']
+        rpcUrls: [currentOrigin + '/rpc'],
+        blockExplorerUrls: [currentOrigin + '/transaction-details.html?hash=']
       };
 
       function openWalletConnectModal() {
