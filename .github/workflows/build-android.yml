@@ -112,12 +112,23 @@ jobs:
       run: |
         echo '🔧 Fixing android:exported for Firebase Messaging Service...'
         MANIFEST="platforms/android/app/src/main/AndroidManifest.xml"
-        # Fix: Add android:exported="false" attribute to service tag (in-place edit, not duplicate)
-        sed -i '/<service android:name="by.chemerisuk.cordova.firebase.FirebaseMessagingPluginService"/s/>/ android:exported="false">/' "$MANIFEST"
-        # Also fix receiver if exists
-        sed -i '/<receiver android:name="by.chemerisuk.cordova.firebase/s/>/ android:exported="false">/' "$MANIFEST"
-        echo '📋 Manifest after fix:'
-        grep -A2 "FirebaseMessaging" "$MANIFEST" || true
+        
+        # Remove duplicate service entries first, keep only one
+        # Use awk to remove duplicate FirebaseMessagingPluginService blocks
+        awk '
+        /service android:name="by.chemerisuk.cordova.firebase.FirebaseMessagingPluginService"/ {
+          if (seen) { skip=1; next }
+          seen=1
+        }
+        /<\/service>/ && skip { skip=0; next }
+        !skip { print }
+        ' "$MANIFEST" > "${MANIFEST}.tmp" && mv "${MANIFEST}.tmp" "$MANIFEST"
+        
+        # Now add android:exported="false" to the remaining service
+        sed -i 's/<service android:name="by.chemerisuk.cordova.firebase.FirebaseMessagingPluginService">/<service android:name="by.chemerisuk.cordova.firebase.FirebaseMessagingPluginService" android:exported="false">/g' "$MANIFEST"
+        
+        echo '📋 FirebaseMessaging entries count:'
+        grep -c "FirebaseMessagingPluginService" "$MANIFEST" || echo "0"
         echo '✅ Fixed android:exported attribute'
 
     - name: Remove local-notification from platform
