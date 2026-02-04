@@ -12285,6 +12285,13 @@ if (totalCost > (currentBalance + precision)) {
     document.documentElement.classList.add('app-ready');
     document.body.classList.add('app-ready');
 
+    // 📲 إظهار install prompt فوراً بعد قبول الشروط والدخول
+    setTimeout(() => {
+      if (typeof showInstallButton === 'function') {
+        showInstallButton(true); // true = إظهار فوري
+      }
+    }, 2000); // انتظر 2 ثواني ثم أظهر فوراً
+
     // Force the user object to request a fresh update
     user._forceUpdate = true;
 
