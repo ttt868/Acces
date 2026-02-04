@@ -490,8 +490,16 @@ class AccessNotificationSystem {
         return;
       }
       
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/presence?userId=${this.userId}`;
+      // ✅ FIX: Use correct WebSocket URL for Cordova
+      let wsUrl;
+      if (window.IS_CORDOVA_APP || window.WS_BASE_URL) {
+        // Cordova mode - use configured WebSocket URL
+        wsUrl = `${window.WS_BASE_URL || 'wss://accesschain.org'}/presence?userId=${this.userId}`;
+      } else {
+        // Web mode - use current host
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//${window.location.host}/presence?userId=${this.userId}`;
+      }
       
       console.log('Notification WebSocket connecting to:', wsUrl);
       this.ws = new WebSocket(wsUrl);

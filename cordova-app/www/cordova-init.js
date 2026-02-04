@@ -176,6 +176,9 @@ document.addEventListener('deviceready', function() {
     // ✅ Setup Native Local Notifications
     setupNativeNotifications();
     
+    // ✅ Request notification permission on Android 13+
+    requestNotificationPermission();
+    
     // Setup Google Sign-In
     setupGoogleSignIn();
     
@@ -311,6 +314,46 @@ function setupNativeNotifications() {
         window.Notification.requestPermission = function(callback) {
             return Promise.resolve('granted').then(r => { if (callback) callback(r); return r; });
         };
+    }
+}
+
+// ✅ Request notification permission on Android 13+ (API 33+)
+function requestNotificationPermission() {
+    console.log('📱 Requesting notification permission...');
+    
+    // Check if cordova.plugins.permissions is available
+    if (window.cordova && window.cordova.plugins && window.cordova.plugins.permissions) {
+        const permissions = cordova.plugins.permissions;
+        
+        // POST_NOTIFICATIONS permission for Android 13+
+        permissions.checkPermission(permissions.POST_NOTIFICATIONS, function(status) {
+            if (!status.hasPermission) {
+                console.log('🔔 Requesting POST_NOTIFICATIONS permission...');
+                permissions.requestPermission(permissions.POST_NOTIFICATIONS, function(status) {
+                    if (status.hasPermission) {
+                        console.log('✅ Notification permission granted!');
+                        window.notificationPermissionGranted = true;
+                    } else {
+                        console.log('❌ Notification permission denied');
+                        window.notificationPermissionGranted = false;
+                    }
+                }, function(error) {
+                    console.error('Error requesting permission:', error);
+                });
+            } else {
+                console.log('✅ Notification permission already granted');
+                window.notificationPermissionGranted = true;
+            }
+        }, function(error) {
+            // Permission doesn't exist (Android < 13) - assume granted
+            console.log('📱 POST_NOTIFICATIONS not required on this Android version');
+            window.notificationPermissionGranted = true;
+        });
+    } else {
+        // No permissions plugin - show toast asking user
+        console.log('⚠️ Permissions plugin not available');
+        // For Android < 13, notifications are enabled by default
+        window.notificationPermissionGranted = true;
     }
 }
 
