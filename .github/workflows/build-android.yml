@@ -98,6 +98,13 @@ jobs:
         cordova platform add android@12.0.1 --verbose
         echo '✅ Android platform added'
     
+    - name: Copy google-services.json for Firebase
+      working-directory: cordova-app
+      run: |
+        echo '🔥 Copying google-services.json for Firebase...'
+        cp google-services.json platforms/android/app/google-services.json
+        echo '✅ google-services.json copied to platforms/android/app/'
+
     - name: Remove local-notification from platform
       working-directory: cordova-app
       run: |
