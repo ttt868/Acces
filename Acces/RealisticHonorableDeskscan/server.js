@@ -1083,14 +1083,13 @@ function getFCMTranslation(lang, key) {
 }
 
 // ✅ Send FCM notification to recipient (for Cordova app)
+// Sends data-only message - app translates based on current device language
 async function sendFCMNotificationToRecipient(transactionData) {
   console.log('📱 [FCM] Starting FCM notification for transaction...');
   try {
     const recipientWallet = transactionData.to.toLowerCase();
     const amount = formatAmountSmart(transactionData.amount || 0);
     const fromAddress = transactionData.from.toLowerCase();
-    const fromShort = fromAddress.length > 10 ? 
-      `${fromAddress.substring(0, 6)}...${fromAddress.substring(fromAddress.length - 4)}` : fromAddress;
 
     console.log('📱 [FCM] Looking for user with wallet:', recipientWallet);
 
@@ -1105,29 +1104,30 @@ async function sendFCMNotificationToRecipient(transactionData) {
       return;
     }
     const userId = userResult.rows[0].id;
+    console.log('📱 [FCM] Found user:', userId);
 
-    // Get device language from FCM token (more accurate than user profile)
-    const fcmResult = await pool.query(
-      'SELECT language FROM fcm_tokens WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1',
-      [userId]
-    );
-    const deviceLang = fcmResult.rows.length > 0 
-      ? (fcmResult.rows[0].language || 'en').substring(0, 2).toLowerCase()
-      : 'en';
-    
-    console.log('📱 [FCM] Found user:', userId, 'device language:', deviceLang);
-
-    // Get translated notification text (same format as web - uses device language)
-    const newTxText = getFCMTranslation(deviceLang, 'newTransaction');
-    const fromLabel = getFCMTranslation(deviceLang, 'fromLabel');
-    const amountLabel = getFCMTranslation(deviceLang, 'amountLabel');
-    
-    const title = 'Access Network';
-    const body = `${newTxText}\n${amountLabel}: ${amount} ACCESS\n${fromLabel}: ${fromShort}`;
-
-    // Send FCM notification
-    if (fcmService && typeof fcmService.sendFCMNotification === 'function') {
-      const result = await fcmService.sendFCMNotification(userId, title, body);
+    // Send FCM with data only - app will translate based on device language
+    if (fcmService && typeof fcmService.sendFCMDataNotification === 'function') {
+      const result = await fcmService.sendFCMDataNotification(userId, {
+        type: 'transaction_received',
+        amount: amount,
+        from: fromAddress,
+        to: recipientWallet,
+        hash: transactionData.hash || '',
+        timestamp: String(Date.now())
+      });
+      console.log('📱 [FCM] Result for user', userId, ':', JSON.stringify(result));
+    } else if (fcmService && typeof fcmService.sendFCMNotification === 'function') {
+      // Fallback to old method with server-side translation
+      const fromShort = fromAddress.length > 10 ? 
+        `${fromAddress.substring(0, 6)}...${fromAddress.substring(fromAddress.length - 4)}` : fromAddress;
+      const title = 'Access Network';
+      const body = `New transaction received\nAmount: ${amount} ACCESS\nFrom: ${fromShort}`;
+      const result = await fcmService.sendFCMNotification(userId, title, body, {
+        type: 'transaction_received',
+        amount: amount,
+        from: fromAddress
+      });
       console.log('📱 [FCM] Result for user', userId, ':', JSON.stringify(result));
     } else {
       console.log('📱 [FCM] fcmService not available!');

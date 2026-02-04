@@ -109,6 +109,73 @@ export async function sendFCMNotification(userId, title, body, data = {}) {
 }
 
 /**
+ * Send FCM data-only notification (no notification payload)
+ * App will handle display and translation based on device language
+ */
+export async function sendFCMDataNotification(userId, data = {}) {
+  if (!fcmInitialized) {
+    console.error('FCM not initialized');
+    return { success: false, error: 'FCM not initialized' };
+  }
+
+  try {
+    const result = await pool.query(
+      'SELECT token FROM fcm_tokens WHERE user_id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return { success: false, error: 'No FCM token found for user' };
+    }
+
+    const tokens = result.rows.map(row => row.token);
+    
+    // Data-only message - app handles notification display
+    const message = {
+      data: {
+        ...data,
+        click_action: 'OPEN_APP',
+        userId: String(userId)
+      },
+      android: {
+        priority: 'high'
+      },
+      tokens: tokens
+    };
+
+    const response = await admin.messaging().sendEachForMulticast(message);
+    
+    console.log(`📱 FCM data sent to user ${userId}: ${response.successCount} success, ${response.failureCount} failed`);
+
+    // Remove invalid tokens
+    if (response.failureCount > 0) {
+      const failedTokens = [];
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) {
+          failedTokens.push(tokens[idx]);
+        }
+      });
+      
+      if (failedTokens.length > 0) {
+        await pool.query(
+          'DELETE FROM fcm_tokens WHERE token = ANY($1)',
+          [failedTokens]
+        );
+      }
+    }
+
+    return { 
+      success: true, 
+      successCount: response.successCount,
+      failureCount: response.failureCount 
+    };
+  } catch (error) {
+    console.error('FCM data send error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Send FCM notification to multiple users
  */
 export async function sendFCMToUsers(userIds, title, body, data = {}) {
@@ -180,6 +247,7 @@ export async function sendFCMToAll(title, body, data = {}) {
 
 export default {
   sendFCMNotification,
+  sendFCMDataNotification,
   sendFCMToUsers,
   sendFCMToAll,
   isInitialized: () => fcmInitialized

@@ -1,7 +1,7 @@
 /**
  * Firebase Cloud Messaging (FCM) for Cordova
  * Push Notifications System for Access Network App
- * Enhanced version with better token registration
+ * Enhanced version with device language detection (like web)
  */
 
 (function() {
@@ -9,6 +9,38 @@
 
   let fcmToken = null;
   let messaging = null;
+
+  // ✅ Transaction notification translations (same as notification-system.js)
+  const NOTIFICATION_TRANSLATIONS = {
+    en: { newTransaction: 'New transaction received', fromLabel: 'From', amountLabel: 'Amount' },
+    ar: { newTransaction: 'تم استلام معاملة جديدة', fromLabel: 'من', amountLabel: 'المبلغ' },
+    fr: { newTransaction: 'Nouvelle transaction reçue', fromLabel: 'De', amountLabel: 'Montant' },
+    de: { newTransaction: 'Neue Transaktion erhalten', fromLabel: 'Von', amountLabel: 'Betrag' },
+    es: { newTransaction: 'Nueva transacción recibida', fromLabel: 'De', amountLabel: 'Cantidad' },
+    tr: { newTransaction: 'Yeni işlem alındı', fromLabel: 'Gönderen', amountLabel: 'Miktar' },
+    ru: { newTransaction: 'Получена новая транзакция', fromLabel: 'От', amountLabel: 'Сумма' },
+    zh: { newTransaction: '收到新交易', fromLabel: '来自', amountLabel: '金额' },
+    ja: { newTransaction: '新しい取引を受信しました', fromLabel: '送信元', amountLabel: '金額' },
+    ko: { newTransaction: '새 거래가 수신되었습니다', fromLabel: '발신', amountLabel: '금액' },
+    pt: { newTransaction: 'Nova transação recebida', fromLabel: 'De', amountLabel: 'Quantia' },
+    hi: { newTransaction: 'नया लेनदेन प्राप्त हुआ', fromLabel: 'से', amountLabel: 'राशि' },
+    it: { newTransaction: 'Nuova transazione ricevuta', fromLabel: 'Da', amountLabel: 'Importo' },
+    id: { newTransaction: 'Transaksi baru diterima', fromLabel: 'Dari', amountLabel: 'Jumlah' },
+    pl: { newTransaction: 'Otrzymano nową transakcję', fromLabel: 'Od', amountLabel: 'Kwota' }
+  };
+
+  // Get device language (like web)
+  function getDeviceLanguage() {
+    var lang = navigator.language || navigator.userLanguage || 'en';
+    return lang.substring(0, 2).toLowerCase();
+  }
+
+  // Get translation for current device language
+  function getTranslation(key) {
+    var lang = getDeviceLanguage();
+    var texts = NOTIFICATION_TRANSLATIONS[lang] || NOTIFICATION_TRANSLATIONS['en'];
+    return texts[key] || NOTIFICATION_TRANSLATIONS['en'][key];
+  }
 
   // Wait for device ready
   document.addEventListener('deviceready', initFCM, false);
@@ -144,27 +176,32 @@
 
   // Show in-app notification when app is in foreground
   function showInAppNotification(payload) {
-    const title = payload.title || payload.notification?.title || 'Access Network';
-    const body = payload.body || payload.notification?.body || '';
+    // Check if this is a transaction notification with data
+    var data = payload.data || payload;
+    var title = 'Access Network';
+    var body = '';
+
+    if (data.type === 'transaction_received' && data.amount) {
+      // Translate locally based on current device language (like web)
+      var newTxText = getTranslation('newTransaction');
+      var fromLabel = getTranslation('fromLabel');
+      var amountLabel = getTranslation('amountLabel');
+      var fromShort = data.from || 'Unknown';
+      if (fromShort.length > 10) {
+        fromShort = fromShort.substring(0, 6) + '...' + fromShort.substring(fromShort.length - 4);
+      }
+      body = newTxText + '\n' + amountLabel + ': ' + data.amount + ' ACCESS\n' + fromLabel + ': ' + fromShort;
+    } else {
+      // Use provided title/body
+      title = payload.title || payload.notification?.title || 'Access Network';
+      body = payload.body || payload.notification?.body || '';
+    }
 
     // Create toast notification
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-      position: fixed;
-      top: 20px;
-      left: 10px;
-      right: 10px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 15px 20px;
-      border-radius: 12px;
-      z-index: 999999;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      animation: fcmSlideDown 0.3s ease;
-    `;
-    toast.innerHTML = '<div style="font-weight: 600; font-size: 15px; margin-bottom: 4px;">' + title + '</div>' +
-      '<div style="font-size: 13px; opacity: 0.9;">' + body + '</div>';
+    var toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:20px;left:10px;right:10px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:15px 20px;border-radius:12px;z-index:999999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.3);animation:fcmSlideDown 0.3s ease;';
+    toast.innerHTML = '<div style="font-weight:600;font-size:15px;margin-bottom:4px;">' + title + '</div>' +
+      '<div style="font-size:13px;opacity:0.9;white-space:pre-line;">' + body + '</div>';
     
     // Add animation style if not exists
     if (!document.getElementById('fcm-animation-style')) {
