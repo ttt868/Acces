@@ -112,13 +112,18 @@
 
     console.log('📤 [FCM] Saving token for user:', userId);
 
+    // Get device language
+    const deviceLang = (navigator.language || navigator.userLanguage || 'en').substring(0, 2).toLowerCase();
+    console.log('🌐 [FCM] Device language:', deviceLang);
+
     fetch('https://accesschain.org/api/fcm/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userId: userId,
         token: token,
-        platform: 'android'
+        platform: 'android',
+        language: deviceLang
       })
     })
     .then(function(response) { return response.json(); })

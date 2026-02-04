@@ -1057,8 +1057,34 @@ async function sendWebPushNotificationToRecipient(transactionData) {
   }
 }
 
+// ✅ Transaction notification translations (same as notification-system.js)
+const FCM_TRANSLATIONS = {
+  en: { newTransaction: 'New transaction received', fromLabel: 'From', amountLabel: 'Amount' },
+  ar: { newTransaction: 'تم استلام معاملة جديدة', fromLabel: 'من', amountLabel: 'المبلغ' },
+  fr: { newTransaction: 'Nouvelle transaction reçue', fromLabel: 'De', amountLabel: 'Montant' },
+  de: { newTransaction: 'Neue Transaktion erhalten', fromLabel: 'Von', amountLabel: 'Betrag' },
+  es: { newTransaction: 'Nueva transacción recibida', fromLabel: 'De', amountLabel: 'Cantidad' },
+  tr: { newTransaction: 'Yeni işlem alındı', fromLabel: 'Gönderen', amountLabel: 'Miktar' },
+  ru: { newTransaction: 'Получена новая транзакция', fromLabel: 'От', amountLabel: 'Сумма' },
+  zh: { newTransaction: '收到新交易', fromLabel: '来自', amountLabel: '金额' },
+  ja: { newTransaction: '新しい取引を受信しました', fromLabel: '送信元', amountLabel: '金額' },
+  ko: { newTransaction: '새 거래가 수신되었습니다', fromLabel: '발신', amountLabel: '금액' },
+  pt: { newTransaction: 'Nova transação recebida', fromLabel: 'De', amountLabel: 'Quantia' },
+  hi: { newTransaction: 'नया लेनदेन प्राप्त हुआ', fromLabel: 'से', amountLabel: 'राशि' },
+  it: { newTransaction: 'Nuova transazione ricevuta', fromLabel: 'Da', amountLabel: 'Importo' },
+  id: { newTransaction: 'Transaksi baru diterima', fromLabel: 'Dari', amountLabel: 'Jumlah' },
+  pl: { newTransaction: 'Otrzymano nową transakcję', fromLabel: 'Od', amountLabel: 'Kwota' }
+};
+
+// Get translation for FCM notifications
+function getFCMTranslation(lang, key) {
+  const texts = FCM_TRANSLATIONS[lang] || FCM_TRANSLATIONS['en'];
+  return texts[key] || FCM_TRANSLATIONS['en'][key];
+}
+
 // ✅ Send FCM notification to recipient (for Cordova app)
 async function sendFCMNotificationToRecipient(transactionData) {
+  console.log('📱 [FCM] Starting FCM notification for transaction...');
   try {
     const recipientWallet = transactionData.to.toLowerCase();
     const amount = formatAmountSmart(transactionData.amount || 0);
@@ -1066,24 +1092,48 @@ async function sendFCMNotificationToRecipient(transactionData) {
     const fromShort = fromAddress.length > 10 ? 
       `${fromAddress.substring(0, 6)}...${fromAddress.substring(fromAddress.length - 4)}` : fromAddress;
 
+    console.log('📱 [FCM] Looking for user with wallet:', recipientWallet);
+
     // Find user by wallet address
     const userResult = await pool.query(
-      'SELECT id FROM users WHERE LOWER(wallet_address) = $1 OR LOWER(external_wallet) = $1',
+      'SELECT id FROM users WHERE LOWER(wallet_address) = $1',
       [recipientWallet]
     );
 
-    if (userResult.rows.length === 0) return;
+    if (userResult.rows.length === 0) {
+      console.log('📱 [FCM] No user found for wallet:', recipientWallet);
+      return;
+    }
     const userId = userResult.rows[0].id;
+
+    // Get device language from FCM token (more accurate than user profile)
+    const fcmResult = await pool.query(
+      'SELECT language FROM fcm_tokens WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1',
+      [userId]
+    );
+    const deviceLang = fcmResult.rows.length > 0 
+      ? (fcmResult.rows[0].language || 'en').substring(0, 2).toLowerCase()
+      : 'en';
+    
+    console.log('📱 [FCM] Found user:', userId, 'device language:', deviceLang);
+
+    // Get translated notification text (same format as web - uses device language)
+    const newTxText = getFCMTranslation(deviceLang, 'newTransaction');
+    const fromLabel = getFCMTranslation(deviceLang, 'fromLabel');
+    const amountLabel = getFCMTranslation(deviceLang, 'amountLabel');
+    
+    const title = 'Access Network';
+    const body = `${newTxText}\n${amountLabel}: ${amount} ACCESS\n${fromLabel}: ${fromShort}`;
 
     // Send FCM notification
     if (fcmService && typeof fcmService.sendFCMNotification === 'function') {
-      await fcmService.sendFCMNotification(userId, 
-        '💰 Received ACCESS',
-        `From: ${fromShort} | Amount: ${amount} ACCESS`
-      );
+      const result = await fcmService.sendFCMNotification(userId, title, body);
+      console.log('📱 [FCM] Result for user', userId, ':', JSON.stringify(result));
+    } else {
+      console.log('📱 [FCM] fcmService not available!');
     }
   } catch (error) {
-    // Silent - FCM errors should not affect main flow
+    console.error('📱 [FCM] Error:', error.message);
   }
 }
 
@@ -2982,7 +3032,7 @@ const server = http.createServer(async (req, res) => {
     // POST /api/fcm/register - Register FCM token for push notifications
     if (pathname === '/api/fcm/register' && req.method === 'POST') {
       try {
-        const { userId, token, platform } = await parseRequestBody(req);
+        const { userId, token, platform, language } = await parseRequestBody(req);
         
         if (!userId || !token) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -2990,17 +3040,19 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // Save or update FCM token
+        // Save or update FCM token with device language
+        const deviceLang = (language || 'en').substring(0, 2).toLowerCase();
         await pool.query(`
-          INSERT INTO fcm_tokens (user_id, token, platform, updated_at)
-          VALUES ($1, $2, $3, NOW())
+          INSERT INTO fcm_tokens (user_id, token, platform, language, updated_at)
+          VALUES ($1, $2, $3, $4, NOW())
           ON CONFLICT (token) DO UPDATE SET
             user_id = EXCLUDED.user_id,
             platform = EXCLUDED.platform,
+            language = EXCLUDED.language,
             updated_at = NOW()
-        `, [userId, token, platform || 'android']);
+        `, [userId, token, platform || 'android', deviceLang]);
 
-        console.log(`📱 FCM token registered for user ${userId}`);
+        console.log(`📱 FCM token registered for user ${userId} (lang: ${deviceLang})`);
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'FCM token registered' }));

@@ -243,9 +243,11 @@ async function sendReEngagementNotifications() {
 
         // 🔥 Also send FCM notification for Cordova app users
         try {
-          const message = getReEngagementMessage(daysInactive, userLang);
+          const userLang = user.user_language || 'en';
+          const message = getMessageForInactivity(daysInactive, userLang);
           if (message && fcmService && typeof fcmService.sendFCMNotification === 'function') {
             await fcmService.sendFCMNotification(user.user_id, message.title, message.body);
+            console.log(`📱 [FCM RE-ENGAGEMENT] Sent to user ${user.user_id} (${userLang})`);
           }
         } catch (fcmError) {
           // Silent - FCM failure shouldn't block Web Push success
