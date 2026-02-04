@@ -102,6 +102,71 @@ window.WebSocket.prototype = OriginalWebSocket.prototype;
 document.addEventListener('deviceready', function() {
     console.log('📱 Cordova is ready!');
     
+    // ✅ Override navigator.clipboard to use Cordova plugin
+    if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
+        console.log('📋 Overriding navigator.clipboard with Cordova plugin');
+        
+        // Store original clipboard
+        const originalClipboard = navigator.clipboard;
+        
+        // Create new clipboard object with Cordova support
+        const cordovaClipboard = {
+            writeText: function(text) {
+                return new Promise((resolve, reject) => {
+                    cordova.plugins.clipboard.copy(
+                        text,
+                        () => {
+                            console.log('✅ Clipboard write success (Cordova)');
+                            resolve();
+                        },
+                        (err) => {
+                            console.error('❌ Clipboard write error (Cordova):', err);
+                            // Fallback to original
+                            if (originalClipboard && originalClipboard.writeText) {
+                                originalClipboard.writeText(text).then(resolve).catch(reject);
+                            } else {
+                                reject(err);
+                            }
+                        }
+                    );
+                });
+            },
+            readText: function() {
+                return new Promise((resolve, reject) => {
+                    cordova.plugins.clipboard.paste(
+                        (text) => {
+                            console.log('✅ Clipboard read success (Cordova)');
+                            resolve(text || '');
+                        },
+                        (err) => {
+                            console.error('❌ Clipboard read error (Cordova):', err);
+                            // Fallback to original
+                            if (originalClipboard && originalClipboard.readText) {
+                                originalClipboard.readText().then(resolve).catch(reject);
+                            } else {
+                                resolve('');
+                            }
+                        }
+                    );
+                });
+            }
+        };
+        
+        // Replace navigator.clipboard
+        try {
+            Object.defineProperty(navigator, 'clipboard', {
+                value: cordovaClipboard,
+                writable: true,
+                configurable: true
+            });
+            console.log('✅ navigator.clipboard overridden successfully');
+        } catch (e) {
+            console.warn('⚠️ Could not override navigator.clipboard:', e);
+            // Fallback: just set helper functions
+            window.nativeClipboard = cordovaClipboard;
+        }
+    }
+    
     // StatusBar
     if (window.StatusBar) {
         StatusBar.backgroundColorByHexString('#1a1a2e');
@@ -165,17 +230,68 @@ window.scanQRCode = function() {
 // ✅ Paste from Clipboard helper
 window.pasteFromClipboard = async function() {
     try {
+        // Try Cordova plugin first (more reliable in native app)
+        if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
+            return new Promise((resolve, reject) => {
+                cordova.plugins.clipboard.paste(
+                    (text) => resolve(text || ''),
+                    (err) => {
+                        console.error('❌ Cordova clipboard paste error:', err);
+                        resolve('');
+                    }
+                );
+            });
+        }
+        // Fallback to web API
         if (navigator.clipboard && navigator.clipboard.readText) {
             return await navigator.clipboard.readText();
-        } else if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
-            return new Promise((resolve, reject) => {
-                cordova.plugins.clipboard.paste(resolve, reject);
-            });
         }
         return '';
     } catch (e) {
         console.error('❌ Clipboard read error:', e);
         return '';
+    }
+};
+
+// ✅ Copy to Clipboard helper (Native Cordova)
+window.copyToClipboard = async function(text) {
+    try {
+        // Try Cordova plugin first (more reliable in native app)
+        if (window.cordova && window.cordova.plugins && window.cordova.plugins.clipboard) {
+            return new Promise((resolve, reject) => {
+                cordova.plugins.clipboard.copy(
+                    text,
+                    () => {
+                        console.log('✅ Copied to clipboard (Cordova)');
+                        resolve(true);
+                    },
+                    (err) => {
+                        console.error('❌ Cordova clipboard copy error:', err);
+                        reject(err);
+                    }
+                );
+            });
+        }
+        // Fallback to web API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            console.log('✅ Copied to clipboard (Web API)');
+            return true;
+        }
+        // Last resort fallback
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        console.log('✅ Copied to clipboard (execCommand)');
+        return true;
+    } catch (e) {
+        console.error('❌ Clipboard write error:', e);
+        return false;
     }
 };
 
