@@ -71,9 +71,9 @@ jobs:
           --variable WEB_APPLICATION_CLIENT_ID="586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com" \
           --variable REVERSED_CLIENT_ID="com.googleusercontent.apps.586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn" \
           --variable PLAY_SERVICES_VERSION="20.7.0"
-        echo '� Installing Firebase Cloud Messaging plugin...'
-        cordova plugin add cordova-plugin-firebase-messaging@6.1.0 --save
-        echo '�🔔 Removing local-notification plugin to avoid SDK compatibility issues...'
+        echo '🔥 Installing Firebase Cloud Messaging plugin (latest with Android 12 fix)...'
+        cordova plugin add cordova-plugin-firebase-messaging@7.0.2 --save
+        echo '🔔 Removing local-notification plugin to avoid SDK compatibility issues...'
         cordova plugin remove cordova-plugin-local-notification 2>/dev/null || true
     
     - name: Setup Release Keystore for Signing
@@ -106,30 +106,6 @@ jobs:
         echo '🔥 Copying google-services.json for Firebase...'
         cp google-services.json platforms/android/app/google-services.json
         echo '✅ google-services.json copied to platforms/android/app/'
-
-    - name: Fix Firebase Messaging android:exported for Android 12+
-      working-directory: cordova-app
-      run: |
-        echo '🔧 Fixing android:exported for Firebase Messaging Service...'
-        MANIFEST="platforms/android/app/src/main/AndroidManifest.xml"
-        
-        # Remove duplicate service entries first, keep only one
-        # Use awk to remove duplicate FirebaseMessagingPluginService blocks
-        awk '
-        /service android:name="by.chemerisuk.cordova.firebase.FirebaseMessagingPluginService"/ {
-          if (seen) { skip=1; next }
-          seen=1
-        }
-        /<\/service>/ && skip { skip=0; next }
-        !skip { print }
-        ' "$MANIFEST" > "${MANIFEST}.tmp" && mv "${MANIFEST}.tmp" "$MANIFEST"
-        
-        # Now add android:exported="false" to the remaining service
-        sed -i 's/<service android:name="by.chemerisuk.cordova.firebase.FirebaseMessagingPluginService">/<service android:name="by.chemerisuk.cordova.firebase.FirebaseMessagingPluginService" android:exported="false">/g' "$MANIFEST"
-        
-        echo '📋 FirebaseMessaging entries count:'
-        grep -c "FirebaseMessagingPluginService" "$MANIFEST" || echo "0"
-        echo '✅ Fixed android:exported attribute'
 
     - name: Remove local-notification from platform
       working-directory: cordova-app
