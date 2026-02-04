@@ -1,11 +1,12 @@
 /**
  * Re-Engagement Notification System
  * Sends push notifications to inactive users after 3-7 days
- * Uses existing VAPID/WebPush infrastructure
+ * Uses existing VAPID/WebPush infrastructure + FCM for Cordova apps
  */
 
 import webpush from 'web-push';
 import { pool } from './db.js';
+import fcmService from './fcm-service.js';
 
 // Configure webpush with VAPID keys (Updated Jan 2026)
 // ⚠️ IMPORTANT: Private key MUST be in .env file only - no fallback for security
@@ -239,6 +240,16 @@ async function sendReEngagementNotifications() {
 
         await webpush.sendNotification(subscription, payload);
         successCount++;
+
+        // 🔥 Also send FCM notification for Cordova app users
+        try {
+          const message = getReEngagementMessage(daysInactive, userLang);
+          if (message && fcmService && typeof fcmService.sendFCMNotification === 'function') {
+            await fcmService.sendFCMNotification(user.user_id, message.title, message.body);
+          }
+        } catch (fcmError) {
+          // Silent - FCM failure shouldn't block Web Push success
+        }
 
         // Update last_reengagement_notification timestamp
         await pool.query(

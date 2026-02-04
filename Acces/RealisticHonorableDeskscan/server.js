@@ -926,8 +926,8 @@ async function broadcastTransactionLog(transactionData) {
       }
     }
 
-    // Send Web Push notifications to recipient (background notifications like YouTube)
-    await sendWebPushNotificationToRecipient(transactionData);
+    // Send Web Push + FCM notifications to recipient (for web + Cordova app)
+    await sendAllNotificationsToRecipient(transactionData);
     
   } catch (error) {
     console.error('خطأ في إرسال سجل المعاملات:', error);
@@ -1057,8 +1057,48 @@ async function sendWebPushNotificationToRecipient(transactionData) {
   }
 }
 
+// ✅ Send FCM notification to recipient (for Cordova app)
+async function sendFCMNotificationToRecipient(transactionData) {
+  try {
+    const recipientWallet = transactionData.to.toLowerCase();
+    const amount = formatAmountSmart(transactionData.amount || 0);
+    const fromAddress = transactionData.from.toLowerCase();
+    const fromShort = fromAddress.length > 10 ? 
+      `${fromAddress.substring(0, 6)}...${fromAddress.substring(fromAddress.length - 4)}` : fromAddress;
+
+    // Find user by wallet address
+    const userResult = await pool.query(
+      'SELECT id FROM users WHERE LOWER(wallet_address) = $1 OR LOWER(external_wallet) = $1',
+      [recipientWallet]
+    );
+
+    if (userResult.rows.length === 0) return;
+    const userId = userResult.rows[0].id;
+
+    // Send FCM notification
+    if (fcmService && typeof fcmService.sendFCMNotification === 'function') {
+      await fcmService.sendFCMNotification(userId, 
+        '💰 Received ACCESS',
+        `From: ${fromShort} | Amount: ${amount} ACCESS`
+      );
+    }
+  } catch (error) {
+    // Silent - FCM errors should not affect main flow
+  }
+}
+
+// ✅ Combined: Send both Web Push AND FCM
+async function sendAllNotificationsToRecipient(transactionData) {
+  // Send Web Push (for website)
+  await sendWebPushNotificationToRecipient(transactionData);
+  // Send FCM (for Cordova app)
+  await sendFCMNotificationToRecipient(transactionData);
+}
+
 // ✅ Make function globally accessible to fix scope issues
 global.sendWebPushNotificationToRecipient = sendWebPushNotificationToRecipient;
+global.sendFCMNotificationToRecipient = sendFCMNotificationToRecipient;
+global.sendAllNotificationsToRecipient = sendAllNotificationsToRecipient;
 
               // Import and initialize network system
               try {
@@ -2935,6 +2975,8 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    // ========== ACTIVITY AD CONFIGURATION ENDPOINT (مستقل عن Boost) ==========
+
     // ========== FCM (Firebase Cloud Messaging) ENDPOINTS for Cordova App ==========
     
     // POST /api/fcm/register - Register FCM token for push notifications
@@ -2972,28 +3014,6 @@ const server = http.createServer(async (req, res) => {
     }
 
     // DELETE /api/fcm/unregister - Remove FCM token
-    if (pathname === '/api/fcm/unregister' && req.method === 'DELETE') {
-      try {
-        const { token } = await parseRequestBody(req);
-        
-        if (!token) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'token required' }));
-          return;
-        }
-
-        await pool.query('DELETE FROM fcm_tokens WHERE token = $1', [token]);
-        
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, message: 'FCM token removed' }));
-        return;
-      } catch (error) {
-        console.error('Error removing FCM token:', error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: error.message }));
-        return;
-      }
-    }
 
     // POST /api/fcm/send - Send FCM notification (for testing)
     if (pathname === '/api/fcm/send' && req.method === 'POST') {
@@ -3019,7 +3039,29 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    // ========== ACTIVITY AD CONFIGURATION ENDPOINT (مستقل عن Boost) ==========
+    if (pathname === '/api/fcm/unregister' && req.method === 'DELETE') {
+      try {
+        const { token } = await parseRequestBody(req);
+        
+        if (!token) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'token required' }));
+          return;
+        }
+
+        await pool.query('DELETE FROM fcm_tokens WHERE token = $1', [token]);
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'FCM token removed' }));
+        return;
+      } catch (error) {
+        console.error('Error removing FCM token:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: error.message }));
+        return;
+      }
+    }
+
     
     // GET /api/ad-config - إرسال معرف الإعلان للواجهة الأمامية
     if (pathname === '/api/ad-config' && req.method === 'GET') {
@@ -7554,7 +7596,7 @@ const server = http.createServer(async (req, res) => {
 
           // Silent - reduce console spam
 
-          // 📱 إرسال Web Push Notification للمستلم (مثل YouTube)
+          // 📱 إرسال Web Push + FCM Notification للمستلم (للويب + Cordova)
           try {
             const transactionDataForPush = {
               hash: hash,
@@ -7566,10 +7608,10 @@ const server = http.createServer(async (req, res) => {
               timestamp: timestamp
             };
             
-            await global.sendWebPushNotificationToRecipient(transactionDataForPush);
+            await global.sendAllNotificationsToRecipient(transactionDataForPush);
             // Silent - reduce console spam
           } catch (pushError) {
-            console.warn('Web Push notification failed (non-critical):', pushError.message);
+            console.warn('Push notification failed (non-critical):', pushError.message);
           }
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
