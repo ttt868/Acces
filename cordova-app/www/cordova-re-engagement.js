@@ -4,32 +4,98 @@
  * Listens to server WebSocket for re-engagement triggers
  */
 
-// Re-engagement messages (same as server but client-side)
+// Re-engagement messages (SAME as server - all languages)
 const RE_ENGAGEMENT_MESSAGES = {
   en: [
     { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'Your session is ready! Tap to start a new activity.' },
     { minDays: 5, maxDays: 6, title: 'Welcome back! 👋', body: 'ACCESS Network is waiting for you. Start your session now.' },
-    { minDays: 7, maxDays: 10, title: 'We miss you! 💫', body: 'Your ACCESS Network activity awaits. Come back and explore!' }
+    { minDays: 7, maxDays: 10, title: 'We miss you! 💫', body: 'Your ACCESS Network activity awaits. Come back and explore!' },
+    { minDays: 11, maxDays: 14, title: 'Long time no see! 🌟', body: 'ACCESS Network has updates for you. Tap to check in!' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'Your account is still active. Ready to continue?' }
   ],
   ar: [
     { minDays: 3, maxDays: 4, title: 'ACCESS شبكة', body: 'جلستك جاهزة! اضغط لبدء نشاط جديد.' },
     { minDays: 5, maxDays: 6, title: 'مرحباً بعودتك! 👋', body: 'شبكة ACCESS في انتظارك. ابدأ جلستك الآن.' },
-    { minDays: 7, maxDays: 10, title: 'نفتقدك! 💫', body: 'نشاطك في شبكة ACCESS بانتظارك. عُد واستكشف!' }
+    { minDays: 7, maxDays: 10, title: 'نفتقدك! 💫', body: 'نشاطك في شبكة ACCESS بانتظارك. عُد واستكشف!' },
+    { minDays: 11, maxDays: 14, title: 'مدة طويلة! 🌟', body: 'لديك تحديثات في شبكة ACCESS. اضغط للاطلاع!' },
+    { minDays: 15, maxDays: 30, title: '🔔 ACCESS شبكة', body: 'حسابك لا يزال نشطاً. هل أنت مستعد للمتابعة؟' }
   ],
   fr: [
-    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'Votre session est prête ! Appuyez pour démarrer.' },
-    { minDays: 5, maxDays: 6, title: 'Bon retour ! 👋', body: 'ACCESS Network vous attend.' },
-    { minDays: 7, maxDays: 10, title: 'Vous nous manquez ! 💫', body: 'Votre activité ACCESS Network vous attend.' }
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'Votre session est prête ! Appuyez pour démarrer une nouvelle activité.' },
+    { minDays: 5, maxDays: 6, title: 'Bon retour ! 👋', body: 'ACCESS Network vous attend. Commencez votre session maintenant.' },
+    { minDays: 7, maxDays: 10, title: 'Vous nous manquez ! 💫', body: 'Votre activité ACCESS Network vous attend. Revenez explorer !' },
+    { minDays: 11, maxDays: 14, title: 'Ça fait longtemps ! 🌟', body: 'ACCESS Network a des mises à jour pour vous. Appuyez pour voir !' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'Votre compte est toujours actif. Prêt à continuer ?' }
+  ],
+  de: [
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'Ihre Sitzung ist bereit! Tippen Sie, um eine neue Aktivität zu starten.' },
+    { minDays: 5, maxDays: 6, title: 'Willkommen zurück! 👋', body: 'ACCESS Network wartet auf Sie. Starten Sie jetzt Ihre Sitzung.' },
+    { minDays: 7, maxDays: 10, title: 'Wir vermissen dich! 💫', body: 'Ihre ACCESS Network-Aktivität wartet. Kommen Sie zurück und entdecken Sie!' },
+    { minDays: 11, maxDays: 14, title: 'Lange nicht gesehen! 🌟', body: 'ACCESS Network hat Updates für Sie. Tippen Sie zum Einchecken!' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'Ihr Konto ist noch aktiv. Bereit weiterzumachen?' }
   ],
   es: [
-    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: '¡Tu sesión está lista! Toca para iniciar.' },
-    { minDays: 5, maxDays: 6, title: '¡Bienvenido! 👋', body: 'ACCESS Network te espera.' },
-    { minDays: 7, maxDays: 10, title: '¡Te extrañamos! 💫', body: 'Tu actividad ACCESS Network te espera.' }
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: '¡Tu sesión está lista! Toca para iniciar una nueva actividad.' },
+    { minDays: 5, maxDays: 6, title: '¡Bienvenido de nuevo! 👋', body: 'ACCESS Network te espera. Comienza tu sesión ahora.' },
+    { minDays: 7, maxDays: 10, title: '¡Te extrañamos! 💫', body: 'Tu actividad en ACCESS Network te espera. ¡Vuelve y explora!' },
+    { minDays: 11, maxDays: 14, title: '¡Cuánto tiempo! 🌟', body: 'ACCESS Network tiene actualizaciones para ti. ¡Toca para ver!' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'Tu cuenta sigue activa. ¿Listo para continuar?' }
   ],
   tr: [
-    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'Oturumunuz hazır! Başlamak için dokunun.' },
-    { minDays: 5, maxDays: 6, title: 'Hoş geldiniz! 👋', body: 'ACCESS Network sizi bekliyor.' },
-    { minDays: 7, maxDays: 10, title: 'Sizi özledik! 💫', body: 'ACCESS Network aktiviteniz sizi bekliyor.' }
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'Oturumunuz hazır! Yeni bir aktivite başlatmak için dokunun.' },
+    { minDays: 5, maxDays: 6, title: 'Tekrar hoş geldiniz! 👋', body: 'ACCESS Network sizi bekliyor. Oturumunuza şimdi başlayın.' },
+    { minDays: 7, maxDays: 10, title: 'Sizi özledik! 💫', body: 'ACCESS Network aktiviteniz sizi bekliyor. Geri dönün ve keşfedin!' },
+    { minDays: 11, maxDays: 14, title: 'Uzun zaman oldu! 🌟', body: 'ACCESS Network sizin için güncellemeler var. Kontrol etmek için dokunun!' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'Hesabınız hala aktif. Devam etmeye hazır mısınız?' }
+  ],
+  it: [
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'La tua sessione è pronta! Tocca per iniziare una nuova attività.' },
+    { minDays: 5, maxDays: 6, title: 'Bentornato! 👋', body: 'ACCESS Network ti aspetta. Inizia la tua sessione ora.' },
+    { minDays: 7, maxDays: 10, title: 'Ci manchi! 💫', body: 'La tua attività su ACCESS Network ti aspetta. Torna a esplorare!' },
+    { minDays: 11, maxDays: 14, title: 'È passato tanto tempo! 🌟', body: 'ACCESS Network ha aggiornamenti per te. Tocca per vedere!' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'Il tuo account è ancora attivo. Pronto a continuare?' }
+  ],
+  ru: [
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'Ваша сессия готова! Нажмите, чтобы начать новую активность.' },
+    { minDays: 5, maxDays: 6, title: 'С возвращением! 👋', body: 'ACCESS Network ждет вас. Начните сессию сейчас.' },
+    { minDays: 7, maxDays: 10, title: 'Мы скучаем! 💫', body: 'Ваша активность в ACCESS Network ждет. Возвращайтесь!' },
+    { minDays: 11, maxDays: 14, title: 'Давно не виделись! 🌟', body: 'У ACCESS Network есть обновления для вас. Нажмите, чтобы посмотреть!' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'Ваш аккаунт все еще активен. Готовы продолжить?' }
+  ],
+  zh: [
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: '您的会话已准备就绪！点击开始新活动。' },
+    { minDays: 5, maxDays: 6, title: '欢迎回来！👋', body: 'ACCESS Network 正在等您。立即开始您的会话。' },
+    { minDays: 7, maxDays: 10, title: '我们想念您！💫', body: '您的 ACCESS Network 活动正在等待您。回来探索吧！' },
+    { minDays: 11, maxDays: 14, title: '好久不见！🌟', body: 'ACCESS Network 有更新给您。点击查看！' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: '您的账户仍然活跃。准备好继续了吗？' }
+  ],
+  ja: [
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'セッションの準備ができました！タップして新しいアクティビティを開始。' },
+    { minDays: 5, maxDays: 6, title: 'おかえりなさい！👋', body: 'ACCESS Network がお待ちしています。今すぐセッションを開始しましょう。' },
+    { minDays: 7, maxDays: 10, title: 'お待ちしておりました！💫', body: 'ACCESS Network でのアクティビティがお待ちしています。戻ってきてください！' },
+    { minDays: 11, maxDays: 14, title: 'お久しぶりです！🌟', body: 'ACCESS Network に更新があります。タップして確認！' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'アカウントはまだアクティブです。続ける準備はできましたか？' }
+  ],
+  ko: [
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: '세션이 준비되었습니다! 탭하여 새 활동을 시작하세요.' },
+    { minDays: 5, maxDays: 6, title: '다시 오신 것을 환영합니다! 👋', body: 'ACCESS Network가 기다리고 있습니다. 지금 세션을 시작하세요.' },
+    { minDays: 7, maxDays: 10, title: '보고 싶었어요! 💫', body: 'ACCESS Network 활동이 기다리고 있습니다. 돌아와서 탐험하세요!' },
+    { minDays: 11, maxDays: 14, title: '오랜만이에요! 🌟', body: 'ACCESS Network에 업데이트가 있습니다. 탭하여 확인하세요!' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: '계정이 아직 활성 상태입니다. 계속할 준비가 되셨나요?' }
+  ],
+  pt: [
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'Sua sessão está pronta! Toque para iniciar uma nova atividade.' },
+    { minDays: 5, maxDays: 6, title: 'Bem-vindo de volta! 👋', body: 'ACCESS Network está esperando você. Comece sua sessão agora.' },
+    { minDays: 7, maxDays: 10, title: 'Sentimos sua falta! 💫', body: 'Sua atividade no ACCESS Network aguarda. Volte e explore!' },
+    { minDays: 11, maxDays: 14, title: 'Quanto tempo! 🌟', body: 'ACCESS Network tem atualizações para você. Toque para ver!' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'Sua conta ainda está ativa. Pronto para continuar?' }
+  ],
+  hi: [
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'आपका सत्र तैयार है! नई गतिविधि शुरू करने के लिए टैप करें।' },
+    { minDays: 5, maxDays: 6, title: 'वापसी पर स्वागत है! 👋', body: 'ACCESS Network आपका इंतजार कर रहा है। अभी अपना सत्र शुरू करें।' },
+    { minDays: 7, maxDays: 10, title: 'हम आपको याद करते हैं! 💫', body: 'आपकी ACCESS Network गतिविधि आपका इंतजार कर रही है। वापस आएं!' },
+    { minDays: 11, maxDays: 14, title: 'बहुत समय हो गया! 🌟', body: 'ACCESS Network में आपके लिए अपडेट हैं। देखने के लिए टैप करें!' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'आपका खाता अभी भी सक्रिय है। जारी रखने के लिए तैयार?' }
   ]
 };
 
