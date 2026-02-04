@@ -122,13 +122,12 @@ function getInstallText() {
   return installTranslations[userLang] || installTranslations.en;
 }
 
-// تخزين حدث التثبيت - لا تظهر شيء هنا
+// تخزين حدث التثبيت
 window.addEventListener('beforeinstallprompt', (e) => {
-  console.log('Install prompt available - saved for later');
+  console.log('Install prompt available');
   e.preventDefault();
   deferredPrompt = e;
-  // لا تستدعي showInstallButton هنا!
-  // سيتم استدعاؤها من script.js بعد قبول شروط الخصوصية
+  showInstallButton();
 });
 
 // إنشاء زر التثبيت
@@ -163,12 +162,11 @@ function createInstallButton() {
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.85);
       z-index: 99999;
       justify-content: center;
       align-items: center;
       animation: fadeIn 0.3s ease;
-      backdrop-filter: blur(5px);
     }
     
     .install-prompt-overlay.show {
@@ -176,75 +174,81 @@ function createInstallButton() {
     }
     
     .install-prompt-card {
-      background: #ffffff;
-      border-radius: 20px;
-      padding: 30px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: 24px;
+      padding: 35px;
       text-align: center;
-      max-width: 300px;
+      max-width: 320px;
       margin: 20px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 25px 80px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.1);
     }
     
     .install-icon {
-      width: 80px;
-      height: 80px;
-      border-radius: 18px;
-      margin-bottom: 18px;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+      border: 3px solid rgba(255,255,255,0.2);
     }
     
     .install-prompt-card h3 {
-      color: #1a1a1a;
-      margin: 0 0 8px 0;
-      font-size: 20px;
+      color: #fff;
+      margin: 0 0 12px 0;
+      font-size: 22px;
       font-weight: 600;
     }
     
     .install-prompt-card p {
-      color: #666;
-      margin: 0 0 24px 0;
+      color: #aaa;
+      margin: 0 0 25px 0;
       font-size: 14px;
       line-height: 1.5;
     }
     
     .install-buttons {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
+      gap: 12px;
+      justify-content: center;
     }
     
     .install-btn-primary {
-      background: #667eea;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
-      padding: 14px 24px;
+      padding: 14px 28px;
       border-radius: 12px;
       font-size: 16px;
-      font-weight: 600;
+      font-weight: bold;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
     }
     
     .install-btn-primary:hover {
-      background: #5a6fd6;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
     }
     
     .install-btn-secondary {
       background: transparent;
       color: #888;
-      border: none;
-      padding: 12px 24px;
+      border: 1px solid #444;
+      padding: 14px 28px;
       border-radius: 12px;
-      font-size: 14px;
+      font-size: 16px;
       cursor: pointer;
-      transition: color 0.2s;
+      transition: all 0.3s;
     }
     
     .install-btn-secondary:hover {
-      color: #555;
+      border-color: #666;
+      color: #aaa;
     }
     
     @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
+      from { opacity: 0; transform: scale(0.9); }
       to { opacity: 1; transform: scale(1); }
     }
   `;
@@ -261,7 +265,7 @@ function createInstallButton() {
 }
 
 // إظهار زر التثبيت
-function showInstallButton(immediate = false) {
+function showInstallButton() {
   // لا تظهر إذا مثبت مسبقاً
   if (window.matchMedia('(display-mode: standalone)').matches) {
     console.log('App already installed');
@@ -278,18 +282,11 @@ function showInstallButton(immediate = false) {
   
   createInstallButton();
   
-  // إذا كان الاستدعاء فوري (بعد قبول الشروط) - أظهر فوراً
-  if (immediate) {
-    const overlay = document.getElementById('install-overlay');
-    if (overlay) overlay.classList.add('show');
-    return;
-  }
-  
-  // أظهر بعد 3 ثواني
+  // أظهر بعد 5 ثواني
   setTimeout(() => {
     const overlay = document.getElementById('install-overlay');
     if (overlay) overlay.classList.add('show');
-  }, 3000);
+  }, 5000);
 }
 
 // إخفاء نافذة التثبيت
