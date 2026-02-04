@@ -107,6 +107,15 @@ jobs:
         cp google-services.json platforms/android/app/google-services.json
         echo '✅ google-services.json copied to platforms/android/app/'
 
+    - name: Fix Firebase Messaging android:exported for Android 12+
+      working-directory: cordova-app
+      run: |
+        echo '🔧 Fixing android:exported for Firebase Messaging Service...'
+        MANIFEST="platforms/android/app/src/main/AndroidManifest.xml"
+        # Add android:exported="false" to FirebaseMessagingPluginService
+        sed -i 's/<service android:name="by.chemerisuk.cordova.firebase.FirebaseMessagingPluginService"/<service android:name="by.chemerisuk.cordova.firebase.FirebaseMessagingPluginService" android:exported="false"/g' "$MANIFEST"
+        echo '✅ Fixed android:exported attribute'
+
     - name: Remove local-notification from platform
       working-directory: cordova-app
       run: |
