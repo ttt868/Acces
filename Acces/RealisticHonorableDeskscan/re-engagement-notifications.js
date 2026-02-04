@@ -242,12 +242,23 @@ async function sendReEngagementNotifications() {
         successCount++;
 
         // 🔥 Also send FCM notification for Cordova app users
+        // Send as data-only so app can translate based on device language
         try {
-          const userLang = user.user_language || 'en';
-          const message = getMessageForInactivity(daysInactive, userLang);
-          if (message && fcmService && typeof fcmService.sendFCMNotification === 'function') {
-            await fcmService.sendFCMNotification(user.user_id, message.title, message.body);
-            console.log(`📱 [FCM RE-ENGAGEMENT] Sent to user ${user.user_id} (${userLang})`);
+          if (fcmService && typeof fcmService.sendFCMDataNotification === 'function') {
+            await fcmService.sendFCMDataNotification(user.user_id, {
+              type: 're-engagement',
+              daysInactive: String(daysInactive),
+              timestamp: String(Date.now())
+            });
+            console.log(`📱 [FCM RE-ENGAGEMENT] Data sent to user ${user.user_id}`);
+          } else if (fcmService && typeof fcmService.sendFCMNotification === 'function') {
+            // Fallback: use server-side translation
+            const userLang = user.user_language || 'en';
+            const message = getMessageForInactivity(daysInactive, userLang);
+            if (message) {
+              await fcmService.sendFCMNotification(user.user_id, message.title, message.body);
+              console.log(`📱 [FCM RE-ENGAGEMENT] Sent to user ${user.user_id} (${userLang})`);
+            }
           }
         } catch (fcmError) {
           // Silent - FCM failure shouldn't block Web Push success
@@ -259,7 +270,7 @@ async function sendReEngagementNotifications() {
           [user.user_id]
         );
 
-        console.log(`📬 [RE-ENGAGEMENT] ✅ Sent to user ${user.user_id} (${daysInactive} days inactive, lang: ${userLang})`);
+        console.log(`📬 [RE-ENGAGEMENT] ✅ Sent to user ${user.user_id} (${daysInactive} days inactive)`);
 
       } catch (pushError) {
         failCount++;

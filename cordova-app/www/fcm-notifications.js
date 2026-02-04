@@ -29,6 +29,25 @@
     pl: { newTransaction: 'Otrzymano nową transakcję', fromLabel: 'Od', amountLabel: 'Kwota' }
   };
 
+  // ✅ Re-engagement notification translations (same as re-engagement-notifications.js)
+  const REENGAGEMENT_TRANSLATIONS = {
+    en: { sessionReady: 'Your session is ready! Tap to start a new activity.', welcomeBack: 'Welcome back! 👋', missYou: 'We miss you! 💫' },
+    ar: { sessionReady: 'جلستك جاهزة! اضغط لبدء نشاط جديد.', welcomeBack: 'مرحباً بعودتك! 👋', missYou: 'نفتقدك! 💫' },
+    fr: { sessionReady: 'Votre session est prête ! Appuyez pour démarrer.', welcomeBack: 'Bon retour ! 👋', missYou: 'Vous nous manquez ! 💫' },
+    de: { sessionReady: 'Ihre Sitzung ist bereit! Tippen Sie zum Starten.', welcomeBack: 'Willkommen zurück! 👋', missYou: 'Wir vermissen dich! 💫' },
+    es: { sessionReady: '¡Tu sesión está lista! Toca para iniciar.', welcomeBack: '¡Bienvenido de nuevo! 👋', missYou: '¡Te extrañamos! 💫' },
+    tr: { sessionReady: 'Oturumunuz hazır! Başlatmak için dokunun.', welcomeBack: 'Tekrar hoş geldiniz! 👋', missYou: 'Sizi özledik! 💫' },
+    ru: { sessionReady: 'Ваша сессия готова! Нажмите, чтобы начать.', welcomeBack: 'С возвращением! 👋', missYou: 'Мы скучаем по вам! 💫' },
+    zh: { sessionReady: '您的会话已准备就绪！点击开始。', welcomeBack: '欢迎回来！👋', missYou: '我们想念您！💫' },
+    ja: { sessionReady: 'セッションの準備ができました！タップして開始。', welcomeBack: 'おかえりなさい！👋', missYou: 'お待ちしておりました！💫' },
+    ko: { sessionReady: '세션이 준비되었습니다! 탭하여 시작하세요.', welcomeBack: '다시 오신 것을 환영합니다! 👋', missYou: '보고 싶었어요! 💫' },
+    pt: { sessionReady: 'Sua sessão está pronta! Toque para iniciar.', welcomeBack: 'Bem-vindo de volta! 👋', missYou: 'Sentimos sua falta! 💫' },
+    hi: { sessionReady: 'आपका सत्र तैयार है! शुरू करने के लिए टैप करें।', welcomeBack: 'वापसी पर स्वागत है! 👋', missYou: 'हम आपको याद करते हैं! 💫' },
+    it: { sessionReady: 'La tua sessione è pronta! Tocca per iniziare.', welcomeBack: 'Bentornato! 👋', missYou: 'Ci manchi! 💫' },
+    id: { sessionReady: 'Sesi Anda siap! Ketuk untuk memulai.', welcomeBack: 'Selamat datang kembali! 👋', missYou: 'Kami rindu Anda! 💫' },
+    pl: { sessionReady: 'Twoja sesja jest gotowa! Dotknij, aby rozpocząć.', welcomeBack: 'Witaj ponownie! 👋', missYou: 'Tęsknimy za Tobą! 💫' }
+  };
+
   // Get device language (like web)
   function getDeviceLanguage() {
     var lang = navigator.language || navigator.userLanguage || 'en';
@@ -40,6 +59,13 @@
     var lang = getDeviceLanguage();
     var texts = NOTIFICATION_TRANSLATIONS[lang] || NOTIFICATION_TRANSLATIONS['en'];
     return texts[key] || NOTIFICATION_TRANSLATIONS['en'][key];
+  }
+
+  // Get re-engagement translation
+  function getReengagementTranslation(key) {
+    var lang = getDeviceLanguage();
+    var texts = REENGAGEMENT_TRANSLATIONS[lang] || REENGAGEMENT_TRANSLATIONS['en'];
+    return texts[key] || REENGAGEMENT_TRANSLATIONS['en'][key];
   }
 
   // Wait for device ready
@@ -191,6 +217,9 @@
         fromShort = fromShort.substring(0, 6) + '...' + fromShort.substring(fromShort.length - 4);
       }
       body = newTxText + '\n' + amountLabel + ': ' + data.amount + ' ACCESS\n' + fromLabel + ': ' + fromShort;
+    } else if (data.type === 're-engagement' || data.type === 'reengagement') {
+      // Re-engagement notification - translate locally
+      body = getReengagementTranslation('sessionReady');
     } else {
       // Use provided title/body
       title = payload.title || payload.notification?.title || 'Access Network';
