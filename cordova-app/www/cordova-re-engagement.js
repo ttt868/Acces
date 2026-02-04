@@ -96,6 +96,22 @@ const RE_ENGAGEMENT_MESSAGES = {
     { minDays: 7, maxDays: 10, title: 'हम आपको याद करते हैं! 💫', body: 'आपकी ACCESS Network गतिविधि आपका इंतजार कर रही है। वापस आएं!' },
     { minDays: 11, maxDays: 14, title: 'बहुत समय हो गया! 🌟', body: 'ACCESS Network में आपके लिए अपडेट हैं। देखने के लिए टैप करें!' },
     { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'आपका खाता अभी भी सक्रिय है। जारी रखने के लिए तैयार?' }
+  ],
+  // Indonesian
+  id: [
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'Sesi Anda siap! Ketuk untuk memulai aktivitas baru.' },
+    { minDays: 5, maxDays: 6, title: 'Selamat datang kembali! 👋', body: 'ACCESS Network menunggu Anda. Mulai sesi Anda sekarang.' },
+    { minDays: 7, maxDays: 10, title: 'Kami merindukanmu! 💫', body: 'Aktivitas ACCESS Network Anda menunggu. Kembali dan jelajahi!' },
+    { minDays: 11, maxDays: 14, title: 'Lama tidak bertemu! 🌟', body: 'ACCESS Network memiliki pembaruan untuk Anda. Ketuk untuk melihat!' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'Akun Anda masih aktif. Siap untuk melanjutkan?' }
+  ],
+  // Polish
+  pl: [
+    { minDays: 3, maxDays: 4, title: 'ACCESS Network', body: 'Twoja sesja jest gotowa! Dotknij, aby rozpocząć nową aktywność.' },
+    { minDays: 5, maxDays: 6, title: 'Witaj ponownie! 👋', body: 'ACCESS Network czeka na Ciebie. Rozpocznij sesję teraz.' },
+    { minDays: 7, maxDays: 10, title: 'Tęsknimy! 💫', body: 'Twoja aktywność w ACCESS Network czeka. Wróć i odkrywaj!' },
+    { minDays: 11, maxDays: 14, title: 'Dawno się nie widzieliśmy! 🌟', body: 'ACCESS Network ma dla Ciebie aktualizacje. Dotknij, aby sprawdzić!' },
+    { minDays: 15, maxDays: 30, title: 'ACCESS Network 🔔', body: 'Twoje konto jest nadal aktywne. Gotowy do kontynuacji?' }
   ]
 };
 
