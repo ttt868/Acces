@@ -71,7 +71,9 @@ jobs:
           --variable WEB_APPLICATION_CLIENT_ID="586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com" \
           --variable REVERSED_CLIENT_ID="com.googleusercontent.apps.586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn" \
           --variable PLAY_SERVICES_VERSION="20.7.0"
-        echo '🔔 Removing local-notification plugin to avoid SDK compatibility issues...'
+        echo '� Installing Firebase Cloud Messaging plugin...'
+        cordova plugin add cordova-plugin-firebase-messaging@6.1.0 --save
+        echo '�🔔 Removing local-notification plugin to avoid SDK compatibility issues...'
         cordova plugin remove cordova-plugin-local-notification 2>/dev/null || true
     
     - name: Setup Release Keystore for Signing
