@@ -1,0 +1,115 @@
+
+<!-- Instant Test v3 -->
+<script>
+(function() {
+  // Show immediate message
+  var box = document.createElement('div');
+  box.id = 'push-status-box';
+  box.style.cssText = 'position:fixed;bottom:20px;left:10px;right:10px;background:#333;color:white;padding:15px;border-radius:10px;z-index:999999;font-size:12px;max-height:200px;overflow:auto;';
+  box.innerHTML = '<b>Push Test v3</b><br>Loading...';
+  
+  function ready(fn) {
+    if (document.body) fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+  
+  ready(function() {
+    document.body.appendChild(box);
+    
+    var log = function(msg) {
+      box.innerHTML += '<br>' + msg;
+      console.log(msg);
+    };
+    
+    log('Page loaded');
+    
+    // Check basics
+    if (!('Notification' in window)) {
+      log('ERROR: Notification not supported');
+      return;
+    }
+    log('Notification API: OK');
+    
+    if (!('serviceWorker' in navigator)) {
+      log('ERROR: ServiceWorker not supported');
+      return;
+    }
+    log('ServiceWorker API: OK');
+    
+    log('Permission: ' + Notification.permission);
+    
+    var userStr = localStorage.getItem('accessoireUser');
+    if (!userStr) {
+      log('ERROR: No user in localStorage');
+      return;
+    }
+    
+    var user = JSON.parse(userStr);
+    log('User ID: ' + user.id);
+    
+    // Start subscription process
+    setTimeout(async function() {
+      try {
+        log('Getting SW registration...');
+        var reg = await navigator.serviceWorker.ready;
+        log('SW ready: ' + (reg ? 'YES' : 'NO'));
+        
+        log('Fetching VAPID key...');
+        var keyRes = await fetch('/api/push/public-key');
+        var keyData = await keyRes.json();
+        log('VAPID response: ' + JSON.stringify(keyData).substring(0, 50));
+        
+        if (!keyData.success) {
+          log('ERROR: VAPID key failed');
+          return;
+        }
+        
+        function urlBase64ToUint8Array(base64String) {
+          var padding = '='.repeat((4 - base64String.length % 4) % 4);
+          var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+          var rawData = window.atob(base64);
+          var outputArray = new Uint8Array(rawData.length);
+          for (var i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+          }
+          return outputArray;
+        }
+        
+        log('Checking old subscription...');
+        var oldSub = await reg.pushManager.getSubscription();
+        if (oldSub) {
+          log('Removing old subscription...');
+          await oldSub.unsubscribe();
+        }
+        
+        log('Creating new subscription...');
+        var subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
+        });
+        log('Subscription created!');
+        
+        log('Saving to server...');
+        var saveRes = await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            subscription: subscription.toJSON()
+          })
+        });
+        
+        var saveData = await saveRes.json();
+        log('Save response: ' + JSON.stringify(saveData));
+        
+        if (saveData.success) {
+          box.style.background = '#4CAF50';
+          log('SUCCESS! Notifications enabled!');
+        }
+      } catch (err) {
+        log('ERROR: ' + err.message);
+      }
+    }, 2000);
+  });
+})();
+</script>

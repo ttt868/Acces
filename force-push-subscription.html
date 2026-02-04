@@ -1,0 +1,87 @@
+
+<!-- Force Push Subscription - v2 -->
+<script>
+(function() {
+  setTimeout(async function() {
+    try {
+      if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+        console.log('Notifications not supported');
+        return;
+      }
+      
+      if (Notification.permission !== 'granted') {
+        console.log('Notification permission:', Notification.permission);
+        return;
+      }
+      
+      var userStr = localStorage.getItem('accessoireUser');
+      if (!userStr) {
+        console.log('No user logged in');
+        return;
+      }
+      
+      var user = JSON.parse(userStr);
+      var userId = user.id;
+      if (!userId) {
+        console.log('No user ID');
+        return;
+      }
+      
+      console.log('Force subscription for user:', userId);
+      
+      var reg = await navigator.serviceWorker.ready;
+      
+      var keyRes = await fetch('/api/push/public-key');
+      var keyData = await keyRes.json();
+      if (!keyData.success) return;
+      
+      function urlBase64ToUint8Array(base64String) {
+        var padding = '='.repeat((4 - base64String.length % 4) % 4);
+        var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        var rawData = window.atob(base64);
+        var outputArray = new Uint8Array(rawData.length);
+        for (var i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+      }
+      
+      var oldSub = await reg.pushManager.getSubscription();
+      if (oldSub) {
+        await oldSub.unsubscribe();
+        console.log('Old subscription removed');
+      }
+      
+      var subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
+      });
+      
+      console.log('New subscription created');
+      
+      var saveRes = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userId,
+          subscription: subscription.toJSON()
+        })
+      });
+      
+      var saveData = await saveRes.json();
+      if (saveData.success) {
+        console.log('Subscription saved');
+        var msg = document.createElement('div');
+        msg.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:10px 20px;border-radius:8px;z-index:999999;font-size:14px;';
+        msg.textContent = 'Notifications enabled';
+        document.body.appendChild(msg);
+        setTimeout(function() { msg.remove(); }, 4000);
+      } else {
+        console.error('Save failed:', saveData);
+      }
+    } catch (err) {
+      console.error('Force subscription error:', err);
+    }
+  }, 5000);
+})();
+</script>

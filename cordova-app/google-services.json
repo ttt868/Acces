@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "804899641984",
+    "project_id": "acces-app-90fdb",
+    "storage_bucket": "acces-app-90fdb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:804899641984:android:4b841fad8fa84d5b1ee465",
+        "android_client_info": {
+          "package_name": "io.accessnetwork.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBl9O3_vMgPNKBnhifZLZjO6SAzRu8pY_I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

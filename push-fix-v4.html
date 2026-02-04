@@ -1,0 +1,102 @@
+
+<!-- Push Fix v4 - Unregister and Re-register SW -->
+<script>
+(function() {
+  var box = document.createElement('div');
+  box.id = 'push-status-box';
+  box.style.cssText = 'position:fixed;bottom:20px;left:10px;right:10px;background:#333;color:white;padding:15px;border-radius:10px;z-index:999999;font-size:12px;max-height:250px;overflow:auto;';
+  box.innerHTML = '<b>Push Fix v4</b><br>Starting...';
+  
+  function ready(fn) {
+    if (document.body) fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+  
+  ready(function() {
+    document.body.appendChild(box);
+    
+    var log = function(msg) {
+      box.innerHTML += '<br>' + msg;
+      console.log(msg);
+    };
+    
+    (async function() {
+      try {
+        log('Step 1: Unregistering all SWs...');
+        var regs = await navigator.serviceWorker.getRegistrations();
+        for (var reg of regs) {
+          await reg.unregister();
+          log('Unregistered: ' + reg.scope);
+        }
+        
+        log('Step 2: Registering fresh SW...');
+        var newReg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        log('Registered: ' + newReg.scope);
+        
+        log('Step 3: Waiting for SW to activate...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        var swReg = await navigator.serviceWorker.ready;
+        log('SW is ready');
+        
+        log('Step 4: Getting VAPID key...');
+        var keyRes = await fetch('/api/push/public-key');
+        var keyData = await keyRes.json();
+        log('Key: ' + keyData.publicKey.substring(0, 20) + '...');
+        
+        if (!keyData.success) {
+          log('ERROR: No VAPID key');
+          return;
+        }
+        
+        function urlBase64ToUint8Array(base64String) {
+          var padding = '='.repeat((4 - base64String.length % 4) % 4);
+          var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+          var rawData = window.atob(base64);
+          var outputArray = new Uint8Array(rawData.length);
+          for (var i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+          }
+          return outputArray;
+        }
+        
+        log('Step 5: Subscribing to push...');
+        var subscription = await swReg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(keyData.publicKey)
+        });
+        log('Subscribed!');
+        
+        var userStr = localStorage.getItem('accessoireUser');
+        if (!userStr) {
+          log('ERROR: No user');
+          return;
+        }
+        var user = JSON.parse(userStr);
+        log('User ID: ' + user.id);
+        
+        log('Step 6: Saving to server...');
+        var saveRes = await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            subscription: subscription.toJSON()
+          })
+        });
+        
+        var saveData = await saveRes.json();
+        log('Response: ' + JSON.stringify(saveData));
+        
+        if (saveData.success) {
+          box.style.background = '#4CAF50';
+          log('SUCCESS! Notifications are now working!');
+        }
+      } catch (err) {
+        log('ERROR: ' + err.message);
+        box.style.background = '#f44336';
+      }
+    })();
+  });
+})();
+</script>

@@ -13,19 +13,22 @@
   "author": "Access Network Team",
   "license": "Apache-2.0",
   "devDependencies": {
-    "cordova-android": "^13.0.0",
+    "cordova-android": "^14.0.1",
     "cordova-clipboard": "^1.3.0",
     "cordova-plugin-advanced-http": "^3.3.1",
     "cordova-plugin-android-permissions": "^1.1.5",
     "cordova-plugin-camera": "^8.0.0",
     "cordova-plugin-deeplinks": "^1.1.1",
     "cordova-plugin-file": "^8.1.3",
+    "cordova-plugin-firebase-analytics": "~6.1.0",
+    "cordova-plugin-firebase-messaging": "^6.1.2",
     "cordova-plugin-googleplus": "^8.5.2",
     "cordova-plugin-inappbrowser": "^6.0.0",
     "cordova-plugin-network-information": "^3.0.0",
     "cordova-plugin-splashscreen": "^6.0.2",
     "cordova-plugin-statusbar": "^4.0.0",
     "cordova-plugin-x-socialsharing": "^6.0.4",
+    "cordova-support-android-plugin": "~1.0.0",
     "es6-promise-plugin": "^4.2.2"
   },
   "cordova": {
@@ -54,6 +57,13 @@
       "cordova-plugin-deeplinks": {
         "URL_SCHEME": "accessnetwork",
         "DEEPLINK_HOST": "accesschain.org"
+      },
+      "cordova-plugin-firebase-messaging": {
+        "FIREBASE_ANALYTICS_COLLECTION_ENABLED": "false",
+        "FIREBASE_PERFORMANCE_COLLECTION_ENABLED": "false",
+        "FIREBASE_CRASHLYTICS_COLLECTION_ENABLED": "false",
+        "ANDROID_FIREBASE_MESSAGING_VERSION": "22.0.+",
+        "ANDROIDX_CORE_VERSION": "1.6.+"
       }
     }
   }

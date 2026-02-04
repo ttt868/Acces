@@ -180,8 +180,14 @@ class AccessNotificationSystem {
       // 🔔 FACEBOOK/INSTAGRAM STYLE: إعادة الاشتراك التلقائية
       // إذا كان الإذن ممنوح سابقاً، نعيد الاشتراك تلقائياً كل مرة
       if (this.permission === 'granted') {
-        await this.forceNewSubscription(); // Always create fresh subscription on load
+        console.log('🔔 Permission granted, forcing new subscription...');
+        // Wait a bit for user data to load
+        setTimeout(async () => {
+          await this.forceNewSubscription();
+        }, 2000);
         this.startAutoRenewalCheck(); // Start checking every 5 minutes
+      } else {
+        console.log('🔔 Permission status:', this.permission);
       }
       
       return true;
@@ -226,6 +232,17 @@ class AccessNotificationSystem {
         return false;
       }
 
+      // Check if user ID exists
+      if (!this.userId) {
+        this.getUserWalletAddress();
+      }
+      
+      if (!this.userId) {
+        console.log('⏳ No user ID yet, will retry subscription later');
+        setTimeout(() => this.forceNewSubscription(), 5000);
+        return false;
+      }
+
       // Get VAPID public key from server
       const response = await fetch('/api/push/public-key');
       const data = await response.json();
@@ -255,32 +272,89 @@ class AccessNotificationSystem {
       });
 
       this.pushSubscription = subscription;
-      console.log('✅ Fresh push subscription created');
+      console.log('✅ Fresh push subscription created:', subscription.endpoint.substring(0, 50));
 
       // Save to server
       if (!this.userId) {
         this.getUserWalletAddress();
       }
 
-      if (this.userId) {
-        const saveResponse = await fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: this.userId,
-            subscription: subscription.toJSON()
-          })
-        });
+      console.log('🔔 User ID for subscription:', this.userId);
 
-        const saveData = await saveResponse.json();
-        if (saveData.success) {
-          console.log('✅ Push subscription saved to server - READY FOR NOTIFICATIONS');
+      if (this.userId) {
+        try {
+          const saveResponse = await fetch('/api/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: this.userId,
+              subscription: subscription.toJSON()
+            })
+          });
+
+          const saveData = await saveResponse.json();
+          console.log('🔔 Save subscription response:', saveData);
+          if (saveData.success) {
+            console.log('✅ Push subscription saved to server - READY FOR NOTIFICATIONS');
+            // Store in localStorage that we have subscribed on this server
+            localStorage.setItem('push_subscription_saved', Date.now().toString());
+            // Notification enabled silently
+          } else {
+            console.error('❌ Failed to save subscription:', saveData.error);
+            // Error silently logged
+          }
+        } catch (saveError) {
+          console.error('❌ Error saving subscription:', saveError);
+          // Connection error silently logged
         }
+      } else {
+        console.warn('⚠️ No user ID - subscription created but not saved to server');
+        // Login prompt silently logged
+        // Retry after user logs in
+        setTimeout(() => {
+          if (this.userId && this.pushSubscription) {
+            this.saveSubscriptionToServer(this.pushSubscription);
+          }
+        }, 10000);
       }
 
       return true;
     } catch (error) {
       console.error('Error creating fresh subscription:', error);
+      return false;
+    }
+  }
+
+  // Save subscription to server
+  async saveSubscriptionToServer(subscription) {
+    try {
+      if (!this.userId) {
+        this.getUserWalletAddress();
+      }
+      
+      if (!this.userId) {
+        console.warn('⚠️ Still no user ID for subscription save');
+        return false;
+      }
+
+      const saveResponse = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: this.userId,
+          subscription: subscription.toJSON ? subscription.toJSON() : subscription
+        })
+      });
+
+      const saveData = await saveResponse.json();
+      if (saveData.success) {
+        console.log('✅ Push subscription saved to server (retry)');
+        localStorage.setItem('push_subscription_saved', Date.now().toString());
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error saving subscription:', error);
       return false;
     }
   }
@@ -696,16 +770,119 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (initialized) {
     // Request permission after a short delay
     setTimeout(async () => {
-      if (Notification.permission === 'default') {
+      const currentPermission = Notification.permission;
+      
+      if (currentPermission === 'default') {
+        // Never asked - ask now
         await window.accessNotifications.requestPermission();
+      } else if (currentPermission === 'denied') {
+        // Blocked - show message to user
+        console.log('🔔 Notifications are blocked. User needs to enable in browser settings.');
+        showNotificationBlockedMessage();
+      } else if (currentPermission === 'granted') {
+        // Already granted - make sure we have a valid subscription
+        console.log('🔔 Notifications granted - ensuring subscription...');
+        await window.accessNotifications.forceNewSubscription();
       }
     }, 3000);
   }
 });
 
+// Show message when notifications are blocked
+function showNotificationBlockedMessage() {
+  // Only show once per session
+  if (sessionStorage.getItem('notificationBlockedShown')) return;
+  sessionStorage.setItem('notificationBlockedShown', 'true');
+  
+  // Create toast message
+  const toast = document.createElement('div');
+  toast.id = 'notification-blocked-toast';
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(255, 107, 107, 0.4);
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    max-width: 90%;
+    text-align: center;
+    cursor: pointer;
+  `;
+  toast.innerHTML = `
+    <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">🔔 الإشعارات محظورة</div>
+    <div style="font-size: 12px; opacity: 0.9;">اضغط لتفعيل الإشعارات من إعدادات المتصفح</div>
+  `;
+  
+  toast.onclick = () => {
+    // Try to open browser notification settings
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'notifications' }).then(result => {
+        console.log('Notification permission status:', result.state);
+      });
+    }
+    toast.remove();
+  };
+  
+  document.body.appendChild(toast);
+  
+  // Auto-hide after 10 seconds
+  setTimeout(() => {
+    if (toast.parentNode) toast.remove();
+  }, 10000);
+}
+
+// Show notification status to user (visible on phone)
+function showNotificationStatus(message, type = 'info') {
+  // Remove old status if exists
+  const old = document.getElementById('notification-status-toast');
+  if (old) old.remove();
+  
+  const colors = {
+    success: 'linear-gradient(135deg, #00c853 0%, #00e676 100%)',
+    error: 'linear-gradient(135deg, #ff5252 0%, #ff1744 100%)',
+    warning: 'linear-gradient(135deg, #ff9800 0%, #ffc107 100%)',
+    info: 'linear-gradient(135deg, #2196f3 0%, #03a9f4 100%)'
+  };
+  
+  const toast = document.createElement('div');
+  toast.id = 'notification-status-toast';
+  toast.style.cssText = `
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: ${colors[type] || colors.info};
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    max-width: 85%;
+  `;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    if (toast.parentNode) toast.remove();
+  }, 5000);
+}
+
 // Listen for user login/wallet changes
 window.addEventListener('storage', (event) => {
   if (event.key === 'accessoireUser') {
     window.accessNotifications.getUserWalletAddress();
+    // Try to save subscription after login
+    if (window.accessNotifications.pushSubscription) {
+      window.accessNotifications.saveSubscriptionToServer(window.accessNotifications.pushSubscription);
+    }
   }
 });

@@ -102,6 +102,13 @@
     <!-- ✅ Clipboard Plugin -->
     <plugin name="cordova-clipboard" spec="^1.3.0" />
     
+    <!-- ✅ Firebase Cloud Messaging for Push Notifications -->
+    <plugin name="cordova-plugin-firebase-messaging" spec="^6.1.0">
+        <variable name="FIREBASE_ANALYTICS_COLLECTION_ENABLED" value="false" />
+        <variable name="FIREBASE_PERFORMANCE_COLLECTION_ENABLED" value="false" />
+        <variable name="FIREBASE_CRASHLYTICS_COLLECTION_ENABLED" value="false" />
+    </plugin>
+    
     <!-- Note: Local Notifications removed due to SDK 34 compatibility issues -->
     
     <!-- ✅ Deep Links Configuration for Invite System -->
