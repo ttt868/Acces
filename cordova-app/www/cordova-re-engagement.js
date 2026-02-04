@@ -273,40 +273,39 @@ class CordovaReEngagement {
     }
   }
 
-  // Show re-engagement notification
+  // Show re-engagement notification (in-app toast only)
+  // Real push notifications are handled by FCM from server via fcm-notifications.js
   showReEngagementNotification(title, body) {
-    console.log('🔔 Showing re-engagement notification:', title, body);
+    console.log('🔔 Showing re-engagement in-app toast:', title, body);
     
-    // Use the global notification function from cordova-init.js
-    if (window.showNativeNotification) {
-      window.showNativeNotification(title, body, { type: 're-engagement' });
-    } else if (window.showToastNotification) {
-      window.showToastNotification(title, body);
-    } else {
-      // Fallback - create simple toast
-      const toast = document.createElement('div');
-      toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 15px 25px;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
-        z-index: 999999;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        max-width: 90%;
-        text-align: center;
-      `;
-      toast.innerHTML = `
-        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${title}</div>
-        <div style="font-size: 12px; opacity: 0.9;">${body}</div>
-      `;
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 5000);
-    }
+    // Only show in-app toast - FCM handles actual push notifications from server
+    this.showInAppToast(title, body);
+  }
+
+  // Show in-app toast notification
+  showInAppToast(title, body) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+      z-index: 999999;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 90%;
+      text-align: center;
+    `;
+    toast.innerHTML = `
+      <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${title}</div>
+      <div style="font-size: 12px; opacity: 0.9;">${body}</div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
   }
 }
 

@@ -137,10 +137,11 @@ class AccessNotificationSystem {
     // Check if running in Cordova
     this.isCordova = window.IS_CORDOVA_APP || (typeof cordova !== 'undefined');
     
-    // In Cordova, we use native notifications; in web, we use Service Worker
+    // In Cordova, we use FCM (Firebase Cloud Messaging) - handled by fcm-notifications.js
+    // In web, we use Service Worker + Web Push
     if (this.isCordova) {
-      this.isSupported = true; // Will use cordova-plugin-local-notification
-      console.log('🔔 Cordova mode - using native notifications');
+      this.isSupported = true; // FCM handles notifications via fcm-notifications.js
+      console.log('🔔 Cordova mode - using FCM (Firebase Cloud Messaging)');
     } else {
       this.isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
     }
@@ -160,10 +161,12 @@ class AccessNotificationSystem {
       return false;
     }
 
-    // Cordova mode - skip Service Worker, use native
+    // Cordova mode - FCM handles everything via fcm-notifications.js
+    // Just connect WebSocket for real-time updates (in-app only)
     if (this.isCordova) {
-      console.log('🔔 Initializing Cordova native notifications');
-      this.permission = 'granted'; // Assume granted via native prompt
+      console.log('🔔 Cordova: FCM notifications handled by fcm-notifications.js');
+      console.log('🔔 Cordova: Connecting WebSocket for real-time in-app updates');
+      this.permission = 'granted'; // FCM handles permission
       this.getUserWalletAddress();
       this.connectWebSocket();
       return true;
