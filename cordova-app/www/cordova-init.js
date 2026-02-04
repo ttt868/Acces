@@ -4,8 +4,8 @@
  */
 
 // ✅ API Configuration
-window.API_BASE_URL = 'http://89.167.14.197:3000';
-window.WS_BASE_URL = 'ws://89.167.14.197:3000';
+window.API_BASE_URL = 'https://accesschain.org';
+window.WS_BASE_URL = 'wss://accesschain.org';
 window.IS_CORDOVA_APP = true;
 
 // Google Sign-In

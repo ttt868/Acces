@@ -10,8 +10,8 @@
     <content src="index.html" />
     
     <!-- Allow access to server API -->
+    <access origin="https://accesschain.org" />
     <access origin="https://access-network.io" />
-    <access origin="http://89.167.14.197:3000" />
     <access origin="*" />
     
     <allow-intent href="http://*/*" />
