@@ -173,16 +173,111 @@ document.addEventListener('deviceready', function() {
         StatusBar.styleLightContent();
     }
     
+    // ✅ Setup Native Local Notifications
+    setupNativeNotifications();
+    
     // Setup Google Sign-In
     setupGoogleSignIn();
     
-    // Request notification permission (web API)
-    if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-            console.log('📱 Notification permission:', permission);
-        });
-    }
+    // Request notification permission (web API) - skip in Cordova, we use native
+    // if ('Notification' in window && Notification.permission === 'default') {
+    //     Notification.requestPermission().then(permission => {
+    //         console.log('📱 Notification permission:', permission);
+    //     });
+    // }
 }, false);
+
+// ✅ Native Notifications System for Cordova
+function setupNativeNotifications() {
+    if (!window.cordova || !window.cordova.plugins || !window.cordova.plugins.notification) {
+        console.log('⚠️ Local notification plugin not available');
+        return;
+    }
+    
+    const localNotification = window.cordova.plugins.notification.local;
+    
+    // Request permission
+    localNotification.requestPermission(function(granted) {
+        console.log('🔔 Native notification permission:', granted ? 'granted' : 'denied');
+    });
+    
+    // ✅ Override web Notification API to use native notifications
+    window.NativeNotification = window.Notification;
+    
+    window.Notification = function(title, options = {}) {
+        console.log('📱 Native notification:', title, options);
+        
+        // Schedule native notification
+        localNotification.schedule({
+            id: Date.now(),
+            title: title,
+            text: options.body || '',
+            icon: 'res://icon',
+            smallIcon: 'res://ic_stat_notification',
+            foreground: true,
+            sound: true,
+            vibrate: true,
+            priority: 2,
+            data: options.data || {}
+        });
+        
+        // Return mock object for compatibility
+        return {
+            close: function() {},
+            addEventListener: function() {},
+            removeEventListener: function() {}
+        };
+    };
+    
+    // Keep static properties
+    window.Notification.permission = 'granted';
+    window.Notification.requestPermission = function(callback) {
+        return new Promise(function(resolve) {
+            localNotification.requestPermission(function(granted) {
+                const result = granted ? 'granted' : 'denied';
+                if (callback) callback(result);
+                resolve(result);
+            });
+        });
+    };
+    
+    // Handle notification clicks
+    localNotification.on('click', function(notification) {
+        console.log('🔔 Notification clicked:', notification);
+        // Open the app and navigate if needed
+        if (notification.data && notification.data.url) {
+            window.location.href = notification.data.url;
+        }
+    });
+    
+    console.log('✅ Native notifications setup complete');
+}
+
+// ✅ Global function to show native notification (can be called from anywhere)
+window.showNativeNotification = function(title, body, data = {}) {
+    if (window.cordova && window.cordova.plugins && window.cordova.plugins.notification && window.cordova.plugins.notification.local) {
+        window.cordova.plugins.notification.local.schedule({
+            id: Date.now(),
+            title: title,
+            text: body,
+            icon: 'res://icon',
+            smallIcon: 'res://ic_stat_notification',
+            foreground: true,
+            sound: true,
+            vibrate: true,
+            priority: 2,
+            data: data
+        });
+        console.log('✅ Native notification shown:', title);
+        return true;
+    } else if (window.Notification && window.Notification.permission === 'granted') {
+        // Fallback to web notification
+        new window.NativeNotification(title, { body: body, data: data });
+        return true;
+    }
+    console.warn('⚠️ Cannot show notification - no method available');
+    return false;
+};
 
 // ✅ QR Code Scanner Function (using BarcodeScanner plugin)
 window.scanQRCode = function() {

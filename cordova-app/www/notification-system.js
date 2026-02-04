@@ -134,7 +134,17 @@ function formatAmountClean(amount) {
 
 class AccessNotificationSystem {
   constructor() {
-    this.isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    // Check if running in Cordova
+    this.isCordova = window.IS_CORDOVA_APP || (typeof cordova !== 'undefined');
+    
+    // In Cordova, we use native notifications; in web, we use Service Worker
+    if (this.isCordova) {
+      this.isSupported = true; // Will use cordova-plugin-local-notification
+      console.log('🔔 Cordova mode - using native notifications');
+    } else {
+      this.isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    }
+    
     this.permission = 'default';
     this.registration = null;
     this.userWalletAddress = null;
@@ -150,8 +160,17 @@ class AccessNotificationSystem {
       return false;
     }
 
+    // Cordova mode - skip Service Worker, use native
+    if (this.isCordova) {
+      console.log('🔔 Initializing Cordova native notifications');
+      this.permission = 'granted'; // Assume granted via native prompt
+      this.getUserWalletAddress();
+      this.connectWebSocket();
+      return true;
+    }
+
     try {
-      // Register Service Worker
+      // Register Service Worker (web only)
       this.registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/'
       });
@@ -641,7 +660,14 @@ class AccessNotificationSystem {
         }
       };
 
-      // Show notification via Service Worker
+      // ✅ Cordova mode - use native notification
+      if (this.isCordova && window.showNativeNotification) {
+        window.showNativeNotification(title, body, options.data);
+        console.log('🔔 Native notification shown:', title);
+        return;
+      }
+
+      // Show notification via Service Worker (web only)
       if (this.registration && this.registration.active) {
         // Send message to service worker to show notification
         this.registration.active.postMessage({
@@ -658,7 +684,7 @@ class AccessNotificationSystem {
         await this.registration.showNotification(title, options);
         console.log('Notification shown via registration:', title, body);
       } else {
-        // Fallback to direct Notification API
+        // Fallback to direct Notification API (will use native in Cordova via override)
         new Notification(title, options);
         console.log('Notification shown directly:', title, body);
       }
