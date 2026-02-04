@@ -112,8 +112,12 @@ jobs:
       run: |
         echo '🔧 Fixing android:exported for Firebase Messaging Service...'
         MANIFEST="platforms/android/app/src/main/AndroidManifest.xml"
-        # Add android:exported="false" to FirebaseMessagingPluginService
-        sed -i 's/<service android:name="by.chemerisuk.cordova.firebase.FirebaseMessagingPluginService"/<service android:name="by.chemerisuk.cordova.firebase.FirebaseMessagingPluginService" android:exported="false"/g' "$MANIFEST"
+        # Fix: Add android:exported="false" attribute to service tag (in-place edit, not duplicate)
+        sed -i '/<service android:name="by.chemerisuk.cordova.firebase.FirebaseMessagingPluginService"/s/>/ android:exported="false">/' "$MANIFEST"
+        # Also fix receiver if exists
+        sed -i '/<receiver android:name="by.chemerisuk.cordova.firebase/s/>/ android:exported="false">/' "$MANIFEST"
+        echo '📋 Manifest after fix:'
+        grep -A2 "FirebaseMessaging" "$MANIFEST" || true
         echo '✅ Fixed android:exported attribute'
 
     - name: Remove local-notification from platform
