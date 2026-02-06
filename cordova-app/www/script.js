@@ -15191,10 +15191,20 @@ class Translator {
     if (this.translations[lang]) {
       this.currentLanguage = lang;
       localStorage.setItem('preferredLanguage', lang);
+      
+      // Update FCM notification language on server
+      if (typeof window.updateFCMLanguage === 'function') {
+        window.updateFCMLanguage(lang);
+      }
     } else {
       console.warn(`Language ${lang} not found, falling back to ${this.fallbackLanguage}`);
       this.currentLanguage = this.fallbackLanguage;
       localStorage.setItem('preferredLanguage', this.fallbackLanguage);
+      
+      // Update FCM notification language on server
+      if (typeof window.updateFCMLanguage === 'function') {
+        window.updateFCMLanguage(this.fallbackLanguage);
+      }
     }
   }
 

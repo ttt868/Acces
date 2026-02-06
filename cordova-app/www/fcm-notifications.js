@@ -161,18 +161,15 @@
       return;
     }
 
-    // Check if already registered for this user
-    const registeredUser = localStorage.getItem('fcm_registered_user');
-    if (registeredUser === String(userId) && localStorage.getItem('fcm_registered') === 'true') {
-      console.log('✅ [FCM] Already registered for user:', userId);
-      return;
-    }
-
+    // Always send token to server (server will upsert)
+    // Token may have been deleted server-side due to errors
     console.log('📤 [FCM] Saving token for user:', userId);
 
-    // Get device language
+    // Get app's selected language (preferredLanguage) first, then fall back to device language
+    const preferredLang = localStorage.getItem('preferredLanguage');
     const deviceLang = (navigator.language || navigator.userLanguage || 'en').substring(0, 2).toLowerCase();
-    console.log('🌐 [FCM] Device language:', deviceLang);
+    const appLang = preferredLang ? preferredLang.substring(0, 2).toLowerCase() : deviceLang;
+    console.log('🌐 [FCM] Using language:', appLang, '(preferred:', preferredLang, ', device:', deviceLang, ')');
 
     fetch('https://accesschain.org/api/fcm/register', {
       method: 'POST',
@@ -181,7 +178,7 @@
         userId: userId,
         token: token,
         platform: 'android',
-        language: deviceLang
+        language: appLang
       })
     })
     .then(function(response) { return response.json(); })
@@ -212,7 +209,8 @@
       var newTxText = getTranslation('newTransaction');
       var fromLabel = getTranslation('fromLabel');
       var amountLabel = getTranslation('amountLabel');
-      var fromShort = data.from || 'Unknown';
+      // Use senderAddress (new) or from (old) for backward compatibility
+      var fromShort = data.senderAddress || data.from || 'Unknown';
       if (fromShort.length > 10) {
         fromShort = fromShort.substring(0, 6) + '...' + fromShort.substring(fromShort.length - 4);
       }
@@ -316,5 +314,66 @@
       }
     }
   }, 2000); // Check every 2 seconds
+
+  // ============================================
+  // UPDATE FCM LANGUAGE WHEN APP LANGUAGE CHANGES
+  // ============================================
+  window.updateFCMLanguage = function(newLanguage) {
+    console.log('🌐 [FCM] Updating language to:', newLanguage);
+    
+    // Get stored FCM token
+    const token = fcmToken || localStorage.getItem('pending_fcm_token');
+    if (!token) {
+      console.log('⚠️ [FCM] No token available to update language');
+      return;
+    }
+    
+    // Get user ID
+    const userStr = localStorage.getItem('accessoireUser');
+    if (!userStr) {
+      console.log('⚠️ [FCM] No user logged in');
+      return;
+    }
+    
+    let userId;
+    try {
+      const user = JSON.parse(userStr);
+      userId = user.id;
+    } catch (e) {
+      console.error('❌ [FCM] Error parsing user:', e);
+      return;
+    }
+    
+    if (!userId) {
+      console.log('⚠️ [FCM] No user ID');
+      return;
+    }
+    
+    // Get short language code (first 2 chars)
+    const langCode = (newLanguage || 'en').substring(0, 2).toLowerCase();
+    
+    // Update FCM token with new language
+    fetch('https://accesschain.org/api/fcm/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: userId,
+        token: token,
+        platform: 'android',
+        language: langCode
+      })
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+      if (data.success) {
+        console.log('✅ [FCM] Language updated to:', langCode);
+      } else {
+        console.error('❌ [FCM] Language update failed:', data.error);
+      }
+    })
+    .catch(function(error) {
+      console.error('❌ [FCM] Network error updating language:', error);
+    });
+  };
 
 })();
