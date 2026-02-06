@@ -9928,6 +9928,9 @@ async function requestCameraAndStart(scannerModal) {
 function startQRScanner(scannerModal) {
   // Show scanner modal
   scannerModal.style.display = 'flex';
+  
+  // Add click outside to close
+  scannerModal.addEventListener('click', handleScannerOutsideClick);
 
   // Initialize scanner if needed
   if (!qrScanner) {
@@ -9957,7 +9960,18 @@ window.closeQRScanner = function() {
   if (qrScanner) {
     qrScanner.stop();
   }
+  
+  // Remove click outside listener
+  scannerModal.removeEventListener('click', handleScannerOutsideClick);
 };
+
+// Handle click outside scanner content to close
+function handleScannerOutsideClick(e) {
+  // Only close if clicked on the background (modal itself), not the content
+  if (e.target.id === 'qr-scanner-modal') {
+    closeQRScanner();
+  }
+}
 
 
  // Paste clipboard content into recipient address field
