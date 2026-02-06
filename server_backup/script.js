@@ -9724,25 +9724,9 @@ window.pasteAddress = async function() {
   const addressInput = document.getElementById('recipient-address');
   if (!addressInput) return;
   
-  // Method 1: Try modern Clipboard API with permission request
+  // Try modern Clipboard API
   if (navigator.clipboard && navigator.clipboard.readText) {
     try {
-      // Try to request permission first (works in some browsers)
-      if (navigator.permissions && navigator.permissions.query) {
-        try {
-          const permissionStatus = await navigator.permissions.query({ name: 'clipboard-read' });
-          if (permissionStatus.state === 'denied') {
-            // Permission denied, use fallback
-            showPastePrompt(addressInput);
-            return;
-          }
-        } catch (permErr) {
-          // Permission API not supported for clipboard, continue anyway
-          console.log('Clipboard permission query not supported');
-        }
-      }
-      
-      // Try to read clipboard
       const text = await navigator.clipboard.readText();
       if (text) {
         addressInput.value = text.trim();
@@ -9753,121 +9737,16 @@ window.pasteAddress = async function() {
       }
     } catch (error) {
       console.log('Clipboard API failed:', error.message);
-      // Fall through to fallback method
+      // Fallback: Focus input and show notification to use Ctrl+V
+      addressInput.focus();
+      showNotification(translator.translate('Please press Ctrl+V to paste the address'), 'info');
     }
+  } else {
+    // Clipboard API not supported
+    addressInput.focus();
+    showNotification(translator.translate('Please press Ctrl+V to paste the address'), 'info');
   }
-  
-  // Method 2: Fallback - Show paste prompt for browsers that don't support Clipboard API
-  showPastePrompt(addressInput);
 };
-
-// Fallback paste prompt for browsers like Firefox
-function showPastePrompt(addressInput) {
-  // Focus the input field
-  addressInput.focus();
-  
-  // Create a simple prompt overlay
-  const existingPrompt = document.getElementById('paste-prompt-overlay');
-  if (existingPrompt) existingPrompt.remove();
-  
-  const overlay = document.createElement('div');
-  overlay.id = 'paste-prompt-overlay';
-  overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-  `;
-  
-  const promptBox = document.createElement('div');
-  promptBox.style.cssText = `
-    background: var(--card-background, white);
-    padding: 20px;
-    border-radius: 12px;
-    text-align: center;
-    max-width: 320px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  `;
-  
-  promptBox.innerHTML = `
-    <h3 style="margin: 0 0 15px; color: var(--text-color, #333);">${translator.translate('Paste Address')}</h3>
-    <p style="margin: 0 0 15px; color: var(--light-text, #666); font-size: 14px;">
-      ${translator.translate('Press Ctrl+V (or Cmd+V on Mac) to paste, or enter the address manually:')}
-    </p>
-    <input type="text" id="manual-paste-input" placeholder="${translator.translate('Paste or type address here')}" 
-      style="width: 100%; padding: 12px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; 
-      font-size: 14px; box-sizing: border-box; margin-bottom: 15px;">
-    <div style="display: flex; gap: 10px; justify-content: center;">
-      <button id="paste-prompt-cancel" style="padding: 10px 20px; border: 1px solid var(--border-color, #ddd); 
-        background: transparent; border-radius: 8px; cursor: pointer; color: var(--text-color, #333);">
-        ${translator.translate('Cancel')}
-      </button>
-      <button id="paste-prompt-confirm" style="padding: 10px 20px; border: none; 
-        background: var(--primary-color, #4a90e2); color: white; border-radius: 8px; cursor: pointer;">
-        ${translator.translate('Confirm')}
-      </button>
-    </div>
-  `;
-  
-  overlay.appendChild(promptBox);
-  document.body.appendChild(overlay);
-  
-  const manualInput = document.getElementById('manual-paste-input');
-  manualInput.focus();
-  
-  // Handle paste event on the manual input
-  manualInput.addEventListener('paste', (e) => {
-    setTimeout(() => {
-      const pastedText = manualInput.value.trim();
-      if (pastedText) {
-        addressInput.value = pastedText;
-        overlay.remove();
-        if (isValidWalletAddress(pastedText)) {
-          showNotification(translator.translate('Valid wallet address pasted'), 'success');
-        }
-      }
-    }, 100);
-  });
-  
-  // Cancel button
-  document.getElementById('paste-prompt-cancel').addEventListener('click', () => {
-    overlay.remove();
-  });
-  
-  // Confirm button
-  document.getElementById('paste-prompt-confirm').addEventListener('click', () => {
-    const text = manualInput.value.trim();
-    if (text) {
-      addressInput.value = text;
-      if (isValidWalletAddress(text)) {
-        showNotification(translator.translate('Valid wallet address pasted'), 'success');
-      }
-    }
-    overlay.remove();
-  });
-  
-  // Close on click outside
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      overlay.remove();
-    }
-  });
-  
-  // Close on Escape key
-  const handleEscape = (e) => {
-    if (e.key === 'Escape') {
-      overlay.remove();
-      document.removeEventListener('keydown', handleEscape);
-    }
-  };
-  document.addEventListener('keydown', handleEscape);
-}
 
 
   // Copy wallet address to clipboard
