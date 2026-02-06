@@ -1,0 +1,73 @@
+{
+  "timestamp": 1763883074582,
+  "date": "2025-11-23T07:31:14.582Z",
+  "type": "wallets_only",
+  "wallets": [
+    {
+      "id": 7,
+      "email": "cooperdb797@gmail.com",
+      "wallet_address": "0xcad3c92be4bf0322bf9401a07bea4d8f56b35242",
+      "coins": "1.51468000",
+      "account_created_date": "1763284094121",
+      "permanent_balance": "1.51468000"
+    },
+    {
+      "id": 8,
+      "email": "acseoire@gmail.com",
+      "wallet_address": "0x7054abf44bca418ad99c7d45e4f72f933d6a47cb",
+      "coins": "1.40000000",
+      "account_created_date": "1763284114843",
+      "permanent_balance": "1.40000000"
+    },
+    {
+      "id": 9,
+      "email": "ikramberan@gmail.com",
+      "wallet_address": "0x6ee215a41a75c3bb7934e09c9a1b3a1e94ac0869",
+      "coins": "0.81000000",
+      "account_created_date": "1763284145428",
+      "permanent_balance": "0.81000000"
+    },
+    {
+      "id": 10,
+      "email": "xsunmining@gmail.com",
+      "wallet_address": "0x92a6728e2dbc64a17e7fb0418a3538ae99c6f373",
+      "coins": "0.15000000",
+      "account_created_date": "1763284237257",
+      "permanent_balance": "0.15000000"
+    },
+    {
+      "id": 64,
+      "email": "lorensoaxel076@gmail.com",
+      "wallet_address": "0x3e7af3665ad77b6cdb0a370bb0553b7afc1a5b72",
+      "coins": "0.00000000",
+      "account_created_date": "1763838422106",
+      "permanent_balance": "0.00000000"
+    },
+    {
+      "id": 65,
+      "email": "amedzen087@gmail.com",
+      "wallet_address": "0x18185d48d512e5a9b93f862276eb512cb299c0ba",
+      "coins": "0.00000000",
+      "account_created_date": "1763839092934",
+      "permanent_balance": "0.00000000"
+    },
+    {
+      "id": 66,
+      "email": "bfk8213@gmail.com",
+      "wallet_address": "0xa1ba90ba045941c4c708d77f6886ffb38b0e99ee",
+      "coins": "0.00000000",
+      "account_created_date": "1763839644454",
+      "permanent_balance": "0.00000000"
+    },
+    {
+      "id": 67,
+      "email": "cryptoscoins93@gmail.com",
+      "wallet_address": "0x555442fd9e6911a8a0df318c42013e1a2976398d",
+      "coins": "0.00000000",
+      "account_created_date": "1763839945492",
+      "permanent_balance": null
+    }
+  ],
+  "total": 8,
+  "totalBalance": 3.8746799999999997
+}

@@ -1,7 +1,7 @@
 // Service Worker for Push Notifications ONLY
 // No caching, no offline storage - notifications only
 
-const SW_VERSION = '9.0.0';
+const SW_VERSION = '11.0.0';
 
 // Transaction notification translations
 const NOTIFICATION_TRANSLATIONS = {

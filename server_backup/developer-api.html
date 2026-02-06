@@ -1,0 +1,3754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Cordova API Path Converter -->
+    <script>
+    (function() {
+        var isCordova = typeof window.cordova !== 'undefined' || 
+                        document.URL.indexOf('file://') === 0 || 
+                        document.URL.indexOf('localhost') === -1;
+        
+        if (isCordova) {
+            var API_BASE_URL = 'https://accesschain.org';
+            var originalFetch = window.fetch;
+            
+            window.fetch = function(url, options) {
+                if (typeof url === 'string') {
+                    if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                        url = API_BASE_URL + url;
+                        console.log('[Cordova] Converted fetch URL:', url);
+                    }
+                }
+                return originalFetch.call(this, url, options);
+            };
+            
+            var originalXHROpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url) {
+                if (typeof url === 'string') {
+                    if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                        url = API_BASE_URL + url;
+                        console.log('[Cordova] Converted XHR URL:', url);
+                    }
+                }
+                return originalXHROpen.apply(this, [method, url].concat(Array.prototype.slice.call(arguments, 2)));
+            };
+            console.log('[Cordova] API path converter initialized for explorer page');
+        }
+    })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="no">
+    <meta name="apple-mobile-web-app-capable" content="no">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Access Network - API Documentation</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Access Network Developer API Documentation. Learn how to integrate with Access blockchain using JSON-RPC API, REST endpoints, and WebSocket connections.">
+    <meta name="keywords" content="Access Network API, blockchain API, developer documentation, JSON-RPC, Web3 API, crypto API">
+    <link rel="canonical" href="https://accesschain.org/developer-api.html">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://accesschain.org/developer-api.html">
+    <meta property="og:title" content="Access Network - API Documentation">
+    <meta property="og:description" content="Developer API Documentation for Access Network. Integrate your apps with Access blockchain.">
+    <meta property="og:image" content="https://accesschain.org/logo.png">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://accesschain.org/developer-api.html">
+    <meta name="twitter:title" content="Access Network - API Documentation">
+    <meta name="twitter:description" content="Developer API for Access Network blockchain integration.">
+    <meta name="twitter:image" content="https://accesschain.org/logo.png">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-code: #f6f8fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6c757d;
+            --border-color: #e1e8ed;
+            --accent-color: #0969da;
+            --accent-purple: var(--accent-purple);
+            --accent-blue: var(--accent-blue);
+            --footer-bg: #f8f9fa;
+            --footer-text: #333;
+            --search-bg: #ffffff;
+            --search-border: #e1e8ed;
+            --success-color: #2da44e;
+            --warning-bg: #fff8c5;
+            --warning-border: #d4a72c;
+            --danger-bg: #ffebe9;
+            --danger-border: #ff8182;
+            --info-bg: #ddf4ff;
+            --info-border: #54aeff;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-code: #1c2128;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+            --accent-color: #58a6ff;
+            --accent-purple: #8b95ff;
+            --accent-blue: #4da6ff;
+            --footer-bg: #161b22;
+            --footer-text: #e6edf3;
+            --search-bg: #0d1117;
+            --search-border: #30363d;
+            --success-color: #3fb950;
+            --warning-bg: #3d2e00;
+            --warning-border: #e3b341;
+            --danger-bg: #3d1319;
+            --danger-border: #f85149;
+            --info-bg: #0c2d6b;
+            --info-border: #1f6feb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.sidebar-open {
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 0 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-primary);
+            font-weight: 800;
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: -2px;
+        }
+
+        /* Hamburger Menu */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            border: none;
+            background: none;
+            position: relative;
+            right: 10px;
+        }
+
+        .menu-toggle span {
+            width: 20px;
+            height: 2px;
+            background: #333;
+            margin: 2px 0;
+            transition: 0.3s;
+        }
+
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sign-in-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+        }
+
+        /* Hide user info on mobile devices */
+        @media (max-width: 768px) {
+            .sign-in-btn.user-logged-in {
+                display: none !important;
+            }
+        }
+
+        .sign-in-btn svg {
+            color: var(--text-primary) !important;
+        }
+
+        .sign-in-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .sign-in-btn:hover svg {
+            color: var(--text-primary) !important;
+        }
+
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex;
+            }
+
+            .nav {
+                display: none;
+            }
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0;
+            position: relative;
+            z-index: 100;
+            overflow: visible;
+        }
+
+        [data-theme="dark"] .nav {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 0;
+            align-items: center;
+            overflow: visible;
+            position: relative;
+            z-index: 100;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        [data-theme="dark"] .nav-item {
+            color: var(--text-secondary);
+        }
+
+        .nav-item:hover {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+        }
+
+        .nav-item.active {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+            font-weight: 500;
+        }
+
+        .dropdown {
+            position: relative;
+            z-index: 999;
+        }
+
+        .dropdown.active {
+            z-index: 9999;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            min-width: 250px;
+            display: none;
+            z-index: 99999999;
+            padding: 8px 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            margin-top: 2px;
+        }
+
+        [data-theme="dark"] .dropdown-menu {
+            background: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+
+        .dropdown.active .dropdown-menu {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: none;
+            font-size: 14px;
+        }
+
+        [data-theme="dark"] .dropdown-item {
+            color: var(--text-primary);
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-purple);
+        }
+
+        [data-theme="dark"] .dropdown-item:hover {
+            background: var(--bg-code);
+        }
+
+        /* Toast Notification System */
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 300px;
+            max-width: 500px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 999999;
+            animation: slideInRight 0.3s ease;
+            transition: all 0.3s ease;
+        }
+
+        .toast-notification.success {
+            border-left: 4px solid #10b981;
+        }
+
+        .toast-notification.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .toast-notification.info {
+            border-left: 4px solid #3b82f6;
+        }
+
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .toast-notification.success .toast-icon {
+            color: #10b981;
+        }
+
+        .toast-notification.error .toast-icon {
+            color: #ef4444;
+        }
+
+        .toast-notification.info .toast-icon {
+            color: #3b82f6;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 18px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .toast-close:hover {
+            color: var(--text-primary);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .toast-notification.hiding {
+            animation: slideOutRight 0.3s ease forwards;
+        }
+
+        @media (max-width: 768px) {
+            .toast-notification {
+                left: 10px;
+                right: 10px;
+                min-width: auto;
+            }
+        }
+
+        /* Confirmation Modal - Professional Delete Confirmation */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 999999;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .confirm-modal.active {
+            display: flex;
+        }
+
+        .confirm-dialog {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .confirm-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .confirm-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .confirm-icon i {
+            color: #ef4444;
+        }
+
+        .confirm-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .confirm-message {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .confirm-key-preview {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--accent-color);
+            word-break: break-all;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .confirm-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .confirm-btn-cancel {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .confirm-btn-cancel:hover {
+            background: var(--bg-code);
+        }
+
+        .confirm-btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .confirm-btn-delete:hover {
+            background: #dc2626;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Authentication Modal */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .auth-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .auth-header {
+            padding: 30px 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .auth-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .auth-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .auth-form {
+            padding: 30px;
+        }
+
+        .auth-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-close:hover {
+            background: #f0f0f0;
+        }
+
+        .google-btn {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-primary);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .google-btn:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-1px);
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1999;
+            backdrop-filter: blur(2px);
+        }
+
+        .mobile-menu-overlay.active {
+            display: block;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px;
+            height: 100vh;
+            height: 100dvh;
+            background: var(--bg-primary);
+            box-shadow: 2px 0 20px rgba(0,0,0,0.2);
+            z-index: 9998;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .mobile-menu.active {
+            left: 0;
+        }
+
+        .mobile-menu-header {
+            padding: 20px 20px 20px 0px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mobile-menu-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .mobile-menu-content {
+            padding: 20px 0;
+        }
+
+        .mobile-nav-item {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: 1px solid var(--bg-secondary);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .mobile-nav-item:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-purple);
+            padding-left: 25px;
+        }
+
+        .mobile-nav-item:active {
+            background: var(--bg-secondary);
+            transform: scale(0.98);
+        }
+
+        .mobile-nav-section {
+            padding: 15px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #c0c0c0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+            opacity: 0.5;
+        }
+
+        [data-theme="dark"] .mobile-nav-section {
+            color: #606060;
+            opacity: 0.6;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: var(--bg-secondary);
+            margin: 15px 0;
+        }
+
+        .mobile-user-section {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: -20px -20px 0 -20px;
+        }
+
+        /* Light mode - same purple gradient background */
+        body:not(.dark-theme) .mobile-user-section,
+        html:not([data-theme="dark"]) .mobile-user-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .mobile-user-details {
+            flex: 1;
+            min-width: 0;
+            padding-left: 8px;
+        }
+
+        .mobile-user-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 2px;
+            color: white !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mobile-user-email {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8) !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Light mode - keep white text on purple background */
+        body:not(.dark-theme) .mobile-user-name,
+        html:not([data-theme="dark"]) .mobile-user-name {
+            color: white !important;
+        }
+
+        body:not(.dark-theme) .mobile-user-email,
+        html:not([data-theme="dark"]) .mobile-user-email {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .mobile-user-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .mobile-user-actions .mobile-nav-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 15px;
+            color: white !important;
+            text-decoration: none;
+            border: none;
+        }
+
+        .mobile-user-actions .mobile-nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            padding-left: 15px;
+            font-size: 14px;
+            border-bottom: none;
+            transition: background 0.3s ease;
+        }
+
+        /* Light mode - same white text and semi-transparent buttons */
+        body:not(.dark-theme) .mobile-user-actions .mobile-nav-item,
+        html:not([data-theme="dark"]) .mobile-user-actions .mobile-nav-item {
+            background: rgba(255, 255, 255, 0.1);
+            color: white !important;
+        }
+
+        body:not(.dark-theme) .mobile-user-actions .mobile-nav-item:hover,
+        html:not([data-theme="dark"]) .mobile-user-actions .mobile-nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-user-actions .mobile-nav-item i {
+            margin-right: 8px;
+            width: 16px;
+        }
+
+        .mobile-signin-section {
+            padding: 0 0 10px 0;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 16px 16px 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .api-key-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .key-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .key-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .key-status {
+            background: var(--success-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .key-value {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+            word-break: break-all;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .key-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .key-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .key-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .key-btn:hover {
+            opacity: 0.8;
+        }
+
+        .key-btn.danger {
+            background: #dc3545;
+        }
+
+        .create-key-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 16px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .create-key-btn:hover {
+            opacity: 0.9;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .page-intro {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .page-description {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .endpoint-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .endpoint-header {
+            margin-bottom: 20px;
+        }
+
+        .endpoint-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .endpoint-description {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .code-container {
+            position: relative;
+            margin: 16px 0;
+        }
+
+        .code-box {
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            padding-right: 80px;
+            font-family: 'Courier New', Consolas, Monaco, monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+            overflow-x: auto;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            opacity: 0.8;
+        }
+
+        .copy-btn.copied {
+            background: var(--success-color);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border-color);
+            margin: 24px 0 16px 0;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .param-table th {
+            background: var(--bg-code);
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .param-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .param-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .param-name {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        .param-table code {
+            background: var(--bg-code);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: var(--accent-color);
+        }
+
+        .alert-box {
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            display: flex;
+            align-items: start;
+            gap: 12px;
+        }
+
+        .alert-box.warning {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+        }
+
+        .alert-box.danger {
+            background: var(--danger-bg);
+            border: 1px solid var(--danger-border);
+        }
+
+        .alert-box.info {
+            background: var(--info-bg);
+            border: 1px solid var(--info-border);
+        }
+
+        .alert-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .code-example {
+            margin-top: 12px;
+        }
+
+        .example-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .try-it-section {
+            margin-top: 30px;
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .try-it-section:hover {
+            border-color: var(--accent-purple);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+        }
+
+        .try-it-header h3 {
+            font-size: 18px;
+            color: var(--accent-purple);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .try-it-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .try-it-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-field label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .api-input {
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .api-input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .api-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        .try-btn {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            align-self: flex-start;
+        }
+
+        .try-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .try-btn:active {
+            transform: translateY(0);
+        }
+
+        .try-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .try-it-result {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .result-status {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .result-status.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .result-status.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .result-body {
+            background: var(--bg-primary);
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu {
+                display: block;
+            }
+
+            .page-title {
+                font-size: 22px;
+            }
+
+            .endpoint-title {
+                font-size: 20px;
+            }
+
+            .endpoint-section {
+                padding: 16px;
+            }
+
+            .code-box {
+                font-size: 12px;
+                padding: 12px;
+                padding-right: 70px;
+            }
+
+            .copy-btn {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+
+            .tabs {
+                gap: 0;
+            }
+
+            .tab {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .try-it-section {
+                padding: 16px;
+            }
+
+            .try-btn {
+                width: 100%;
+            }
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--footer-bg);
+            color: var(--footer-text);
+            padding: 40px 0 20px;
+            margin-top: 50px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer-link:hover {
+            color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">Developer API</div>
+                </div>
+            </div>
+            <button class="mobile-menu-close" onclick="toggleMobileMenu()">×</button>
+        </div>
+
+        <div class="mobile-menu-content">
+            <!-- User Profile Section for Mobile (Only shown when logged in) -->
+            <div class="mobile-user-section" id="mobileUserSection" style="display: none;">
+                <div class="mobile-user-info">
+                    <div class="mobile-user-details">
+                        <div class="mobile-user-name" id="mobileUserName">User Name</div>
+                        <div class="mobile-user-email" id="mobileUserEmail">user@example.com</div>
+                    </div>
+                </div>
+                <div class="mobile-user-actions">
+                    <a href="#" class="mobile-nav-item" onclick="showUserProfile()">
+                        <i class="fas fa-user"></i> My Profile
+                    </a>
+                    <a href="#" class="mobile-nav-item" onclick="logoutExplorer()">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+                <div class="mobile-menu-divider"></div>
+            </div>
+
+            <!-- Sign In Section for Mobile (Only shown when not logged in) -->
+            <div class="mobile-signin-section" id="mobileSigninSection">
+                <a href="#" class="mobile-nav-item" onclick="showAuthModal(); return false;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                </a>
+                <div class="mobile-menu-divider"></div>
+            </div>
+
+            <a href="access-explorer.html" class="mobile-nav-item">🏠 Home</a>
+            <a href="developer-api.html" class="mobile-nav-item" style="background: var(--bg-secondary);">📚 API Documentation</a>
+            <a href="#" class="mobile-nav-item" onclick="event.preventDefault(); document.getElementById('apiKeysList').scrollIntoView({behavior: 'smooth'});">🔑 API Key Management</a>
+
+            <div style="padding: 20px; margin-top: auto; border-top: 1px solid var(--border-color);">
+                <button onclick="toggleTheme()" style="width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-primary); font-weight: 500; transition: all 0.2s;">
+                    <span id="mobile-theme-icon" style="font-size: 18px;">☀️</span>
+                    <span id="mobile-theme-text">Light Mode</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Sign In Modal -->
+    <div class="auth-modal" id="authModal" onclick="if(event.target === this) hideAuthModal()">
+        <div class="auth-container">
+            <button class="auth-close" onclick="hideAuthModal()">×</button>
+
+            <div class="auth-header">
+                <div class="auth-title">Sign In to AccessScan</div>
+                <div class="auth-subtitle">Access the network explorer with your Google account</div>
+            </div>
+
+            <div class="auth-form">
+                <button type="button" class="google-btn" onclick="triggerGoogleSignIn()">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continue with Google
+                </button>
+
+                <!-- Terms Checkbox -->
+                <div class="form-group" style="margin-top: 25px;">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="termsCheckbox" required>
+                        <span class="checkmark"></span>
+                        I agree to the <a href="terms-of-service.html" target="_blank" style="color: var(--accent-purple);">Terms of Service</a>.
+                    </label>
+                </div>
+
+                <div id="authMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">Developer API</div>
+                </div>
+            </div>
+
+            <div class="right-section">
+                <a href="#" class="sign-in-btn" onclick="showAuthModal()" style="display: none;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                </a>
+                <button class="menu-toggle" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="access-explorer.html" class="nav-item">Home</a>
+            <a href="developer-api.html" class="nav-item active">API Documentation</a>
+            <a href="#" class="nav-item" onclick="event.preventDefault(); document.getElementById('apiKeysList').scrollIntoView({behavior: 'smooth'});">API Key</a>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">More ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="#" class="dropdown-item" onclick="event.preventDefault(); toggleTheme();" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="desktop-theme-text">Light Mode</span>
+                        <span id="desktop-theme-icon">☀️</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-intro">
+            <h1 class="page-title">Access Network Developer API</h1>
+            <p class="page-description">Complete REST API documentation for Access Network blockchain. Compatible with Ethereum JSON-RPC standard.</p>
+        </div>
+
+        <!-- Endpoint 1 -->
+        <div class="endpoint-section">
+            <div class="endpoint-header">
+                <h2 class="endpoint-title">access_blockNumber</h2>
+                <p class="endpoint-description">Returns the number of most recent block.</p>
+            </div>
+
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="code-box">https://<span class="api-domain"></span>/api/explorer/stats?module=proxy&action=access_blockNumber&apikey=YourApiKeyToken</div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="showTab(this, 'request')">Request</button>
+                <button class="tab" onclick="showTab(this, 'response')">Response</button>
+                <button class="tab" onclick="showTab(this, 'javascript')">JavaScript</button>
+                <button class="tab" onclick="showTab(this, 'python')">Python</button>
+            </div>
+
+            <div class="tab-content active" data-tab="request">
+                <div class="code-example">
+                    <div class="example-title">cURL Example:</div>
+                    <div class="code-container">
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        <div class="code-box">curl -X GET "https://<span class="api-domain"></span>/api/explorer/stats?module=proxy&action=access_blockNumber&apikey=YourApiKeyToken"</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="response">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": "0x10d4f"
+}</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="javascript">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">// Using fetch API
+const apiUrl = 'https://<span class="api-domain"></span>/api/explorer/stats';
+const params = new URLSearchParams({
+    module: 'proxy',
+    action: 'access_blockNumber',
+    apikey: 'YourApiKeyToken'
+});
+
+fetch(`${apiUrl}?${params}`)
+    .then(response => response.json())
+    .then(data => {
+        console.log('Latest Block:', parseInt(data.result, 16));
+    })
+    .catch(error => console.error('Error:', error));</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="python">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">import requests
+
+url = "https://<span class="api-domain"></span>/api/explorer/stats"
+params = {
+    "module": "proxy",
+    "action": "access_blockNumber",
+    "apikey": "YourApiKeyToken"
+}
+
+response = requests.get(url, params=params)
+data = response.json()
+block_number = int(data['result'], 16)
+print(f"Latest Block: {block_number}")</div>
+                </div>
+            </div>
+
+            <!-- Try it Section -->
+            <div class="try-it-section">
+                <div class="try-it-header">
+                    <h3>🧪 Try it Now</h3>
+                    <p>Test this API endpoint with your API key</p>
+                </div>
+                <div class="try-it-form">
+                    <div class="form-field">
+                        <label>API Key:</label>
+                        <input type="text" id="apikey-1" class="api-input" placeholder="Enter your API key" />
+                    </div>
+                    <button class="try-btn" onclick="testBlockNumber()">
+                        <i class="fas fa-play"></i> Test API
+                    </button>
+                </div>
+                <div class="try-it-result" id="result-1" style="display: none;">
+                    <div class="result-header">
+                        <span class="result-title">Response:</span>
+                        <span class="result-status" id="status-1"></span>
+                    </div>
+                    <pre class="result-body" id="response-1"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Endpoint 2 -->
+        <div class="endpoint-section">
+            <div class="endpoint-header">
+                <h2 class="endpoint-title">access_getBlockByNumber</h2>
+                <p class="endpoint-description">Returns information about a block by block number.</p>
+            </div>
+
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="code-box">https://<span class="api-domain"></span>/api/explorer/block/{blockNumber}?module=proxy&action=access_getBlockByNumber&tag=0x10d4f&boolean=true&apikey=YourApiKeyToken</div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="showTab(this, 'params')">Parameters</button>
+                <button class="tab" onclick="showTab(this, 'javascript2')">JavaScript</button>
+                <button class="tab" onclick="showTab(this, 'python2')">Python</button>
+            </div>
+
+            <div class="tab-content active" data-tab="params">
+                <table class="param-table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="param-name">tag</td>
+                            <td>the block number, in hex eg. <code>0x36B3C</code></td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">boolean</td>
+                            <td>the <code>boolean</code> value to show full transaction objects. when <code>true</code>, returns full transaction objects.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tab-content" data-tab="javascript2">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">const blockNumber = '0x10d4f';
+const apiUrl = `https://<span class="api-domain"></span>/api/explorer/block/${blockNumber}`;
+
+const params = new URLSearchParams({
+    module: 'proxy',
+    action: 'access_getBlockByNumber',
+    tag: blockNumber,
+    boolean: 'true',
+    apikey: 'YourApiKeyToken'
+});
+
+fetch(`${apiUrl}?${params}`)
+    .then(response => response.json())
+    .then(data => {
+        console.log('Block Data:', data.result);
+        console.log('Transactions:', data.result.transactions);
+    });</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="python2">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">import requests
+
+block_number = "0x10d4f"
+url = f"https://<span class="api-domain"></span>/api/explorer/block/{block_number}"
+
+params = {
+    "module": "proxy",
+    "action": "access_getBlockByNumber",
+    "tag": block_number,
+    "boolean": "true",
+    "apikey": "YourApiKeyToken"
+}
+
+response = requests.get(url, params=params)
+block_data = response.json()['result']
+print(f"Block Hash: {block_data['hash']}")
+print(f"Transactions: {len(block_data['transactions'])}")</div>
+                </div>
+            </div>
+
+            <!-- Try it Section -->
+            <div class="try-it-section">
+                <div class="try-it-header">
+                    <h3>🧪 Try it Now</h3>
+                    <p>Test this API endpoint with your API key</p>
+                </div>
+                <div class="try-it-form">
+                    <div class="form-field">
+                        <label>Block Number (hex):</label>
+                        <input type="text" id="block-tag-2" class="api-input" placeholder="e.g., 0x10d4f" value="0x10d4f" />
+                    </div>
+                    <div class="form-field">
+                        <label>Show Full Transactions:</label>
+                        <select id="block-boolean-2" class="api-input">
+                            <option value="true">Yes (true)</option>
+                            <option value="false">No (false)</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>API Key:</label>
+                        <input type="text" id="apikey-2" class="api-input" placeholder="Enter your API key" />
+                    </div>
+                    <button class="try-btn" onclick="testGetBlockByNumber()">
+                        <i class="fas fa-play"></i> Test API
+                    </button>
+                </div>
+                <div class="try-it-result" id="result-2" style="display: none;">
+                    <div class="result-header">
+                        <span class="result-title">Response:</span>
+                        <span class="result-status" id="status-2"></span>
+                    </div>
+                    <pre class="result-body" id="response-2"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Endpoint 3 -->
+        <div class="endpoint-section">
+            <div class="endpoint-header">
+                <h2 class="endpoint-title">access_getTransactionByHash</h2>
+                <p class="endpoint-description">Returns the information about a transaction requested by transaction hash.</p>
+            </div>
+
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="code-box">https://<span class="api-domain"></span>/api/explorer/transaction/{txHash}?module=proxy&action=access_getTransactionByHash&txhash=0xbc78ab8a9e9a0bca7d0321a27b2d&apikey=YourApiKeyToken</div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="showTab(this, 'params3')">Parameters</button>
+                <button class="tab" onclick="showTab(this, 'javascript3')">JavaScript</button>
+                <button class="tab" onclick="showTab(this, 'python3')">Python</button>
+            </div>
+
+            <div class="tab-content active" data-tab="params3">
+                <table class="param-table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="param-name">txhash</td>
+                            <td>the <code>string</code> representing the hash of the transaction</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tab-content" data-tab="javascript3">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">const txHash = '0xbc78ab8a9e9a0bca7d0321a27b2d';
+const apiUrl = `https://<span class="api-domain"></span>/api/explorer/transaction/${txHash}`;
+
+const params = new URLSearchParams({
+    module: 'proxy',
+    action: 'access_getTransactionByHash',
+    txhash: txHash,
+    apikey: 'YourApiKeyToken'
+});
+
+fetch(`${apiUrl}?${params}`)
+    .then(response => response.json())
+    .then(data => {
+        const tx = data.result;
+        console.log('From:', tx.from);
+        console.log('To:', tx.to);
+        console.log('Value:', tx.value);
+    });</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="python3">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">import requests
+
+tx_hash = "0xbc78ab8a9e9a0bca7d0321a27b2d"
+url = f"https://<span class="api-domain"></span>/api/explorer/transaction/{tx_hash}"
+
+params = {
+    "module": "proxy",
+    "action": "access_getTransactionByHash",
+    "txhash": tx_hash,
+    "apikey": "YourApiKeyToken"
+}
+
+response = requests.get(url, params=params)
+tx_data = response.json()['result']
+print(f"From: {tx_data['from']}")
+print(f"To: {tx_data['to']}")
+print(f"Value: {tx_data['value']}")</div>
+                </div>
+            </div>
+
+            <!-- Try it Section -->
+            <div class="try-it-section">
+                <div class="try-it-header">
+                    <h3>🧪 Try it Now</h3>
+                    <p>Test this API endpoint with your API key</p>
+                </div>
+                <div class="try-it-form">
+                    <div class="form-field">
+                        <label>Transaction Hash:</label>
+                        <input type="text" id="tx-hash-3" class="api-input" placeholder="e.g., 0xbc78ab8a9e9a0bca7d0321a27b2d" />
+                    </div>
+                    <div class="form-field">
+                        <label>API Key:</label>
+                        <input type="text" id="apikey-3" class="api-input" placeholder="Enter your API key" />
+                    </div>
+                    <button class="try-btn" onclick="testGetTransactionByHash()">
+                        <i class="fas fa-play"></i> Test API
+                    </button>
+                </div>
+                <div class="try-it-result" id="result-3" style="display: none;">
+                    <div class="result-header">
+                        <span class="result-title">Response:</span>
+                        <span class="result-status" id="status-3"></span>
+                    </div>
+                    <pre class="result-body" id="response-3"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Endpoint 4 -->
+        <div class="endpoint-section">
+            <div class="endpoint-header">
+                <h2 class="endpoint-title">access_getTransactionCount</h2>
+                <p class="endpoint-description">Returns the number of transactions performed by an address.</p>
+            </div>
+
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="code-box">https://<span class="api-domain"></span>/api/explorer/address/{address}?module=proxy&action=access_getTransactionCount&address=0x4bd5900cb274ef15b153066b7de&tag=latest&apikey=YourApiKeyToken</div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="showTab(this, 'params4')">Parameters</button>
+                <button class="tab" onclick="showTab(this, 'javascript4')">JavaScript</button>
+                <button class="tab" onclick="showTab(this, 'python4')">Python</button>
+            </div>
+
+            <div class="tab-content active" data-tab="params4">
+                <table class="param-table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="param-name">address</td>
+                            <td>the <code>string</code> representing the address to get transaction count</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">tag</td>
+                            <td>the <code>string</code> pre-defined block parameter, either <code>earliest</code>, <code>pending</code> or <code>latest</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tab-content" data-tab="javascript4">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">const address = '0x4bd5900cb274ef15b153066b7de';
+const apiUrl = `https://<span class="api-domain"></span>/api/explorer/address/${address}`;
+
+const params = new URLSearchParams({
+    module: 'proxy',
+    action: 'access_getTransactionCount',
+    address: address,
+    tag: 'latest',
+    apikey: 'YourApiKeyToken'
+});
+
+fetch(`${apiUrl}?${params}`)
+    .then(response => response.json())
+    .then(data => {
+        const txCount = parseInt(data.result, 16);
+        console.log('Transaction Count:', txCount);
+    });</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="python4">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">import requests
+
+address = "0x4bd5900cb274ef15b153066b7de"
+url = f"https://<span class="api-domain"></span>/api/explorer/address/{address}"
+
+params = {
+    "module": "proxy",
+    "action": "access_getTransactionCount",
+    "address": address,
+    "tag": "latest",
+    "apikey": "YourApiKeyToken"
+}
+
+response = requests.get(url, params=params)
+tx_count = int(response.json()['result'], 16)
+print(f"Transaction Count: {tx_count}")</div>
+                </div>
+            </div>
+
+            <!-- Try it Section -->
+            <div class="try-it-section">
+                <div class="try-it-header">
+                    <h3>🧪 Try it Now</h3>
+                    <p>Test this API endpoint with your API key</p>
+                </div>
+                <div class="try-it-form">
+                    <div class="form-field">
+                        <label>Address:</label>
+                        <input type="text" id="address-4" class="api-input" placeholder="e.g., 0x4bd5900cb274ef15b153066b7de" />
+                    </div>
+                    <div class="form-field">
+                        <label>Block Tag:</label>
+                        <select id="tag-4" class="api-input">
+                            <option value="latest">Latest</option>
+                            <option value="earliest">Earliest</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>API Key:</label>
+                        <input type="text" id="apikey-4" class="api-input" placeholder="Enter your API key" />
+                    </div>
+                    <button class="try-btn" onclick="testGetTransactionCount()">
+                        <i class="fas fa-play"></i> Test API
+                    </button>
+                </div>
+                <div class="try-it-result" id="result-4" style="display: none;">
+                    <div class="result-header">
+                        <span class="result-title">Response:</span>
+                        <span class="result-status" id="status-4"></span>
+                    </div>
+                    <pre class="result-body" id="response-4"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Endpoint 5 -->
+        <div class="endpoint-section">
+            <div class="endpoint-header">
+                <h2 class="endpoint-title">access_sendRawTransaction</h2>
+                <p class="endpoint-description">Submits a pre-signed transaction for broadcast to the Access network.</p>
+            </div>
+
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="code-box">https://<span class="api-domain"></span>/api/blockchain/send?module=proxy&action=access_sendRawTransaction&hex=0xf904808000831cfde080&apikey=YourApiKeyToken</div>
+            </div>
+
+            <div class="alert-box warning">
+                <span class="alert-icon">💡</span>
+                <div>
+                    <strong>Tip:</strong> Send a POST request if your hex string is particularly long.
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="showTab(this, 'javascript5')">JavaScript</button>
+                <button class="tab" onclick="showTab(this, 'python5')">Python</button>
+            </div>
+
+            <div class="tab-content active" data-tab="javascript5">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">const signedTx = '0xf904808000831cfde080';
+const apiUrl = 'https://<span class="api-domain"></span>/api/blockchain/send';
+
+const params = new URLSearchParams({
+    module: 'proxy',
+    action: 'access_sendRawTransaction',
+    hex: signedTx,
+    apikey: 'YourApiKeyToken'
+});
+
+fetch(`${apiUrl}?${params}`, {
+    method: 'POST'
+})
+    .then(response => response.json())
+    .then(data => {
+        console.log('Transaction Hash:', data.result);
+    });</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="python5">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">import requests
+
+signed_tx = "0xf904808000831cfde080"
+url = "https://<span class="api-domain"></span>/api/blockchain/send"
+
+data = {
+    "module": "proxy",
+    "action": "access_sendRawTransaction",
+    "hex": signed_tx,
+    "apikey": "YourApiKeyToken"
+}
+
+response = requests.post(url, data=data)
+result = response.json()
+print(f"Transaction Hash: {result['result']}")</div>
+                </div>
+            </div>
+
+            <!-- Try it Section -->
+            <div class="try-it-section">
+                <div class="try-it-header">
+                    <h3>🧪 Try it Now</h3>
+                    <p>Test this API endpoint with your API key</p>
+                </div>
+                <div class="try-it-form">
+                    <div class="form-field">
+                        <label>Signed Transaction (hex):</label>
+                        <textarea id="signed-tx-5" class="api-input" rows="3" placeholder="e.g., 0xf904808000831cfde080"></textarea>
+                    </div>
+                    <div class="form-field">
+                        <label>API Key:</label>
+                        <input type="text" id="apikey-5" class="api-input" placeholder="Enter your API key" />
+                    </div>
+                    <button class="try-btn" onclick="testSendRawTransaction()">
+                        <i class="fas fa-play"></i> Test API
+                    </button>
+                </div>
+                <div class="try-it-result" id="result-5" style="display: none;">
+                    <div class="result-header">
+                        <span class="result-title">Response:</span>
+                        <span class="result-status" id="status-5"></span>
+                    </div>
+                    <pre class="result-body" id="response-5"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Endpoint 6 -->
+        <div class="endpoint-section">
+            <div class="endpoint-header">
+                <h2 class="endpoint-title">access_gasPrice</h2>
+                <p class="endpoint-description">Returns the current price per gas in wei.</p>
+            </div>
+
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="code-box">https://<span class="api-domain"></span>/api/explorer/stats?module=proxy&action=access_gasPrice&apikey=YourApiKeyToken</div>
+            </div>
+
+            <div class="alert-box info">
+                <span class="alert-icon">📊</span>
+                <div>
+                    <strong>Tip:</strong> The result is returned in wei. For Access Network, gas price is fixed at 0.00002 ACCESS.
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="showTab(this, 'javascript6')">JavaScript</button>
+                <button class="tab" onclick="showTab(this, 'python6')">Python</button>
+                <button class="tab" onclick="showTab(this, 'response6')">Response</button>
+            </div>
+
+            <div class="tab-content active" data-tab="javascript6">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">const apiUrl = 'https://<span class="api-domain"></span>/api/explorer/stats';
+
+const params = new URLSearchParams({
+    module: 'proxy',
+    action: 'access_gasPrice',
+    apikey: 'YourApiKeyToken'
+});
+
+fetch(`${apiUrl}?${params}`)
+    .then(response => response.json())
+    .then(data => {
+        const gasPrice = parseInt(data.result, 16);
+        console.log('Gas Price (wei):', gasPrice);
+        console.log('Gas Price (ACCESS):', gasPrice / 1e18);
+    });</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="python6">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">import requests
+
+url = "https://<span class="api-domain"></span>/api/explorer/stats"
+params = {
+    "module": "proxy",
+    "action": "access_gasPrice",
+    "apikey": "YourApiKeyToken"
+}
+
+response = requests.get(url, params=params)
+gas_price_wei = int(response.json()['result'], 16)
+gas_price_access = gas_price_wei / 1e18
+print(f"Gas Price: {gas_price_access} ACCESS")</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="response6">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">{
+  "jsonrpc": "2.0",
+  "id": 73,
+  "result": "0x430e23400"
+}</div>
+                </div>
+            </div>
+
+            <!-- Try it Section -->
+            <div class="try-it-section">
+                <div class="try-it-header">
+                    <h3>🧪 Try it Now</h3>
+                    <p>Test this API endpoint with your API key</p>
+                </div>
+                <div class="try-it-form">
+                    <div class="form-field">
+                        <label>API Key:</label>
+                        <input type="text" id="apikey-6" class="api-input" placeholder="Enter your API key" />
+                    </div>
+                    <button class="try-btn" onclick="testGasPrice()">
+                        <i class="fas fa-play"></i> Test API
+                    </button>
+                </div>
+                <div class="try-it-result" id="result-6" style="display: none;">
+                    <div class="result-header">
+                        <span class="result-title">Response:</span>
+                        <span class="result-status" id="status-6"></span>
+                    </div>
+                    <pre class="result-body" id="response-6"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Endpoint 7 -->
+        <div class="endpoint-section">
+            <div class="endpoint-header">
+                <h2 class="endpoint-title">access_getTopAccounts</h2>
+                <p class="endpoint-description">Returns a list of top accounts by balance with pagination support.</p>
+            </div>
+
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="code-box">https://<span class="api-domain"></span>/api/explorer/top-accounts?limit=100&page=1&apikey=YourApiKeyToken</div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="showTab(this, 'params7')">Parameters</button>
+                <button class="tab" onclick="showTab(this, 'response7')">Response</button>
+                <button class="tab" onclick="showTab(this, 'javascript7')">JavaScript</button>
+                <button class="tab" onclick="showTab(this, 'python7')">Python</button>
+            </div>
+
+            <div class="tab-content active" data-tab="params7">
+                <table class="param-table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="param-name">limit</td>
+                            <td>Number of accounts to return per page (default: <code>100</code>, max: <code>10000</code>)</td>
+                        </tr>
+                        <tr>
+                            <td class="param-name">page</td>
+                            <td>Page number for pagination (default: <code>1</code>)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tab-content" data-tab="response7">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">{
+  "success": true,
+  "data": {
+    "accounts": [
+      {
+        "rank": 1,
+        "address": "0x0000000000000000000000000000000000000003",
+        "balance": "100.04000000",
+        "balanceRaw": 100.04,
+        "percentage": "22.14903830",
+        "txCount": 0
+      }
+    ],
+    "total": 50,
+    "totalSupply": "451.66746576",
+    "page": 1,
+    "limit": 100,
+    "totalPages": 1
+  }
+}</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="javascript7">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">const apiUrl = 'https://<span class="api-domain"></span>/api/explorer/top-accounts';
+
+const params = new URLSearchParams({
+    limit: 100,
+    page: 1,
+    apikey: 'YourApiKeyToken'
+});
+
+fetch(`${apiUrl}?${params}`)
+    .then(response => response.json())
+    .then(data => {
+        console.log('Total Accounts:', data.data.total);
+        console.log('Total Supply:', data.data.totalSupply);
+        console.log('Top Accounts:', data.data.accounts);
+
+        // Display top 10 accounts
+        data.data.accounts.slice(0, 10).forEach(account => {
+            console.log(`Rank ${account.rank}: ${account.address}`);
+            console.log(`Balance: ${account.balance} ACCESS (${account.percentage}%)`);
+            console.log(`Transactions: ${account.txCount}`);
+            console.log('---');
+        });
+    })
+    .catch(error => console.error('Error:', error));</div>
+                </div>
+            </div>
+
+            <div class="tab-content" data-tab="python7">
+                <div class="code-container">
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    <div class="code-box">import requests
+
+url = "https://<span class="api-domain"></span>/api/explorer/top-accounts"
+
+params = {
+    "limit": 100,
+    "page": 1,
+    "apikey": "YourApiKeyToken"
+}
+
+response = requests.get(url, params=params)
+data = response.json()
+
+if data['success']:
+    accounts_data = data['data']
+    print(f"Total Accounts: {accounts_data['total']}")
+    print(f"Total Supply: {accounts_data['totalSupply']} ACCESS")
+    print(f"\nTop 10 Accounts:")
+
+    for account in accounts_data['accounts'][:10]:
+        print(f"Rank {account['rank']}: {account['address']}")
+        print(f"Balance: {account['balance']} ACCESS ({account['percentage']}%)")
+        print(f"Transactions: {account['txCount']}")
+        print("---")</div>
+                </div>
+            </div>
+
+            <!-- Try it Section -->
+            <div class="try-it-section">
+                <div class="try-it-header">
+                    <h3>🧪 Try it Now</h3>
+                    <p>Test this API endpoint with your API key</p>
+                </div>
+                <div class="try-it-form">
+                    <div class="form-field">
+                        <label>Limit (max 10000):</label>
+                        <input type="number" id="limit-7" class="api-input" placeholder="100" value="10" min="1" max="10000" />
+                    </div>
+                    <div class="form-field">
+                        <label>Page:</label>
+                        <input type="number" id="page-7" class="api-input" placeholder="1" value="1" min="1" />
+                    </div>
+                    <div class="form-field">
+                        <label>API Key:</label>
+                        <input type="text" id="apikey-7" class="api-input" placeholder="Enter your API key" />
+                    </div>
+                    <button class="try-btn" onclick="testGetTopAccounts()">
+                        <i class="fas fa-play"></i> Test API
+                    </button>
+                </div>
+                <div class="try-it-result" id="result-7" style="display: none;">
+                    <div class="result-header">
+                        <span class="result-title">Response:</span>
+                        <span class="result-status" id="status-7"></span>
+                    </div>
+                    <pre class="result-body" id="response-7"></pre>
+                </div>
+            </div>
+
+            <div class="alert-box info">
+                <span class="alert-icon">ℹ️</span>
+                <div>
+                    <strong>Privacy Protection:</strong> This endpoint returns ONLY network account data (addresses and balances) to protect user privacy. No personal information (names, emails) is ever exposed through this API.
+                </div>
+            </div>
+
+            <div class="alert-box info">
+                <span class="alert-icon">📊</span>
+                <div>
+                    <strong>Data Sources:</strong> Account data is aggregated from multiple sources: registered users, external wallets, and blockchain network accounts (ethereum-network-data/accounts/).
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal for Delete -->
+    <div id="confirmModal" class="confirm-modal">
+        <div class="confirm-dialog">
+            <div class="confirm-header">
+                <div class="confirm-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="confirm-title">Delete API Key</div>
+            </div>
+            <div class="confirm-message">
+                Are you sure you want to delete this API key? This action cannot be undone.
+            </div>
+            <div id="confirmKeyPreview" class="confirm-key-preview"></div>
+            <div class="confirm-actions">
+                <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+                <button class="confirm-btn confirm-btn-delete" id="confirmDeleteBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Management Section - Professional Layout -->
+    <div class="container" style="margin-top: 50px;">
+        <div class="endpoint-section">
+            <div class="endpoint-header">
+                <h2 class="endpoint-title">🔑 API Key Management</h2>
+                <p class="endpoint-description">Generate and manage your API keys for accessing the Access Network API</p>
+            </div>
+
+            <!-- Rate Limit Warning -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin: 0 0 8px 0; font-size: 16px;">⚡ Free Tier Limits</h3>
+                <p style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.95;">
+                    <strong>50 requests/hour</strong> - To protect our resources from abuse
+                </p>
+                <p style="margin: 0 0 8px 0; font-size: 13px; opacity: 0.85;">
+                  Premium tiers coming soon: Basic (500/h), Standard (2000/h), Premium (10000+/h)
+                </p>
+            </div>
+
+            <!-- Protection Notice -->
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 14px; border-radius: 8px; margin: 20px 0; font-size: 13px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px;">🛡️</span>
+                    <div>
+                        <strong>Abuse Protection:</strong> Maximum 5 creations and 3 deletions per 24 hours.
+                        <br>Deleted keys are preserved for audit purposes.
+                    </div>
+                </div>
+            </div>
+
+            <div id="apiKeysList" style="margin: 20px 0;">
+                <!-- API Keys will be displayed here -->
+            </div>
+
+            <div style="max-width: 500px; margin: 20px 0;">
+                <div class="input-group">
+                    <label class="input-label">Key Name (Optional)</label>
+                    <input type="text" id="keyName" class="input-field" placeholder="My API Key">
+                </div>
+
+                <button class="create-key-btn" onclick="createApiKey()">
+                    <span>+</span>
+                    <span>Generate New API Key (Free: 50 req/hour)</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="endpoint-section">
+            <div class="endpoint-header">
+                <h2 class="endpoint-title">🎫 API Token Management</h2>
+                <p class="endpoint-description">Generate and manage your API tokens for enhanced security</p>
+            </div>
+
+            <div id="apiTokensList" style="margin: 20px 0;">
+                <!-- API Tokens will be displayed here -->
+            </div>
+
+            <div style="max-width: 500px; margin: 20px 0;">
+                <div class="input-group">
+                    <label class="input-label">Token Name (Optional)</label>
+                    <input type="text" id="tokenName" class="input-field" placeholder="My Access Token">
+                </div>
+
+                <button class="create-key-btn" onclick="createApiToken()">
+                    <span>+</span>
+                    <span>Generate New API Token</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const currentDomain = window.location.origin.replace('https://', '').replace('http://', '');
+        document.querySelectorAll('.api-domain').forEach(el => {
+            el.textContent = currentDomain;
+        });
+
+        // ============= Google OAuth Authentication (نفس النظام من access-explorer.html) =============
+        let currentExplorerUser = null;
+        let explorerSessionToken = null;
+
+        // Google Client ID - loaded securely from server
+        let GOOGLE_CLIENT_ID = null;
+
+        // Load Google Client ID from secure server endpoint
+        async function loadGoogleClientId() {
+            try {
+                const response = await fetch('/api/oauth-config');
+                const data = await response.json();
+                if (data.success && data.clientId) {
+                    GOOGLE_CLIENT_ID = data.clientId;
+                    console.log('✅ Google OAuth configured securely');
+                } else {
+                    console.error('Failed to load Google Client ID:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading Google Client ID:', error);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load Google Client ID first
+            await loadGoogleClientId();
+            // ✅ Handle OAuth callback first (نفس access-explorer.html)
+            await handleOAuthCallback();
+
+            const sessionRestored = loadExplorerSession();
+            if (!sessionRestored) {
+                const backupSession = sessionStorage.getItem('explorerGoogleBackup');
+                if (backupSession) {
+                    try {
+                        const session = JSON.parse(backupSession);
+                        if (session.token && session.user) {
+                            explorerSessionToken = session.token;
+                            currentExplorerUser = session.user;
+                            updateExplorerAuthUI();
+                            saveExplorerSession(session.token, session.user);
+                            console.log('🔄 Session restored from backup');
+                        } else {
+                            updateExplorerAuthUI();
+                        }
+                    } catch (error) {
+                        console.error('Failed to restore backup session:', error);
+                        updateExplorerAuthUI();
+                    }
+                } else {
+                    // No session - show Sign In button
+                    updateExplorerAuthUI();
+                }
+            }
+
+            setInterval(() => {
+                validateCurrentSession();
+                if (currentExplorerUser) {
+                    updateSessionActivity();
+                }
+            }, 5 * 60 * 1000);
+
+            loadApiKeys();
+            loadApiTokens();
+        });
+
+        function triggerGoogleSignIn() {
+            if (!GOOGLE_CLIENT_ID) {
+                showAuthMessage('Google authentication not configured. Please try again.', 'error');
+                return;
+            }
+
+            const termsCheckbox = document.getElementById('termsCheckbox');
+            if (!termsCheckbox || !termsCheckbox.checked) {
+                showAuthMessage('Please agree to the Terms of Service', 'error');
+                return;
+            }
+
+            // ✅ استخدام implicit flow نفس access-explorer.html
+            const redirectUri = window.location.origin + window.location.pathname;
+            const state = Math.random().toString(36).substring(7);
+            const nonce = Math.random().toString(36).substring(7);
+            sessionStorage.setItem('oauth_state', state);
+            sessionStorage.setItem('oauth_nonce', nonce);
+            sessionStorage.setItem('googleAuthInProgress', 'true');
+
+            const scope = 'openid email profile';
+            const authUrl =
+                `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${GOOGLE_CLIENT_ID}` +
+                `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+                `&response_type=token id_token` +
+                `&state=${encodeURIComponent(state)}` +
+                `&scope=${encodeURIComponent(scope)}` +
+                `&nonce=${encodeURIComponent(nonce)}`;
+
+            console.log('🔐 Redirecting to Google Sign-In...');
+            window.location.href = authUrl;
+        }
+
+        // ✅ نفس النظام من access-explorer.html تماماً
+        async function handleOAuthCallback() {
+            // Check if we have a hash fragment (OAuth response)
+            const hash = window.location.hash;
+            if (!hash || hash.length <= 1) {
+                return;
+            }
+
+            // Check if we were expecting a callback
+            const authInProgress = sessionStorage.getItem('googleAuthInProgress');
+            if (!authInProgress) {
+                return;
+            }
+
+            console.log('🔍 Processing OAuth callback...');
+            sessionStorage.removeItem('googleAuthInProgress');
+
+            try {
+                const params = new URLSearchParams(hash.substring(1));
+                const accessToken = params.get('access_token');
+                const idToken = params.get('id_token');
+
+                if (!accessToken || !idToken) {
+                    throw new Error('Missing tokens in OAuth response');
+                }
+
+                // Fetch user info
+                const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+
+                if (!userInfoResponse.ok) {
+                    throw new Error('Failed to fetch user info');
+                }
+
+                const userInfo = await userInfoResponse.json();
+
+                // ✅ Save user to database
+                try {
+                    const response = await fetch('/api/auth/explorer-google', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: userInfo.email,
+                            name: userInfo.name,
+                            googleId: userInfo.id,
+                            picture: userInfo.picture
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log('✅ User saved to database:', data.user.email);
+                    }
+                } catch (dbError) {
+                    console.error('❌ Error saving user to database:', dbError);
+                }
+
+                saveExplorerSession(accessToken, userInfo);
+                updateExplorerAuthUI();
+                hideAuthModal();
+
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                console.log('✅ Successfully signed in:', userInfo.name);
+            } catch (error) {
+                console.error('❌ OAuth callback error:', error);
+                showAuthMessage('Authentication failed. Please try again.', 'error');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        function loadExplorerSession() {
+            try {
+                const sessionData = localStorage.getItem('explorerGoogleSession');
+                if (sessionData) {
+                    const session = JSON.parse(sessionData);
+                    const now = Date.now();
+                    const sessionAge = now - (session.timestamp || 0);
+                    const maxAge = 30 * 24 * 60 * 60 * 1000;
+
+                    if (sessionAge < maxAge && session.token && session.user) {
+                        explorerSessionToken = session.token;
+                        currentExplorerUser = session.user;
+                        updateExplorerAuthUI();
+                        console.log('✅ Explorer session restored:', session.user.name);
+                        return true;
+                    } else {
+                        console.log('⚠️ Explorer session expired, clearing...');
+                        clearExplorerSession();
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error loading session:', error);
+            }
+            return false;
+        }
+
+        // Toast Notification System
+        function showToast(message, type = 'info', title = '') {
+            const icons = {
+                success: '<i class="fas fa-check-circle"></i>',
+                error: '<i class="fas fa-exclamation-circle"></i>',
+                info: '<i class="fas fa-info-circle"></i>'
+            };
+
+            const titles = {
+                success: title || 'Success',
+                error: title || 'Error',
+                info: title || 'Information'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `toast-notification ${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type]}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${titles[type]}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.closest('.toast-notification').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function saveExplorerSession(token, user) {
+            explorerSessionToken = token;
+            currentExplorerUser = user;
+
+            const sessionData = {
+                token: token,
+                user: user,
+                timestamp: Date.now(),
+                loginMethod: 'google',
+                userAgent: navigator.userAgent,
+                lastActivity: Date.now()
+            };
+
+            localStorage.setItem('explorerGoogleSession', JSON.stringify(sessionData));
+            sessionStorage.setItem('explorerGoogleBackup', JSON.stringify(sessionData));
+            console.log('💾 Session saved successfully');
+        }
+
+        function clearExplorerSession() {
+            explorerSessionToken = null;
+            currentExplorerUser = null;
+            localStorage.removeItem('explorerGoogleSession');
+            sessionStorage.removeItem('explorerGoogleBackup');
+            console.log('🗑️ Session cleared');
+        }
+
+        function updateExplorerAuthUI() {
+            const signInBtn = document.querySelector('.sign-in-btn');
+            const mobileUserSection = document.getElementById('mobileUserSection');
+            const mobileSigninSection = document.getElementById('mobileSigninSection');
+            const mobileUserName = document.getElementById('mobileUserName');
+            const mobileUserEmail = document.getElementById('mobileUserEmail');
+
+            if (currentExplorerUser) {
+                const displayName = currentExplorerUser.name || 'User';
+                const userEmail = currentExplorerUser.email || '';
+
+                // Desktop version - نفس access-explorer.html بالضبط
+                signInBtn.className = 'sign-in-btn user-logged-in';
+                signInBtn.style.display = 'flex';
+                signInBtn.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                        <span style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${displayName}</span>
+                        <button onclick="logoutExplorer()" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px; cursor: pointer;">Logout</button>
+                    </div>
+                `;
+
+                // Mobile version - show user section in sidebar
+                if (mobileUserSection && mobileSigninSection) {
+                    mobileUserSection.style.display = 'block';
+                    mobileSigninSection.style.display = 'none';
+
+                    if (mobileUserName) mobileUserName.textContent = displayName;
+                    if (mobileUserEmail) mobileUserEmail.textContent = userEmail;
+                }
+            } else {
+                // Desktop version - show sign in button ONLY when not logged in
+                signInBtn.className = 'sign-in-btn';
+                signInBtn.style.display = 'flex';
+                signInBtn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                `;
+                signInBtn.onclick = showAuthModal;
+
+                // Mobile version - show sign in section in sidebar
+                if (mobileUserSection && mobileSigninSection) {
+                    mobileUserSection.style.display = 'none';
+                    mobileSigninSection.style.display = 'block';
+                }
+            }
+        }
+
+        function showUserProfile() {
+            showToast('Profile page will be implemented soon', 'info');
+            toggleMobileMenu();
+        }
+
+        function logoutExplorer() {
+            clearExplorerSession();
+            updateExplorerAuthUI();
+
+            // Hide all API keys and clear visibility state
+            hideAllApiKeys();
+
+            // Clear API keys display without page reload
+            const apiKeysContainer = document.getElementById('apiKeysList');
+            if (apiKeysContainer) {
+                apiKeysContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔑</div>
+                        <p>Sign in to manage your API keys.</p>
+                    </div>
+                `;
+            }
+
+            // Close mobile menu if open
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu && mobileMenu.classList.contains('active')) {
+                toggleMobileMenu();
+            }
+
+            console.log('👋 User logged out successfully');
+        }
+
+        function showAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function hideAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+            clearAuthMessages();
+        }
+
+        function clearAuthMessages() {
+            document.getElementById('authMessage').innerHTML = '';
+        }
+
+        function showAuthMessage(message, type = 'error') {
+            const messageDiv = document.getElementById('authMessage');
+            messageDiv.innerHTML = `<div class="${type}-message">${message}</div>`;
+        }
+
+        function updateSessionActivity() {
+            const sessionData = localStorage.getItem('explorerGoogleSession');
+            if (sessionData && currentExplorerUser) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    session.lastActivity = Date.now();
+                    localStorage.setItem('explorerGoogleSession', JSON.stringify(session));
+                } catch (error) {
+                    console.error('❌ Error updating session activity:', error);
+                }
+            }
+        }
+
+        function validateCurrentSession() {
+            if (!currentExplorerUser || !explorerSessionToken) {
+                return;
+            }
+
+            const sessionData = localStorage.getItem('explorerGoogleSession');
+            if (!sessionData) {
+                logoutExplorer();
+                return;
+            }
+
+            try {
+                const session = JSON.parse(sessionData);
+                const now = Date.now();
+                const sessionAge = now - (session.timestamp || 0);
+                const inactivityTime = now - (session.lastActivity || 0);
+                const maxAge = 30 * 24 * 60 * 60 * 1000;
+                const maxInactivity = 7 * 24 * 60 * 60 * 1000;
+
+                if (sessionAge > maxAge || inactivityTime > maxInactivity) {
+                    console.log('⚠️ Session expired due to age or inactivity, logging out');
+                    logoutExplorer();
+                }
+            } catch (error) {
+                console.error('❌ Error validating session:', error);
+                logoutExplorer();
+            }
+        }
+
+        document.getElementById('authModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                hideAuthModal();
+            }
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (currentExplorerUser && explorerSessionToken) {
+                updateSessionActivity();
+            }
+        });
+
+        // ============= Mobile Menu & API Management =============
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.querySelector('.mobile-menu-overlay');
+            const body = document.body;
+
+            menu.classList.toggle('active');
+            overlay.classList.toggle('active');
+
+            if (menu.classList.contains('active')) {
+                body.style.overflow = 'hidden';
+            } else {
+                body.style.overflow = '';
+            }
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            updateThemeUI(newTheme);
+        }
+
+        function updateThemeUI(theme) {
+            const mobileIcon = document.getElementById('mobile-theme-icon');
+            const mobileText = document.getElementById('mobile-theme-text');
+            const desktopIcon = document.getElementById('desktop-theme-icon');
+            const desktopText = document.getElementById('desktop-theme-text');
+
+
+            if (theme === 'dark') {
+                if (mobileIcon) mobileIcon.textContent = '🌙';
+                if (mobileText) mobileText.textContent = 'Dark Mode';
+                if (desktopIcon) desktopIcon.textContent = '🌙';
+                if (desktopText) desktopText.textContent = 'Dark Mode';
+            } else {
+                if (mobileIcon) mobileIcon.textContent = '☀️';
+                if (mobileText) mobileText.textContent = 'Light Mode';
+                if (desktopIcon) desktopIcon.textContent = '☀️';
+                if (desktopText) desktopText.textContent = 'Light Mode';
+            }
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        window.addEventListener('DOMContentLoaded', function() {
+            updateThemeUI(savedTheme);
+        });
+
+        // Toggle dropdown menus
+        function toggleDropdown(element, event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const dropdown = element.closest('.dropdown');
+            const isActive = dropdown.classList.contains('active');
+
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown.active').forEach(d => {
+                if (d !== dropdown) {
+                    d.classList.remove('active');
+                }
+            });
+
+            // Toggle current dropdown
+            if (isActive) {
+                dropdown.classList.remove('active');
+            } else {
+                dropdown.classList.add('active');
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.dropdown.active').forEach(d => {
+                d.classList.remove('active');
+            });
+        });
+
+        // Show confirmation modal before delete
+        function showConfirmModal(keyId, keyValue) {
+            if (!currentExplorerUser || !currentExplorerUser.email) {
+                showToast('Please sign in first', 'info');
+                return;
+            }
+
+            const modal = document.getElementById('confirmModal');
+            const preview = document.getElementById('confirmKeyPreview');
+            const deleteBtn = document.getElementById('confirmDeleteBtn');
+
+            // Show masked key in preview
+            preview.textContent = maskApiKey(keyValue);
+
+            // Set up delete handler
+            deleteBtn.onclick = () => performDeleteApiKey(keyId);
+
+            // Show modal
+            modal.classList.add('active');
+        }
+
+        // Close confirmation modal
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('confirmModal');
+            if (modal && e.target === modal) {
+                closeConfirmModal();
+            }
+        });
+
+        // Actual delete function
+        async function performDeleteApiKey(keyId) {
+            closeConfirmModal();
+
+            try {
+                const response = await fetch(`/api/explorer/api-keys/${keyId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: currentExplorerUser.email })
+                });
+
+                if (response.ok) {
+                    showToast('API key deleted successfully', 'success');
+                    loadApiKeys();
+                } else {
+                    showToast('Failed to delete API key', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting API key:', error);
+                showToast('Error deleting API key', 'error');
+            }
+        }
+
+        // Legacy function for backward compatibility
+        async function deleteApiKey(keyId, keyValue) {
+            showConfirmModal(keyId, keyValue);
+        }
+
+        async function createApiKey() {
+            if (!currentExplorerUser || !currentExplorerUser.email) {
+                showToast('Please sign in first', 'info');
+                return;
+            }
+
+            const keyName = document.getElementById('keyName').value || 'My API Key';
+
+            try {
+                const response = await fetch('/api/explorer/api-keys/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        email: currentExplorerUser.email,
+                        keyName 
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showToast('API key created successfully!', 'success');
+                    document.getElementById('keyName').value = '';
+                    loadApiKeys();
+                } else {
+                    // Show clear error message based on error code
+                    if (data.errorCode === 'MAX_KEYS_REACHED') {
+                        showToast('⚠️ You can only have ONE active API key. Delete your existing key first.', 'error');
+                    } else if (data.errorCode === 'CREATION_RATE_LIMIT') {
+                        showToast('🛡️ Too many creations! Please wait 24 hours before creating more keys.', 'error');
+                    } else if (data.errorCode === 'RATE_LIMIT_EXCEEDED') {
+                        showToast('🛡️ Too many deletions! Please wait 24 hours.', 'error');
+                    } else {
+                        const errorMsg = data.error || 'Failed to create API key';
+                        showToast(errorMsg, 'error');
+                    }
+                    console.error('API Key creation error:', data);
+                }
+            } catch (error) {
+                console.error('Error creating API key:', error);
+                showToast('Network error: ' + error.message, 'error');
+            }
+        }
+
+        async function createApiToken() {
+            showToast('API Tokens feature coming soon - use API Keys for now', 'info');
+            return;
+        }
+
+        async function deleteApiToken(tokenId) {
+            if (!confirm('Are you sure you want to delete this API token?')) return;
+
+            try {
+                const response = await fetch(`/api/explorer/api-tokens/${tokenId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${explorerSessionToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    showToast('API token deleted successfully', 'success');
+                    loadApiTokens();
+                } else {
+                    showToast('Failed to delete API token', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting API token:', error);
+                showToast('Error deleting API token', 'error');
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+
+        // Format date consistently (fix Arabic date display issue)
+        function formatDate(timestamp) {
+            const date = new Date(parseInt(timestamp));
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Mask API key for security (show first 6 and last 4 chars)
+        function maskApiKey(apiKey) {
+            if (!apiKey || apiKey.length < 20) return apiKey;
+            const prefix = apiKey.substring(0, 6);
+            const suffix = apiKey.substring(apiKey.length - 4);
+            return `${prefix}${'*'.repeat(12)}${suffix}`;
+        }
+
+        // Toggle API key visibility
+        function toggleKeyVisibility(keyId, fullKey) {
+            const keyElement = document.getElementById(`key-${keyId}`);
+            const eyeIcon = document.getElementById(`eye-${keyId}`);
+
+            // Get current visibility state from localStorage
+            const visibilityState = JSON.parse(localStorage.getItem('apiKeyVisibility') || '{}');
+            const isVisible = visibilityState[keyId] || false;
+
+            if (isVisible) {
+                // Hide key
+                keyElement.textContent = maskApiKey(fullKey);
+                eyeIcon.textContent = '👁️';
+                visibilityState[keyId] = false;
+            } else {
+                // Show key
+                keyElement.textContent = fullKey;
+                eyeIcon.textContent = '🙈';
+                visibilityState[keyId] = true;
+            }
+
+            // Save state to localStorage
+            localStorage.setItem('apiKeyVisibility', JSON.stringify(visibilityState));
+        }
+
+        // Hide all API keys (called on logout)
+        function hideAllApiKeys() {
+            localStorage.removeItem('apiKeyVisibility');
+        }
+
+        async function loadApiKeys() {
+            const container = document.getElementById('apiKeysList');
+
+            if (!currentExplorerUser || !currentExplorerUser.email) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔑</div>
+                        <p>Sign in to manage your API keys.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/explorer/api-keys', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: currentExplorerUser.email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success && data.apiKeys) {
+                    const keys = data.apiKeys;
+
+                    if (keys.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🔑</div>
+                                <p>No API keys yet. Generate your first key to get started.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    // Get visibility state from localStorage
+                    const visibilityState = JSON.parse(localStorage.getItem('apiKeyVisibility') || '{}');
+
+                    container.innerHTML = keys.map(key => {
+                        const fullKey = key.api_key || key.key;
+                        const isVisible = visibilityState[key.id] || false;
+                        const displayKey = isVisible ? fullKey : maskApiKey(fullKey);
+                        const eyeIcon = isVisible ? '🙈' : '👁️';
+
+                        return `
+                        <div class="api-key-card">
+                            <div class="key-header">
+                                <span class="key-name">${key.key_name || key.name}</span>
+                                <span class="key-status" style="background: ${key.tier === 'free' ? '#6c757d' : '#28a745'}; padding: 4px 8px; border-radius: 4px; font-size: 11px;">
+                                    ${(key.tier || 'free').toUpperCase()}
+                                </span>
+                            </div>
+                            <div class="key-value">
+                                <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                                    <span class="key-text" id="key-${key.id}" style="flex: 1;">${displayKey}</span>
+                                    <button class="key-btn" onclick="toggleKeyVisibility(${key.id}, '${fullKey}')" style="padding: 4px 8px; background: transparent; border: 1px solid var(--border-color); font-size: 16px;" title="Show/Hide Key">
+                                        <span id="eye-${key.id}">${eyeIcon}</span>
+                                    </button>
+                                </div>
+                                <div class="key-actions">
+                                    <button class="key-btn" onclick="copyToClipboard('${fullKey}')">Copy</button>
+                                    <button class="key-btn danger" onclick="deleteApiKey(${key.id}, '${fullKey}')">Delete</button>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                <small style="color: var(--text-secondary); font-size: 12px;">
+                                    Created: ${formatDate(key.created_at)}
+                                </small>
+                                <small style="color: var(--accent-color); font-weight: 600; font-size: 12px;">
+                                    Limit: ${key.rate_limit} req/hour
+                                </small>
+                            </div>
+                        </div>
+                    `;
+                    }).join('');
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🔑</div>
+                            <p>No API keys yet. Generate your first key to get started.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading API keys:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <p>Error loading API keys. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function loadApiTokens() {
+            const tokens = JSON.parse(localStorage.getItem('apiTokens') || '[]');
+            const container = document.getElementById('apiTokensList');
+
+            if (tokens.length === 0 && !explorerSessionToken) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎫</div>
+                        <p>Sign in to manage your API tokens.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (tokens.length === 0 && explorerSessionToken) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎫</div>
+                        <p>No API tokens yet. Generate your first token to get started.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = tokens.map(token => `
+                <div class="api-key-card">
+                    <div class="key-header">
+                        <span class="key-name">${token.name}</span>
+                        <span class="key-status">${token.status}</span>
+                    </div>
+                    <div class="key-value">
+                        <span class="key-text">${token.token}</span>
+                        <div class="key-actions">
+                            <button class="key-btn" onclick="copyToClipboard('${token.token}')">Copy</button>
+                            <button class="key-btn danger" onclick="deleteApiToken(${token.id})">Delete</button>
+                        </div>
+                    </div>
+                    <small style="color: var(--text-secondary); font-size: 12px;">Created: ${new Date(token.created).toLocaleDateString()}</small>
+                </div>
+            `).join('');
+        }
+
+        function copyCode(button) {
+            const codeBox = button.nextElementSibling;
+            const text = codeBox.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                button.textContent = '✓ Copied';
+                button.classList.add('copied');
+
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function showTab(button, tabName) {
+            const section = button.closest('.endpoint-section');
+            const tabs = section.querySelectorAll('.tab');
+            const contents = section.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            button.classList.add('active');
+
+            contents.forEach(content => {
+                content.classList.remove('active');
+                if (content.getAttribute('data-tab') === tabName) {
+                    content.classList.add('active');
+                }
+            });
+        }
+
+        function getApiDomain() {
+            return window.location.hostname;
+        }
+
+        function showResult(resultId, statusId, responseBodyId, responseData, isSuccess) {
+            const resultDiv = document.getElementById(resultId);
+            const statusSpan = document.getElementById(statusId);
+            const responseBody = document.getElementById(responseBodyId);
+
+            resultDiv.style.display = 'block';
+            statusSpan.textContent = isSuccess ? 'Success ✓' : 'Error ✗';
+            statusSpan.className = `result-status ${isSuccess ? 'success' : 'error'}`;
+            responseBody.textContent = JSON.stringify(responseData, null, 2);
+        }
+
+        async function testBlockNumber() {
+            const apikey = document.getElementById('apikey-1').value.trim();
+            const resultDiv = document.getElementById('result-1');
+            const statusSpan = document.getElementById('status-1');
+            const responseBody = document.getElementById('response-1');
+
+            if (!apikey) {
+                alert('الرجاء إدخال API Key');
+                return;
+            }
+
+            try {
+                const apiUrl = `https://${getApiDomain()}/api/explorer/stats`;
+                const params = new URLSearchParams({
+                    module: 'proxy',
+                    action: 'access_blockNumber',
+                    apikey: apikey
+                });
+
+                const response = await fetch(`${apiUrl}?${params}`);
+                const data = await response.json();
+
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
+                statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
+                responseBody.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = 'Error ✗';
+                statusSpan.className = 'result-status error';
+                responseBody.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testGetBlockByNumber() {
+            const blockTag = document.getElementById('block-tag-2').value.trim();
+            const boolean = document.getElementById('block-boolean-2').value;
+            const apikey = document.getElementById('apikey-2').value.trim();
+            const resultDiv = document.getElementById('result-2');
+            const statusSpan = document.getElementById('status-2');
+            const responseBody = document.getElementById('response-2');
+
+            if (!blockTag || !apikey) {
+                alert('الرجاء إدخال Block Number و API Key');
+                return;
+            }
+
+            try {
+                const apiUrl = `https://${getApiDomain()}/api/explorer/block/${blockTag}`;
+                const params = new URLSearchParams({
+                    module: 'proxy',
+                    action: 'access_getBlockByNumber',
+                    tag: blockTag,
+                    boolean: boolean,
+                    apikey: apikey
+                });
+
+                const response = await fetch(`${apiUrl}?${params}`);
+                const data = await response.json();
+
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
+                statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
+                responseBody.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = 'Error ✗';
+                statusSpan.className = 'result-status error';
+                responseBody.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testGetTransactionByHash() {
+            const txHash = document.getElementById('tx-hash-3').value.trim();
+            const apikey = document.getElementById('apikey-3').value.trim();
+            const resultDiv = document.getElementById('result-3');
+            const statusSpan = document.getElementById('status-3');
+            const responseBody = document.getElementById('response-3');
+
+            if (!txHash || !apikey) {
+                alert('الرجاء إدخال Transaction Hash و API Key');
+                return;
+            }
+
+            try {
+                const apiUrl = `https://${getApiDomain()}/api/explorer/transaction/${txHash}`;
+                const params = new URLSearchParams({
+                    module: 'proxy',
+                    action: 'access_getTransactionByHash',
+                    txhash: txHash,
+                    apikey: apikey
+                });
+
+                const response = await fetch(`${apiUrl}?${params}`);
+                const data = await response.json();
+
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
+                statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
+                responseBody.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = 'Error ✗';
+                statusSpan.className = 'result-status error';
+                responseBody.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testGetTransactionCount() {
+            const address = document.getElementById('address-4').value.trim();
+            const tag = document.getElementById('tag-4').value;
+            const apikey = document.getElementById('apikey-4').value.trim();
+            const resultDiv = document.getElementById('result-4');
+            const statusSpan = document.getElementById('status-4');
+            const responseBody = document.getElementById('response-4');
+
+            if (!address || !apikey) {
+                alert('الرجاء إدخال Address و API Key');
+                return;
+            }
+
+            try {
+                const apiUrl = `https://${getApiDomain()}/api/explorer/address/${address}`;
+                const params = new URLSearchParams({
+                    module: 'proxy',
+                    action: 'access_getTransactionCount',
+                    address: address,
+                    tag: tag,
+                    apikey: apikey
+                });
+
+                const response = await fetch(`${apiUrl}?${params}`);
+                const data = await response.json();
+
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
+                statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
+                responseBody.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = 'Error ✗';
+                statusSpan.className = 'result-status error';
+                responseBody.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testSendRawTransaction() {
+            const signedTx = document.getElementById('signed-tx-5').value.trim();
+            const apikey = document.getElementById('apikey-5').value.trim();
+            const resultDiv = document.getElementById('result-5');
+            const statusSpan = document.getElementById('status-5');
+            const responseBody = document.getElementById('response-5');
+
+            if (!signedTx || !apikey) {
+                alert('الرجاء إدخال Signed Transaction و API Key');
+                return;
+            }
+
+            try {
+                const apiUrl = `https://${getApiDomain()}/api/blockchain/send`;
+                const params = new URLSearchParams({
+                    module: 'proxy',
+                    action: 'access_sendRawTransaction',
+                    hex: signedTx,
+                    apikey: apikey
+                });
+
+                const response = await fetch(`${apiUrl}?${params}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
+                statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
+                responseBody.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = 'Error ✗';
+                statusSpan.className = 'result-status error';
+                responseBody.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testGasPrice() {
+            const apikey = document.getElementById('apikey-6').value.trim();
+            const resultDiv = document.getElementById('result-6');
+            const statusSpan = document.getElementById('status-6');
+            const responseBody = document.getElementById('response-6');
+
+            if (!apikey) {
+                alert('الرجاء إدخال API Key');
+                return;
+            }
+
+            try {
+                const apiUrl = `https://${getApiDomain()}/api/explorer/stats`;
+                const params = new URLSearchParams({
+                    module: 'proxy',
+                    action: 'access_gasPrice',
+                    apikey: apikey
+                });
+
+                const response = await fetch(`${apiUrl}?${params}`);
+                const data = await response.json();
+
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
+                statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
+                responseBody.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = 'Error ✗';
+                statusSpan.className = 'result-status error';
+                responseBody.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testGetTopAccounts() {
+            const limit = document.getElementById('limit-7').value;
+            const page = document.getElementById('page-7').value;
+            const apikey = document.getElementById('apikey-7').value.trim();
+            const resultDiv = document.getElementById('result-7');
+            const statusSpan = document.getElementById('status-7');
+            const responseBody = document.getElementById('response-7');
+
+            if (!apikey) {
+                alert('الرجاء إدخال API Key');
+                return;
+            }
+
+            try {
+                const apiUrl = `https://${getApiDomain()}/api/explorer/top-accounts`;
+                const params = new URLSearchParams({
+                    limit: limit,
+                    page: page,
+                    apikey: apikey
+                });
+
+                const response = await fetch(`${apiUrl}?${params}`);
+                const data = await response.json();
+
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
+                statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
+                responseBody.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                statusSpan.textContent = 'Error ✗';
+                statusSpan.className = 'result-status error';
+                responseBody.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="about.html" class="footer-link">About</a>
+                <a href="faq.html" class="footer-link">FAQ</a>
+                <a href="developer-api.html" class="footer-link">API</a>
+                <a href="contact.html" class="footer-link">Contact Us</a>
+                <a href="terms-of-service.html" class="footer-link">Terms</a>
+            </div>
+            <p>&copy; 2025 AccessScan. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

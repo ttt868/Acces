@@ -302,8 +302,8 @@ self.addEventListener('push', (event) => {
   if (data.type === 'transaction_received' && data.amount) {
     // Transaction notification
     const t = getTranslation(deviceLang);
-    const fromShort = data.from ? 
-      `${data.from.substring(0, 6)}...${data.from.substring(data.from.length - 4)}` : 
+    const fromShort = data.sender ? 
+      `${data.sender.substring(0, 6)}...${data.sender.substring(data.sender.length - 4)}` : 
       '???';
     body = `${t.newTx}\n${t.amount}: ${formatAmountSmart(data.amount)} ACCESS\n${t.from}: ${fromShort}`;
   } else if (data.type === 're-engagement' && data.daysInactive) {

@@ -79,21 +79,34 @@ export async function sendFCMNotification(userId, title, body, data = {}) {
     
     console.log(`📱 FCM sent to user ${userId}: ${response.successCount} success, ${response.failureCount} failed`);
 
-    // Remove invalid tokens
+    // Only remove tokens with PERMANENT errors (not temporary failures)
     if (response.failureCount > 0) {
-      const failedTokens = [];
+      const permanentlyInvalidTokens = [];
+      const permanentErrorCodes = [
+        'messaging/registration-token-not-registered',
+        'messaging/invalid-registration-token',
+        'messaging/invalid-argument'
+      ];
+      
       response.responses.forEach((resp, idx) => {
-        if (!resp.success) {
-          failedTokens.push(tokens[idx]);
+        if (!resp.success && resp.error) {
+          const errorCode = resp.error.code || '';
+          console.log(`📱 [FCM] Token ${idx} error: ${errorCode} - ${resp.error.message}`);
+          
+          // Only mark as invalid if it's a permanent error
+          if (permanentErrorCodes.includes(errorCode)) {
+            permanentlyInvalidTokens.push(tokens[idx]);
+          }
         }
       });
       
-      if (failedTokens.length > 0) {
+      // Only delete tokens with permanent errors
+      if (permanentlyInvalidTokens.length > 0) {
         await pool.query(
           'DELETE FROM fcm_tokens WHERE token = ANY($1)',
-          [failedTokens]
+          [permanentlyInvalidTokens]
         );
-        console.log(`🗑️ Removed ${failedTokens.length} invalid FCM tokens`);
+        console.log(`🗑️ Removed ${permanentlyInvalidTokens.length} permanently invalid FCM tokens`);
       }
     }
 
@@ -147,20 +160,34 @@ export async function sendFCMDataNotification(userId, data = {}) {
     
     console.log(`📱 FCM data sent to user ${userId}: ${response.successCount} success, ${response.failureCount} failed`);
 
-    // Remove invalid tokens
+    // Only remove tokens with PERMANENT errors (not temporary failures)
     if (response.failureCount > 0) {
-      const failedTokens = [];
+      const permanentlyInvalidTokens = [];
+      const permanentErrorCodes = [
+        'messaging/registration-token-not-registered',
+        'messaging/invalid-registration-token',
+        'messaging/invalid-argument'
+      ];
+      
       response.responses.forEach((resp, idx) => {
-        if (!resp.success) {
-          failedTokens.push(tokens[idx]);
+        if (!resp.success && resp.error) {
+          const errorCode = resp.error.code || '';
+          console.log(`📱 [FCM] Token ${idx} error: ${errorCode} - ${resp.error.message}`);
+          
+          // Only mark as invalid if it's a permanent error
+          if (permanentErrorCodes.includes(errorCode)) {
+            permanentlyInvalidTokens.push(tokens[idx]);
+          }
         }
       });
       
-      if (failedTokens.length > 0) {
+      // Only delete tokens with permanent errors
+      if (permanentlyInvalidTokens.length > 0) {
         await pool.query(
           'DELETE FROM fcm_tokens WHERE token = ANY($1)',
-          [failedTokens]
+          [permanentlyInvalidTokens]
         );
+        console.log(`🗑️ Removed ${permanentlyInvalidTokens.length} permanently invalid FCM tokens`);
       }
     }
 

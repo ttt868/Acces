@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعادة تعيين الإشعارات</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a2e; color: white; padding: 20px; text-align: center; }
+        .btn { background: #00d4ff; color: white; border: none; padding: 20px 40px; font-size: 18px; border-radius: 12px; margin: 10px; cursor: pointer; }
+        #log { background: rgba(0,0,0,0.3); padding: 15px; margin-top: 20px; text-align: left; direction: ltr; font-size: 14px; border-radius: 8px; max-height: 400px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>إعادة تعيين الإشعارات</h1>
+    <p>هذه الصفحة ستمسح Service Worker القديم وتنشئ اشتراكا جديدا</p>
+    <button class="btn" onclick="resetAll()">إعادة التعيين الكامل</button>
+    <div id="log"></div>
+    <script>
+        function log(msg) {
+            document.getElementById('log').innerHTML += new Date().toLocaleTimeString() + ' - ' + msg + '<br>';
+        }
+        
+        async function resetAll() {
+            log('Starting full reset...');
+            
+            try {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                log('Found ' + regs.length + ' service workers');
+                
+                for (const reg of regs) {
+                    try {
+                        const sub = await reg.pushManager.getSubscription();
+                        if (sub) {
+                            await sub.unsubscribe();
+                            log('Unsubscribed push');
+                        }
+                    } catch (e) {
+                        log('No push sub: ' + e.message);
+                    }
+                    await reg.unregister();
+                    log('Unregistered SW: ' + reg.scope);
+                }
+                
+                log('Waiting 2 seconds...');
+                await new Promise(r => setTimeout(r, 2000));
+                
+                log('Registering new Service Worker...');
+                const newReg = await navigator.serviceWorker.register('/sw.js?v=' + Date.now());
+                log('SW registered, waiting for ready...');
+                await navigator.serviceWorker.ready;
+                log('Service Worker ready!');
+                
+                log('Fetching VAPID key...');
+                const resp = await fetch('/api/push/public-key');
+                const data = await resp.json();
+                log('VAPID key: ' + data.publicKey.substring(0, 30) + '...');
+                
+                log('Creating push subscription...');
+                const vapidKey = urlBase64ToUint8Array(data.publicKey);
+                
+                const subscription = await newReg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: vapidKey
+                });
+                
+                log('SUCCESS! Subscription created!');
+                log('Endpoint: ' + subscription.endpoint.substring(0, 80) + '...');
+                
+                // Save to server
+                const sessionData = localStorage.getItem('accessoireUser');
+                if (sessionData) {
+                    const userId = JSON.parse(sessionData).id;
+                    log('Saving for user: ' + userId);
+                    const saveResp = await fetch('/api/push/subscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: userId, subscription: subscription.toJSON() })
+                    });
+                    const saveData = await saveResp.json();
+                    log('Save result: ' + JSON.stringify(saveData));
+                } else {
+                    log('Not logged in - subscription not saved');
+                }
+            } catch (e) {
+                log('ERROR: ' + e.name + ' - ' + e.message);
+                if (e.stack) log('Stack: ' + e.stack);
+            }
+        }
+        
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+            return outputArray;
+        }
+    </script>
+</body>
+</html>

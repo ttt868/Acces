@@ -1,6 +1,20 @@
 // Push Notification System for ACCESS Network
 // Sends push notifications when user receives ACCESS tokens
 
+// ✅ IMMEDIATE: تخزين دالة عرض Modal عالمياً للاستدعاء المباشر
+window.showNotificationModal = function() {
+  console.log('🔔 [DIRECT] showNotificationModal() called from window');
+  if (typeof showNotificationPromptModal === 'function') {
+    showNotificationPromptModal();
+  } else {
+    console.error('showNotificationPromptModal not defined yet');
+    // Fallback: طلب الإذن مباشرة
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(p => console.log('Permission:', p));
+    }
+  }
+};
+
 // Transaction notification translations
 const NOTIFICATION_TRANSLATIONS = {
   en: {
@@ -134,6 +148,7 @@ function formatAmountClean(amount) {
 
 class AccessNotificationSystem {
   constructor() {
+    console.log('🔔 [INIT] AccessNotificationSystem constructor called');
     this.isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
     this.permission = 'default';
     this.registration = null;
@@ -141,17 +156,20 @@ class AccessNotificationSystem {
     this.userId = null;
     this.ws = null;
     this.pushSubscription = null;
+    console.log('🔔 [INIT] isSupported:', this.isSupported);
   }
 
   // Initialize the notification system
   async initialize() {
+    console.log('🔔 [INIT] initialize() called');
     if (!this.isSupported) {
-      console.log('Push notifications not supported on this device');
+      console.log('🔔 [INIT] Push notifications not supported on this device');
       return false;
     }
 
     try {
       // Register Service Worker
+      console.log('🔔 [INIT] Registering service worker...');
       this.registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/'
       });
@@ -226,24 +244,29 @@ class AccessNotificationSystem {
 
   // 🔔 FACEBOOK/INSTAGRAM STYLE: Force create new subscription every time
   async forceNewSubscription() {
+    console.log('🔔 [SUBSCRIBE] forceNewSubscription() called');
     try {
       if (!this.registration) {
-        console.log('No service worker registration');
+        console.log('🔔 [SUBSCRIBE] ERROR: No service worker registration');
         return false;
       }
 
       // Check if user ID exists
       if (!this.userId) {
+        console.log('🔔 [SUBSCRIBE] Getting user wallet address...');
         this.getUserWalletAddress();
       }
       
+      console.log('🔔 [SUBSCRIBE] userId:', this.userId);
+      
       if (!this.userId) {
-        console.log('⏳ No user ID yet, will retry subscription later');
+        console.log('🔔 [SUBSCRIBE] ⏳ No user ID yet, will retry in 5 seconds');
         setTimeout(() => this.forceNewSubscription(), 5000);
         return false;
       }
 
       // Get VAPID public key from server
+      console.log('🔔 [SUBSCRIBE] Fetching VAPID public key...');
       const response = await fetch('/api/push/public-key');
       const data = await response.json();
       
@@ -298,6 +321,7 @@ class AccessNotificationSystem {
             console.log('✅ Push subscription saved to server - READY FOR NOTIFICATIONS');
             // Store in localStorage that we have subscribed on this server
             localStorage.setItem('push_subscription_saved', Date.now().toString());
+            // Show success message to user
             // Notification enabled silently
           } else {
             console.error('❌ Failed to save subscription:', saveData.error);
@@ -350,6 +374,7 @@ class AccessNotificationSystem {
       if (saveData.success) {
         console.log('✅ Push subscription saved to server (retry)');
         localStorage.setItem('push_subscription_saved', Date.now().toString());
+        localStorage.removeItem('pendingPushSubscription'); // ✅ مسح الاشتراك المعلق
         return true;
       }
       return false;
@@ -357,6 +382,61 @@ class AccessNotificationSystem {
       console.error('Error saving subscription:', error);
       return false;
     }
+  }
+
+  // ✅ حفظ الاشتراك مع إعادة المحاولة
+  async saveSubscriptionToServerWithRetry(subscriptionJson) {
+    try {
+      const saveResponse = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: this.userId,
+          subscription: subscriptionJson
+        })
+      });
+
+      const saveData = await saveResponse.json();
+      if (saveData.success) {
+        console.log('✅ Web Push subscription saved to server');
+        localStorage.setItem('push_subscription_saved', Date.now().toString());
+        localStorage.removeItem('pendingPushSubscription');
+      } else {
+        console.error('Failed to save push subscription:', saveData.error);
+      }
+    } catch (error) {
+      console.error('Error saving subscription:', error);
+    }
+  }
+
+  // ✅ انتظار تسجيل دخول المستخدم
+  waitForUserLogin() {
+    // التحقق كل 3 ثواني لمدة دقيقتين
+    let attempts = 0;
+    const maxAttempts = 40; // 40 × 3 = 120 ثانية
+    
+    const checkInterval = setInterval(async () => {
+      attempts++;
+      this.getUserWalletAddress();
+      
+      if (this.userId) {
+        clearInterval(checkInterval);
+        console.log('✅ User logged in, saving pending push subscription...');
+        
+        const pendingSubscription = localStorage.getItem('pendingPushSubscription');
+        if (pendingSubscription) {
+          try {
+            const subscriptionJson = JSON.parse(pendingSubscription);
+            await this.saveSubscriptionToServerWithRetry(subscriptionJson);
+          } catch (e) {
+            console.error('Error parsing pending subscription:', e);
+          }
+        }
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkInterval);
+        console.log('⏰ User login wait timeout - subscription will be saved on next visit');
+      }
+    }, 3000);
   }
 
   // 🔔 Auto-renewal check every 5 minutes - like Facebook/Instagram
@@ -469,23 +549,17 @@ class AccessNotificationSystem {
         this.getUserWalletAddress();
       }
 
+      // ✅ حفظ الاشتراك في localStorage للاستخدام لاحقاً
+      const subscriptionJson = subscription.toJSON();
+      localStorage.setItem('pendingPushSubscription', JSON.stringify(subscriptionJson));
+
       if (this.userId) {
         // Send subscription to server
-        const saveResponse = await fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: this.userId,
-            subscription: subscription.toJSON()
-          })
-        });
-
-        const saveData = await saveResponse.json();
-        if (saveData.success) {
-          console.log('Web Push subscription saved to server');
-        } else {
-          console.error('Failed to save push subscription:', saveData.error);
-        }
+        await this.saveSubscriptionToServerWithRetry(subscriptionJson);
+      } else {
+        console.log('⚠️ Web Push subscription created but user not logged in - will save after login');
+        // ✅ تعيين مستمع لحفظ الاشتراك عند تسجيل الدخول
+        this.waitForUserLogin();
       }
 
       return true;
@@ -521,7 +595,7 @@ class AccessNotificationSystem {
             console.log('Notification system tracking wallet:', this.userWalletAddress);
           }
           if (user.id) {
-            this.userId = user.id;
+            this.userId = String(user.id); // ⚠️ Always convert to string for DB compatibility
             console.log('Notification system tracking user ID:', this.userId);
           }
         }
@@ -647,25 +721,29 @@ class AccessNotificationSystem {
 
   // Request notification permission
   async requestPermission() {
+    console.log('🔔 [PERMISSION] requestPermission() called');
     if (!this.isSupported) {
+      console.log('🔔 [PERMISSION] Not supported, returning false');
       return false;
     }
 
     try {
+      console.log('🔔 [PERMISSION] Requesting browser permission...');
       const permission = await Notification.requestPermission();
       this.permission = permission;
+      console.log('🔔 [PERMISSION] Browser response:', permission);
       
       if (permission === 'granted') {
-        console.log('Notification permission granted');
+        console.log('🔔 [PERMISSION] ✅ Permission GRANTED - subscribing to Web Push...');
         // Subscribe to Web Push for background notifications
         await this.subscribeToWebPush();
         return true;
       } else {
-        console.log('Notification permission denied');
+        console.log('🔔 [PERMISSION] ❌ Permission DENIED or dismissed');
         return false;
       }
     } catch (error) {
-      console.error('Error requesting permission:', error);
+      console.error('🔔 [PERMISSION] Error requesting permission:', error);
       return false;
     }
   }
@@ -766,15 +844,45 @@ window.accessNotifications = new AccessNotificationSystem();
 
 // Auto-initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('🔔 [INIT] DOMContentLoaded - starting notification system...');
+  
+  // Show debug status
+  const debugInfo = {
+    serviceWorker: 'serviceWorker' in navigator,
+    pushManager: 'PushManager' in window,
+    notification: 'Notification' in window,
+    permission: typeof Notification !== 'undefined' ? Notification.permission : 'N/A'
+  };
+  console.log('🔔 [DEBUG] Browser support:', debugInfo);
+  
   const initialized = await window.accessNotifications.initialize();
+  console.log('🔔 [INIT] Initialize result:', initialized);
+  
   if (initialized) {
-    // Request permission after a short delay
+    // ✅ Check for pending subscription (created but not saved)
+    setTimeout(async () => {
+      window.accessNotifications.getUserWalletAddress();
+      const pendingSubscription = localStorage.getItem('pendingPushSubscription');
+      if (pendingSubscription && window.accessNotifications.userId) {
+        console.log('🔔 Found pending subscription - saving now...');
+        try {
+          const subscriptionJson = JSON.parse(pendingSubscription);
+          await window.accessNotifications.saveSubscriptionToServerWithRetry(subscriptionJson);
+        } catch (e) {
+          console.error('Error saving pending subscription:', e);
+        }
+      }
+    }, 2000);
+
+    // Check permission after a short delay
     setTimeout(async () => {
       const currentPermission = Notification.permission;
+      console.log('🔔 [PERMISSION CHECK] Current permission:', currentPermission);
       
       if (currentPermission === 'default') {
-        // Never asked - ask now
-        await window.accessNotifications.requestPermission();
+        // Never asked - show prompt modal (requires user click for modern browsers)
+        console.log('🔔 Permission not yet requested - showing prompt modal');
+        showNotificationPromptModal(); // ✅ ENABLED - user must click to grant permission
       } else if (currentPermission === 'denied') {
         // Blocked - show message to user
         console.log('🔔 Notifications are blocked. User needs to enable in browser settings.');
@@ -785,12 +893,288 @@ document.addEventListener('DOMContentLoaded', async () => {
         await window.accessNotifications.forceNewSubscription();
       }
     }, 3000);
+  } else {
+    console.log('🔔 [INIT] ❌ Failed to initialize - showing manual prompt');
+    // Show prompt anyway after 5 seconds
+    setTimeout(() => {
+      console.log('🔔 [FALLBACK] Trying to show modal after init failure...');
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+        showNotificationPromptModal(); // ✅ ENABLED
+      }
+    }, 5000);
   }
+  
+  // ✅ EMERGENCY FALLBACK: إذا لم يظهر Modal بعد 10 ثواني، حاول مرة أخرى
+  setTimeout(() => {
+    console.log('🔔 [EMERGENCY] 10s fallback check...');
+    const modalExists = document.getElementById('notification-prompt-modal');
+    if (!modalExists && typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      console.log('🔔 [EMERGENCY] Modal not shown yet - forcing display!');
+      showNotificationPromptModal();
+    }
+  }, 10000);
+  
+  // ✅ MOBILE FRIENDLY: إظهار Banner ظاهر في أعلى الصفحة بعد ثانيتين
+  setTimeout(() => {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      showNotificationBanner();
+    }
+  }, 2000);
 });
+
+// 🔔 Show notification BANNER (visible at top of page - mobile friendly)
+function showNotificationBanner() {
+  console.log('🔔 [BANNER] showNotificationBanner() called');
+  
+  // Don't show if already exists
+  if (document.getElementById('notification-banner')) {
+    console.log('🔔 [BANNER] Already exists');
+    return;
+  }
+  
+  // Don't show if permission already granted or denied
+  if (Notification.permission !== 'default') {
+    console.log('🔔 [BANNER] Permission is:', Notification.permission);
+    return;
+  }
+  
+  console.log('🔔 [BANNER] Creating banner...');
+  
+  const banner = document.createElement('div');
+  banner.id = 'notification-banner';
+  banner.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 999999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  `;
+  
+  banner.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+      <span style="font-size: 24px;">🔔</span>
+      <span style="font-size: 14px; font-weight: 500;">Enable notifications to receive alerts when you get ACCESS tokens</span>
+    </div>
+    <button id="enable-notif-btn" style="
+      background: white;
+      color: #667eea;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    ">Enable</button>
+    <button id="close-banner-btn" style="
+      background: transparent;
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 20px;
+      margin-left: 10px;
+    ">×</button>
+  `;
+  
+  document.body.prepend(banner);
+  
+  // Enable button
+  document.getElementById('enable-notif-btn').addEventListener('click', async () => {
+    console.log('🔔 [BANNER] Enable clicked!');
+    banner.innerHTML = '<span style="padding: 15px;">⏳ Requesting permission...</span>';
+    
+    try {
+      const permission = await Notification.requestPermission();
+      console.log('🔔 [BANNER] Permission result:', permission);
+      
+      if (permission === 'granted') {
+        banner.style.background = 'linear-gradient(135deg, #00c853 0%, #00e676 100%)';
+        banner.innerHTML = '<span style="padding: 15px;">✅ Notifications enabled!</span>';
+        
+        // Subscribe to push
+        if (window.accessNotifications) {
+          await window.accessNotifications.forceNewSubscription();
+        }
+        
+        setTimeout(() => banner.remove(), 3000);
+      } else {
+        banner.style.background = 'linear-gradient(135deg, #ff5252 0%, #ff1744 100%)';
+        banner.innerHTML = '<span style="padding: 15px;">❌ Notifications blocked. Enable in browser settings.</span>';
+        setTimeout(() => banner.remove(), 5000);
+      }
+    } catch (e) {
+      console.error('🔔 [BANNER] Error:', e);
+      banner.innerHTML = '<span style="padding: 15px;">❌ Error: ' + e.message + '</span>';
+    }
+  });
+  
+  // Close button
+  document.getElementById('close-banner-btn').addEventListener('click', () => {
+    banner.remove();
+    localStorage.setItem('notification_banner_closed', Date.now().toString());
+  });
+}
+
+// 🔔 Show notification prompt modal (required for modern browsers - needs user click)
+function showNotificationPromptModal() {
+  console.log('🔔 [MODAL] showNotificationPromptModal() called');
+  console.log('🔔 [MODAL] Current permission:', Notification.permission);
+  console.log('🔔 [MODAL] sessionStorage notificationPromptShown:', sessionStorage.getItem('notificationPromptShown'));
+  
+  // Don't show if permission already granted
+  if (Notification.permission === 'granted') {
+    console.log('🔔 [MODAL] Permission already granted - skipping modal');
+    // ✅ لكن تأكد من وجود subscription
+    if (window.accessNotifications) {
+      window.accessNotifications.forceNewSubscription();
+    }
+    return;
+  }
+  
+  // Don't show if permission denied
+  if (Notification.permission === 'denied') {
+    console.log('🔔 [MODAL] Permission denied - showing blocked message instead');
+    showNotificationBlockedMessage();
+    return;
+  }
+  
+  // ✅ إزالة شرط sessionStorage - نريد إظهار Modal دائماً إذا لم يتم منح الإذن
+  // if (sessionStorage.getItem('notificationPromptShown')) {
+  //   console.log('🔔 [MODAL] Already shown in this session - skipping');
+  //   return;
+  // }
+  
+  console.log('🔔 [MODAL] ✅ Creating notification prompt modal NOW...');
+  
+  const modal = document.createElement('div');
+  modal.id = 'notification-prompt-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    animation: fadeIn 0.3s ease;
+  `;
+  
+  modal.innerHTML = `
+    <div style="
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 350px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    ">
+      <div style="font-size: 60px; margin-bottom: 15px;">🔔</div>
+      <h3 style="color: #fff; margin: 0 0 10px 0; font-size: 20px;">Enable Notifications</h3>
+      <p style="color: rgba(255, 255, 255, 0.7); margin: 0 0 20px 0; font-size: 14px; line-height: 1.5;">
+        Get notified when you receive ACCESS tokens and important updates.
+      </p>
+      <button id="enable-notifications-btn" style="
+        background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+        color: white;
+        border: none;
+        padding: 14px 40px;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin-bottom: 10px;
+        transition: transform 0.2s, box-shadow 0.2s;
+      ">
+        Enable Notifications
+      </button>
+      <button id="skip-notifications-btn" style="
+        background: transparent;
+        color: rgba(255, 255, 255, 0.5);
+        border: none;
+        padding: 10px;
+        font-size: 14px;
+        cursor: pointer;
+        width: 100%;
+      ">
+        Maybe later
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Enable button - THIS is the user gesture that allows permission request
+  document.getElementById('enable-notifications-btn').addEventListener('click', async () => {
+    sessionStorage.setItem('notificationPromptShown', 'true');
+    modal.remove();
+    
+    // Now request permission - this works because it's from a click event
+    console.log('🔔 User clicked enable - requesting permission...');
+    const granted = await window.accessNotifications.requestPermission();
+    
+    if (granted) {
+      showNotificationSuccessToast();
+    }
+  });
+  
+  // Skip button
+  document.getElementById('skip-notifications-btn').addEventListener('click', () => {
+    sessionStorage.setItem('notificationPromptShown', 'true');
+    modal.remove();
+  });
+  
+  // Click outside to close
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      sessionStorage.setItem('notificationPromptShown', 'true');
+      modal.remove();
+    }
+  });
+}
+
+// Show success toast after enabling notifications
+function showNotificationSuccessToast() {
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #00c853 0%, #00e676 100%);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 200, 83, 0.4);
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    animation: slideDown 0.3s ease;
+  `;
+  toast.innerHTML = '✅ Notifications enabled successfully!';
+  document.body.appendChild(toast);
+  
+  setTimeout(() => toast.remove(), 4000);
+}
 
 // Show message when notifications are blocked
 function showNotificationBlockedMessage() {
-  // Only show once per session
+  return; // DISABLED
   if (sessionStorage.getItem('notificationBlockedShown')) return;
   sessionStorage.setItem('notificationBlockedShown', 'true');
   
@@ -876,13 +1260,101 @@ function showNotificationStatus(message, type = 'info') {
   }, 5000);
 }
 
-// Listen for user login/wallet changes
-window.addEventListener('storage', (event) => {
+// Listen for user login/wallet changes (cross-tab only)
+window.addEventListener('storage', async (event) => {
   if (event.key === 'accessoireUser') {
     window.accessNotifications.getUserWalletAddress();
-    // Try to save subscription after login
+    
+    // ✅ Try to save pending subscription after login
+    const pendingSubscription = localStorage.getItem('pendingPushSubscription');
+    if (pendingSubscription && window.accessNotifications.userId) {
+      console.log('🔔 User logged in - saving pending push subscription...');
+      try {
+        const subscriptionJson = JSON.parse(pendingSubscription);
+        await window.accessNotifications.saveSubscriptionToServerWithRetry(subscriptionJson);
+      } catch (e) {
+        console.error('Error saving pending subscription:', e);
+      }
+    }
+    
+    // Try to save existing subscription after login
     if (window.accessNotifications.pushSubscription) {
       window.accessNotifications.saveSubscriptionToServer(window.accessNotifications.pushSubscription);
     }
   }
 });
+
+// ✅ NEW: Listen for custom userLoggedIn event (same-tab)
+window.addEventListener('userLoggedIn', async (event) => {
+  console.log('🔔 [EVENT] userLoggedIn event received');
+  window.accessNotifications.getUserWalletAddress();
+  
+  if (window.accessNotifications.userId) {
+    // Save any pending subscription
+    const pendingSubscription = localStorage.getItem('pendingPushSubscription');
+    if (pendingSubscription) {
+      console.log('🔔 [EVENT] Saving pending subscription for user:', window.accessNotifications.userId);
+      try {
+        const subscriptionJson = JSON.parse(pendingSubscription);
+        await window.accessNotifications.saveSubscriptionToServerWithRetry(subscriptionJson);
+      } catch (e) {
+        console.error('Error saving pending subscription:', e);
+      }
+    }
+    
+    // Also ensure we have a subscription if permission is granted
+    if (Notification.permission === 'granted' && !window.accessNotifications.pushSubscription) {
+      console.log('🔔 [EVENT] Creating new subscription after login...');
+      await window.accessNotifications.forceNewSubscription();
+    }
+  }
+});
+
+// ✅ NEW: Continuous polling for userId (every 5 seconds)
+// This catches cases where storage event doesn't fire (same tab)
+let _pushPollingStarted = false;
+function startPushSubscriptionPolling() {
+  if (_pushPollingStarted) return;
+  _pushPollingStarted = true;
+  
+  console.log('🔔 [POLLING] Starting continuous userId check (every 5 seconds)');
+  
+  setInterval(async () => {
+    // Skip if already have userId and subscription is saved
+    if (localStorage.getItem('push_subscription_saved') && window.accessNotifications.userId) {
+      return;
+    }
+    
+    // Check for userId
+    const prevUserId = window.accessNotifications.userId;
+    window.accessNotifications.getUserWalletAddress();
+    
+    // If userId just became available
+    if (!prevUserId && window.accessNotifications.userId) {
+      console.log('🔔 [POLLING] userId now available:', window.accessNotifications.userId);
+      
+      // Check for pending subscription
+      const pendingSubscription = localStorage.getItem('pendingPushSubscription');
+      if (pendingSubscription) {
+        console.log('🔔 [POLLING] Saving pending subscription...');
+        try {
+          const subscriptionJson = JSON.parse(pendingSubscription);
+          await window.accessNotifications.saveSubscriptionToServerWithRetry(subscriptionJson);
+        } catch (e) {
+          console.error('Error saving pending subscription:', e);
+        }
+      } else if (Notification.permission === 'granted') {
+        // Create new subscription
+        console.log('🔔 [POLLING] Creating subscription for newly logged in user...');
+        await window.accessNotifications.forceNewSubscription();
+      }
+    }
+  }, 5000);
+}
+
+// Start polling after page load
+if (document.readyState === 'complete') {
+  startPushSubscriptionPolling();
+} else {
+  window.addEventListener('load', startPushSubscriptionPolling);
+}

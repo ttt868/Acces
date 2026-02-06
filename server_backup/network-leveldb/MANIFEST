@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "next_file_number": 1,
+  "last_sequence": 0,
+  "log_number": 1,
+  "prev_log_number": 0,
+  "levels": {
+    "0": [],
+    "1": [],
+    "2": []
+  },
+  "created_at": 1770253156242,
+  "comparator": "leveldb.BytewiseComparator"
+}

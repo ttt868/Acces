@@ -69,11 +69,22 @@ async function registerPushNotifications(userId) {
     const registration = await navigator.serviceWorker.ready;
     console.log('🔔 Service worker ready');
 
+    // 🔑 Get fresh VAPID key from server FIRST
+    console.log('🔔 Fetching VAPID key from server...');
+    const keyRes = await fetch('/api/push/public-key');
+    const keyJson = await keyRes.json();
+    if (!keyJson.success || !keyJson.publicKey) {
+      console.error('❌ Failed to get VAPID key');
+      return;
+    }
+    const vapidPublicKey = keyJson.publicKey;
+    console.log('🔔 Got VAPID key:', vapidPublicKey.substring(0, 20) + '...');
+
     // Check if already subscribed
     let subscription = await registration.pushManager.getSubscription();
     console.log('🔔 Current subscription:', subscription ? 'exists' : 'none');
     
-    // ✅ Force unsubscribe old subscription and create new one to fix 410 errors
+    // ✅ ALWAYS unsubscribe old subscription to fix VAPID mismatch errors
     if (subscription) {
       try {
         await subscription.unsubscribe();
@@ -84,18 +95,13 @@ async function registerPushNotifications(userId) {
       }
     }
     
-    if (!subscription) {
-      // Subscribe to push notifications with current VAPID key (Updated Jan 2026)
-      const vapidPublicKey = 'BM_rReowAfVGz12iV2a-p3J8_pkQJLXUty6ZP56PBxdIjDdh6IEG1Awk36Hgxv2opxDz2zwzVjjSOKiydFWAEKI';
-      console.log('🔔 Subscribing with VAPID key...');
-      
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-      });
-
-      console.log('✅ Subscribed to push notifications:', subscription.endpoint.substring(0, 50) + '...');
-    }
+    // Create new subscription with fresh VAPID key
+    console.log('🔔 Creating new subscription with VAPID key...');
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+    });
+    console.log('✅ Subscribed to push notifications:', subscription.endpoint.substring(0, 50) + '...');
 
     // Send subscription to server
     console.log('🔔 Sending subscription to server...');
@@ -167,7 +173,9 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-// 🔔 طلب إذن الإشعارات فوراً عند تحميل الصفحة
+// 🔔 طلب إذن الإشعارات - تم نقله إلى notification-system.js
+// ⚠️ DISABLED: This conflicts with notification-system.js which handles permission via modal
+// The modal approach is required because modern browsers need user gesture (click) for permission
 (function autoRequestNotificationPermission() {
   // انتظر 5 ثواني للتأكد من تسجيل الدخول
   setTimeout(async () => {
@@ -187,11 +195,11 @@ function urlBase64ToUint8Array(base64String) {
       
       console.log('🔔 [AUTO] Current permission:', Notification.permission);
       
-      // إذا لم يُسأل من قبل، اطلب الإذن
+      // ⚠️ لا نطلب الإذن تلقائياً - notification-system.js يعرض Modal بدلاً من ذلك
+      // المتصفحات الحديثة تحتاج نقرة من المستخدم لطلب الإذن
       if (Notification.permission === 'default') {
-        console.log('🔔 [AUTO] Requesting notification permission...');
-        const permission = await Notification.requestPermission();
-        console.log('🔔 [AUTO] Permission result:', permission);
+        console.log('🔔 [AUTO] Permission is default - waiting for user to click Modal in notification-system.js');
+        return; // ✅ لا نفعل شيء - Modal سيظهر من notification-system.js
       }
       
       // إذا تم منح الإذن، سجل الاشتراك
@@ -225,6 +233,7 @@ function urlBase64ToUint8Array(base64String) {
     }
   }, 5000); // انتظر 5 ثواني
 })();
+
 
 // AccessRewards main script
 document.addEventListener('DOMContentLoaded', function() {
@@ -7956,6 +7965,17 @@ window.addEventListener('load', applyArabicCssIfNeeded);
       };
       localStorage.setItem('accessoireUser', JSON.stringify(minimalUserData));
       console.log('Saved minimal user session for:', minimalUserData.email);
+      
+      // ✅ Dispatch custom event for notification system (same-tab)
+      // This allows notification-system.js to save pending subscriptions
+      try {
+        window.dispatchEvent(new CustomEvent('userLoggedIn', { 
+          detail: { userId: user.id, email: user.email }
+        }));
+        console.log('🔔 Dispatched userLoggedIn event for notification system');
+      } catch (e) {
+        console.error('Error dispatching userLoggedIn event:', e);
+      }
     }
   }
 

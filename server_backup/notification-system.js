@@ -303,7 +303,8 @@ class AccessNotificationSystem {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               userId: this.userId,
-              subscription: subscription.toJSON()
+              subscription: subscription.toJSON(),
+              language: getSiteLanguage()
             })
           });
 
@@ -808,6 +809,32 @@ class AccessNotificationSystem {
       }
     } catch (error) {
       console.error('Error showing notification:', error);
+    }
+  }
+
+  // Update push subscription language when user changes site language
+  async updatePushLanguage(newLanguage) {
+    if (!this.userId || !this.pushSubscription) {
+      console.log('Cannot update push language: No user or subscription');
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/push/update-language', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: this.userId,
+          endpoint: this.pushSubscription.endpoint,
+          language: newLanguage
+        })
+      });
+      
+      if (response.ok) {
+        console.log(`✅ Push language updated to: ${newLanguage}`);
+      }
+    } catch (error) {
+      console.error('Error updating push language:', error);
     }
   }
 

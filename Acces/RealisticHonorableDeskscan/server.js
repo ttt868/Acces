@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import http from 'http';
 import nodemailer from 'nodemailer';
 import transporter from './nodemailer-config.js';
@@ -18,7 +21,7 @@ import { startReEngagementScheduler } from './re-engagement-notifications.js';
 // ============================================================================
 // 📦 إصدار الملفات - غير هذا الرقم فقط لتحديث كل الملفات
 // ============================================================================
-const ASSETS_VERSION = '15.8';
+const ASSETS_VERSION = '16.3';
 
 // ============================================================================
 // 🛡️ NEVER DIE PROTECTION - السيرفر لا يسقط أبداً!
@@ -89,6 +92,12 @@ if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
     process.env.VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY
   );
+  console.log('✅ Web Push VAPID keys configured successfully');
+  console.log('📨 VAPID Public Key:', process.env.VAPID_PUBLIC_KEY.substring(0, 20) + '...');
+} else {
+  console.error('❌ VAPID keys NOT configured! Web Push will NOT work!');
+  console.error('   VAPID_PUBLIC_KEY:', process.env.VAPID_PUBLIC_KEY ? 'SET' : 'MISSING');
+  console.error('   VAPID_PRIVATE_KEY:', process.env.VAPID_PRIVATE_KEY ? 'SET' : 'MISSING');
 }
 // KYC system removed to reduce resource consumption
 
@@ -963,7 +972,7 @@ function formatAmountSmart(amount) {
 // Send Web Push notification to recipient wallet owner
 async function sendWebPushNotificationToRecipient(transactionData) {
   try {
-    // Silent - reduce console spam
+    console.log('📨 [WEB PUSH] Starting for tx:', transactionData.hash?.substring(0, 12));
     
     const recipientWallet = transactionData.to.toLowerCase();
     const amount = formatAmountSmart(transactionData.amount || 0);
@@ -971,7 +980,7 @@ async function sendWebPushNotificationToRecipient(transactionData) {
     const fromShort = fromAddress.length > 10 ? 
       `${fromAddress.substring(0, 6)}...${fromAddress.substring(fromAddress.length - 4)}` : fromAddress;
 
-    // Silent - reduce console spam
+    console.log('📨 [WEB PUSH] Recipient wallet:', recipientWallet.substring(0, 10) + '...');
 
     // Find user by wallet address
     const userResult = await pool.query(
@@ -980,23 +989,28 @@ async function sendWebPushNotificationToRecipient(transactionData) {
     );
 
     if (userResult.rows.length === 0) {
+      console.log('📨 [WEB PUSH] No user found for wallet:', recipientWallet.substring(0, 10) + '...');
       return;
     }
 
     const userId = userResult.rows[0].id;
-    // Silent - reduce console spam
+    console.log('📨 [WEB PUSH] Found userId:', userId);
 
     // Get all active push subscriptions for this user
+    // ⚠️ user_id in DB is VARCHAR, must convert to string
     const subsResult = await pool.query(
       'SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = $1 AND revoked_at IS NULL',
-      [userId]
+      [String(userId)]
     );
 
-    // Silent - reduce console spam
+    console.log('📨 [WEB PUSH] Found', subsResult.rows.length, 'subscriptions for userId:', userId);
 
     if (subsResult.rows.length === 0) {
+      console.log('📨 [WEB PUSH] No subscriptions found for userId:', userId);
       return;
     }
+
+    console.log('📨 [WEB PUSH] Found', subsResult.rows.length, 'subscriptions for userId:', userId);
 
     // Prepare notification payload - FLAT structure for Service Worker
     const payload = JSON.stringify({
@@ -1025,20 +1039,22 @@ async function sendWebPushNotificationToRecipient(transactionData) {
           }
         };
 
+        console.log('📨 [WEB PUSH] Sending to endpoint:', sub.endpoint.substring(0, 60) + '...');
         await webpush.sendNotification(subscription, payload);
         successCount++;
+        console.log('📨 [WEB PUSH] ✅ Sent successfully!');
       } catch (pushError) {
         failCount++;
-        // Silent - reduce console spam
+        console.error('📨 [WEB PUSH] ❌ Failed:', pushError.statusCode, pushError.body || pushError.message);
         
         // If subscription is invalid (410 Gone, 404, or 403 Forbidden/VAPID mismatch)
         // DELETE it - Service Worker's pushsubscriptionchange will auto-renew
         if (pushError.statusCode === 410 || pushError.statusCode === 404 || pushError.statusCode === 403) {
+          console.log('📨 [WEB PUSH] Deleting invalid subscription (code:', pushError.statusCode, ')');
           await pool.query(
             'DELETE FROM push_subscriptions WHERE endpoint = $1',
             [sub.endpoint]
           );
-          // Silent - reduce console spam
           
           // Mark user for re-subscription notification via WebSocket
           try {
@@ -1051,7 +1067,7 @@ async function sendWebPushNotificationToRecipient(transactionData) {
       }
     }
 
-    // Silent - reduce console spam
+    console.log('📨 [WEB PUSH] Results: success=' + successCount + ', failed=' + failCount);
   } catch (error) {
     console.error('Error sending Web Push notification:', error);
   }
@@ -1139,10 +1155,13 @@ async function sendFCMNotificationToRecipient(transactionData) {
 
 // ✅ Combined: Send both Web Push AND FCM
 async function sendAllNotificationsToRecipient(transactionData) {
+  console.log('📨 [ALL NOTIFICATIONS] Starting for tx:', transactionData.hash?.substring(0, 12));
   // Send Web Push (for website)
   await sendWebPushNotificationToRecipient(transactionData);
+ console.log('📨 [ALL NOTIFICATIONS] Web Push completed');
   // Send FCM (for Cordova app)
   await sendFCMNotificationToRecipient(transactionData);
+  console.log('📨 [ALL NOTIFICATIONS] FCM completed');
 }
 
 // ✅ Make function globally accessible to fix scope issues
@@ -2871,6 +2890,106 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ========== WEB PUSH NOTIFICATION ENDPOINTS ==========
+    
+    // POST /api/push/test - Test send web push to a user (for debugging)
+    if (pathname === '/api/push/test' && req.method === 'POST') {
+      try {
+        const { userId } = await parseRequestBody(req);
+        console.log('🔔 [PUSH TEST] Testing push for userId:', userId);
+        
+        if (!userId) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'userId required' }));
+          return;
+        }
+
+        // Get subscriptions for this user
+        // ⚠️ user_id in DB is VARCHAR, must convert to string
+        const subsResult = await pool.query(
+          'SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = $1 AND revoked_at IS NULL',
+          [String(userId)]
+        );
+
+        if (subsResult.rows.length === 0) {
+          console.log('🔔 [PUSH TEST] No subscriptions found for user:', userId);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ 
+            success: false, 
+            error: 'No web push subscriptions found for this user',
+            subscriptionCount: 0
+          }));
+          return;
+        }
+
+        console.log('🔔 [PUSH TEST] Found', subsResult.rows.length, 'subscriptions');
+
+        const payload = JSON.stringify({
+          type: 'test',
+          title: 'Test Notification',
+          body: 'This is a test notification from Access Network!',
+          tag: 'test-' + Date.now(),
+          timestamp: Date.now()
+        });
+
+        let successCount = 0;
+        let failCount = 0;
+        const errors = [];
+
+        for (const sub of subsResult.rows) {
+          try {
+            const subscription = {
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh, auth: sub.auth }
+            };
+            await webpush.sendNotification(subscription, payload);
+            successCount++;
+            console.log('🔔 [PUSH TEST] ✅ Sent successfully to:', sub.endpoint.substring(0, 50));
+          } catch (err) {
+            failCount++;
+            errors.push({ statusCode: err.statusCode, message: err.body || err.message });
+            console.error('🔔 [PUSH TEST] ❌ Failed:', err.statusCode, err.body || err.message);
+          }
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: successCount > 0,
+          subscriptionCount: subsResult.rows.length,
+          successCount,
+          failCount,
+          errors: errors.length > 0 ? errors : undefined
+        }));
+        return;
+      } catch (error) {
+        console.error('Error in push test:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: error.message }));
+        return;
+      }
+    }
+    
+    // GET /api/push/subscriptions/:userId - Check subscriptions for a user
+    if (pathname.startsWith('/api/push/subscriptions/') && req.method === 'GET') {
+      try {
+        const userId = pathname.split('/').pop();
+        const result = await pool.query(
+          'SELECT id, LEFT(endpoint, 60) as endpoint_preview, user_agent, created_at FROM push_subscriptions WHERE user_id = $1 AND revoked_at IS NULL',
+          [userId]
+        );
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          userId: userId,
+          count: result.rows.length,
+          subscriptions: result.rows
+        }));
+        return;
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: error.message }));
+        return;
+      }
+    }
     
     // GET /api/push/public-key - Returns VAPID public key for client subscription
     if (pathname === '/api/push/public-key' && req.method === 'GET') {

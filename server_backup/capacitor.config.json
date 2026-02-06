@@ -1,0 +1,47 @@
+
+{
+  "appId": "com.accessoire.app",
+  "appName": "Accessoire",
+  "webDir": ".",
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": [
+      "accounts.google.com",
+      "*.google.com",
+      "*.googleapis.com"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true,
+    "icon": "access-logo-1 ipfs.png",
+    "adaptiveIcon": {
+      "foreground": "access-logo-1 ipfs.png",
+      "background": "#ffffff"
+    }
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "allowsLinkPreview": true,
+    "icon": "access-logo-1 ipfs.png"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "SplashScreen": {
+      "launchShowDuration": 0,
+      "launchAutoHide": true,
+      "backgroundColor": "#ffffff",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "androidSpinnerStyle": "large",
+      "iosSpinnerStyle": "small",
+      "spinnerColor": "#999999",
+      "splashFullScreen": false,
+      "splashImmersive": false
+    }
+  }
+}

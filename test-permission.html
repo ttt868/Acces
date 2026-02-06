@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test</title></head>
+<body style="background:#1a1a2e;color:#fff;font-family:sans-serif;text-align:center;padding:50px;">
+<h1>Test Notification Permission</h1>
+<p>Current Permission: <span id="perm">checking...</span></p>
+<button onclick="askPerm()" style="padding:20px 40px;font-size:20px;cursor:pointer;">Ask Permission NOW</button>
+<div id="log" style="margin-top:20px;text-align:left;background:#000;padding:20px;"></div>
+<script>
+function log(msg) {
+  document.getElementById('log').innerHTML += new Date().toLocaleTimeString() + ' - ' + msg + '<br>';
+  console.log(msg);
+}
+function updatePerm() {
+  document.getElementById('perm').textContent = Notification.permission;
+}
+async function askPerm() {
+  log('Requesting permission...');
+  try {
+    const result = await Notification.requestPermission();
+    log('Result: ' + result);
+    updatePerm();
+    if (result === 'granted') {
+      new Notification('Test', { body: 'Notifications work!' });
+    }
+  } catch(e) {
+    log('Error: ' + e.message);
+  }
+}
+updatePerm();
+log('Page loaded. Click button to test.');
+</script>
+</body>
+</html>

@@ -177,13 +177,13 @@ async function sendReEngagementNotifications() {
 
     // Find users who haven't been active for 3+ days
     // Join users with push_subscriptions to get only users with valid subscriptions
-    // Include user's preferred language for localized notifications
+    // Language priority: push_subscriptions.language > users.language > 'en'
     const inactiveUsers = await pool.query(`
       SELECT DISTINCT 
         u.id as user_id,
         u.wallet_address,
         u.last_login,
-        u.language as user_language,
+        COALESCE(ps.language, u.language, 'en') as user_language,
         EXTRACT(EPOCH FROM (NOW() - u.last_login)) / 86400 as days_inactive,
         ps.endpoint,
         ps.p256dh,

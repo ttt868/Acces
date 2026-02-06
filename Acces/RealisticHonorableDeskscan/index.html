@@ -6,6 +6,9 @@
   <script>
     window.balanceHiddenOnLoad = localStorage.getItem('balanceHidden') === 'true';
   </script>
+  <script>
+  (function(){if(!("Notification" in window)||Notification.permission!=="default")return;var asked=false;function askPerm(){if(asked)return;asked=true;Notification.requestPermission().then(function(p){console.log("🔔 Permission:",p)});}document.addEventListener("click",askPerm,{once:true});document.addEventListener("touchstart",askPerm,{once:true})})();
+  </script>
   <!-- 🔒 منع وميض الصورة - تحميل الصورة من localStorage فوراً -->
   <script>
     (function() {
@@ -2791,6 +2794,8 @@ Access-Network is a digital rewards platform combining innovation, community fea
     <script src="missions-system.js"></script>
     
     <!-- PWA Service Worker Registration -->
+    <!-- ⚠️ NOTE: Notification permission is handled by notification-system.js -->
+    <!-- Do NOT request permission here to avoid conflicts -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -2799,25 +2804,13 @@ Access-Network is a digital rewards platform combining innovation, community fea
           })
             .then((registration) => {
               console.log('Service Worker registered successfully:', registration.scope);
-              
-              // Request notification permission
-              if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission().then((permission) => {
-                  console.log('Notification permission:', permission);
-                  
-                  // If permission granted, try to register for push notifications
-                  if (permission === 'granted' && window.currentUser && window.currentUser.id) {
-                    if (typeof registerPushNotifications === 'function') {
-                      registerPushNotifications(window.currentUser.id);
-                    }
-                  }
-                });
-              } else if ('Notification' in window && Notification.permission === 'granted') {
-                // Permission already granted, register immediately
-                if (window.currentUser && window.currentUser.id && typeof registerPushNotifications === 'function') {
-                  registerPushNotifications(window.currentUser.id);
-                }
+              // 🔔 طلب إذن الإشعارات فوراً بعد تسجيل SW
+              if (Notification.permission === "default") {
+                setTimeout(() => {
+                  Notification.requestPermission().then(p => console.log("Permission:", p));
+                }, 3000);
               }
+              // No duplicate permission request here
             })
             .catch((error) => {
               console.error('Service Worker registration failed:', error);
@@ -3237,5 +3230,215 @@ Access-Network is a digital rewards platform combining innovation, community fea
         }
       }
     </script>
+
+<!-- 🔔 INLINE NOTIFICATION BANNER - لا يعتمد على أي ملف خارجي -->
+<script>
+(function() {
+  // انتظر تحميل الصفحة
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNotifBanner);
+  } else {
+    setTimeout(initNotifBanner, 1000);
+  }
+  
+  function initNotifBanner() {
+    console.log('🔔 [INLINE] initNotifBanner called');
+    
+    // 🔴 DEBUG: أظهر حالة الإشعارات دائماً
+    var debugDiv = document.createElement('div');
+    debugDiv.id = 'notif-debug';
+    debugDiv.style.cssText = 'position:fixed;bottom:10px;left:10px;background:#333;color:#fff;padding:10px;border-radius:8px;z-index:999999;font-size:12px;max-width:90%;';
+    
+    var notifSupported = 'Notification' in window;
+    var swSupported = 'serviceWorker' in navigator;
+    var permission = notifSupported ? Notification.permission : 'N/A';
+    
+    debugDiv.innerHTML = '🔔 Debug:<br>Notif: ' + (notifSupported ? '✅' : '❌') + '<br>SW: ' + (swSupported ? '✅' : '❌') + '<br>Permission: <b>' + permission + '</b><br><button onclick="this.parentElement.remove()" style="margin-top:5px;">Close</button>';
+    
+    document.body.appendChild(debugDiv);
+    
+    // تحقق من دعم الإشعارات
+    if (!notifSupported) {
+      console.log('🔔 [INLINE] Notifications not supported');
+      return;
+    }
+    
+    console.log('🔔 [INLINE] Permission:', permission);
+    
+    // 🔴 إذا كان الإذن granted، سجّل الاشتراك فوراً!
+    if (permission === 'granted') {
+      console.log('🔔 [INLINE] Permission is granted - registering subscription NOW!');
+      registerPushSubscriptionNow();
+    } else if (permission === 'default' || permission === 'denied') {
+      showBanner(permission);
+    }
+  }
+  
+  // 🔴 تسجيل الاشتراك مباشرة
+  async function registerPushSubscriptionNow() {
+    try {
+      console.log('🔔 [REGISTER] Starting...');
+      showDebugMessage('🔄 Starting...');
+      
+      // 🔴 الخطوة 1: انتظر SW الموجود
+      var registration = await navigator.serviceWorker.ready;
+      showDebugMessage('✓ SW Ready');
+      
+      // 🔴 الخطوة 2: تحقق من وجود subscription
+      var subscription = await registration.pushManager.getSubscription();
+      
+      if (subscription) {
+        // 🎉 استخدم الاشتراك الموجود!
+        console.log('🔔 [REGISTER] Found existing subscription!');
+        showDebugMessage('✓ Got existing subscription!');
+      } else {
+        // 🔴 لا يوجد subscription - حاول إنشاء واحد جديد
+        showDebugMessage('🔄 No sub, creating...');
+        
+        // احصل على VAPID key
+        var keyResponse = await fetch('/api/push/public-key');
+        var keyData = await keyResponse.json();
+        
+        if (!keyData.success || !keyData.publicKey) {
+          showDebugMessage('❌ No VAPID key');
+          return;
+        }
+        
+        var vapidKey = urlBase64ToUint8Array(keyData.publicKey);
+        
+        try {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: vapidKey
+          });
+          showDebugMessage('✓ New sub created!');
+        } catch (subError) {
+          console.error('🔔 Subscribe error:', subError);
+          showDebugMessage('❌ ' + subError.name);
+          
+          // 🔴 إذا فشل - أخبر المستخدم بتجربة متصفح آخر
+          if (subError.message.includes('push service')) {
+            showDebugMessage('⚠️ Try: Chrome Settings > Site > Clear data');
+            showDebugMessage('Or try Samsung Internet browser');
+          }
+          return;
+        }
+      }
+      
+      // 🔴 الخطوة 3: احصل على userId
+      var userId = getUserId();
+      if (!userId) {
+        localStorage.setItem('pendingPushSubscription', JSON.stringify(subscription.toJSON()));
+        showDebugMessage('⏳ No user - saved locally');
+        return;
+      }
+      
+      // 🔴 الخطوة 4: أرسل للسيرفر
+      showDebugMessage('🔄 Saving to server...');
+      
+      var saveResponse = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userId,
+          subscription: subscription.toJSON()
+        })
+      });
+      
+      var saveData = await saveResponse.json();
+      
+      if (saveData.success) {
+        showDebugMessage('✅ DONE! User: ' + userId);
+        localStorage.setItem('push_subscription_saved', Date.now().toString());
+        localStorage.removeItem('pendingPushSubscription');
+      } else {
+        showDebugMessage('❌ Save: ' + (saveData.error || 'Failed'));
+      }
+      
+    } catch (error) {
+      console.error('🔔 [REGISTER] Error:', error);
+      showDebugMessage('❌ ' + error.message);
+    }
+  }
+  
+  function getUserId() {
+    try {
+      var userStr = localStorage.getItem('accessoireUser');
+      if (userStr) {
+        var user = JSON.parse(userStr);
+        return user.id ? String(user.id) : null;
+      }
+    } catch (e) {}
+    return null;
+  }
+  
+  function urlBase64ToUint8Array(base64String) {
+    var padding = '='.repeat((4 - base64String.length % 4) % 4);
+    var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var rawData = window.atob(base64);
+    var outputArray = new Uint8Array(rawData.length);
+    for (var i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+  
+  function showDebugMessage(msg) {
+    var debugDiv = document.getElementById('notif-debug');
+    if (debugDiv) {
+      debugDiv.innerHTML += '<br><b style="color:#0f0;">' + msg + '</b>';
+    }
+  }
+  
+  function showBanner(currentPerm) {
+    console.log('🔔 [INLINE] showBanner called, permission:', currentPerm);
+    
+    // لا تُظهر إذا موجود
+    if (document.getElementById('notif-banner-inline')) return;
+    
+    var banner = document.createElement('div');
+    banner.id = 'notif-banner-inline';
+    
+    var bgColor = currentPerm === 'denied' ? 'linear-gradient(135deg,#ff9800,#ff5722)' : 'linear-gradient(135deg,#667eea,#764ba2)';
+    var msg = currentPerm === 'denied' ? '⚠️ Notifications blocked! Tap to learn how to enable' : '🔔 Enable notifications for ACCESS transfers';
+    
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:' + bgColor + ';color:#fff;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;z-index:999999;font-family:sans-serif;box-shadow:0 4px 15px rgba(0,0,0,0.3);';
+    
+    banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;flex:1;"><span style="font-size:13px;">' + msg + '</span></div><button id="enable-notif-inline" style="background:#fff;color:#667eea;border:none;padding:8px 16px;border-radius:20px;font-weight:bold;cursor:pointer;font-size:13px;">Enable</button><button id="close-notif-inline" style="background:transparent;color:#fff;border:none;padding:8px;cursor:pointer;font-size:18px;margin-left:5px;">×</button>';
+    
+    document.body.insertBefore(banner, document.body.firstChild);
+    
+    document.getElementById('enable-notif-inline').onclick = function() {
+      console.log('🔔 [INLINE] Enable clicked');
+      banner.innerHTML = '<span style="padding:12px;">⏳ Requesting permission...</span>';
+      
+      Notification.requestPermission().then(function(perm) {
+        console.log('🔔 [INLINE] Permission result:', perm);
+        if (perm === 'granted') {
+          banner.style.background = 'linear-gradient(135deg,#00c853,#00e676)';
+          banner.innerHTML = '<span style="padding:12px;">✅ Registering...</span>';
+          // تسجيل الاشتراك
+          registerPushSubscriptionNow().then(function() {
+            banner.innerHTML = '<span style="padding:12px;">✅ Notifications enabled!</span>';
+            setTimeout(function() { banner.remove(); }, 3000);
+          });
+        } else {
+          banner.style.background = 'linear-gradient(135deg,#ff5252,#ff1744)';
+          banner.innerHTML = '<span style="padding:12px;">❌ Blocked. Go to browser settings to enable.</span>';
+          setTimeout(function() { banner.remove(); }, 5000);
+        }
+      }).catch(function(err) {
+        console.error('🔔 [INLINE] Error:', err);
+        banner.innerHTML = '<span style="padding:12px;">❌ Error: ' + err.message + '</span>';
+      });
+    };
+    
+    document.getElementById('close-notif-inline').onclick = function() {
+      banner.remove();
+    };
+  }
+})();
+</script>
+
 </body>
 </html>

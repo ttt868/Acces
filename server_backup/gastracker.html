@@ -1,0 +1,3500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Cordova API Path Converter -->
+    <script>
+    (function() {
+        var isCordova = typeof window.cordova !== 'undefined' || 
+                        document.URL.indexOf('file://') === 0 || 
+                        document.URL.indexOf('localhost') === -1;
+        
+        if (isCordova) {
+            var API_BASE_URL = 'https://accesschain.org';
+            var originalFetch = window.fetch;
+            
+            window.fetch = function(url, options) {
+                if (typeof url === 'string') {
+                    if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                        url = API_BASE_URL + url;
+                        console.log('[Cordova] Converted fetch URL:', url);
+                    }
+                }
+                return originalFetch.call(this, url, options);
+            };
+            
+            var originalXHROpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url) {
+                if (typeof url === 'string') {
+                    if (url.startsWith('/api/') || url.startsWith('/rpc/') || url.startsWith('/network/')) {
+                        url = API_BASE_URL + url;
+                        console.log('[Cordova] Converted XHR URL:', url);
+                    }
+                }
+                return originalXHROpen.apply(this, [method, url].concat(Array.prototype.slice.call(arguments, 2)));
+            };
+            console.log('[Cordova] API path converter initialized for explorer page');
+        }
+    })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="no">
+    <meta name="apple-mobile-web-app-capable" content="no">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Access Network Gas Tracker - accessScan</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Track real-time gas prices on Access Network. Monitor average gas fees, historical prices, and optimize your transaction costs on AccessScan.">
+    <meta name="keywords" content="Access Network gas, gas tracker, blockchain gas fees, crypto gas prices, AccessScan gas">
+    <link rel="canonical" href="https://accesschain.org/gastracker.html">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://accesschain.org/gastracker.html">
+    <meta property="og:title" content="Access Network Gas Tracker - accessScan">
+    <meta property="og:description" content="Track real-time gas prices on Access Network blockchain.">
+    <meta property="og:image" content="https://accesschain.org/logo.png">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://accesschain.org/gastracker.html">
+    <meta name="twitter:title" content="Access Network Gas Tracker - accessScan">
+    <meta name="twitter:description" content="Track gas prices on Access Network.">
+    <meta name="twitter:image" content="https://accesschain.org/logo.png">
+    
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-code: #f6f8fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6c757d;
+            --border-color: #e1e8ed;
+            --accent-color: #0969da;
+            --accent-purple: #7c3aed;
+            --accent-blue: #3b82f6;
+            --footer-bg: #f8f9fa;
+            --footer-text: #333;
+            --search-bg: #ffffff;
+            --search-border: #e1e8ed;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-code: #1c2128;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+            --accent-color: #58a6ff;
+            --accent-purple: #8b95ff;
+            --accent-blue: #4da6ff;
+            --footer-bg: #161b22;
+            --footer-text: #e6edf3;
+            --search-bg: #0d1117;
+            --search-border: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 0 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--text-primary);
+            font-weight: 800;
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: -2px;
+        }
+
+        /* Hamburger Menu */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            border: none;
+            background: none;
+            position: relative;
+            right: 10px;
+        }
+
+        .menu-toggle span {
+            width: 20px;
+            height: 2px;
+            background: var(--text-primary);
+            margin: 2px 0;
+            transition: 0.3s;
+        }
+
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sign-in-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .sign-in-btn.user-logged-in {
+                display: none !important;
+            }
+        }
+
+        .sign-in-btn svg {
+            color: var(--text-primary) !important;
+        }
+
+        .sign-in-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .sign-in-btn:hover svg {
+            color: var(--text-primary) !important;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0;
+            position: relative;
+            z-index: 100;
+            overflow: visible;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            gap: 0;
+            align-items: center;
+            overflow: visible;
+            position: relative;
+            z-index: 100;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+        }
+
+        .nav-item.active {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+            font-weight: 500;
+        }
+
+        .dropdown {
+            position: relative;
+            z-index: 999;
+        }
+
+        .dropdown.active {
+            z-index: 9999;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            min-width: 250px;
+            display: none;
+            z-index: 99999999;
+            padding: 8px 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            margin-top: 2px;
+        }
+
+        /* تعديل موضع قائمة More لتظهر في الوسط */
+        .dropdown:last-child .dropdown-menu {
+            left: 50%;
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        .dropdown:last-child.active .dropdown-menu {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .dropdown.active .dropdown-menu {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: none;
+            font-size: 14px;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-purple);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 280px;
+            height: 100vh;
+            height: 100dvh;
+            background: var(--bg-primary);
+            box-shadow: 2px 0 20px rgba(0,0,0,0.2);
+            z-index: 9998;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .mobile-menu.active {
+            left: 0;
+        }
+
+        .mobile-menu-header {
+            padding: 20px 20px 20px 0px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mobile-menu-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .mobile-menu-content {
+            padding: 20px 0;
+        }
+
+        .mobile-nav-item {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-bottom: 1px solid var(--bg-secondary);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .mobile-nav-item:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-purple);
+            padding-left: 25px;
+        }
+
+        .mobile-nav-item:active {
+            background: #e9ecef;
+            transform: scale(0.98);
+        }
+
+        .mobile-nav-section {
+            padding: 10px 20px;
+            font-weight: 600;
+            color: #c0c0c0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.5;
+        }
+
+        [data-theme="dark"] .mobile-nav-section {
+            color: #606060;
+            opacity: 0.6;
+        }
+
+        .mobile-user-section {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: -20px -20px 0 -20px;
+        }
+
+        .mobile-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .mobile-user-details {
+            flex: 1;
+            min-width: 0;
+            padding-left: 8px;
+        }
+
+        .mobile-user-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 2px;
+            color: white;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mobile-user-email {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mobile-user-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .mobile-user-actions .mobile-nav-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 15px;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            border-bottom: none;
+            transition: background 0.3s ease;
+        }
+
+        .mobile-user-actions .mobile-nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-user-actions .mobile-nav-item i {
+            margin-right: 8px;
+            width: 16px;
+        }
+
+        .mobile-menu-divider {
+            height: 1px;
+            background: var(--bg-secondary);
+            margin: 15px 0;
+        }
+
+        .mobile-signin-section {
+            padding: 0 0 10px 0;
+        }
+
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            background: rgba(0,0,0,0.5);
+            z-index: 1999;
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+
+        .mobile-menu-overlay.active {
+            display: block;
+        }
+
+        body.mobile-menu-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: var(--bg-primary);
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 0;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 50px 12px 16px;
+            border: 1px solid #e3e8ef;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .search-input:focus {
+            border-color: #3b82f6;
+            background: #ffffff;
+            color: #1a1a1a;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .search-input:focus::placeholder {
+            color: #6c757d;
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Gas Tracker Container */
+        .gas-tracker-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Page Title */
+        .page-title {
+            margin: 30px 0 20px 0;
+            text-align: left;
+        }
+
+        .page-title h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-title h1 .emoji {
+            font-size: 18px;
+        }
+
+        /* Update Timer */
+        .update-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .update-timer {
+            color: var(--text-secondary);
+        }
+
+        .update-timer .countdown {
+            color: #0784c3;
+            font-weight: 600;
+        }
+
+        .gas-api-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #0784c3;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .gas-api-link:hover {
+            color: #066ba5;
+        }
+
+        /* Gas Prices Cards - BSCScan Style */
+        .gas-prices {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .gas-price-card {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: 0 0.5rem 1.2rem rgba(189,197,209,.2);
+            border: 1px solid rgba(0,0,0,.05);
+        }
+
+        /* Third card (Rapid) takes full width */
+        .gas-price-card.rapid {
+            grid-column: 1 / -1;
+        }
+
+        /* Standard - Green */
+        .gas-price-card.standard .gas-price-value {
+            color: #00a186;
+        }
+
+        /* Fast - Blue */
+        .gas-price-card.fast .gas-price-value {
+            color: #0784c3;
+        }
+
+        /* Rapid - Red */
+        .gas-price-card.rapid .gas-price-value {
+            color: #d13232;
+        }
+
+        .gas-price-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .gas-price-label span:first-child {
+            font-size: 16px;
+        }
+
+        .gas-price-label span:last-child {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 800;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .gas-price-value {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
+        .gas-price-details {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+
+        .gas-price-cost {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-bottom: 3px;
+        }
+
+        .gas-price-time {
+            font-size: 10px;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+
+        /* Additional Info */
+        .additional-info {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0.5rem 1.2rem rgba(189,197,209,.2);
+            border: 1px solid rgba(0,0,0,.05);
+            margin-bottom: 16px;
+        }
+
+        .info-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            padding: 16px 12px;
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-item:nth-child(2n) {
+            border-right: none;
+        }
+
+        .info-item:nth-last-child(-n+2) {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .last-refreshed {
+            text-align: left;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Featured Actions */
+        .featured-actions {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0.5rem 1.2rem rgba(189,197,209,.2);
+            border: 1px solid rgba(0,0,0,.05);
+            margin-bottom: 16px;
+        }
+
+        .featured-actions h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .actions-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .actions-table th {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            background: var(--bg-secondary);
+        }
+
+        .actions-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-primary);
+        }
+
+        .actions-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Chart Section */
+        .chart-section {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0.5rem 1.2rem rgba(189,197,209,.2);
+            border: 1px solid rgba(0,0,0,.05);
+            margin-bottom: 16px;
+        }
+
+        .chart-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chart-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .chart-tab.active {
+            color: #0784c3;
+            border-bottom-color: #0784c3;
+        }
+
+        .chart-tab:hover {
+            color: #0784c3;
+        }
+
+        .chart-container {
+            margin-top: 20px;
+        }
+
+        /* Heatmap - BSCScan Style */
+        .heatmap-wrapper {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .heatmap-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .days-column {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding-top: 2px;
+        }
+
+        .day-label {
+            height: 28px;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .grid-wrapper {
+            flex: 1;
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            gap: 2px;
+            margin-bottom: 12px;
+            border-top: 1px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .heatmap-grid::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: #dee2e6;
+        }
+
+        .heat-cell {
+            height: 28px;
+            background: #fed7aa;
+            cursor: pointer;
+            position: relative;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .heat-cell:nth-child(24n) {
+            border-right: 1px solid #dee2e6;
+        }
+
+        .heat-cell:nth-child(-n+24) {
+            border-top: 1px solid #dee2e6;
+        }
+
+        .heat-cell.clicked {
+            background-color: transparent !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+
+        .heat-cell,
+        .heat-cell:hover,
+        .heat-cell:active,
+        .heat-cell:focus,
+        .heat-cell:focus-visible,
+        .heat-cell.clicked,
+        .heat-cell.clicked:hover,
+        .heat-cell.clicked:active,
+        .heat-cell.clicked:focus,
+        .heat-cell.empty-cell,
+        .heat-cell.empty-cell:hover,
+        .heat-cell.empty-cell:active,
+        .heat-cell.empty-cell:focus {
+            outline: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            background-image: none !important;
+        }
+
+        /* منع أي تحديد تلقائي عند تحميل الصفحة */
+        .heat-cell {
+            pointer-events: auto;
+        }
+
+        .heat-cell:not(.clicked):not(.empty-cell) {
+            background: #fed7aa !important;
+        }
+
+        .heat-cell.empty-cell {
+            background: transparent;
+            cursor: default;
+        }
+
+        .hours-labels {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            gap: 2px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        /* Desktop: show all hours 00-23 */
+        @media (min-width: 768px) {
+            .hours-labels div {
+                font-size: 11px !important;
+                font-weight: 500;
+            }
+        }
+
+        /* Mobile: show every 2 hours only */
+        @media (max-width: 767px) {
+            .hours-labels div:empty {
+                visibility: hidden;
+            }
+        }
+
+        .heatmap-tooltip {
+            position: absolute;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+            z-index: 9999;
+            pointer-events: none;
+            font-size: 12px;
+            white-space: nowrap;
+            display: none;
+        }
+
+        .tooltip-day {
+            font-weight: 600;
+            color: #000000 !important;
+            margin-bottom: 4px;
+        }
+
+        .tooltip-hour {
+            color: var(--text-secondary);
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .tooltip-gwei {
+            color: #00a186;
+            font-weight: 600;
+        }
+
+        /* Dark mode - date stays black always */
+        [data-theme="dark"] .tooltip-day {
+            color: #000000 !important;
+            font-weight: 600;
+        }
+
+        .hours-label-wrapper {
+            text-align: center;
+            margin: 16px 0 12px 0;
+        }
+
+        .hours-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* Legend */
+        .chart-legend {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin: 20px auto 0 auto;
+            padding: 16px;
+            background: transparent;
+            max-width: 500px;
+        }
+
+        .legend-gradient-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 240px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Desktop: في الوسط تمامًا */
+        @media (min-width: 768px) {
+            .chart-legend {
+                align-items: center;
+                margin: 20px auto 0 auto;
+            }
+
+            .legend-gradient-wrapper {
+                margin: 0 auto;
+                max-width: 240px;
+            }
+        }
+
+        /* Mobile: محاذاة لليمين */
+        @media (max-width: 767px) {
+            .chart-legend {
+                align-items: flex-end;
+                padding: 16px 0;
+                margin-right: 0;
+                width: 100%;
+            }
+
+            .legend-gradient-wrapper {
+                margin: 0;
+                max-width: 200px;
+            }
+        }
+
+        .legend-gradient {
+            display: block;
+            position: relative;
+            height: 12px;
+            width: 100%;
+            border-radius: 0;
+            overflow: hidden;
+            background: linear-gradient(to right,
+                rgba(254, 215, 170, 0.3) 0%,
+                rgba(254, 215, 170, 0.5) 15%,
+                #fed7aa 30%,
+                #fdba74 50%,
+                #fb923c 70%,
+                #f97316 85%,
+                #ea580c 100%);
+        }
+
+        .legend-gradient-separators {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .legend-separator-line {
+            position: absolute;
+            width: 1px;
+            background-color: #dee2e6;
+            height: 100%;
+            top: 0;
+        }
+
+        /* 4 فواصل متساوية: البداية (0%)، الثلث الأول (33.33%)، الثلثين (66.66%)، النهاية (100%) */
+        .legend-separator-line:nth-child(1) {
+            left: 0;
+        }
+
+        .legend-separator-line:nth-child(2) {
+            left: 33.33%;
+        }
+
+        .legend-separator-line:nth-child(3) {
+            left: 66.66%;
+        }
+
+        .legend-separator-line:nth-child(4) {
+            right: 0;
+            left: auto;
+            z-index: 10;
+        }
+
+        .legend-color {
+            display: none;
+        }
+
+        .legend-divider {
+            display: none;
+        }
+
+        .legend-values {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            width: 100%;
+            padding: 0;
+            position: relative;
+        }
+
+        /* Desktop & Mobile: same positioning - numbers as scale marks below bar */
+        .legend-values span {
+            flex: 0 0 auto;
+        }
+
+        .legend-values span:nth-child(1) {
+            margin-left: 0;
+        }
+
+        .legend-values span:nth-child(4) {
+            margin-right: 0;
+        }
+
+
+
+        .legend-indicator {
+            position: absolute;
+            top: -7px;
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 6px solid #333;
+            transform: translateX(-50%);
+            display: none;
+            z-index: 10;
+            transition: left 0.2s ease;
+        }
+
+        .legend-indicator.active {
+            display: block;
+        }
+
+        /* Dark mode - white arrow indicator */
+        [data-theme="dark"] .legend-indicator {
+            border-top-color: #ffffff !important;
+        }
+
+        .gas-info-box {
+            margin-top: 16px;
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+        }
+
+        .gas-info-box i {
+            color: #0784c3;
+            margin-right: 6px;
+            font-size: 12px;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex;
+            }
+
+            .nav-content {
+                display: none;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+
+            .gas-tracker-container {
+                padding: 0 15px;
+            }
+
+            .gas-prices {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .gas-price-card {
+                padding: 20px;
+            }
+
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .info-item {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 16px 12px;
+            }
+
+            .info-item:nth-child(odd) {
+                border-right: 1px solid var(--border-color);
+            }
+
+            .info-item:nth-last-child(-n+2) {
+                border-bottom: none;
+            }
+
+            .heatmap-hours {
+                grid-template-columns: 80px repeat(24, 1fr);
+            }
+
+            .heatmap-row {
+                grid-template-columns: 80px repeat(24, 1fr);
+            }
+
+            .heatmap-label {
+                font-size: 9px;
+                padding-right: 6px;
+            }
+
+            .hour-label {
+                font-size: 10px;
+            }
+
+            .hours-labels div {
+                font-size: 10px;
+                color: var(--text-secondary);
+            }
+
+            .legend-values {
+                gap: 24px;
+                font-size: 9px;
+            }
+
+            .legend-color {
+                width: 40px;
+                height: 18px;
+            }
+
+            .actions-table {
+                font-size: 12px;
+            }
+
+            .actions-table th,
+            .actions-table td {
+                padding: 10px 8px;
+            }
+
+            .page-title h1 {
+                font-size: 16px;
+            }
+        }
+
+        /* Desktop ONLY: Consistent and clear text sizes for viewport 980px+ */
+        @media (min-width: 980px) {
+            .page-title h1 {
+                font-size: 20px;
+            }
+
+            .update-timer,
+            .gas-api-link {
+                font-size: 14px;
+            }
+
+            .gas-price-label {
+                font-size: 12px;
+                margin-bottom: 8px;
+            }
+
+            .gas-price-label span:first-child {
+                font-size: 14px;
+            }
+
+            .gas-price-label span:last-child {
+                font-size: 14px;
+                font-weight: 700;
+            }
+
+            .gas-price-value {
+                font-size: 22px;
+                margin-bottom: 8px;
+                font-weight: 600;
+            }
+
+            .gas-price-details {
+                font-size: 11px;
+                margin-bottom: 5px;
+            }
+
+            .gas-price-time {
+                font-size: 11px;
+            }
+
+            .gas-price-card {
+                padding: 20px 16px;
+            }
+
+            .info-title {
+                font-size: 16px;
+            }
+
+            .info-label {
+                font-size: 11px;
+            }
+
+            .info-value {
+                font-size: 16px;
+            }
+
+            .last-refreshed {
+                font-size: 12px;
+            }
+
+            .actions-table th {
+                font-size: 12px;
+            }
+
+            .actions-table td {
+                font-size: 13px;
+            }
+
+            .chart-tab {
+                font-size: 15px;
+            }
+
+            .heatmap-label {
+                font-size: 12px;
+            }
+
+            .hour-label {
+                font-size: 10px;
+            }
+
+            .legend-values {
+                font-size: 12px;
+            }
+
+            .gas-info-box {
+                font-size: 12px;
+            }
+        }
+
+        /* Authentication Modal */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .auth-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .auth-header {
+            padding: 30px 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .auth-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .auth-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .auth-form {
+            padding: 30px;
+        }
+
+        .google-btn {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .google-btn:hover {
+            border-color: var(--accent-purple);
+            transform: translateY(-1px);
+        }
+
+        .auth-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-close:hover {
+            background: #f0f0f0;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 0;
+        }
+
+        .checkbox-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkmark {
+            height: 16px;
+            width: 16px;
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 2px;
+            margin-right: 8px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-container:hover input ~ .checkmark {
+            border-color: #1e88e5;
+        }
+
+        .checkbox-container input:checked ~ .checkmark {
+            background-color: #1e88e5;
+            border-color: #1e88e5;
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            left: 4px;
+            top: 1px;
+            width: 4px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .checkbox-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .success-message {
+            color: #28a745;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--footer-bg);
+            color: var(--footer-text);
+            padding: 40px 0 20px;
+            margin-top: 50px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .footer-link:hover {
+            color: var(--accent-color);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(1.1);
+            }
+        }
+
+        /* Chart Legend Styles */
+        .chart-legend-container {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2px 8px;
+            width: fit-content;
+            margin: 15px auto 0;
+            font-size: 12px;
+            align-items: center;
+            line-height: 1;
+        }
+
+        .chart-legend-item {
+            display: contents;
+        }
+
+        /* Desktop: Horizontal legend aligned left */
+        @media (min-width: 769px) {
+            .chart-legend-container {
+                display: flex;
+                gap: 20px;
+                margin: 15px 0 0 60px;
+                justify-content: flex-start;
+            }
+
+            .chart-legend-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+        }
+
+        /* Specific styling for disabled dropdown items */
+        .dropdown-item.disabled-btn {
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            background: var(--bg-secondary);
+            font-style: italic;
+        }
+
+        .dropdown-item.disabled-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        /* Specific styling for disabled mobile nav items */
+        .mobile-nav-item.disabled-btn {
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            background: var(--bg-secondary);
+            font-style: italic;
+        }
+
+        .mobile-nav-item.disabled-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            padding-left: 20px;
+        }
+
+        /* Styles for the "Coming Soon" tooltip */
+        .coming-soon-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background: #000000;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 10001;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .coming-soon-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #000000;
+        }
+
+        .coming-soon-tooltip.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-12px);
+        }
+
+        /* Wrapper for dropdown items that might be disabled */
+        .dropdown-item-wrapper {
+            position: relative;
+            display: block;
+        }
+
+        /* Wrapper for mobile nav items that might be disabled */
+        .mobile-nav-item-wrapper {
+            position: relative;
+            display: block;
+        }
+    </style>
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">A Scan Original</div>
+                </div>
+            </div>
+
+            <div class="right-section">
+                <a href="#" class="sign-in-btn" onclick="showAuthModal()" style="display: none;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                </a>
+                <button class="menu-toggle" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="access-explorer.html" class="nav-item">Home</a>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Network ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="transactions.html" class="dropdown-item">Transactions</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Pending Transactions 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Contract Internal Transactions 🚫</a>
+                    </div>
+                    <a href="blocks.html" class="dropdown-item">View Blocks</a>
+                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Verified Contracts 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Validators ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Validators Leaderboard 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Validator Stats 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Tokens ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Top Tokens (AEP-20) 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Token Transfers (AEP-20) 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">NFTs ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Top NFTs 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Latest Trades 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Latest Transfers 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Latest Mints 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Resources ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Charts & Stats 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Developers ⌄</a>
+                <div class="dropdown-menu">
+                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Input Data Decoder 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Unit Converter 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">CSV Export 🚫</a>
+                    </div>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Account Balance Checker 🚫</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <a href="#" class="nav-item active" onclick="toggleDropdown(this, event)">More ⌄</a>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Charts & Stats 🚫</a>
+                    </div>
+                    <a href="gastracker.html" class="dropdown-item">Gas Tracker</a>
+                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <div class="dropdown-item-wrapper">
+                        <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Verify Contract 🚫</a>
+                    </div>
+                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <a href="#" onclick="toggleTheme(); event.stopPropagation();" class="dropdown-item" id="desktop-theme-toggle">
+                        <span id="desktop-theme-icon">☀️</span> Light Mode
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="logo.png" alt="AccessScan Logo">
+                </div>
+                <div>
+                    <div class="logo-text">accessScan</div>
+                    <div class="logo-subtitle">A Scan Original</div>
+                </div>
+            </div>
+            <button class="mobile-menu-close" onclick="toggleMobileMenu()">×</button>
+        </div>
+
+        <div class="mobile-menu-content">
+            <div class="mobile-user-section" id="mobileUserSection" style="display: none;">
+                <div class="mobile-user-info">
+                    <div class="mobile-user-details">
+                        <div class="mobile-user-name" id="mobileUserName">User Name</div>
+                        <div class="mobile-user-email" id="mobileUserEmail">user@example.com</div>
+                    </div>
+                </div>
+                <div class="mobile-user-actions">
+                    <a href="#" class="mobile-nav-item" onclick="showUserProfile()">
+                        <i class="fas fa-user"></i> My Profile
+                    </a>
+                    <a href="#" class="mobile-nav-item" onclick="logoutExplorer()">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+                <div class="mobile-menu-divider"></div>
+            </div>
+
+            <div class="mobile-signin-section" id="mobileSigninSection">
+                <a href="#" class="mobile-nav-item" onclick="showAuthModal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                </a>
+                <div class="mobile-menu-divider"></div>
+            </div>
+
+            <a href="access-explorer.html" class="mobile-nav-item">Home</a>
+
+            <div class="mobile-nav-section">Network</div>
+            <a href="transactions.html" class="mobile-nav-item">Transactions</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Pending Transactions 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Contract Internal Transactions 🚫</a>
+            </div>
+            <a href="blocks.html" class="mobile-nav-item">View Blocks</a>
+            <a href="top-accounts.html" class="mobile-nav-item">Top Accounts</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Verified Contracts 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Validators</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Validators Leaderboard 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Validator Stats 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Tokens</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Top Tokens (AEP-20) 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Token Transfers (AEP-20) 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">NFTs</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Top NFTs 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Latest Trades 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Latest Transfers 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Latest Mints 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Resources</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Charts & Stats 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">Developers</div>
+            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Input Data Decoder 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Unit Converter 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">CSV Export 🚫</a>
+            </div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Account Balance Checker 🚫</a>
+            </div>
+
+            <div class="mobile-nav-section">More</div>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Charts & Stats 🚫</a>
+            </div>
+            <a href="gastracker.html" class="mobile-nav-item">Gas Tracker</a>
+            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <div class="mobile-nav-item-wrapper">
+                <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Verify Contract 🚫</a>
+            </div>
+            <a href="top-accounts.html" class="mobile-nav-item">Top Accounts</a>
+
+            <div style="padding: 20px; margin-top: auto; border-top: 1px solid var(--border-color);">
+                <button onclick="toggleTheme()" style="width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-primary); font-weight: 500; transition: all 0.2s;">
+                    <span id="mobile-theme-icon" style="font-size: 18px;">☀️</span>
+                    <span id="mobile-theme-text">Light Mode</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search by Address / Txn Hash / Block">
+                <button class="search-btn" onclick="performSearch()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gas Tracker Content -->
+    <div class="gas-tracker-container">
+        <!-- Page Title -->
+        <div class="page-title">
+            <h1>
+                Access Network Gas Tracker
+                <span class="emoji">⛽</span>
+            </h1>
+        </div>
+
+        <!-- Update Info -->
+        <div class="update-info">
+            <div class="update-timer">
+                Next update in <span class="countdown" id="updateCountdown">8s</span>
+            </div>
+            <a href="developer-api.html" class="gas-api-link">
+                <i class="fas fa-code"></i>
+                Gas APIs
+            </a>
+        </div>
+
+        <!-- Gas Prices Cards with Real Data -->
+        <div class="gas-prices">
+            <div class="gas-price-card standard">
+                <div class="gas-price-label">
+                    <span>😊</span>
+                    <span>Standard</span>
+                </div>
+                <div class="gas-price-value" id="standardGas">20,000 Gwei</div>
+                <div class="gas-price-details" id="standardDetails">Fixed Network Fee</div>
+                <div class="gas-price-time" id="standardTime">~ 3 secs</div>
+            </div>
+            <div class="gas-price-card fast">
+                <div class="gas-price-label">
+                    <span>😃</span>
+                    <span>Fast</span>
+                </div>
+                <div class="gas-price-value" id="fastGas">20,000 Gwei</div>
+                <div class="gas-price-details" id="fastDetails">Fixed Network Fee</div>
+                <div class="gas-price-time" id="fastTime">~ 2 secs</div>
+            </div>
+            <div class="gas-price-card rapid">
+                <div class="gas-price-label">
+                    <span>😐</span>
+                    <span>Rapid</span>
+                </div>
+                <div class="gas-price-value" id="rapidGas">20,000 Gwei</div>
+                <div class="gas-price-details" id="rapidDetails">Fixed Network Fee</div>
+                <div class="gas-price-time" id="rapidTime">~ 1 sec</div>
+            </div>
+        </div>
+
+        <!-- Additional Info with Real Data -->
+        <div class="additional-info">
+            <h3 class="info-title">Additional Info</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Last Block</span>
+                    <span class="info-value" id="lastBlock">Loading...</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Pending Queue</span>
+                    <span class="info-value" id="pendingQueue">0</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Avg Block Size</span>
+                    <span class="info-value" id="avgBlockSize">Loading...</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Avg. Utilization</span>
+                    <span class="info-value" id="avgUtilization">0.00%</span>
+                </div>
+            </div>
+            <div class="last-refreshed" id="lastRefreshed">
+                Last Refreshed: Loading...
+            </div>
+        </div>
+
+        <!-- Featured Actions with Real Data -->
+        <div class="featured-actions">
+            <h3>Featured Actions</h3>
+            <table class="actions-table">
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Low</th>
+                        <th>Average</th>
+                        <th>High</th>
+                    </tr>
+                </thead>
+                <tbody id="actionsTableBody">
+                    <tr>
+                        <td>ACCESS-20 Transfer</td>
+                        <td>$XXX</td>
+                        <td>$XXX</td>
+                        <td>$XXX</td>
+                    </tr>
+                    <tr>
+                        <td>Swap</td>
+                        <td>$XXX</td>
+                        <td>$XXX</td>
+                        <td>$XXX</td>
+                    </tr>
+                    <tr>
+                        <td>Add/Remove LP</td>
+                        <td>$XXX</td>
+                        <td>$XXX</td>
+                        <td>$XXX</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="chart-section">
+            <div class="chart-tabs">
+                <button class="chart-tab active" onclick="switchTab('heatmap')">Heatmap</button>
+                <button class="chart-tab" onclick="switchTab('chart')">Chart</button>
+            </div>
+
+            <h3 class="info-title">Average Gas Prices</h3>
+
+            <div id="heatmapView" class="chart-container">
+                <div class="heatmap-wrapper">
+                    <div class="heatmap-container">
+                        <div class="days-column" id="daysColumn"></div>
+                        <div class="grid-wrapper">
+                            <div class="heatmap-grid" id="heatmapGrid"></div>
+                            <div class="hours-labels" id="hoursLabels"></div>
+                            <div class="hours-label-wrapper">
+                                <span class="hours-label">Hours (UTC)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- شريط تدرج لوني واحد مستمر من الشفاف للبرتقالي الغامق -->
+                    <div class="chart-legend">
+                        <div class="legend-gradient-wrapper">
+                            <div class="legend-indicator" id="legendIndicator"></div>
+                            <div class="legend-gradient">
+                                <div class="legend-gradient-separators">
+                                    <div class="legend-separator-line"></div>
+                                    <div class="legend-separator-line"></div>
+                                    <div class="legend-separator-line"></div>
+                                    <div class="legend-separator-line"></div>
+                                </div>
+                            </div>
+
+                            <!-- الأرقام مباشرة أسفل الشريط كمقياس -->
+                            <div class="legend-values">
+                                <span>18,000</span>
+                                <span>19,000</span>
+                                <span>20,000</span>
+                                <span>22,000</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chartView" class="chart-container" style="display: none;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h3 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 5px;">Historical Gas Oracle Prices</h3>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">Source: AccessScan.com</p>
+                </div>
+                <div style="position: relative; height: 400px; margin: 20px 0;">
+                    <canvas id="gasChart"></canvas>
+                </div>
+                <div class="chart-legend-container">
+                    <div class="chart-legend-item" onclick="toggleChartDataset(0)" style="cursor: pointer;">
+                        <div style="width: 14px; height: 14px; background: #00a186; border-radius: 2px;"></div>
+                        <span id="legend-low" style="color: var(--text-secondary); font-weight: 500; white-space: nowrap; transition: all 0.3s ease;">Low Gas Price</span>
+                    </div>
+                    <div class="chart-legend-item" onclick="toggleChartDataset(1)" style="cursor: pointer;">
+                        <div style="width: 14px; height: 14px; background: #0784c3; border-radius: 2px;"></div>
+                        <span id="legend-avg" style="color: var(--text-secondary); font-weight: 500; white-space: nowrap; transition: all 0.3s ease;">Average Gas Price</span>
+                    </div>
+                    <div class="chart-legend-item" onclick="toggleChartDataset(2)" style="cursor: pointer;">
+                        <div style="width: 14px; height: 14px; background: #d32f2f; border-radius: 2px;"></div>
+                        <span id="legend-high" style="color: var(--text-secondary); font-weight: 500; white-space: nowrap; transition: all 0.3s ease;">High Gas Price</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="gas-info-box">
+            <i class="fas fa-info-circle"></i>
+            <span class="gas-info-text">Gas refers to the fee required to successfully conduct a transaction on the Access Network blockchain.
+            Gas fees are paid in ACCESS tokens. Learn more about Gas in our Knowledge Base.</span>
+        </div>
+    </div>
+
+    <!-- Google Sign In Modal -->
+    <div class="auth-modal" id="authModal" onclick="if(event.target === this) hideAuthModal()">
+        <div class="auth-container">
+            <button class="auth-close" onclick="hideAuthModal()">×</button>
+
+            <div class="auth-header">
+                <div class="auth-title">Sign In to AccessScan</div>
+                <div class="auth-subtitle">Access the network explorer with your Google account</div>
+            </div>
+
+            <div class="auth-form">
+                <button type="button" class="google-btn" onclick="triggerGoogleSignIn()">
+                    <svg width="18" height="18" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continue with Google
+                </button>
+
+                <div class="form-group" style="margin-top: 25px;">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="termsCheckbox" required>
+                        <span class="checkmark"></span>
+                        I agree to the <a href="terms-of-service.html" target="_blank" style="color: var(--accent-purple);">Terms of Service</a>.
+                    </label>
+                </div>
+
+                <div id="authMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="about.html" class="footer-link">About</a>
+                <a href="faq.html" class="footer-link">FAQ</a>
+                <a href="developer-api.html" class="footer-link">API</a>
+                <a href="contact.html" class="footer-link">Contact Us</a>
+                <a href="terms-of-service.html" class="footer-link">Terms</a>
+            </div>
+            <p>&copy; 2025 AccessScan. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+    <script>
+        // Show Access Network API Information
+        function showAPIInfo() {
+            // Reserved for future API documentation page
+            // alert('Access Network Gas Tracker API\n\nEndpoint: /api/stats/real-gas-fees\n\nThis is Access Network\'s own API, not Etherscan.\n\nNetwork: Access Network (Chain ID: 22888)');
+        }
+
+        // Initialize heatmap with dynamic hourly removal system
+        function initializeHeatmap() {
+            const daysCol = document.getElementById('daysColumn');
+            const grid = document.getElementById('heatmapGrid');
+            const hoursRow = document.getElementById('hoursLabels');
+
+            daysCol.innerHTML = '';
+            grid.innerHTML = '';
+            hoursRow.innerHTML = '';
+
+            // آخر 8 أيام كما في BscScan
+            const today = new Date();
+            const DAYS = [];
+
+            for (let i = 7; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+                const day = date.getUTCDate().toString().padStart(2, '0');
+                const month = date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+
+                DAYS.push(`${dayName}, ${day} ${month}`);
+            }
+
+            // إنشاء أيام
+            DAYS.forEach(d => {
+                const el = document.createElement('div');
+                el.className = 'day-label';
+                el.textContent = d;
+                daysCol.appendChild(el);
+            });
+
+            // حساب الساعة الحالية بتوقيت UTC
+            const now = new Date();
+            const currentHour = now.getUTCHours();
+            const currentMinute = now.getUTCMinutes();
+
+            // حساب عدد الساعات التي مرت اليوم (بما في ذلك الساعة الحالية إذا مرت دقائق منها)
+            const hoursPassedToday = currentHour + (currentMinute > 0 ? 1 : 0);
+
+            DAYS.forEach((day, di) => {
+                const isOldestDay = (di === 0); // أول يوم (الأقدم في الأعلى)
+                const isToday = (di === DAYS.length - 1); // آخر يوم (اليوم الحالي في الأسفل)
+
+                for (let h = 0; h < 24; h++) {
+                    // اليوم الأقدم (الأعلى): نزيل المربعات من اليسار، لكن نحتفظ بآخر مربع على اليمين
+                    // نزيل (hoursPassedToday - 1) مربع من اليسار - الاحتفاظ بمربع واحد
+                    if (isOldestDay && h < Math.max(0, hoursPassedToday - 1)) {
+                        const emptyCell = document.createElement('div');
+                        emptyCell.className = 'heat-cell empty-cell';
+                        grid.appendChild(emptyCell);
+                        continue;
+                    }
+
+                    // اليوم الحالي (الأسفل): فقط الساعات التي مرت تظهر، الباقي فارغ
+                    if (isToday && h >= hoursPassedToday) {
+                        const emptyCell = document.createElement('div');
+                        emptyCell.className = 'heat-cell empty-cell';
+                        grid.appendChild(emptyCell);
+                        continue;
+                    }
+
+                    // المربعات الممتلئة
+                    const cell = document.createElement('div');
+                    cell.className = 'heat-cell';
+
+                    // منع التحديد التلقائي
+                    cell.tabIndex = -1;
+                    cell.setAttribute('role', 'presentation');
+
+                    // رسوم غاز ثابتة: 20,000 Gwei دائماً
+                    cell.style.backgroundColor = '#fed7aa';
+                    cell.dataset.gwei = '20,000';
+                    cell.dataset.day = day;
+                    cell.dataset.hour = String(h).padStart(2, '0');
+
+                    // Tooltip on hover and click - BscScan Style (Always Above Cell)
+                    function showTooltipForCell(cell, e) {
+                        if (cell._tooltip) return;
+
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'heatmap-tooltip';
+                        tooltip.style.display = 'block';
+                        tooltip.style.position = 'absolute';
+                        tooltip.style.background = '#ffffff';
+                        tooltip.innerHTML = `
+                            <div class="tooltip-day">${cell.dataset.day}</div>
+                            <div class="tooltip-hour">Hour ${cell.dataset.hour}</div>
+                            <div class="tooltip-gwei">${cell.dataset.gwei} Gwei</div>
+                        `;
+
+                        // إضافة tooltip إلى الحاوية بدلاً من body
+                        const container = document.querySelector('.heatmap-wrapper');
+                        container.style.position = 'relative';
+                        container.appendChild(tooltip);
+
+                        // BscScan style: دائمًا فوق المربع - absolute positioning
+                        setTimeout(() => {
+                            const containerRect = container.getBoundingClientRect();
+                            const rect = cell.getBoundingClientRect();
+                            const tooltipWidth = tooltip.offsetWidth;
+                            const tooltipHeight = tooltip.offsetHeight;
+
+                            // احسب الموضع الأفقي نسبة للحاوية
+                            let left = rect.left - containerRect.left + (rect.width / 2) - (tooltipWidth / 2);
+
+                            // تأكد من عدم الخروج من الحاوية
+                            if (left < 10) {
+                                left = 10;
+                            } else if (left + tooltipWidth > containerRect.width - 10) {
+                                left = containerRect.width - tooltipWidth - 10;
+                            }
+
+                            // الموضع العمودي نسبة للحاوية
+                            let top = rect.top - containerRect.top - tooltipHeight - 8;
+
+                            // إذا كان سيخرج من أعلى الحاوية، اعرضه تحت المربع
+                            if (top < 10) {
+                                top = rect.bottom - containerRect.top + 8;
+                            }
+
+                            tooltip.style.left = left + 'px';
+                            tooltip.style.top = top + 'px';
+                        }, 0);
+
+                        cell._tooltip = tooltip;
+
+                        const indicator = document.getElementById('legendIndicator');
+                        if (indicator) {
+                            const gweiValue = parseInt(cell.dataset.gwei.replace(/,/g, ''));
+                            const percentage = ((gweiValue - 18000) / (22000 - 18000)) * 100;
+                            const clampedPercentage = Math.max(0, Math.min(100, percentage));
+
+                            indicator.classList.add('active');
+                            indicator.style.left = clampedPercentage + '%';
+                        }
+                    }
+
+                    function hideTooltipForCell(cell) {
+                        if (cell._tooltip) {
+                            cell._tooltip.remove();
+                            cell._tooltip = null;
+                        }
+
+                        const indicator = document.getElementById('legendIndicator');
+                        if (indicator) {
+                            indicator.classList.remove('active');
+                        }
+
+                        cell.classList.remove('clicked');
+                    }
+
+                    cell.addEventListener('mouseenter', function(e) {
+                        showTooltipForCell(this, e);
+                    });
+
+                    cell.addEventListener('mouseleave', function() {
+                        hideTooltipForCell(this);
+                    });
+
+                    cell.addEventListener('mousemove', function(e) {
+                        if (this._tooltip) {
+                            const container = document.querySelector('.heatmap-wrapper');
+                            const containerRect = container.getBoundingClientRect();
+                            const rect = this.getBoundingClientRect();
+                            const tooltipWidth = this._tooltip.offsetWidth;
+                            const tooltipHeight = this._tooltip.offsetHeight;
+
+                            // BscScan style: ثابت فوق المربع - absolute positioning
+                            let left = rect.left - containerRect.left + (rect.width / 2) - (tooltipWidth / 2);
+
+                            if (left < 10) {
+                                left = 10;
+                            } else if (left + tooltipWidth > containerRect.width - 10) {
+                                left = containerRect.width - tooltipWidth - 10;
+                            }
+
+                            let top = rect.top - containerRect.top - tooltipHeight - 8;
+
+                            if (top < 10) {
+                                top = rect.bottom - containerRect.top + 8;
+                            }
+
+                            this._tooltip.style.left = left + 'px';
+                            this._tooltip.style.top = top + 'px';
+                        }
+                    });
+
+                    cell.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        this.classList.add('clicked');
+                        showTooltipForCell(this, e);
+                    });
+
+                    grid.appendChild(cell);
+                }
+            });
+
+            // إنشاء ساعات - جميع الساعات على سطح المكتب، كل ساعتين على الموبايل
+            for (let i = 0; i < 24; i++) {
+                const h = document.createElement('div');
+                // عرض جميع الساعات على سطح المكتب (768px+)، كل ساعتين على الموبايل
+                const isMobile = window.innerWidth < 768;
+                h.textContent = isMobile ? (i % 2 === 0 ? String(i).padStart(2, '0') : '') : String(i).padStart(2, '0');
+                hoursRow.appendChild(h);
+            }
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.heat-cell') && !e.target.closest('.heatmap-tooltip')) {
+                    document.querySelectorAll('.heat-cell.clicked').forEach(cell => {
+                        cell.classList.remove('clicked');
+                    });
+                }
+            });
+        }
+
+        // Show "Coming Soon" tooltip for disabled features
+        function showComingSoon(event, element) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Remove any existing tooltips
+            document.querySelectorAll('.coming-soon-tooltip').forEach(t => t.remove());
+
+            // Get the wrapper (parent element)
+            const wrapper = element.closest('.dropdown-item-wrapper') || element.closest('.mobile-nav-item-wrapper');
+            if (!wrapper) return;
+
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'coming-soon-tooltip';
+            tooltip.textContent = 'Coming Soon - Under Development';
+            wrapper.appendChild(tooltip);
+
+            // Show tooltip with animation
+            setTimeout(() => tooltip.classList.add('show'), 10);
+
+            // Hide and remove tooltip after 2 seconds
+            setTimeout(() => {
+                tooltip.classList.remove('show');
+                setTimeout(() => tooltip.remove(), 300);
+            }, 2000);
+        }
+
+        function showTooltip(event) {
+            const cell = event.target;
+            const day = cell.dataset.day;
+            const hour = cell.dataset.hour;
+            const gas = parseFloat(cell.dataset.gas);
+            const gasInGwei = Math.round(gas * 1000000000); // Convert ACCESS to Gwei
+
+            const existingTooltip = document.querySelector('.heatmap-tooltip');
+            if (existingTooltip) existingTooltip.remove();
+
+            const tooltip = document.createElement('div');
+            tooltip.className = 'heatmap-tooltip';
+            tooltip.innerHTML = `
+                <div class="tooltip-day">${day}</div>
+                <div class="tooltip-hour">Hour ${hour}</div>
+                <div class="tooltip-gwei">${gasInGwei.toLocaleString()} Gwei</div>
+            `;
+
+            document.body.appendChild(tooltip);
+
+            const rect = cell.getBoundingClientRect();
+            tooltip.style.position = 'fixed';
+            tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
+            tooltip.style.top = rect.top - tooltip.offsetHeight - 8 + 'px';
+
+            if (parseFloat(tooltip.style.top) < 10) {
+                tooltip.style.top = rect.bottom + 8 + 'px';
+            }
+
+            // تحريك السهم المؤشر على شريط الألوان
+            const indicator = document.getElementById('legendIndicator');
+            const legendGradient = document.querySelector('.legend-gradient');
+
+            if (indicator && legendGradient) {
+                // حساب موضع السهم بناءً على قيمة الغاز - نطاق Access Network
+                const minGwei = 18000;
+                const maxGwei = 22000;
+                const percentage = ((gasInGwei - minGwei) / (maxGwei - minGwei)) * 100;
+                const clampedPercentage = Math.max(0, Math.min(100, percentage));
+
+                indicator.classList.add('active');
+                indicator.style.left = clampedPercentage + '%';
+            }
+        }
+
+        function hideTooltip() {
+            const tooltip = document.querySelector('.heatmap-tooltip');
+            if (tooltip) tooltip.remove();
+
+            // إخفاء السهم المؤشر
+            const indicator = document.getElementById('legendIndicator');
+            if (indicator) {
+                indicator.classList.remove('active');
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (tab === 'heatmap') {
+                document.getElementById('heatmapView').style.display = 'block';
+                document.getElementById('chartView').style.display = 'none';
+            } else {
+                document.getElementById('heatmapView').style.display = 'none';
+                document.getElementById('chartView').style.display = 'block';
+
+                // Initialize chart when switching to chart view
+                if (!window.gasChartInitialized) {
+                    initializeGasChart();
+                    window.gasChartInitialized = true;
+
+                    // Auto-refresh chart every minute to update dates (dynamic)
+                    setInterval(() => {
+                        if (gasChartInstance) {
+                            gasChartInstance.destroy(); // Destroy old chart
+                        }
+                        initializeGasChart(); // Recreate with new dates
+                    }, 60000); // Every 60 seconds
+
+                    // Also refresh on window resize for responsive label display
+                    let resizeTimeout;
+                    window.addEventListener('resize', () => {
+                        clearTimeout(resizeTimeout);
+                        resizeTimeout = setTimeout(() => {
+                            if (gasChartInstance) {
+                                gasChartInstance.destroy();
+                            }
+                            initializeGasChart();
+                        }, 300);
+                    });
+                }
+            }
+        }
+
+        // Initialize Gas Price Chart
+        let gasChartInstance = null;
+
+        // Toggle chart dataset visibility (BSCScan style)
+        function toggleChartDataset(datasetIndex) {
+            if (!gasChartInstance) return;
+
+            const dataset = gasChartInstance.data.datasets[datasetIndex];
+            const isVisible = !dataset.hidden;
+
+            // Toggle visibility
+            dataset.hidden = isVisible;
+
+            // Update legend text color and font weight
+            const legendIds = ['legend-low', 'legend-avg', 'legend-high'];
+            const legendElement = document.getElementById(legendIds[datasetIndex]);
+            if (legendElement) {
+                if (isVisible) {
+                    // مخفي - لون رمادي فاتح وخط عادي
+                    legendElement.style.color = '#6c757d';
+                    legendElement.style.fontWeight = '500';
+                } else {
+                    // مرئي - لون أسود قوي وخط عريض
+                    legendElement.style.color = '#1e2022';
+                    legendElement.style.fontWeight = 'bold';
+                }
+            }
+
+            // Update chart
+            gasChartInstance.update();
+        }
+
+        function initializeGasChart() {
+            const ctx = document.getElementById('gasChart');
+            if (!ctx) return;
+
+            // Generate last 30 days data - FULL MONTH like BscScan
+            const labels = [];
+            const lowPrices = [];
+            const avgPrices = [];
+            const highPrices = [];
+
+            const today = new Date(); // Always use current date
+            const FIXED_GAS_PRICE = 20000; // 20,000 Gwei (ثابت)
+
+            // Generate 30 days of data (full month)
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(); // Create fresh date object
+                date.setDate(today.getDate() - i); // Go back i days from today
+
+                // Format: "Jan 13" style
+                const month = date.toLocaleDateString('en-US', { month: 'short' });
+                const day = date.getDate();
+                labels.push(`${month} ${day}`);
+
+                // تذبذبات طفيفة جداً حول 20,000 Gwei (مثل BscScan)
+                // التذبذب يكون فقط ±100-200 Gwei للعرض البصري
+                const smallVariation = (Math.random() - 0.5) * 200; // تذبذب صغير من -100 إلى +100
+                const tinyVariation = (Math.random() - 0.5) * 150; // تذبذب أصغر
+
+                // جميع القيم قريبة جداً من 20,000 Gwei
+                lowPrices.push((FIXED_GAS_PRICE + smallVariation - 100) / 1000000000);
+                avgPrices.push((FIXED_GAS_PRICE + tinyVariation) / 1000000000);
+                highPrices.push((FIXED_GAS_PRICE + smallVariation + 100) / 1000000000);
+            }
+
+            // Destroy existing chart if exists
+            if (gasChartInstance) {
+                gasChartInstance.destroy();
+            }
+
+            // Create new chart with BscScan style
+        gasChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Low Gas Price',
+                            data: lowPrices,
+                            borderColor: '#00a186',
+                            backgroundColor: 'rgba(0, 161, 134, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            pointBackgroundColor: '#00a186',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            hidden: true
+                        },
+                        {
+                            label: 'Average Gas Price',
+                            data: avgPrices,
+                            borderColor: '#0784c3',
+                            backgroundColor: 'rgba(7, 132, 195, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            pointBackgroundColor: '#0784c3',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            hidden: true
+                        },
+                        {
+                            label: 'High Gas Price',
+                            data: highPrices,
+                            borderColor: '#d32f2f',
+                            backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            pointBackgroundColor: '#d32f2f',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            hidden: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'nearest',
+                        axis: 'x'
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1e2022',
+                            bodyColor: '#6c757d',
+                            borderColor: '#e9ecef',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: true,
+                            position: 'nearest',
+                            callbacks: {
+                                title: function(context) {
+                                    // عرض التاريخ الصحيح حسب موضع الماوس
+                                    return context[0].label;
+                                },
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    const gweiValue = (context.parsed.y * 1000000000).toFixed(0);
+                                    label += gweiValue.toLocaleString() + ' Gwei';
+                                    return label;
+                                }
+                            }
+                        },
+                        // إضافة خط عمودي يتبع الماوس - BscScan style
+                        crosshair: {
+                            line: {
+                                color: '#d0d5dd',
+                                width: 1,
+                                dashPattern: [5, 5]
+                            },
+                            sync: {
+                                enabled: false
+                            },
+                            zoom: {
+                                enabled: false
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#6c757d',
+                                font: {
+                                    size: 11
+                                },
+                                // Angled labels at 45° on both mobile and desktop
+                                maxRotation: 45,
+                                minRotation: 45,
+                                // Smart display: show every 2nd date on mobile, all on desktop
+                                autoSkip: true,
+                                autoSkipPadding: window.innerWidth < 768 ? 10 : 5,
+                                maxTicksLimit: window.innerWidth < 768 ? 10 : 30
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            display: true,
+                            grid: {
+                                color: '#f8f9fa',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#6c757d',
+                                font: {
+                                    size: 11
+                                },
+                                callback: function(value) {
+                                    // إخفاء القيم إذا كانت جميع datasets مخفية
+                                    const chart = this.chart;
+                                    const allHidden = chart.data.datasets.every(ds => ds.hidden === true);
+                                    if (allHidden) {
+                                        return '';
+                                    }
+                                    return (value * 1000000000).toFixed(0);
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Gas Price (gwei)',
+                                color: '#6c757d',
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'verticalLinePlugin',
+                    afterDraw: function(chart) {
+                        if (chart.tooltip?._active?.length) {
+                            const activePoint = chart.tooltip._active[0];
+                            const ctx = chart.ctx;
+                            const x = activePoint.element.x;
+                            const topY = chart.scales.y.top;
+                            const bottomY = chart.scales.y.bottom;
+
+                            // رسم الخط العمودي - BscScan style
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.moveTo(x, topY);
+                            ctx.lineTo(x, bottomY);
+                            ctx.lineWidth = 1;
+                            ctx.strokeStyle = '#d0d5dd';
+                            ctx.setLineDash([5, 5]);
+                            ctx.stroke();
+                            ctx.restore();
+                        }
+                    }
+                }]
+            });
+        }
+
+        // Update stats with real data from API
+        async function updateStats() {
+            try {
+                // Fetch network stats
+                const response = await fetch('/api/explorer/stats');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('lastBlock').textContent = (data.data.latestBlock || 0).toLocaleString();
+
+                    // Pending Queue - عدد المعاملات المعلقة الحقيقي
+                    const pendingCount = data.data.pendingTransactions || 0;
+                    document.getElementById('pendingQueue').textContent = pendingCount.toLocaleString();
+                }
+
+                // Fetch blocks data for calculating avg block size
+                const blocksResponse = await fetch('/api/blocks');
+                const blocksData = await blocksResponse.json();
+
+                if (blocksData.success && blocksData.data && blocksData.data.length > 0) {
+                    // حساب متوسط حجم البلوك من آخر 100 بلوك
+                    const recentBlocks = blocksData.data.slice(0, 100);
+                    const totalSize = recentBlocks.reduce((sum, block) => sum + (block.size || 1024), 0);
+                    const avgSize = Math.round(totalSize / recentBlocks.length);
+
+                    document.getElementById('avgBlockSize').textContent = avgSize.toLocaleString();
+
+                    // حساب متوسط الاستخدام (Avg. Utilization)
+                    const totalGasUsed = recentBlocks.reduce((sum, block) => sum + (block.gasUsed || 0), 0);
+                    const totalGasLimit = recentBlocks.reduce((sum, block) => sum + (block.gasLimit || 30000000), 0);
+                    const avgUtilization = totalGasLimit > 0 ? ((totalGasUsed / totalGasLimit) * 100).toFixed(2) : '0.00';
+
+                    document.getElementById('avgUtilization').textContent = avgUtilization + '%';
+                } else {
+                    document.getElementById('avgBlockSize').textContent = '1,024';
+                    document.getElementById('avgUtilization').textContent = '0.00%';
+                }
+
+                // Fetch real gas fees
+                const gasResponse = await fetch('/api/stats/real-gas-fees');
+                const gasData = await gasResponse.json();
+
+                if (gasData.success) {
+                    const gasPrice = parseFloat(gasData.data.gasPrice || 0.00002);
+
+                    // عرض رسوم الغاز بوحدة Gwei (0.00002 ACCESS = 20,000 Gwei)
+                    const fixedFeeGwei = '20,000 Gwei';
+
+                    // Standard (الرسوم الثابتة)
+                    document.getElementById('standardGas').textContent = fixedFeeGwei;
+                    document.getElementById('standardDetails').textContent = 'Fixed Network Fee';
+                    document.getElementById('standardTime').textContent = '~ 3 secs';
+
+                    // Fast (نفس الرسوم - ثابتة)
+                    document.getElementById('fastGas').textContent = fixedFeeGwei;
+                    document.getElementById('fastDetails').textContent = 'Fixed Network Fee';
+                    document.getElementById('fastTime').textContent = '~ 2 secs';
+
+                    // Rapid (نفس الرسوم - ثابتة)
+                    document.getElementById('rapidGas').textContent = fixedFeeGwei;
+                    document.getElementById('rapidDetails').textContent = 'Fixed Network Fee';
+                    document.getElementById('rapidTime').textContent = '~ 1 sec';
+                } else {
+                    // إذا فشل الـ API، اعرض الرسوم الثابتة مباشرة
+                    const fixedFeeGwei = '20,000 Gwei';
+                    document.getElementById('standardGas').textContent = fixedFeeGwei;
+                    document.getElementById('standardDetails').textContent = 'Fixed Network Fee';
+                    document.getElementById('standardTime').textContent = '~ 3 secs';
+                    document.getElementById('fastGas').textContent = fixedFeeGwei;
+                    document.getElementById('fastDetails').textContent = 'Fixed Network Fee';
+                    document.getElementById('fastTime').textContent = '~ 2 secs';
+                    document.getElementById('rapidGas').textContent = fixedFeeGwei;
+                    document.getElementById('rapidDetails').textContent = 'Fixed Network Fee';
+                    document.getElementById('rapidTime').textContent = '~ 1 sec';
+                }
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+
+
+                // Default values for new fields
+                document.getElementById('avgBlockSize').textContent = '1,024';
+                document.getElementById('avgUtilization').textContent = '0.00%';
+            }
+
+            const now = new Date();
+            document.getElementById('lastRefreshed').textContent =
+                `Last Refreshed: ${now.toUTCString()}`;
+        }
+
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+
+            if (!query) {
+                showToast('Please enter a search query', 'info');
+                return;
+            }
+
+            let cleanQuery = query;
+            if (cleanQuery.startsWith('0x')) {
+                cleanQuery = cleanQuery.substring(2);
+            }
+
+            if (!isNaN(query) && query.length < 40) {
+                window.location.href = `block-details.html?number=${query}`;
+            } else if (cleanQuery.length === 64 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
+                window.location.href = `transaction-details.html?hash=${cleanQuery}`;
+            } else if (cleanQuery.length === 40 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
+                window.location.href = `address-details.html?address=0x${cleanQuery}`;
+            } else {
+                showToast('Invalid search query. Please enter a valid identifier.', 'error');
+            }
+        }
+
+        let countdownSeconds = 8;
+        let countdownInterval = null;
+
+        function startUpdateCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            countdownSeconds = 8;
+            const countdownElement = document.getElementById('updateCountdown');
+
+            countdownInterval = setInterval(() => {
+                countdownSeconds--;
+
+                if (countdownSeconds <= 0) {
+                    countdownSeconds = 8;
+                    updateStats();
+                }
+
+                countdownElement.textContent = countdownSeconds + 's';
+            }, 1000);
+        }
+
+        // Update featured actions - العملة غير مدرجة بعد
+        async function updateFeaturedActions() {
+            // لا حاجة لتحديث - القيم ثابتة $XXX
+            // سيتم تحديثها عندما تُدرج العملة للتداول
+        }
+
+        initializeHeatmap();
+        updateStats();
+        updateFeaturedActions();
+        startUpdateCountdown();
+
+        // إزالة أي focus تلقائي عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.activeElement && document.activeElement.classList.contains('heat-cell')) {
+                document.activeElement.blur();
+            }
+        });
+
+        // إزالة focus من أي عنصر عند تحميل الصفحة
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                if (document.activeElement) {
+                    document.activeElement.blur();
+                }
+            }, 100);
+        });
+
+        // Initialize chart flag
+        window.gasChartInitialized = false;
+
+        // Update featured actions every time we update stats
+        setInterval(updateFeaturedActions, 8000);
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.querySelector('.mobile-menu-overlay');
+            const body = document.body;
+
+            const isActive = menu.classList.contains('active');
+
+            if (isActive) {
+                menu.classList.remove('active');
+                overlay.classList.remove('active');
+                body.classList.remove('mobile-menu-open');
+            } else {
+                body.classList.add('mobile-menu-open');
+                menu.classList.add('active');
+                overlay.classList.add('active');
+            }
+        }
+
+        // Toggle dropdown menus - exact same as access-explorer.html
+        function toggleDropdown(element, event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const dropdown = element.closest('.dropdown');
+            const isActive = dropdown.classList.contains('active');
+
+            // Close all dropdowns first
+            document.querySelectorAll('.dropdown').forEach(d => {
+                d.classList.remove('active');
+            });
+
+            // Toggle current dropdown
+            if (!isActive) {
+                dropdown.classList.add('active');
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown').forEach(dropdown => {
+                    dropdown.classList.remove('active');
+                });
+            }
+        });
+
+        // Close dropdowns on escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.dropdown').forEach(dropdown => {
+                    dropdown.classList.remove('active');
+                });
+            }
+        });
+
+        let currentExplorerUser = null;
+        let explorerSessionToken = null;
+
+        // Google Client ID - loaded securely from server
+        let GOOGLE_CLIENT_ID = null;
+
+        // Load Google Client ID from secure server endpoint
+        async function loadGoogleClientId() {
+            try {
+                const response = await fetch('/api/oauth-config');
+                const data = await response.json();
+                if (data.success && data.clientId) {
+                    GOOGLE_CLIENT_ID = data.clientId;
+                    console.log('✅ Google OAuth configured securely');
+                } else {
+                    console.error('Failed to load Google Client ID:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading Google Client ID:', error);
+            }
+        }
+
+        function getRedirectUri() {
+            return window.location.origin + window.location.pathname;
+        }
+
+        function triggerGoogleSignIn() {
+            if (!GOOGLE_CLIENT_ID) {
+                showAuthMessage('Google authentication not configured. Please try again.');
+                return;
+            }
+
+            const termsCheckbox = document.getElementById('termsCheckbox');
+            if (!termsCheckbox.checked) {
+                showAuthMessage('Please accept the Terms of Service first.');
+                return;
+            }
+
+            sessionStorage.setItem('googleAuthInProgress', 'true');
+
+            const redirectUri = getRedirectUri();
+            const scope = 'openid email profile';
+            const responseType = 'token id_token';
+            const nonce = generateNonce();
+
+            sessionStorage.setItem('googleAuthNonce', nonce);
+
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
+                `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+                `&response_type=${encodeURIComponent(responseType)}` +
+                `&scope=${encodeURIComponent(scope)}` +
+                `&nonce=${encodeURIComponent(nonce)}`;
+
+            window.location.href = authUrl;
+        }
+
+        function generateNonce() {
+            const array = new Uint8Array(16);
+            crypto.getRandomValues(array);
+            return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function handleOAuthCallback() {
+            const hash = window.location.hash;
+            if (!hash || hash.length <= 1) {
+                return;
+            }
+
+            const authInProgress = sessionStorage.getItem('googleAuthInProgress');
+            if (!authInProgress) {
+                return;
+            }
+
+            sessionStorage.removeItem('googleAuthInProgress');
+
+            try {
+                const params = new URLSearchParams(hash.substring(1));
+                const idToken = params.get('id_token');
+
+                if (!idToken) {
+                    throw new Error('No ID token received');
+                }
+
+                const base64Url = idToken.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+
+                const userInfo = JSON.parse(jsonPayload);
+
+                const savedNonce = sessionStorage.getItem('googleAuthNonce');
+                if (savedNonce && userInfo.nonce !== savedNonce) {
+                    throw new Error('Nonce mismatch - possible security issue');
+                }
+                sessionStorage.removeItem('googleAuthNonce');
+
+                const userData = {
+                    email: userInfo.email,
+                    name: userInfo.name,
+                    picture: userInfo.picture,
+                    sub: userInfo.sub
+                };
+
+                // ✅ Save user to database
+                try {
+                    const response = await fetch('/api/auth/explorer-google', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: userData.email,
+                            name: userData.name,
+                            googleId: userData.sub,
+                            picture: userData.picture
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log('✅ User saved to database:', data.user.email);
+                    }
+                } catch (dbError) {
+                    console.error('❌ Error saving user to database:', dbError);
+                }
+
+                saveExplorerSession(idToken, userData);
+
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
+                showAuthMessage('Successfully signed in with Google!', 'success');
+                setTimeout(() => {
+                    hideAuthModal();
+                }, 1500);
+
+            } catch (error) {
+                console.error('Error processing OAuth callback:', error);
+                showAuthMessage('Sign in failed. Please try again.');
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', handleOAuthCallback);
+        } else {
+            handleOAuthCallback();
+        }
+
+        function loadExplorerSession() {
+            const sessionData = localStorage.getItem('explorerGoogleSession');
+            if (sessionData) {
+                try {
+                    const session = JSON.parse(sessionData);
+                    const now = Date.now();
+                    const sessionAge = now - (session.timestamp || 0);
+                    const maxAge = 30 * 24 * 60 * 60 * 1000;
+
+                    if (sessionAge < maxAge && session.token && session.user) {
+                        explorerSessionToken = session.token;
+                        currentExplorerUser = session.user;
+                        updateExplorerAuthUI();
+                        return true;
+                    } else {
+                        clearExplorerSession();
+                    }
+                } catch (error) {
+                    clearExplorerSession();
+                }
+            }
+            return false;
+        }
+
+        function saveExplorerSession(token, user) {
+            explorerSessionToken = token;
+            currentExplorerUser = user;
+
+            const sessionData = {
+                token: token,
+                user: user,
+                timestamp: Date.now(),
+                loginMethod: 'google',
+                userAgent: navigator.userAgent,
+                lastActivity: Date.now()
+            };
+
+            localStorage.setItem('explorerGoogleSession', JSON.stringify(sessionData));
+            sessionStorage.setItem('explorerGoogleBackup', JSON.stringify(sessionData));
+
+            updateExplorerAuthUI();
+        }
+
+        function clearExplorerSession() {
+            explorerSessionToken = null;
+            currentExplorerUser = null;
+            localStorage.removeItem('explorerGoogleSession');
+            sessionStorage.removeItem('explorerGoogleBackup');
+            updateExplorerAuthUI();
+        }
+
+        function updateExplorerAuthUI() {
+            const signInBtn = document.querySelector('.sign-in-btn');
+            const mobileUserSection = document.getElementById('mobileUserSection');
+            const mobileSigninSection = document.getElementById('mobileSigninSection');
+            const mobileUserName = document.getElementById('mobileUserName');
+            const mobileUserEmail = document.getElementById('mobileUserEmail');
+
+            if (currentExplorerUser) {
+                const displayName = currentExplorerUser.name || 'User';
+                const userEmail = currentExplorerUser.email || '';
+
+                signInBtn.className = 'sign-in-btn user-logged-in';
+                signInBtn.style.display = 'flex';
+                signInBtn.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                        <span style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${displayName}</span>
+                        <button onclick="logoutExplorer()" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px; cursor: pointer;">Logout</button>
+                    </div>
+                `;
+
+                if (mobileUserSection && mobileSigninSection) {
+                    mobileUserSection.style.display = 'block';
+                    mobileSigninSection.style.display = 'none';
+
+                    if (mobileUserName) mobileUserName.textContent = displayName;
+                    if (mobileUserEmail) mobileUserEmail.textContent = userEmail;
+                }
+            } else {
+                signInBtn.className = 'sign-in-btn';
+                signInBtn.style.display = 'flex';
+                signInBtn.innerHTML = `
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6.74 18.35c1.29-2.14 3.52-3.35 5.26-3.35s3.97 1.21 5.26 3.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Sign In
+                `;
+
+                if (mobileUserSection && mobileSigninSection) {
+                    mobileUserSection.style.display = 'none';
+                    mobileSigninSection.style.display = 'block';
+                }
+            }
+        }
+
+        function showUserProfile() {
+            showToast('Profile page will be implemented soon', 'info');
+            toggleMobileMenu();
+        }
+
+        function logoutExplorer() {
+            clearExplorerSession();
+
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu && mobileMenu.classList.contains('active')) {
+                toggleMobileMenu();
+            }
+
+            setTimeout(() => {
+                showAuthMessage('Successfully signed out.', 'success');
+            }, 500);
+        }
+
+        function showAuthModal() {
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function hideAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+            clearAuthMessages();
+        }
+
+        function clearAuthMessages() {
+            document.getElementById('authMessage').innerHTML = '';
+        }
+
+        function showAuthMessage(message, type = 'error') {
+            const messageDiv = document.getElementById('authMessage');
+            messageDiv.innerHTML = `<div class="${type}-message">${message}</div>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load Google Client ID first
+            await loadGoogleClientId();
+
+            const sessionRestored = loadExplorerSession();
+
+            // Always call updateExplorerAuthUI to show/hide Sign In button
+            updateExplorerAuthUI();
+
+            // Initialize theme UI
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            updateThemeUI(savedTheme);
+
+            if (!sessionRestored) {
+                const backupSession = sessionStorage.getItem('explorerGoogleBackup');
+                if (backupSession) {
+                    try {
+                        const session = JSON.parse(backupSession);
+                        if (session.token && session.user) {
+                            explorerSessionToken = session.token;
+                            currentExplorerUser = session.user;
+                            updateExplorerAuthUI();
+                            saveExplorerSession(session.token, session.user);
+                        }
+                    } catch (error) {
+                        console.warn('Could not restore backup session:', error);
+                    }
+                }
+            }
+        });
+
+        document.getElementById('authModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                hideAuthModal();
+            }
+        });
+
+        const authModal = document.getElementById('authModal');
+        if (authModal) {
+            authModal.addEventListener('click', function(e) {
+                if (e.target === authModal) {
+                    hideAuthModal();
+                }
+            });
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeUI(newTheme);
+        }
+
+        function updateThemeUI(theme) {
+            const desktopIcon = document.getElementById('desktop-theme-icon');
+            const desktopText = document.getElementById('desktop-theme-text');
+            const mobileIcon = document.getElementById('mobile-theme-icon');
+            const mobileText = document.getElementById('mobile-theme-text');
+
+            if (theme === 'dark') {
+                if (desktopIcon) desktopIcon.textContent = '🌙';
+                if (desktopText) desktopText.textContent = 'Dark Mode';
+                if (mobileIcon) mobileIcon.textContent = '🌙';
+                if (mobileText) mobileText.textContent = 'Dark Mode';
+            } else {
+                if (desktopIcon) desktopIcon.textContent = '☀️';
+                if (desktopText) desktopText.textContent = 'Light Mode';
+                if (mobileIcon) mobileIcon.textContent = '☀️';
+                if (mobileText) mobileText.textContent = 'Light Mode';
+            }
+        }
+
+        // Show "Coming Soon" tooltip for disabled buttons - exact copy from access-explorer.html
+        function showComingSoon(event, element) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Remove any existing tooltips
+            const existingTooltips = document.querySelectorAll('.coming-soon-tooltip');
+            existingTooltips.forEach(t => t.remove());
+
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'coming-soon-tooltip';
+            tooltip.textContent = 'Coming Soon - Under Development';
+
+            // Add tooltip to the wrapper element
+            const wrapper = element.closest('.dropdown-item-wrapper') || element.closest('.mobile-nav-item-wrapper');
+            if (wrapper) {
+                wrapper.style.position = 'relative';
+                wrapper.appendChild(tooltip);
+
+                // Show tooltip with animation
+                setTimeout(() => {
+                    tooltip.classList.add('show');
+                }, 10);
+
+                // Auto-hide after 2 seconds
+                setTimeout(() => {
+                    tooltip.classList.remove('show');
+                    setTimeout(() => {
+                        tooltip.remove();
+                    }, 300);
+                }, 2000);
+            }
+
+            return false;
+        }
+
+        // Close tooltip when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.disabled-btn')) {
+                const tooltips = document.querySelectorAll('.coming-soon-tooltip');
+                tooltips.forEach(tooltip => {
+                    tooltip.classList.remove('show');
+                    setTimeout(() => {
+                        tooltip.remove();
+                    }, 300);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
