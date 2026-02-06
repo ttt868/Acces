@@ -964,8 +964,35 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('User has already viewed privacy policy from login page');
   }
 
-  // Initialize with saved language preference or use preloaded language from head script
-  const savedLanguage = window.__preloadedLang || localStorage.getItem('preferredLanguage') || 'en';
+  // 🌐 Auto-detect device language on first visit
+  const SUPPORTED_LANGUAGES = ['en', 'fr', 'es', 'it', 'tr', 'hi', 'zh', 'ja', 'ko', 'pt', 'ru', 'de', 'ar', 'id', 'pl'];
+  
+  function getInitialLanguage() {
+    // 1. Check if user already has a saved preference
+    const saved = window.__preloadedLang || localStorage.getItem('preferredLanguage');
+    if (saved && SUPPORTED_LANGUAGES.includes(saved)) {
+      return saved;
+    }
+    
+    // 2. First time visit - detect device language
+    const deviceLang = (navigator.language || navigator.userLanguage || 'en').substring(0, 2).toLowerCase();
+    console.log('🌐 First visit - Device language detected:', deviceLang);
+    
+    // 3. Check if device language is supported
+    if (SUPPORTED_LANGUAGES.includes(deviceLang)) {
+      console.log('🌐 Using device language:', deviceLang);
+      localStorage.setItem('preferredLanguage', deviceLang);
+      return deviceLang;
+    }
+    
+    // 4. Fallback to English
+    console.log('🌐 Device language not supported, using English');
+    localStorage.setItem('preferredLanguage', 'en');
+    return 'en';
+  }
+
+  // Initialize with auto-detected or saved language
+  const savedLanguage = getInitialLanguage();
   translator.setLanguage(savedLanguage);
 
   // Store the language in document for immediate access during page load

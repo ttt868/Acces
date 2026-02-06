@@ -9871,7 +9871,7 @@ window.openQRScanner = async function() {
     }
   } catch (error) {
     console.error('📷 Camera permission error:', error);
-    showNotification(translator.translate('Camera permission is required. Please enable it in app settings.'), 'error');
+    showNotification(translator.translate('Camera permission is required to scan QR codes. Please enable it in app settings.'), 'error');
   }
 };
 

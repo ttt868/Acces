@@ -358,6 +358,18 @@ window.translations = {
 'Invalid wallet address format in QR code': 'Invalid wallet address format in QR code',
 'Could not access camera': 'Could not access camera',
 'Error accessing camera. Please check camera permissions.': 'Error accessing camera. Please check camera permissions.',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'Camera permission is required to scan QR codes. Please enable it in app settings.',
+    'Error requesting camera permission': 'Error requesting camera permission',
+    'Camera permission denied. Please enable it in app settings.': 'Camera permission denied. Please enable it in app settings.',
+    'No camera found on this device': 'No camera found on this device',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'Camera permission is required to scan QR codes. Please enable it in app settings.',
+    'Error requesting camera permission': 'Error requesting camera permission',
+    'Camera permission denied. Please enable it in app settings.': 'Camera permission denied. Please enable it in app settings.',
+    'No camera found on this device': 'No camera found on this device',
+
       'Import functionality is temporarily disabled': 'Import functionality is temporarily disabled',
     // Additional Blockchain Features
     "QR Code": "QR Code",
@@ -670,6 +682,18 @@ processingTransaction: "Traitement de la transaction en cours...",
 'Invalid wallet address format in QR code': 'Format d\'adresse de portefeuille invalide dans le code QR',
 'Could not access camera': 'Impossible d\'accéder à la caméra',
 'Error accessing camera. Please check camera permissions.': 'Erreur d\'accès à la caméra. Veuillez vérifier les autorisations de la caméra.',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'L\'autorisation de la caméra est requise pour scanner les codes QR. Veuillez l\'activer dans les paramètres.',
+    'Error requesting camera permission': 'Erreur lors de la demande d\'autorisation de la caméra',
+    'Camera permission denied. Please enable it in app settings.': 'Autorisation de la caméra refusée. Veuillez l\'activer dans les paramètres.',
+    'No camera found on this device': 'Aucune caméra trouvée sur cet appareil',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'L\'autorisation de la caméra est requise pour scanner les codes QR. Veuillez l\'activer dans les paramètres.',
+    'Error requesting camera permission': 'Erreur lors de la demande d\'autorisation de la caméra',
+    'Camera permission denied. Please enable it in app settings.': 'Autorisation de la caméra refusée. Veuillez l\'activer dans les paramètres.',
+    'No camera found on this device': 'Aucune caméra trouvée sur cet appareil',
+
     "Import functionality is temporarily disabled": "La fonctionnalité d'importation est temporairement désactivée",
 "Wallet import functionality is temporarily disabled": "La fonctionnalité d'importation de portefeuille est temporairement désactivée",
 
@@ -1354,6 +1378,18 @@ processingTransaction: "Procesando transacción...",
 'Invalid wallet address format in QR code': 'Formato de dirección de billetera no válido en el código QR',
 'Could not access camera': 'No se pudo acceder a la cámara',
 'Error accessing camera. Please check camera permissions.': 'Error al acceder a la cámara. Verifique los permisos de la cámara.',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'Se requiere permiso de cámara para escanear códigos QR. Por favor, actívelo en la configuración.',
+    'Error requesting camera permission': 'Error al solicitar permiso de cámara',
+    'Camera permission denied. Please enable it in app settings.': 'Permiso de cámara denegado. Por favor, actívelo en la configuración.',
+    'No camera found on this device': 'No se encontró cámara en este dispositivo',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'Se requiere permiso de cámara para escanear códigos QR. Por favor, actívelo en la configuración.',
+    'Error requesting camera permission': 'Error al solicitar permiso de cámara',
+    'Camera permission denied. Please enable it in app settings.': 'Permiso de cámara denegado. Por favor, actívelo en la configuración.',
+    'No camera found on this device': 'No se encontró cámara en este dispositivo',
+
 
 
 
@@ -1979,6 +2015,18 @@ processingTransaction: "Elaborazione della transazione in corso...",
 'Invalid wallet address format in QR code': 'Formato dell\'indirizzo del portafoglio non valido nel codice QR',
 'Could not access camera': 'Impossibile accedere alla fotocamera',
 'Error accessing camera. Please check camera permissions.': 'Errore nell\'accesso alla fotocamera. Controlla le autorizzazioni della fotocamera.',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'È richiesta l\'autorizzazione della fotocamera per scansionare i codici QR. Abilitala nelle impostazioni.',
+    'Error requesting camera permission': 'Errore nella richiesta di autorizzazione della fotocamera',
+    'Camera permission denied. Please enable it in app settings.': 'Autorizzazione fotocamera negata. Abilitala nelle impostazioni.',
+    'No camera found on this device': 'Nessuna fotocamera trovata su questo dispositivo',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'È richiesta l\'autorizzazione della fotocamera per scansionare i codici QR. Abilitala nelle impostazioni.',
+    'Error requesting camera permission': 'Errore nella richiesta di autorizzazione della fotocamera',
+    'Camera permission denied. Please enable it in app settings.': 'Autorizzazione fotocamera negata. Abilitala nelle impostazioni.',
+    'No camera found on this device': 'Nessuna fotocamera trovata su questo dispositivo',
+
 
 
   "Max amount set": "Importo massimo impostato",
@@ -2643,6 +2691,18 @@ processingTransaction: "İşlem işleniyor...",
 'Invalid wallet address format in QR code': 'QR kodunda geçersiz cüzdan adresi formatı',
 'Could not access camera': 'Kameraya erişilemedi',
 'Error accessing camera. Please check camera permissions.': 'Kameraya erişimde hata oluştu. Lütfen kamera izinlerini kontrol edin.',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'QR kodlarını taramak için kamera izni gereklidir. Lütfen ayarlardan etkinleştirin.',
+    'Error requesting camera permission': 'Kamera izni istenirken hata oluştu',
+    'Camera permission denied. Please enable it in app settings.': 'Kamera izni reddedildi. Lütfen ayarlardan etkinleştirin.',
+    'No camera found on this device': 'Bu cihazda kamera bulunamadı',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'QR kodlarını taramak için kamera izni gereklidir. Lütfen ayarlardan etkinleştirin.',
+    'Error requesting camera permission': 'Kamera izni istenirken hata oluştu',
+    'Camera permission denied. Please enable it in app settings.': 'Kamera izni reddedildi. Lütfen ayarlardan etkinleştirin.',
+    'No camera found on this device': 'Bu cihazda kamera bulunamadı',
+
     "Import functionality is temporarily disabled": "İçe aktarma işlevi geçici olarak devre dışı bırakıldı",
     "Wallet import functionality is temporarily disabled": "Cüzdan içe aktarma işlevi geçici olarak devre dışı bırakıldı",
     'Access Community Network': 'Access Topluluk Ağı',
@@ -3352,6 +3412,18 @@ processingTransaction: "İşlem işleniyor...",
 'Invalid wallet address format in QR code': 'QR कोड में वॉलेट पते का प्रारूप अमान्य है',
 'Could not access camera': 'कैमरा एक्सेस नहीं कर सके',
 'Error accessing camera. Please check camera permissions.': 'कैमरा एक्सेस करने में त्रुटि। कृपया कैमरा अनुमतियों की जांच करें।',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'QR कोड स्कैन करने के लिए कैमरा अनुमति आवश्यक है। कृपया सेटिंग्स में सक्षम करें।',
+    'Error requesting camera permission': 'कैमरा अनुमति का अनुरोध करने में त्रुटि',
+    'Camera permission denied. Please enable it in app settings.': 'कैमरा अनुमति अस्वीकृत। कृपया सेटिंग्स में सक्षम करें।',
+    'No camera found on this device': 'इस डिवाइस पर कोई कैमरा नहीं मिला',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'QR कोड स्कैन करने के लिए कैमरा अनुमति आवश्यक है। कृपया सेटिंग्स में सक्षम करें।',
+    'Error requesting camera permission': 'कैमरा अनुमति का अनुरोध करने में त्रुटि',
+    'Camera permission denied. Please enable it in app settings.': 'कैमरा अनुमति अस्वीकृत। कृपया सेटिंग्स में सक्षम करें।',
+    'No camera found on this device': 'इस डिवाइस पर कोई कैमरा नहीं मिला',
+
 
     "Max amount set": "अधिकतम राशि सेट की गई",
     "Insufficient balance to cover gas fees": "गैस शुल्क को कवर करने के लिए शेष राशि अपर्याप्त है",
@@ -4025,6 +4097,18 @@ processingTransaction: "İşlem işleniyor...",
 'Invalid wallet address format in QR code': '二维码中的钱包地址格式无效',
 'Could not access camera': '无法访问相机',
 'Error accessing camera. Please check camera permissions.': '访问相机时出错。请检查相机权限。',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': '扫描二维码需要相机权限。请在设置中启用。',
+    'Error requesting camera permission': '请求相机权限时出错',
+    'Camera permission denied. Please enable it in app settings.': '相机权限被拒绝。请在设置中启用。',
+    'No camera found on this device': '此设备上未找到相机',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': '扫描二维码需要相机权限。请在设置中启用。',
+    'Error requesting camera permission': '请求相机权限时出错',
+    'Camera permission denied. Please enable it in app settings.': '相机权限被拒绝。请在设置中启用。',
+    'No camera found on this device': '此设备上未找到相机',
+
 
     "Max amount set": "已设置最大金额",
     "Insufficient balance to cover gas fees": "余额不足以支付燃气费",
@@ -4655,6 +4739,18 @@ processingTransaction: "İşlem işleniyor...",
 'Invalid wallet address format in QR code': 'QRコード内のウォレットアドレス形式が無効です',
 'Could not access camera': 'カメラにアクセスできませんでした',
 'Error accessing camera. Please check camera permissions.': 'カメラへのアクセス中にエラーが発生しました。カメラの権限を確認してください。',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'QRコードをスキャンするにはカメラの許可が必要です。設定で有効にしてください。',
+    'Error requesting camera permission': 'カメラ許可のリクエスト中にエラーが発生しました',
+    'Camera permission denied. Please enable it in app settings.': 'カメラの許可が拒否されました。設定で有効にしてください。',
+    'No camera found on this device': 'このデバイスにカメラが見つかりません',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'QRコードをスキャンするにはカメラの許可が必要です。設定で有効にしてください。',
+    'Error requesting camera permission': 'カメラ許可のリクエスト中にエラーが発生しました',
+    'Camera permission denied. Please enable it in app settings.': 'カメラの許可が拒否されました。設定で有効にしてください。',
+    'No camera found on this device': 'このデバイスにカメラが見つかりません',
+
 
     "Max amount set": "最大金額が設定されました",
     "Insufficient balance to cover gas fees": "ガス料金をカバーする残高が不足しています",
@@ -5324,6 +5420,18 @@ processingTransaction: "İşlem işleniyor...",
 'Invalid wallet address format in QR code': 'QR 코드의 지갑 주소 형식이 잘못되었습니다',
 'Could not access camera': '카메라에 접근할 수 없습니다',
 'Error accessing camera. Please check camera permissions.': '카메라 접근 중 오류가 발생했습니다. 카메라 권한을 확인하세요.',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'QR 코드를 스캔하려면 카메라 권한이 필요합니다. 설정에서 활성화해 주세요.',
+    'Error requesting camera permission': '카메라 권한 요청 중 오류가 발생했습니다',
+    'Camera permission denied. Please enable it in app settings.': '카메라 권한이 거부되었습니다. 설정에서 활성화해 주세요.',
+    'No camera found on this device': '이 기기에서 카메라를 찾을 수 없습니다',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'QR 코드를 스캔하려면 카메라 권한이 필요합니다. 설정에서 활성화해 주세요.',
+    'Error requesting camera permission': '카메라 권한 요청 중 오류가 발생했습니다',
+    'Camera permission denied. Please enable it in app settings.': '카메라 권한이 거부되었습니다. 설정에서 활성화해 주세요.',
+    'No camera found on this device': '이 기기에서 카메라를 찾을 수 없습니다',
+
     "Import functionality is temporarily disabled": "가져오기 기능이 일시적으로 비활성화되었습니다",
     "Wallet import functionality is temporarily disabled": "지갑 가져오기 기능이 일시적으로 비활성화되었습니다",
 
@@ -6004,6 +6112,18 @@ processingTransaction: "İşlem işleniyor...",
 'Invalid wallet address format in QR code': 'Formato de endereço de carteira inválido no código QR',
 'Could not access camera': 'Não foi possível acessar a câmera',
 'Error accessing camera. Please check camera permissions.': 'Erro ao acessar a câmera. Verifique as permissões da câmera.',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'A permissão da câmera é necessária para escanear códigos QR. Por favor, ative nas configurações.',
+    'Error requesting camera permission': 'Erro ao solicitar permissão da câmera',
+    'Camera permission denied. Please enable it in app settings.': 'Permissão da câmera negada. Por favor, ative nas configurações.',
+    'No camera found on this device': 'Nenhuma câmera encontrada neste dispositivo',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'A permissão da câmera é necessária para escanear códigos QR. Por favor, ative nas configurações.',
+    'Error requesting camera permission': 'Erro ao solicitar permissão da câmera',
+    'Camera permission denied. Please enable it in app settings.': 'Permissão da câmera negada. Por favor, ative nas configurações.',
+    'No camera found on this device': 'Nenhuma câmera encontrada neste dispositivo',
+
 
 
     "Max amount set": "Valor máximo definido",
@@ -6671,6 +6791,18 @@ insufficientBalance: "Недостаточно средств для этой т
 'Invalid wallet address format in QR code': 'Неверный формат адреса кошелька в QR-коде',
 'Could not access camera': 'Не удалось получить доступ к камере',
 'Error accessing camera. Please check camera permissions.': 'Ошибка доступа к камере. Пожалуйста, проверьте разрешения камеры.',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'Для сканирования QR-кодов требуется разрешение камеры. Включите его в настройках.',
+    'Error requesting camera permission': 'Ошибка при запросе разрешения камеры',
+    'Camera permission denied. Please enable it in app settings.': 'Разрешение камеры отклонено. Включите его в настройках.',
+    'No camera found on this device': 'Камера на этом устройстве не найдена',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'Для сканирования QR-кодов требуется разрешение камеры. Включите его в настройках.',
+    'Error requesting camera permission': 'Ошибка при запросе разрешения камеры',
+    'Camera permission denied. Please enable it in app settings.': 'Разрешение камеры отклонено. Включите его в настройках.',
+    'No camera found on this device': 'Камера на этом устройстве не найдена',
+
     "Import functionality is temporarily disabled": "Функция импорта временно отключена",
     "Wallet import functionality is temporarily disabled": "Функция импорта кошелька временно отключена",
 
@@ -7401,6 +7533,18 @@ insufficientBalance: "Недостаточно средств для этой т
 'Invalid wallet address format in QR code': 'Ungültiges Wallet-Adressformat im QR-Code',
 'Could not access camera': 'Zugriff auf die Kamera nicht möglich',
 'Error accessing camera. Please check camera permissions.': 'Fehler beim Zugriff auf die Kamera. Bitte überprüfen Sie die Kamera-Berechtigungen.',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'Kameraberechtigung ist erforderlich, um QR-Codes zu scannen. Bitte in den Einstellungen aktivieren.',
+    'Error requesting camera permission': 'Fehler beim Anfordern der Kameraberechtigung',
+    'Camera permission denied. Please enable it in app settings.': 'Kameraberechtigung verweigert. Bitte in den Einstellungen aktivieren.',
+    'No camera found on this device': 'Keine Kamera auf diesem Gerät gefunden',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'Kameraberechtigung ist erforderlich, um QR-Codes zu scannen. Bitte in den Einstellungen aktivieren.',
+    'Error requesting camera permission': 'Fehler beim Anfordern der Kameraberechtigung',
+    'Camera permission denied. Please enable it in app settings.': 'Kameraberechtigung verweigert. Bitte in den Einstellungen aktivieren.',
+    'No camera found on this device': 'Keine Kamera auf diesem Gerät gefunden',
+
 
 
 
@@ -8145,6 +8289,18 @@ insufficientBalance: "Недостаточно средств для этой т
 'Invalid wallet address format in QR code': 'تنسيق عنوان الحساب غير صالح في رمز QR',
 'Could not access camera': 'تعذر الوصول إلى الكاميرا',
 'Error accessing camera. Please check camera permissions.': 'خطأ في الوصول إلى الكاميرا. يرجى التحقق من أذونات الكاميرا.',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'إذن الكاميرا مطلوب لمسح رموز QR. يرجى تفعيله من الإعدادات.',
+    'Error requesting camera permission': 'خطأ في طلب إذن الكاميرا',
+    'Camera permission denied. Please enable it in app settings.': 'تم رفض إذن الكاميرا. يرجى تفعيله من الإعدادات.',
+    'No camera found on this device': 'لم يتم العثور على كاميرا في هذا الجهاز',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'إذن الكاميرا مطلوب لمسح رموز QR. يرجى تفعيله من الإعدادات.',
+    'Error requesting camera permission': 'خطأ في طلب إذن الكاميرا',
+    'Camera permission denied. Please enable it in app settings.': 'تم رفض إذن الكاميرا. يرجى تفعيله من الإعدادات.',
+    'No camera found on this device': 'لم يتم العثور على كاميرا في هذا الجهاز',
+
 'Wallet details exported. Keep this file secure!': "تم تصدير تفاصيل الحساب احتفظ بهذا الملف بأمان",
     "Wallet import functionality is temporarily disabled": "تم تعطيل وظيفة استيراد الحساب مؤقتًا",
     "Import functionality is temporarily disabled": "تم تعطيل وظيفة الاستيراد مؤقتًا",
@@ -8765,6 +8921,18 @@ insufficientBalance: "Недостаточно средств для этой т
 'Invalid wallet address format in QR code': 'Format alamat dompet tidak valid di dalam kode QR',
 'Could not access camera': 'Tidak dapat mengakses kamera',
 'Error accessing camera. Please check camera permissions.': 'Terjadi kesalahan saat mengakses kamera. Silakan periksa izin kamera.',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'Izin kamera diperlukan untuk memindai kode QR. Harap aktifkan di pengaturan.',
+    'Error requesting camera permission': 'Kesalahan saat meminta izin kamera',
+    'Camera permission denied. Please enable it in app settings.': 'Izin kamera ditolak. Harap aktifkan di pengaturan.',
+    'No camera found on this device': 'Tidak ada kamera yang ditemukan di perangkat ini',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'Izin kamera diperlukan untuk memindai kode QR. Harap aktifkan di pengaturan.',
+    'Error requesting camera permission': 'Kesalahan saat meminta izin kamera',
+    'Camera permission denied. Please enable it in app settings.': 'Izin kamera ditolak. Harap aktifkan di pengaturan.',
+    'No camera found on this device': 'Tidak ada kamera yang ditemukan di perangkat ini',
+
     "Import functionality is temporarily disabled": "Fitur impor dinonaktifkan sementara",
     "Wallet import functionality is temporarily disabled": "Fitur impor dompet dinonaktifkan sementara",
     
@@ -9459,6 +9627,18 @@ insufficientBalance: "Недостаточно средств для этой т
 'Invalid wallet address format in QR code': 'Nieprawidłowy format adresu portfela w kodzie QR',
 'Could not access camera': 'Nie można uzyskać dostępu do kamery',
 'Error accessing camera. Please check camera permissions.': 'Błąd podczas uzyskiwania dostępu do kamery. Sprawdź uprawnienia do kamery.',
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'Wymagane jest uprawnienie do kamery, aby skanować kody QR. Włącz je w ustawieniach.',
+    'Error requesting camera permission': 'Błąd podczas żądania uprawnienia do kamery',
+    'Camera permission denied. Please enable it in app settings.': 'Uprawnienie do kamery zostało odrzucone. Włącz je w ustawieniach.',
+    'No camera found on this device': 'Nie znaleziono kamery na tym urządzeniu',
+
+    // Camera permission translations
+    'Camera permission is required to scan QR codes. Please enable it in app settings.': 'Wymagane jest uprawnienie do kamery, aby skanować kody QR. Włącz je w ustawieniach.',
+    'Error requesting camera permission': 'Błąd podczas żądania uprawnienia do kamery',
+    'Camera permission denied. Please enable it in app settings.': 'Uprawnienie do kamery zostało odrzucone. Włącz je w ustawieniach.',
+    'No camera found on this device': 'Nie znaleziono kamery na tym urządzeniu',
+
     "Import functionality is temporarily disabled": "Funkcja importu jest tymczasowo wyłączona",
     "Wallet import functionality is temporarily disabled": "Funkcja importu portfela jest tymczasowo wyłączona",
 
