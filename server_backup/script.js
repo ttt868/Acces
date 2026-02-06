@@ -9653,8 +9653,8 @@ function initQRScanner() {
         }
       },
       {
-        highlightScanRegion: true,
-        highlightCodeOutline: true
+        highlightScanRegion: false,
+        highlightCodeOutline: false
       }
     );
 

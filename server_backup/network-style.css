@@ -374,13 +374,20 @@ body.arabic .qrcode-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  opacity: 0;
-  animation: modalFadeIn 0.2s ease forwards;
+  /* No animation - instant display */
 }
 
-@keyframes modalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* Disable ALL transitions and animations inside scanner */
+.qr-scanner-modal *,
+.qr-scanner-modal *::before,
+.qr-scanner-modal *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Only allow pulse animation on our highlight */
+.scan-region-highlight {
+  animation: pulse 2s infinite !important;
 }
 
 .scanner-content {
@@ -389,8 +396,7 @@ body.arabic .qrcode-container {
   width: 90%;
   max-width: 400px;
   overflow: hidden;
-  transform: scale(1);
-  opacity: 1;
+  /* No animation - instant display */
 }
 
 .scanner-header {
