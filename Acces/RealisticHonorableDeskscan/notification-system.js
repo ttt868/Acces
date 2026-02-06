@@ -855,6 +855,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   console.log('🔔 [DEBUG] Browser support:', debugInfo);
   
+  // 🦊 Check if browser doesn't support Push (e.g., Firefox Mobile)
+  if (!('PushManager' in window)) {
+    console.log('🔔 [UNSUPPORTED] This browser does not support Push Notifications');
+    // Show unsupported message after 3 seconds
+    setTimeout(() => {
+      showPushNotSupportedMessage();
+    }, 3000);
+    return;
+  }
+  
   const initialized = await window.accessNotifications.initialize();
   console.log('🔔 [INIT] Initialize result:', initialized);
   
@@ -1021,6 +1031,78 @@ function showNotificationBanner() {
   document.getElementById('close-banner-btn').addEventListener('click', () => {
     banner.remove();
     localStorage.setItem('notification_banner_closed', Date.now().toString());
+  });
+}
+
+// 🦊 Show message when browser doesn't support Push Notifications (e.g., Firefox Mobile)
+function showPushNotSupportedMessage() {
+  // Don't show if already shown
+  if (sessionStorage.getItem('pushNotSupportedShown')) {
+    return;
+  }
+  
+  const modal = document.createElement('div');
+  modal.id = 'push-not-supported-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+  `;
+  
+  modal.innerHTML = `
+    <div style="
+      background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 350px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    ">
+      <div style="font-size: 50px; margin-bottom: 15px;">🦊</div>
+      <h3 style="color: #ff9500; margin: 0 0 10px 0; font-size: 18px;">Notifications Not Supported</h3>
+      <p style="color: rgba(255, 255, 255, 0.7); margin: 0 0 20px 0; font-size: 14px; line-height: 1.5;">
+        Your browser (Firefox Mobile) doesn't support push notifications.<br><br>
+        For notifications, please use:<br>
+        <strong style="color: #00d4ff;">Chrome, Edge, Samsung Internet</strong><br>
+        or install our <strong style="color: #00d4ff;">Android App</strong>
+      </p>
+      <button id="close-unsupported-btn" style="
+        background: linear-gradient(135deg, #ff9500 0%, #ff6b00 100%);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 30px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+      ">
+        Got it
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  sessionStorage.setItem('pushNotSupportedShown', 'true');
+  
+  document.getElementById('close-unsupported-btn').addEventListener('click', () => {
+    modal.remove();
+  });
+  
+  // Close on click outside
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
   });
 }
 
