@@ -9829,70 +9829,79 @@ function initQRScanner() {
 
 // Open QR scanner
 window.openQRScanner = async function() {
-  // 📷 Use NATIVE barcode scanner plugin (requests permission automatically like professional apps)
-  if (window.cordova && cordova.plugins && cordova.plugins.barcodeScanner) {
-    console.log('📷 Opening native QR scanner...');
+  const scannerModal = document.getElementById('qr-scanner-modal');
+  if (!scannerModal) return;
+  
+  // 📷 On Cordova: Use android-permissions plugin to request camera permission first
+  if (window.cordova && cordova.plugins && cordova.plugins.permissions) {
+    console.log('📷 Cordova detected, using permissions plugin...');
+    const permissions = cordova.plugins.permissions;
     
-    cordova.plugins.barcodeScanner.scan(
-      function(result) {
-        if (result.cancelled) {
-          console.log('📷 QR scan cancelled by user');
-          return;
-        }
-        
-        const scannedAddress = result.text;
-        console.log('📷 QR scanned:', scannedAddress);
-        
-        // Validate the scanned data is a valid wallet address
-        if (isValidWalletAddress(scannedAddress)) {
-          const addressInput = document.getElementById('recipient-address');
-          if (addressInput) {
-            addressInput.value = scannedAddress;
-          }
-          showNotification(translator.translate('Address successfully scanned'), 'success');
+    // Request CAMERA permission explicitly
+    permissions.requestPermission(
+      permissions.CAMERA,
+      function(status) {
+        console.log('📷 Permission status:', status);
+        if (status.hasPermission) {
+          console.log('📷 Camera permission GRANTED');
+          startQRScanner(scannerModal);
         } else {
-          showNotification(translator.translate('Invalid wallet address in QR code'), 'error');
+          console.log('📷 Camera permission DENIED');
+          showNotification(translator.translate('Camera permission is required to scan QR codes. Please enable it in app settings.'), 'error');
         }
       },
       function(error) {
-        console.error('📷 QR scan error:', error);
-        if (error.includes('permission') || error.includes('Permission')) {
-          showNotification(translator.translate('Camera permission is required to scan QR codes. Please enable it in app settings.'), 'error');
-        } else {
-          showNotification(translator.translate('Error scanning QR code: ') + error, 'error');
-        }
-      },
-      {
-        preferFrontCamera: false,
-        showFlipCameraButton: true,
-        showTorchButton: true,
-        torchOn: false,
-        saveHistory: false,
-        prompt: translator.translate('Place QR code inside the scan area'),
-        resultDisplayDuration: 0,
-        formats: 'QR_CODE',
-        orientation: 'portrait',
-        disableAnimations: false,
-        disableSuccessBeep: false
+        console.error('📷 Permission request error:', error);
+        // Try fallback to getUserMedia
+        requestCameraAndStart(scannerModal);
       }
     );
   } else {
-    // Fallback to web-based scanner for web version
-    console.log('📷 Using web-based QR scanner...');
-    const scannerModal = document.getElementById('qr-scanner-modal');
-    if (!scannerModal) return;
-    
-    // Request camera permission first
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      stream.getTracks().forEach(track => track.stop());
-      startQRScanner(scannerModal);
-    } catch (error) {
-      console.error('📷 Camera access denied:', error);
-      showNotification(translator.translate('Camera permission is required to scan QR codes. Please enable it in app settings.'), 'error');
-    }
+    // Web or Cordova without permissions plugin: use getUserMedia directly
+    console.log('📷 Using web-based camera permission...');
+    await requestCameraAndStart(scannerModal);
   }
 };
+
+// Show overlay with close button when QR scanner is active
+function showQRScannerOverlay() {
+  // Remove existing overlay if any
+  const existingOverlay = document.getElementById('qr-scanner-overlay');
+  if (existingOverlay) existingOverlay.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'qr-scanner-overlay';
+  overlay.innerHTML = `
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+      <div style="width:250px;height:250px;border:3px solid #00ff9d;border-radius:20px;position:relative;">
+        <div style="position:absolute;top:-30px;left:50%;transform:translateX(-50%);color:#fff;background:rgba(0,0,0,0.7);padding:5px 15px;border-radius:10px;font-size:14px;">
+          ${translator.translate('Scan QR Code')}
+        </div>
+      </div>
+      <button id="close-qr-scanner" style="pointer-events:auto;margin-top:30px;background:#ff4444;color:#fff;border:none;padding:15px 40px;border-radius:25px;font-size:16px;cursor:pointer;">
+        ${translator.translate('Cancel')}
+      </button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  document.getElementById('close-qr-scanner').addEventListener('click', function() {
+    closeNativeQRScanner();
+  });
+}
+
+// Close native QR scanner
+function closeNativeQRScanner() {
+  document.body.style.backgroundColor = '';
+  document.body.classList.remove('qr-scanner-active');
+  
+  const overlay = document.getElementById('qr-scanner-overlay');
+  if (overlay) overlay.remove();
+  
+  if (window.QRScanner) {
+    QRScanner.destroy();
+  }
+}
 
 // Helper function to request camera via getUserMedia and start scanner
 async function requestCameraAndStart(scannerModal) {

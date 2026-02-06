@@ -102,11 +102,6 @@
     <!-- ✅ Android Permissions Plugin (for runtime permission requests) -->
     <plugin name="cordova-plugin-android-permissions" spec="^1.1.5" />
     
-    <!-- ✅ Native Barcode/QR Scanner (requests camera permission automatically) -->
-    <plugin name="phonegap-plugin-barcodescanner" spec="^8.1.0">
-        <variable name="CAMERA_USAGE_DESCRIPTION" value="Scan QR codes to send/receive ACCESS tokens" />
-    </plugin>
-    
     <!-- ✅ Clipboard Plugin -->
     <plugin name="cordova-clipboard" spec="^1.3.0" />
     
