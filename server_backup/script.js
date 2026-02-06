@@ -9721,30 +9721,19 @@ function handleScannerOutsideClick(e) {
 
  // Paste clipboard content into recipient address field
 window.pasteAddress = async function() {
-  const addressInput = document.getElementById('recipient-address');
-  if (!addressInput) return;
-  
-  // Try modern Clipboard API
-  if (navigator.clipboard && navigator.clipboard.readText) {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text) {
-        addressInput.value = text.trim();
-        if (isValidWalletAddress(text.trim())) {
-          showNotification(translator.translate('Valid wallet address pasted'), 'success');
-        }
-        return;
+  try {
+    const text = await navigator.clipboard.readText();
+    const addressInput = document.getElementById('recipient-address');
+    if (addressInput) {
+      addressInput.value = text;
+      // Optional validation
+      if (isValidWalletAddress(text)) {
+        showNotification(translator.translate('Valid wallet address pasted'), 'success');
       }
-    } catch (error) {
-      console.log('Clipboard API failed:', error.message);
-      // Fallback: Focus input and show notification to use Ctrl+V
-      addressInput.focus();
-      showNotification(translator.translate('Please press Ctrl+V to paste the address'), 'info');
     }
-  } else {
-    // Clipboard API not supported
-    addressInput.focus();
-    showNotification(translator.translate('Please press Ctrl+V to paste the address'), 'info');
+  } catch (error) {
+    console.error('Error pasting from clipboard:', error);
+    showNotification(translator.translate('Could not read from clipboard'), 'error');
   }
 };
 
