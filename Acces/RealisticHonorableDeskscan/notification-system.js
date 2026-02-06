@@ -880,50 +880,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log('🔔 [PERMISSION CHECK] Current permission:', currentPermission);
       
       if (currentPermission === 'default') {
-        // Never asked - show prompt modal (requires user click for modern browsers)
-        console.log('🔔 Permission not yet requested - showing prompt modal');
-        showNotificationPromptModal(); // ✅ ENABLED - user must click to grant permission
-      } else if (currentPermission === 'denied') {
-        // Blocked - show message to user
-        console.log('🔔 Notifications are blocked. User needs to enable in browser settings.');
-        showNotificationBlockedMessage();
+        // Request permission directly from browser (native dialog)
+        console.log('🔔 Requesting notification permission from browser...');
+        try {
+          const permission = await Notification.requestPermission();
+          console.log('🔔 Permission result:', permission);
+          if (permission === 'granted') {
+            await window.accessNotifications.forceNewSubscription();
+          }
+        } catch (e) {
+          console.error('🔔 Permission request error:', e);
+        }
       } else if (currentPermission === 'granted') {
         // Already granted - make sure we have a valid subscription
         console.log('🔔 Notifications granted - ensuring subscription...');
         await window.accessNotifications.forceNewSubscription();
       }
     }, 3000);
-  } else {
-    console.log('🔔 [INIT] ❌ Failed to initialize - showing manual prompt');
-    // Show prompt anyway after 5 seconds
-    setTimeout(() => {
-      console.log('🔔 [FALLBACK] Trying to show modal after init failure...');
-      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-        showNotificationPromptModal(); // ✅ ENABLED
-      }
-    }, 5000);
   }
-  
-  // ✅ EMERGENCY FALLBACK: إذا لم يظهر Modal بعد 10 ثواني، حاول مرة أخرى
-  setTimeout(() => {
-    console.log('🔔 [EMERGENCY] 10s fallback check...');
-    const modalExists = document.getElementById('notification-prompt-modal');
-    if (!modalExists && typeof Notification !== 'undefined' && Notification.permission === 'default') {
-      console.log('🔔 [EMERGENCY] Modal not shown yet - forcing display!');
-      showNotificationPromptModal();
-    }
-  }, 10000);
-  
-  // ✅ MOBILE FRIENDLY: إظهار Banner ظاهر في أعلى الصفحة بعد ثانيتين
-  setTimeout(() => {
-    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-      showNotificationBanner();
-    }
-  }, 2000);
 });
 
-// 🔔 Show notification BANNER (visible at top of page - mobile friendly)
+// 🔔 Show notification BANNER (visible at top of page - mobile friendly) - DISABLED
 function showNotificationBanner() {
+  // DISABLED - using native browser permission only
+  return;
   console.log('🔔 [BANNER] showNotificationBanner() called');
   
   // Don't show if already exists
