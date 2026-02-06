@@ -154,19 +154,29 @@
     (function() {
       // ===== LANGUAGE BOOTSTRAP =====
       try {
-        var savedLang = localStorage.getItem('preferredLanguage') || 'en';
+        var SUPPORTED_LANGS = ["en","fr","es","it","tr","hi","zh","ja","ko","pt","ru","de","ar","id","pl"];
+        var savedLang = localStorage.getItem("preferredLanguage");
+        
+        // If no saved language, detect from device
+        if (!savedLang) {
+          var deviceLang = (navigator.language || navigator.userLanguage || "en").substring(0,2).toLowerCase();
+          savedLang = SUPPORTED_LANGS.indexOf(deviceLang) !== -1 ? deviceLang : "en";
+          localStorage.setItem("preferredLanguage", savedLang);
+          console.log("🌐 First visit - Using device language:", savedLang);
+        }
+        
         document.documentElement.lang = savedLang;
-        if (savedLang === 'ar') {
-          document.documentElement.dir = 'rtl';
-          document.documentElement.classList.add('arabic');
+        if (savedLang === "ar") {
+          document.documentElement.dir = "rtl";
+          document.documentElement.classList.add("arabic");
         } else {
-          document.documentElement.dir = 'ltr';
+          document.documentElement.dir = "ltr";
         }
         window.__preloadedLang = savedLang;
       } catch (e) {
-        document.documentElement.lang = 'en';
-        document.documentElement.dir = 'ltr';
-        window.__preloadedLang = 'en';
+        document.documentElement.lang = "en";
+        document.documentElement.dir = "ltr";
+        window.__preloadedLang = "en";
       }
       
       // ===== AUTH BOOTSTRAP =====
