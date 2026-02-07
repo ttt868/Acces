@@ -11,7 +11,7 @@
   'use strict';
 
   // ===== CONFIGURATION =====
-  const AD_UNIT_ID = 'ca-app-pub-3940256099942544/5224354917'; // Google test rewarded ad
+  const AD_UNIT_ID = 'ca-app-pub-3940256099942544/5224354917';
 
   let activityAd = null;
   let adReady = false;
@@ -21,162 +21,134 @@
   let initAttempts = 0;
   const MAX_INIT_ATTEMPTS = 5;
 
-  console.log('🎬 Activity Ad System (AdMob) initializing...');
-  console.log('🎬 Ad Unit ID:', AD_UNIT_ID);
+  // ===== VISUAL DEBUG PANEL =====
+  function updateAdStatus(msg, color) {
+    color = color || '#888';
+    console.log('[AdStatus] ' + msg);
+    var el = document.getElementById('ad-debug-status');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'ad-debug-status';
+      el.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;padding:6px 10px;font-size:11px;font-family:monospace;color:#fff;text-align:center;pointer-events:none;';
+      document.body.appendChild(el);
+    }
+    el.style.background = color;
+    el.textContent = '📺 ' + msg;
+  }
 
-  /**
-   * Initialize AdMob and create first rewarded ad
-   */
+  updateAdStatus('Ad system loading...', '#555');
+
+  // ===== INITIALIZE =====
   async function initAdMob() {
     initAttempts++;
-    console.log('🎬 initAdMob attempt #' + initAttempts);
+    updateAdStatus('Init attempt #' + initAttempts + '...', '#666');
 
-    // Check if admob global is available (from admob-plus-cordova plugin)
     if (typeof admob === 'undefined') {
-      console.warn('⚠️ AdMob SDK not available (admob is undefined)');
-      console.warn('⚠️ This may mean the plugin is not installed or deviceready has not fired');
+      updateAdStatus('ERROR: admob object not found! Plugin not loaded.', '#c00');
       if (initAttempts < MAX_INIT_ATTEMPTS) {
-        console.log('🔄 Will retry in 5s...');
         setTimeout(initAdMob, 5000);
       }
       return;
     }
 
     try {
-      console.log('🎬 admob object found:', typeof admob);
-      console.log('🎬 admob.start:', typeof admob.start);
-      console.log('🎬 admob.RewardedAd:', typeof admob.RewardedAd);
+      updateAdStatus('admob found! Calling admob.start()...', '#996600');
 
-      // Start the AdMob SDK
       if (typeof admob.start === 'function') {
-        console.log('🎬 Calling admob.start()...');
         await admob.start();
-        console.log('✅ admob.start() completed');
+        updateAdStatus('admob.start() OK! Creating ad...', '#996600');
       }
 
       admobAvailable = true;
-      console.log('✅ AdMob SDK ready for Activity Ads');
       await createAndLoadAd();
     } catch (error) {
-      console.error('❌ AdMob init error:', error);
-      console.error('❌ Error details:', JSON.stringify(error));
+      updateAdStatus('ERROR in start: ' + (error.message || error), '#c00');
       if (initAttempts < MAX_INIT_ATTEMPTS) {
         setTimeout(initAdMob, 10000);
       }
     }
   }
 
-  /**
-   * Create a new RewardedAd instance and load it
-   */
+  // ===== CREATE AND LOAD AD =====
   async function createAndLoadAd() {
-    if (!admobAvailable) {
-      console.warn('⚠️ createAndLoadAd: admob not available');
-      return;
-    }
+    if (!admobAvailable) return;
 
     try {
-      console.log('📺 Creating RewardedAd with unit:', AD_UNIT_ID);
+      updateAdStatus('Creating RewardedAd...', '#996600');
 
       activityAd = new admob.RewardedAd({
         adUnitId: AD_UNIT_ID,
       });
 
-      console.log('📺 RewardedAd instance created, id:', activityAd.id);
-
-      // Ad loaded and ready to show
-      activityAd.on('load', function(evt) {
+      activityAd.on('load', function() {
         adReady = true;
-        console.log('✅ Activity rewarded ad LOADED and ready');
+        updateAdStatus('Ad LOADED - Ready to show!', '#080');
       });
 
-      // Ad failed to load
       activityAd.on('loadfail', function(evt) {
         adReady = false;
-        console.warn('⚠️ Activity ad LOAD FAILED:', JSON.stringify(evt));
+        var errMsg = '';
+        try { errMsg = JSON.stringify(evt); } catch(e) { errMsg = String(evt); }
+        updateAdStatus('Ad LOAD FAILED: ' + errMsg, '#c00');
         setTimeout(createAndLoadAd, 30000);
       });
 
-      // User earned reward (watched full ad)
-      activityAd.on('reward', function(evt) {
-        console.log('🎁 Activity ad reward earned');
+      activityAd.on('reward', function() {
+        updateAdStatus('Reward earned!', '#080');
       });
 
-      // Ad dismissed (closed by user or after completion)
       activityAd.on('dismiss', function() {
-        console.log('📱 Activity ad DISMISSED');
         activityAdShowing = false;
         adReady = false;
+        updateAdStatus('Ad dismissed. Reloading...', '#996600');
 
-        // Call callback regardless - activity ad doesn't require completion
         if (adClosedCallback && typeof adClosedCallback === 'function') {
-          console.log('📺 Executing callback after ad close');
-          try {
-            adClosedCallback();
-          } catch (e) {
-            console.error('❌ Callback error:', e);
-          }
+          try { adClosedCallback(); } catch(e) {}
           adClosedCallback = null;
         }
-
-        // Pre-load next ad
         setTimeout(createAndLoadAd, 2000);
       });
 
-      // Ad shown
       activityAd.on('show', function() {
-        console.log('📺 Activity ad NOW SHOWING on screen');
+        updateAdStatus('Ad SHOWING on screen!', '#080');
       });
 
-      // Ad failed to show
       activityAd.on('showfail', function(evt) {
-        console.error('❌ Activity ad SHOW FAILED:', JSON.stringify(evt));
         activityAdShowing = false;
         adReady = false;
+        var errMsg = '';
+        try { errMsg = JSON.stringify(evt); } catch(e) { errMsg = String(evt); }
+        updateAdStatus('Ad SHOW FAILED: ' + errMsg, '#c00');
 
         if (adClosedCallback && typeof adClosedCallback === 'function') {
           adClosedCallback();
           adClosedCallback = null;
         }
-
         setTimeout(createAndLoadAd, 5000);
       });
 
-      // Load the ad
-      console.log('📺 Calling activityAd.load()...');
+      updateAdStatus('Loading ad from Google...', '#996600');
       await activityAd.load();
-      console.log('📺 activityAd.load() call completed (waiting for load event)');
+      updateAdStatus('load() called - waiting for response...', '#996600');
 
     } catch (error) {
-      console.error('❌ Error creating/loading activity ad:', error);
-      console.error('❌ Error details:', JSON.stringify(error));
+      updateAdStatus('ERROR creating ad: ' + (error.message || error), '#c00');
       adReady = false;
       setTimeout(createAndLoadAd, 30000);
     }
   }
 
-  /**
-   * Show activity ad before proceeding with action
-   * @param {Function} callback - Called after ad is closed or if ad unavailable
-   */
+  // ===== SHOW AD =====
   window.showActivityAd = async function(callback) {
-    console.log('📺 showActivityAd called, adReady:', adReady, 'admobAvailable:', admobAvailable, 'showing:', activityAdShowing);
-
     if (activityAdShowing) {
-      console.log('⚠️ Activity Ad already showing');
-      if (callback && typeof callback === 'function') {
-        callback();
-      }
+      if (callback) callback();
       return false;
     }
 
-    if (callback && typeof callback === 'function') {
-      adClosedCallback = callback;
-    }
+    if (callback) adClosedCallback = callback;
 
-    // If ad not ready, skip and proceed immediately
     if (!adReady || !activityAd) {
-      console.warn('⚠️ Ad not ready - proceeding without ad');
+      updateAdStatus('Ad not ready - skipping', '#c80');
       if (adClosedCallback) {
         adClosedCallback();
         adClosedCallback = null;
@@ -187,22 +159,18 @@
 
     try {
       activityAdShowing = true;
-      console.log('📺 Calling activityAd.show()...');
+      updateAdStatus('Showing ad...', '#996600');
       await activityAd.show();
-      console.log('📺 activityAd.show() call completed');
     } catch (error) {
-      console.error('❌ Error showing activity ad:', error);
+      updateAdStatus('Show error: ' + (error.message || error), '#c00');
       activityAdShowing = false;
       adReady = false;
-
       if (adClosedCallback) {
         adClosedCallback();
         adClosedCallback = null;
       }
-
       createAndLoadAd();
     }
-
     return true;
   };
 
@@ -220,21 +188,20 @@
 
   // Initialize on Cordova deviceready
   document.addEventListener('deviceready', function() {
-    console.log('🎬 deviceready fired - will init AdMob in 500ms');
-    setTimeout(initAdMob, 500);
+    updateAdStatus('deviceready! Starting AdMob in 1s...', '#996600');
+    setTimeout(initAdMob, 1000);
   }, false);
 
-  // Fallback: retry if deviceready already fired or we're in a browser
+  // Fallback if deviceready already fired
   setTimeout(function() {
     if (!admobAvailable) {
       if (typeof admob !== 'undefined') {
-        console.log('🎬 Fallback init: admob found after timeout');
+        updateAdStatus('Fallback init (admob found)', '#996600');
         initAdMob();
       } else {
-        console.log('ℹ️ Activity AdMob not available (admob object not found after 5s)');
+        updateAdStatus('admob not available after 8s', '#c00');
       }
     }
-  }, 5000);
+  }, 8000);
 
-  console.log('✅ Activity Ad System (AdMob) script loaded');
 })();
