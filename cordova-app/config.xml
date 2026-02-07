@@ -132,7 +132,7 @@
     </universal-links>
     
     <!-- ✅ Custom URL Scheme for accessnetwork:// links -->
-    <!-- singleTop instead of singleTask: prevents destroying ad Activity when returning from background -->
+    <!-- singleTop: keeps AdMob ad Activity alive when app goes to background -->
     <preference name="AndroidLaunchMode" value="singleTop" />
     
     <!-- ✅ Android Intent Filter for Deep Links -->

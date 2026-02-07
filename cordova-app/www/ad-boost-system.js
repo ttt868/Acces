@@ -15,11 +15,13 @@
 
   let boostAd = null;
   let boostAdReady = false;
+  let boostAdLoading = false;   // prevents double load requests
   let rewardGranted = false;
   let currentUserId = null;
   let admobAvailable = false;
   let boostInitAttempts = 0;
-  const MAX_BOOST_INIT_ATTEMPTS = 5;
+  let boostLoadFailCount = 0;
+  const MAX_BOOST_INIT_ATTEMPTS = 10;
 
   console.log('🚀 Ad Boost System (AdMob) initializing...');
   console.log('🚀 Boost Ad Unit ID:', AD_UNIT_ID);
@@ -34,11 +36,17 @@
     if (typeof admob === 'undefined') {
       console.warn('⚠️ AdMob SDK not available for boost ads (admob is undefined)');
       if (boostInitAttempts < MAX_BOOST_INIT_ATTEMPTS) {
-        console.log('🔄 Will retry boost init in 5s...');
-        setTimeout(initializeRewardedAd, 5000);
+        console.log('🔄 Will retry boost init in 3s...');
+        setTimeout(initializeRewardedAd, 3000);
       }
       return;
     }
+
+    if (boostAdLoading || boostAdReady) {
+      console.log('ℹ️ Boost ad already loading or ready, skipping');
+      return;
+    }
+    boostAdLoading = true;
 
     try {
       if (!admobAvailable) {
@@ -65,14 +73,20 @@
       // Ad loaded and ready
       boostAd.on('load', function() {
         boostAdReady = true;
+        boostAdLoading = false;
+        boostLoadFailCount = 0;
         console.log('✅ Boost rewarded ad LOADED and ready to show');
       });
 
       // Ad failed to load
       boostAd.on('loadfail', function(evt) {
         boostAdReady = false;
-        console.warn('⚠️ Boost ad LOAD FAILED:', JSON.stringify(evt));
-        setTimeout(initializeRewardedAd, 30000);
+        boostAdLoading = false;
+        boostLoadFailCount++;
+        console.warn('⚠️ Boost ad LOAD FAILED (attempt #' + boostLoadFailCount + '):', JSON.stringify(evt));
+        // Faster retry: 5s, 10s, 15s, max 20s
+        var delay = Math.min(5000 * boostLoadFailCount, 20000);
+        setTimeout(initializeRewardedAd, delay);
       });
 
       // User earned reward (watched full ad) - SERVER AUTHORITATIVE
@@ -83,6 +97,7 @@
 
       // Ad dismissed (closed)
       boostAd.on('dismiss', function() {
+        boostAdLoading = false;
         console.log('📱 Boost ad DISMISSED, rewardGranted:', rewardGranted);
         handleAdClosed();
       });
@@ -97,7 +112,8 @@
         console.error('❌ Boost ad SHOW FAILED:', JSON.stringify(evt));
         showMessage('Failed to show ad. Please try again.', 'error');
         boostAdReady = false;
-        setTimeout(initializeRewardedAd, 5000);
+        boostAdLoading = false;
+        setTimeout(initializeRewardedAd, 3000);
       });
 
       // Load the ad
@@ -109,8 +125,11 @@
       console.error('❌ Boost ad init error:', error);
       console.error('❌ Error details:', JSON.stringify(error));
       boostAdReady = false;
+      boostAdLoading = false;
+      boostLoadFailCount++;
+      var delay = Math.min(5000 * boostLoadFailCount, 20000);
       if (boostInitAttempts < MAX_BOOST_INIT_ATTEMPTS) {
-        setTimeout(initializeRewardedAd, 30000);
+        setTimeout(initializeRewardedAd, delay);
       }
     }
   }
@@ -143,8 +162,8 @@
     if (!boostAdReady || !boostAd) {
       console.warn('⚠️ Boost ad not ready yet');
       showMessage('Ad is loading... Please wait a moment and try again.', 'warning');
-      // Try to reload
-      if (admobAvailable) {
+      // Try to reload only if not already loading
+      if (admobAvailable && !boostAdLoading) {
         initializeRewardedAd();
       }
       return;
