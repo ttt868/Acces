@@ -1,7 +1,7 @@
 // Service Worker for Push Notifications ONLY
 // No caching, no offline storage - notifications only
 
-const SW_VERSION = '11.0.0';
+const SW_VERSION = '11.1.0';
 
 // Transaction notification translations
 const NOTIFICATION_TRANSLATIONS = {
@@ -292,8 +292,8 @@ self.addEventListener('push', (event) => {
     return;
   }
 
-  // Get device language
-  const deviceLang = self.navigator?.language || 'en';
+  // Get language from push data (site preference) or fallback to device language
+  const deviceLang = data.language || self.navigator?.language?.slice(0, 2) || 'en';
   
   let title = 'Access Network';
   let body = '';
@@ -302,11 +302,13 @@ self.addEventListener('push', (event) => {
   if (data.type === 'transaction_received' && data.amount) {
     // Transaction notification
     const t = getTranslation(deviceLang);
-    const fromShort = data.from ? 
-      `${data.from.substring(0, 6)}...${data.from.substring(data.from.length - 4)}` : 
-      '???';
+    const fromAddr = data.from || data.senderAddress || '';
+    const fromShort = fromAddr && fromAddr.length > 10 ? 
+      `${fromAddr.substring(0, 6)}...${fromAddr.substring(fromAddr.length - 4)}` : 
+      (fromAddr || '???');
     body = `${t.newTx}\n${t.amount}: ${formatAmountSmart(data.amount)} ACCESS\n${t.from}: ${fromShort}`;
   } else if (data.type === 're-engagement' && data.daysInactive) {
+    console.log('RE-ENGAGEMENT DEBUG: type=', data.type, 'daysInactive=', data.daysInactive, 'lang=', deviceLang);
     // Re-engagement notification - translate based on device language
     const msg = getReEngagementMessage(deviceLang, data.daysInactive);
     title = msg.title;

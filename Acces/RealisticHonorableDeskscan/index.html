@@ -35,11 +35,6 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="monetag" content="fbd3213b115b518a8dd608e024d622f5">
-  <meta name="google-adsense-account" content="ca-pub-3543981710825954">
-  
-  <!-- Google AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3543981710825954" crossorigin="anonymous"></script>
-  
   
   <!-- PWA Meta Tags -->
   <meta name="application-name" content="Access Digital">
@@ -127,7 +122,16 @@
     (function() {
       // ===== LANGUAGE BOOTSTRAP =====
       try {
-        var savedLang = localStorage.getItem('preferredLanguage') || 'en';
+        var savedLang = localStorage.getItem('preferredLanguage');
+        
+        // Auto-detect device language on first visit
+        if (!savedLang) {
+          var supportedLangs = ['en','fr','es','it','tr','hi','zh','ja','ko','pt','ru','de','ar','id','pl'];
+          var browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase().split('-')[0];
+          savedLang = supportedLangs.indexOf(browserLang) !== -1 ? browserLang : 'en';
+          localStorage.setItem('preferredLanguage', savedLang);
+        }
+        
         document.documentElement.lang = savedLang;
         if (savedLang === 'ar') {
           document.documentElement.dir = 'rtl';
@@ -3244,18 +3248,9 @@ Access-Network is a digital rewards platform combining innovation, community fea
   function initNotifBanner() {
     console.log('🔔 [INLINE] initNotifBanner called');
     
-    // 🔴 DEBUG: أظهر حالة الإشعارات دائماً
-    var debugDiv = document.createElement('div');
-    debugDiv.id = 'notif-debug';
-    debugDiv.style.cssText = 'position:fixed;bottom:10px;left:10px;background:#333;color:#fff;padding:10px;border-radius:8px;z-index:999999;font-size:12px;max-width:90%;';
-    
     var notifSupported = 'Notification' in window;
     var swSupported = 'serviceWorker' in navigator;
     var permission = notifSupported ? Notification.permission : 'N/A';
-    
-    debugDiv.innerHTML = '🔔 Debug:<br>Notif: ' + (notifSupported ? '✅' : '❌') + '<br>SW: ' + (swSupported ? '✅' : '❌') + '<br>Permission: <b>' + permission + '</b><br><button onclick="this.parentElement.remove()" style="margin-top:5px;">Close</button>';
-    
-    document.body.appendChild(debugDiv);
     
     // تحقق من دعم الإشعارات
     if (!notifSupported) {
@@ -3278,11 +3273,9 @@ Access-Network is a digital rewards platform combining innovation, community fea
   async function registerPushSubscriptionNow() {
     try {
       console.log('🔔 [REGISTER] Starting...');
-      showDebugMessage('🔄 Starting...');
       
       // 🔴 الخطوة 1: انتظر SW الموجود
       var registration = await navigator.serviceWorker.ready;
-      showDebugMessage('✓ SW Ready');
       
       // 🔴 الخطوة 2: تحقق من وجود subscription
       var subscription = await registration.pushManager.getSubscription();
@@ -3290,17 +3283,15 @@ Access-Network is a digital rewards platform combining innovation, community fea
       if (subscription) {
         // 🎉 استخدم الاشتراك الموجود!
         console.log('🔔 [REGISTER] Found existing subscription!');
-        showDebugMessage('✓ Got existing subscription!');
       } else {
         // 🔴 لا يوجد subscription - حاول إنشاء واحد جديد
-        showDebugMessage('🔄 No sub, creating...');
+
         
         // احصل على VAPID key
         var keyResponse = await fetch('/api/push/public-key');
         var keyData = await keyResponse.json();
         
         if (!keyData.success || !keyData.publicKey) {
-          showDebugMessage('❌ No VAPID key');
           return;
         }
         
@@ -3311,16 +3302,10 @@ Access-Network is a digital rewards platform combining innovation, community fea
             userVisibleOnly: true,
             applicationServerKey: vapidKey
           });
-          showDebugMessage('✓ New sub created!');
+
         } catch (subError) {
           console.error('🔔 Subscribe error:', subError);
-          showDebugMessage('❌ ' + subError.name);
-          
-          // 🔴 إذا فشل - أخبر المستخدم بتجربة متصفح آخر
-          if (subError.message.includes('push service')) {
-            showDebugMessage('⚠️ Try: Chrome Settings > Site > Clear data');
-            showDebugMessage('Or try Samsung Internet browser');
-          }
+
           return;
         }
       }
@@ -3329,12 +3314,11 @@ Access-Network is a digital rewards platform combining innovation, community fea
       var userId = getUserId();
       if (!userId) {
         localStorage.setItem('pendingPushSubscription', JSON.stringify(subscription.toJSON()));
-        showDebugMessage('⏳ No user - saved locally');
         return;
       }
       
       // 🔴 الخطوة 4: أرسل للسيرفر
-      showDebugMessage('🔄 Saving to server...');
+
       
       var saveResponse = await fetch('/api/push/subscribe', {
         method: 'POST',
@@ -3348,16 +3332,16 @@ Access-Network is a digital rewards platform combining innovation, community fea
       var saveData = await saveResponse.json();
       
       if (saveData.success) {
-        showDebugMessage('✅ DONE! User: ' + userId);
+
         localStorage.setItem('push_subscription_saved', Date.now().toString());
         localStorage.removeItem('pendingPushSubscription');
       } else {
-        showDebugMessage('❌ Save: ' + (saveData.error || 'Failed'));
+
       }
       
     } catch (error) {
       console.error('🔔 [REGISTER] Error:', error);
-      showDebugMessage('❌ ' + error.message);
+
     }
   }
   
@@ -3383,12 +3367,7 @@ Access-Network is a digital rewards platform combining innovation, community fea
     return outputArray;
   }
   
-  function showDebugMessage(msg) {
-    var debugDiv = document.getElementById('notif-debug');
-    if (debugDiv) {
-      debugDiv.innerHTML += '<br><b style="color:#0f0;">' + msg + '</b>';
-    }
-  }
+
   
   function showBanner(currentPerm) {
     console.log('🔔 [INLINE] showBanner called, permission:', currentPerm);

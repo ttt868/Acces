@@ -21,7 +21,7 @@ import { startReEngagementScheduler } from './re-engagement-notifications.js';
 // ============================================================================
 // 📦 إصدار الملفات - غير هذا الرقم فقط لتحديث كل الملفات
 // ============================================================================
-const ASSETS_VERSION = '16.3';
+const ASSETS_VERSION = '19.0';
 
 // ============================================================================
 // 🛡️ NEVER DIE PROTECTION - السيرفر لا يسقط أبداً!
@@ -996,10 +996,10 @@ async function sendWebPushNotificationToRecipient(transactionData) {
     const userId = userResult.rows[0].id;
     console.log('📨 [WEB PUSH] Found userId:', userId);
 
-    // Get all active push subscriptions for this user
+    // Get all active push subscriptions for this user WITH language
     // ⚠️ user_id in DB is VARCHAR, must convert to string
     const subsResult = await pool.query(
-      'SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = $1 AND revoked_at IS NULL',
+      'SELECT endpoint, p256dh, auth, language FROM push_subscriptions WHERE user_id = $1 AND revoked_at IS NULL',
       [String(userId)]
     );
 
@@ -1012,20 +1012,7 @@ async function sendWebPushNotificationToRecipient(transactionData) {
 
     console.log('📨 [WEB PUSH] Found', subsResult.rows.length, 'subscriptions for userId:', userId);
 
-    // Prepare notification payload - FLAT structure for Service Worker
-    const payload = JSON.stringify({
-      type: 'transaction_received',
-      title: 'Received ACCESS',
-      body: `From: ${fromShort}\nAmount: ${amount} ACCESS`,
-      tag: `access-tx-${transactionData.hash || Date.now()}`,
-      hash: transactionData.hash,
-      amount: amount,
-      from: fromAddress,
-      to: recipientWallet,
-      timestamp: Date.now()
-    });
-
-    // Send to all subscriptions
+    // Send to all subscriptions - each with its own language
     let successCount = 0;
     let failCount = 0;
 
@@ -1039,7 +1026,22 @@ async function sendWebPushNotificationToRecipient(transactionData) {
           }
         };
 
-        console.log('📨 [WEB PUSH] Sending to endpoint:', sub.endpoint.substring(0, 60) + '...');
+        // Prepare notification payload WITH language from subscription
+        const payload = JSON.stringify({
+          type: 'transaction_received',
+          title: 'Received ACCESS',
+          body: `From: ${fromShort}\nAmount: ${amount} ACCESS`,
+          tag: `access-tx-${transactionData.hash || Date.now()}`,
+          hash: transactionData.hash,
+          amount: amount,
+          from: fromAddress,
+          senderAddress: fromAddress,
+          to: recipientWallet,
+          language: sub.language || 'en',
+          timestamp: Date.now()
+        });
+
+        console.log('📨 [WEB PUSH] Sending to endpoint:', sub.endpoint.substring(0, 60) + '... (lang:', sub.language || 'en', ')');
         await webpush.sendNotification(subscription, payload);
         successCount++;
         console.log('📨 [WEB PUSH] ✅ Sent successfully!');
@@ -1127,7 +1129,7 @@ async function sendFCMNotificationToRecipient(transactionData) {
       const result = await fcmService.sendFCMDataNotification(userId, {
         type: 'transaction_received',
         amount: amount,
-        from: fromAddress,
+        senderAddress: fromAddress,
         to: recipientWallet,
         hash: transactionData.hash || '',
         timestamp: String(Date.now())
@@ -1142,7 +1144,7 @@ async function sendFCMNotificationToRecipient(transactionData) {
       const result = await fcmService.sendFCMNotification(userId, title, body, {
         type: 'transaction_received',
         amount: amount,
-        from: fromAddress
+        senderAddress: fromAddress
       });
       console.log('📱 [FCM] Result for user', userId, ':', JSON.stringify(result));
     } else {
@@ -3015,8 +3017,8 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/push/subscribe' && req.method === 'POST') {
       try {
         console.log('🔔 [PUSH] Received subscription request');
-        const { userId, subscription } = await parseRequestBody(req);
-        console.log('🔔 [PUSH] userId:', userId, 'endpoint:', subscription?.endpoint?.substring(0, 50));
+        const { userId, subscription, language } = await parseRequestBody(req);
+        console.log('🔔 [PUSH] userId:', userId, 'endpoint:', subscription?.endpoint?.substring(0, 50), 'language:', language);
         
         if (!userId || !subscription || !subscription.endpoint) {
           console.log('🔔 [PUSH] ERROR: Missing userId or subscription');
@@ -3028,18 +3030,20 @@ const server = http.createServer(async (req, res) => {
         const userAgent = req.headers['user-agent'] || '';
         const p256dh = subscription.keys?.p256dh || '';
         const auth = subscription.keys?.auth || '';
+        const userLanguage = language || 'en';
 
-        // Save subscription to database (upsert on endpoint)
+        // Save subscription to database (upsert on endpoint) with language
         await pool.query(`
-          INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent)
-          VALUES ($1, $2, $3, $4, $5)
+          INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent, language)
+          VALUES ($1, $2, $3, $4, $5, $6)
           ON CONFLICT (endpoint) DO UPDATE SET
             user_id = EXCLUDED.user_id,
             p256dh = EXCLUDED.p256dh,
             auth = EXCLUDED.auth,
             user_agent = EXCLUDED.user_agent,
+            language = EXCLUDED.language,
             revoked_at = NULL
-        `, [userId, subscription.endpoint, p256dh, auth, userAgent]);
+        `, [userId, subscription.endpoint, p256dh, auth, userAgent, userLanguage]);
 
         console.log('🔔 [PUSH] ✅ Subscription saved for userId:', userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -3047,6 +3051,42 @@ const server = http.createServer(async (req, res) => {
         return;
       } catch (error) {
         console.error('Error saving push subscription:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: error.message }));
+        return;
+      }
+    }
+
+    // POST /api/push/update-language - Update push subscription language
+    if (pathname === '/api/push/update-language' && req.method === 'POST') {
+      try {
+        const { userId, endpoint, language } = await parseRequestBody(req);
+        
+        if (!userId || !language) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'userId and language required' }));
+          return;
+        }
+
+        // Update language for user's subscriptions
+        if (endpoint) {
+          await pool.query(
+            'UPDATE push_subscriptions SET language = $1 WHERE endpoint = $2',
+            [language, endpoint]
+          );
+        } else {
+          await pool.query(
+            'UPDATE push_subscriptions SET language = $1 WHERE user_id = $2',
+            [language, userId]
+          );
+        }
+
+        console.log(`🌐 Push language updated to ${language} for user ${userId}`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+        return;
+      } catch (error) {
+        console.error('Error updating push language:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: error.message }));
         return;
@@ -5957,7 +5997,7 @@ const server = http.createServer(async (req, res) => {
         // إنشاء بيانات المعاملة للإشعار
         const transactionData = {
           hash: transactionHash,
-          from: fromAddress.toLowerCase(),
+          senderAddress: fromAddress.toLowerCase(),
           to: walletAddress.toLowerCase(),
           amount: parseFloat(amount),
           timestamp: Date.now(),
@@ -9322,9 +9362,9 @@ const server = http.createServer(async (req, res) => {
     if ((pathname === '/api/users/update-profile' || pathname === '/api/user/update-profile' || pathname === '/api/update-profile') && (req.method === 'PUT' || req.method === 'POST')) {
       try {
         const data = await parseRequestBody(req);
-        const { userId, name, avatar } = data;
+        const { userId, name, avatar, language } = data;
 
-        console.log(`Profile update request received for user ID: ${userId}`);
+        console.log(`Profile update request received for user ID: ${userId}, language: ${language}`);
 
         if (!userId) {
           console.log('Profile update failed: No user ID provided');
@@ -9333,8 +9373,8 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // Handle updates with null fields - allowing name-only or avatar-only updates
-        console.log(`Fields to update: name=${name !== undefined}, avatar=${avatar !== undefined}`);
+        // Handle updates with null fields - allowing name-only, avatar-only, or language-only updates
+        console.log(`Fields to update: name=${name !== undefined}, avatar=${avatar !== undefined}, language=${language !== undefined}`);
 
         // 🚀 OPTIMIZED: استخدام safeQuery بدلاً من transaction (أسرع وأخف)
         try {
@@ -9342,10 +9382,11 @@ const server = http.createServer(async (req, res) => {
           const updateUserResult = await safeQuery(
             `UPDATE users 
              SET name = CASE WHEN $1::text IS NOT NULL THEN $1 ELSE name END,
-                 avatar = CASE WHEN $2::text IS NOT NULL THEN $2 ELSE avatar END 
+                 avatar = CASE WHEN $2::text IS NOT NULL THEN $2 ELSE avatar END,
+                 language = CASE WHEN $4::text IS NOT NULL THEN $4 ELSE language END
              WHERE id = $3 
-             RETURNING id, name, avatar, email, coins, referral_code`,
-            [name, avatar, userId],
+             RETURNING id, name, avatar, email, coins, referral_code, language`,
+            [name, avatar, userId, language],
             10000
           );
 
@@ -9357,9 +9398,19 @@ const server = http.createServer(async (req, res) => {
           }
 
           const updatedUser = updateUserResult.rows[0];
-          console.log(`User table updated successfully for user: ${updatedUser.email}`);
+          console.log(`User table updated successfully for user: ${updatedUser.email}, language: ${updatedUser.language}`);
 
-          // 2. Update the processing_history table if name is provided (non-blocking, no need to wait)
+          // 2. Also update push_subscriptions language if language is provided
+          if (language !== undefined) {
+            safeQuery(
+              'UPDATE push_subscriptions SET language = $1 WHERE user_id = $2',
+              [language, String(userId)],
+              3000
+            ).catch(() => {}); // تجاهل الأخطاء - ليس ضرورياً
+            console.log(`🌐 Push subscription language updated to ${language} for user ${userId}`);
+          }
+
+          // 3. Update the processing_history table if name is provided (non-blocking)
           if (name !== undefined) {
             console.log(`Updating user name in processing_history for user ID: ${userId}`);
             // Only update entries that don't contain "Collecting..." or other special system entries
