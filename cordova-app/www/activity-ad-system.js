@@ -10,23 +10,23 @@
 (function() {
   'use strict';
 
-  // ===== CONFIGURATION =====
-  // Change to production ID when AdMob account is approved
   const AD_UNIT_ID = 'ca-app-pub-3940256099942544/5224354917';
 
   let activityAd = null;
   let adReady = false;
+  let adLoading = false;      // prevents double load requests
   let activityAdShowing = false;
   let adClosedCallback = null;
   let admobAvailable = false;
   let initAttempts = 0;
-  const MAX_INIT_ATTEMPTS = 5;
+  let loadFailCount = 0;
+  const MAX_INIT_ATTEMPTS = 10;
 
   async function initAdMob() {
     initAttempts++;
     if (typeof admob === 'undefined') {
       if (initAttempts < MAX_INIT_ATTEMPTS) {
-        setTimeout(initAdMob, 5000);
+        setTimeout(initAdMob, 3000);
       }
       return;
     }
@@ -37,32 +37,37 @@
       }
       admobAvailable = true;
       console.log('✅ AdMob SDK ready');
-      await createAndLoadAd();
+      createAndLoadAd();
     } catch (error) {
       console.error('❌ AdMob init error:', error);
       if (initAttempts < MAX_INIT_ATTEMPTS) {
-        setTimeout(initAdMob, 10000);
+        setTimeout(initAdMob, 5000);
       }
     }
   }
 
   async function createAndLoadAd() {
-    if (!admobAvailable) return;
+    if (!admobAvailable || adLoading || adReady) return;
+    adLoading = true;
 
     try {
-      activityAd = new admob.RewardedAd({
-        adUnitId: AD_UNIT_ID,
-      });
+      activityAd = new admob.RewardedAd({ adUnitId: AD_UNIT_ID });
 
       activityAd.on('load', function() {
         adReady = true;
+        adLoading = false;
+        loadFailCount = 0;
         console.log('✅ Activity ad loaded');
       });
 
       activityAd.on('loadfail', function(evt) {
         adReady = false;
-        console.warn('⚠️ Activity ad load failed');
-        setTimeout(createAndLoadAd, 30000);
+        adLoading = false;
+        loadFailCount++;
+        console.warn('⚠️ Activity ad load failed, attempt #' + loadFailCount);
+        // Faster retry: 5s, 10s, 15s, max 20s
+        var delay = Math.min(5000 * loadFailCount, 20000);
+        setTimeout(createAndLoadAd, delay);
       });
 
       activityAd.on('reward', function() {
@@ -72,12 +77,14 @@
       activityAd.on('dismiss', function() {
         activityAdShowing = false;
         adReady = false;
+        adLoading = false;
 
         if (adClosedCallback && typeof adClosedCallback === 'function') {
           try { adClosedCallback(); } catch(e) {}
           adClosedCallback = null;
         }
-        setTimeout(createAndLoadAd, 2000);
+        // Pre-load next ad quickly
+        setTimeout(createAndLoadAd, 1000);
       });
 
       activityAd.on('show', function() {
@@ -87,11 +94,12 @@
       activityAd.on('showfail', function(evt) {
         activityAdShowing = false;
         adReady = false;
+        adLoading = false;
         if (adClosedCallback && typeof adClosedCallback === 'function') {
           adClosedCallback();
           adClosedCallback = null;
         }
-        setTimeout(createAndLoadAd, 5000);
+        setTimeout(createAndLoadAd, 3000);
       });
 
       await activityAd.load();
@@ -99,7 +107,10 @@
     } catch (error) {
       console.error('❌ Activity ad error:', error);
       adReady = false;
-      setTimeout(createAndLoadAd, 30000);
+      adLoading = false;
+      loadFailCount++;
+      var delay = Math.min(5000 * loadFailCount, 20000);
+      setTimeout(createAndLoadAd, delay);
     }
   }
 
@@ -116,7 +127,7 @@
         adClosedCallback();
         adClosedCallback = null;
       }
-      if (admobAvailable) createAndLoadAd();
+      if (admobAvailable && !adLoading) createAndLoadAd();
       return true;
     }
 
@@ -148,13 +159,13 @@
   };
 
   document.addEventListener('deviceready', function() {
-    setTimeout(initAdMob, 1000);
+    setTimeout(initAdMob, 800);
   }, false);
 
   setTimeout(function() {
     if (!admobAvailable && typeof admob !== 'undefined') {
       initAdMob();
     }
-  }, 8000);
+  }, 6000);
 
 })();
