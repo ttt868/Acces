@@ -42,10 +42,8 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="monetag" content="fbd3213b115b518a8dd608e024d622f5">
-  <meta name="google-adsense-account" content="ca-pub-3543981710825954">
   
-  <!-- Google AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3543981710825954" crossorigin="anonymous"></script>
+  <!-- AdMob is handled natively by admob-plus-cordova plugin -->
   
   
   <!-- PWA Meta Tags -->
@@ -948,12 +946,7 @@ document.addEventListener('balanceUpdated', function(event) {
     
   </script>
 
-  <!-- Google Publisher Tag for Rewarded Ads -->
-  <script
-    async
-    src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"
-    crossorigin="anonymous"
-  ></script>
+  <!-- AdMob rewarded ads are native - no GPT script needed -->
   
   <!-- HTML5 QR Code Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -2954,42 +2947,11 @@ Access-Network is a digital rewards platform combining innovation, community fea
       </div>
     </div>
 
-    <!-- Activity Start Ad Modal (مستقل تماماً عن نظام Boost) -->
-    <div id="activity-ad-modal" class="modal" style="display: none; position: fixed; z-index: 100000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9);">
-      <div class="modal-content" style="background-color: var(--card-background); margin: 5% auto; padding: 0; border: none; width: 95%; max-width: 800px; height: 85vh; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); position: relative; overflow: hidden;">
-        
-        <!-- Close Button (للإغلاق والتخطي) -->
-        <button id="close-activity-ad" class="close-ad-btn" style="position: absolute; top: 10px; right: 10px; z-index: 100001; background: rgba(0,0,0,0.7); border: none; color: white; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
-          <i class="fas fa-times"></i>
-        </button>
+    <!-- Activity Start Ad - AdMob shows natively, this modal is no longer needed -->
+    <!-- Kept as placeholder in case of fallback/loading indicator -->
+    <div id="activity-ad-modal" class="modal" style="display: none;"></div>
 
-        <!-- Skip Ad Button (يظهر بعد 5 ثواني) -->
-        <button id="skip-activity-ad" class="skip-ad-btn" style="display: none; position: absolute; top: 60px; right: 10px; z-index: 100001; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s;">
-          <i class="fas fa-forward"></i>
-          <span data-translate="Skip Ad">تخطي الإعلان</span>
-        </button>
-
-        <!-- Ad Container -->
-        <div id="activity-ad-container" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #000;">
-          <!-- Google Ad will be loaded here -->
-          <div id="gpt-ad-container"></div>
-          
-          <!-- Loading Message -->
-          <div id="ad-loading-message" style="color: white; text-align: center;">
-            <div class="spinner" style="border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
-            <p data-translate="Loading Ad...">جاري تحميل الإعلان...</p>
-          </div>
-        </div>
-
-        <!-- Ad Info Footer -->
-        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); padding: 12px; text-align: center; color: white; font-size: 13px;">
-          <p style="margin: 0;" data-translate="You can close this ad anytime">يمكنك إغلاق هذا الإعلان في أي وقت</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Add GPT Script for Activity Ads -->
-    <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js" crossorigin="anonymous"></script>
+    <!-- Add GPT Script for Activity Ads - REMOVED: Using AdMob native plugin -->
 
     <!-- Ad Boost System Script -->
     <script src="ad-boost-system.js"></script>

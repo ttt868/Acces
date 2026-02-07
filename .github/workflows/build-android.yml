@@ -73,7 +73,10 @@ jobs:
           --variable PLAY_SERVICES_VERSION="20.7.0"
         echo '🔥 Installing Firebase Cloud Messaging plugin (latest with Android 12 fix)...'
         cordova plugin add cordova-plugin-firebase-messaging@7.0.2 --save
-        echo '🔔 Removing local-notification plugin to avoid SDK compatibility issues...'
+        echo '� Installing AdMob plugin for rewarded ads...'
+        cordova plugin add admob-plus-cordova --save \
+          --variable APP_ID_ANDROID="ca-app-pub-3940256099942544~3347511713"
+        echo '�🔔 Removing local-notification plugin to avoid SDK compatibility issues...'
         cordova plugin remove cordova-plugin-local-notification 2>/dev/null || true
     
     - name: Setup Release Keystore for Signing

@@ -1,114 +1,155 @@
 /**
- * Ad Boost System - Client Side
+ * Ad Boost System - Client Side (AdMob)
  * Handles rewarded ad display and boost activation
+ * SERVER-AUTHORITATIVE: Must complete full ad for boost
+ * 
+ * Test Ad Unit: ca-app-pub-3940256099942544/5224354917
+ * Production:   ca-app-pub-3543981710825954/4821776631
  */
 
 (function() {
   'use strict';
 
-  // Google Publisher Tag setup
-  window.googletag = window.googletag || { cmd: [] };
+  // ===== CONFIGURATION =====
+  const AD_UNIT_ID = 'ca-app-pub-3940256099942544/5224354917'; // Google test ID
 
-  let rewardedSlot = null;
+  let boostAd = null;
+  let boostAdReady = false;
   let rewardGranted = false;
   let currentUserId = null;
+  let admobInitialized = false;
 
   /**
-   * Initialize rewarded ad slot
-   * Can be called multiple times to reinitialize after ad is closed
+   * Initialize AdMob and create boost rewarded ad
    */
-  function initializeRewardedAd() {
-    console.log('🔄 Initializing rewarded ad slot...');
+  async function initializeRewardedAd() {
+    if (typeof admob === 'undefined') {
+      console.warn('⚠️ AdMob SDK not available for boost ads');
+      return;
+    }
 
-    googletag.cmd.push(() => {
-      // Get ad unit ID from environment (will be set via server)
-      const adUnitId = window.REWARDED_AD_UNIT_ID || '/22639388115/rewarded_web_example';
-
-      // Clear existing slot if any
-      if (rewardedSlot) {
-        googletag.destroySlots([rewardedSlot]);
-        rewardedSlot = null;
+    try {
+      if (!admobInitialized) {
+        if (typeof admob.start === 'function') {
+          await admob.start();
+        }
+        admobInitialized = true;
       }
 
-      rewardedSlot = googletag.defineOutOfPageSlot(
-        adUnitId,
-        googletag.enums.OutOfPageFormat.REWARDED
-      );
+      console.log('🔄 Loading boost rewarded ad...');
 
-      if (rewardedSlot) {
-        rewardedSlot.addService(googletag.pubads());
+      boostAd = new admob.RewardedAd({
+        adUnitId: AD_UNIT_ID,
+      });
 
-        // Ad is ready to be shown
-        googletag.pubads().addEventListener('rewardedSlotReady', (event) => {
-          console.log('✅ Rewarded ad is ready');
+      // Ad loaded and ready
+      boostAd.on('load', () => {
+        boostAdReady = true;
+        console.log('✅ Boost rewarded ad loaded');
 
-          // Show the ad when user clicks "Watch Ad" button
-          const watchButton = document.getElementById('watch-ad-button');
-          if (watchButton) {
-            watchButton.onclick = () => {
-              event.makeRewardedVisible();
-              closeAdBoostModal();
-              console.log('📺 Showing rewarded ad');
-            };
-          }
-        });
+        // Enable Watch Ad button when ad is ready
+        const watchButton = document.getElementById('watch-ad-button');
+        if (watchButton) {
+          watchButton.onclick = () => {
+            watchRewardedAd();
+          };
+        }
+      });
 
-        // Ad video has finished playing
-        googletag.pubads().addEventListener('rewardedSlotVideoCompleted', (event) => {
-          console.log('✅ Ad video completed');
-        });
+      // Ad failed to load
+      boostAd.on('loadfail', (evt) => {
+        boostAdReady = false;
+        console.warn('⚠️ Boost ad load failed:', evt);
+        showMessage('No ad available right now. Please try again later.', 'warning');
+        setTimeout(initializeRewardedAd, 30000);
+      });
 
-        // Ad was closed (with or without reward)
-        googletag.pubads().addEventListener('rewardedSlotClosed', handleAdClosed);
+      // User earned reward (watched full ad) - SERVER AUTHORITATIVE
+      boostAd.on('reward', (evt) => {
+        rewardGranted = true;
+        console.log('🎁 Boost reward granted! Payload:', evt);
+      });
 
-        // Reward was granted (ad watched fully)
-        googletag.pubads().addEventListener('rewardedSlotGranted', (event) => {
-          rewardGranted = true;
-          console.log('🎁 Reward granted! Payload:', event.payload);
-        });
+      // Ad dismissed (closed)
+      boostAd.on('dismiss', () => {
+        handleAdClosed();
+      });
 
-        // No ad available
-        googletag.pubads().addEventListener('slotRenderEnded', (event) => {
-          if (event.slot === rewardedSlot && event.isEmpty) {
-            console.warn('⚠️ No ad returned for rewarded ad slot');
-            showMessage('No ad available right now. Please try again later.', 'warning');
-          }
-        });
+      // Ad shown successfully
+      boostAd.on('show', () => {
+        console.log('📺 Boost ad now showing');
+      });
 
-        googletag.enableServices();
-        googletag.display(rewardedSlot);
+      // Ad failed to show
+      boostAd.on('showfail', (evt) => {
+        console.error('❌ Boost ad show failed:', evt);
+        showMessage('Failed to show ad. Please try again.', 'error');
+        boostAdReady = false;
+        setTimeout(initializeRewardedAd, 5000);
+      });
 
-        console.log('✅ Rewarded ad slot initialized successfully');
-      } else {
-        console.error('❌ Rewarded ads are not supported on this page');
-      }
-    });
+      // Load the ad
+      await boostAd.load();
+
+      console.log('✅ Boost rewarded ad slot initialized');
+
+    } catch (error) {
+      console.error('❌ Boost ad init error:', error);
+      boostAdReady = false;
+      setTimeout(initializeRewardedAd, 30000);
+    }
   }
 
-  // Initialize on page load
-  initializeRewardedAd();
+  // Initialize on Cordova deviceready
+  document.addEventListener('deviceready', () => {
+    setTimeout(initializeRewardedAd, 800);
+  }, false);
+
+  // Fallback for browser
+  setTimeout(() => {
+    if (!admobInitialized && typeof admob !== 'undefined') {
+      initializeRewardedAd();
+    }
+  }, 5000);
+
+  /**
+   * Show the rewarded ad (called from Watch Ad button)
+   */
+  async function watchRewardedAd() {
+    if (!boostAdReady || !boostAd) {
+      console.warn('⚠️ Boost ad not ready');
+      showMessage('Ad not ready. Please wait...', 'warning');
+      return;
+    }
+
+    try {
+      rewardGranted = false;
+      closeAdBoostModal();
+      await boostAd.show();
+      console.log('📺 Showing boost rewarded ad');
+    } catch (error) {
+      console.error('❌ Error showing boost ad:', error);
+      showMessage('Failed to show ad. Please try again.', 'error');
+      boostAdReady = false;
+      initializeRewardedAd();
+    }
+  }
 
   /**
    * Handle ad closed event
    * SERVER-AUTHORITATIVE: Only grant if ad completed fully
    */
   async function handleAdClosed() {
-    console.log('📺 Ad closed. Reward granted:', rewardGranted);
+    console.log('📺 Boost ad closed. Reward granted:', rewardGranted);
 
     // STRICT: If ad not completed, allow retry
     if (!rewardGranted) {
       console.warn('⚠️ Ad was closed before completion - NO reward granted');
       showMessage('الإعلان لم يكتمل. شاهد الإعلان كاملاً للحصول على المكافأة.', 'warning');
       
-      // Cleanup and allow retry
-      if (rewardedSlot) {
-        googletag.destroySlots([rewardedSlot]);
-        rewardedSlot = null;
-      }
-      
-      setTimeout(() => {
-        initializeRewardedAd();
-      }, 500);
+      // Reload ad for retry
+      boostAdReady = false;
+      setTimeout(initializeRewardedAd, 500);
       
       return; // EXIT - no reward
     }
@@ -163,11 +204,8 @@
       }
     }
 
-    // Cleanup
-    if (rewardedSlot) {
-      googletag.destroySlots([rewardedSlot]);
-      rewardedSlot = null;
-    }
+    // Cleanup and reload for next ad
+    boostAdReady = false;
 
     setTimeout(() => {
       initializeRewardedAd();

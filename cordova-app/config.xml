@@ -112,6 +112,11 @@
         <variable name="FIREBASE_CRASHLYTICS_COLLECTION_ENABLED" value="false" />
     </plugin>
     
+    <!-- ✅ AdMob Rewarded Ads -->
+    <plugin name="admob-plus-cordova" spec="*">
+        <variable name="APP_ID_ANDROID" value="ca-app-pub-3940256099942544~3347511713" />
+    </plugin>
+    
     <!-- Note: Local Notifications removed due to SDK 34 compatibility issues -->
     
     <!-- ✅ Deep Links Configuration for Invite System -->

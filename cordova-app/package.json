@@ -29,7 +29,8 @@
     "cordova-plugin-statusbar": "^4.0.0",
     "cordova-plugin-x-socialsharing": "^6.0.4",
     "cordova-support-android-plugin": "~1.0.0",
-    "es6-promise-plugin": "^4.2.2"
+    "es6-promise-plugin": "^4.2.2",
+    "admob-plus-cordova": "*"
   },
   "cordova": {
     "platforms": [
@@ -64,6 +65,9 @@
         "FIREBASE_CRASHLYTICS_COLLECTION_ENABLED": "false",
         "ANDROID_FIREBASE_MESSAGING_VERSION": "22.0.+",
         "ANDROIDX_CORE_VERSION": "1.6.+"
+      },
+      "admob-plus-cordova": {
+        "APP_ID_ANDROID": "ca-app-pub-3940256099942544~3347511713"
       }
     }
   }
