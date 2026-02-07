@@ -74,7 +74,7 @@ jobs:
         echo '🔥 Installing Firebase Cloud Messaging plugin (latest with Android 12 fix)...'
         cordova plugin add cordova-plugin-firebase-messaging@7.0.2 --save
         echo '� Installing AdMob plugin for rewarded ads...'
-        cordova plugin add admob-plus-cordova --save \
+        cordova plugin add admob-plus-cordova@1.28.0 --save \
           --variable APP_ID_ANDROID="ca-app-pub-3940256099942544~3347511713"
         echo '�🔔 Removing local-notification plugin to avoid SDK compatibility issues...'
         cordova plugin remove cordova-plugin-local-notification 2>/dev/null || true
@@ -158,7 +158,11 @@ jobs:
                     force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22'
                     force 'com.google.android.gms:play-services-auth:20.7.0'
                     force 'com.google.android.gms:play-services-identity:18.1.0'
-                    force 'com.google.android.gms:play-services-base:18.2.0'
+                    force 'com.google.android.gms:play-services-base:18.3.0'
+                    force 'com.google.android.gms:play-services-basement:18.3.0'
+                    force 'com.google.android.gms:play-services-ads:22.6.0'
+                    force 'com.google.android.gms:play-services-ads-base:22.6.0'
+                    force 'com.google.android.gms:play-services-ads-lite:22.6.0'
                 }
             }
         }

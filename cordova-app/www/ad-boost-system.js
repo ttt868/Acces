@@ -17,116 +17,145 @@
   let boostAdReady = false;
   let rewardGranted = false;
   let currentUserId = null;
-  let admobInitialized = false;
+  let admobAvailable = false;
+  let boostInitAttempts = 0;
+  const MAX_BOOST_INIT_ATTEMPTS = 5;
+
+  console.log('🚀 Ad Boost System (AdMob) initializing...');
+  console.log('🚀 Boost Ad Unit ID:', AD_UNIT_ID);
 
   /**
    * Initialize AdMob and create boost rewarded ad
    */
   async function initializeRewardedAd() {
+    boostInitAttempts++;
+    console.log('🚀 initializeRewardedAd attempt #' + boostInitAttempts);
+
     if (typeof admob === 'undefined') {
-      console.warn('⚠️ AdMob SDK not available for boost ads');
+      console.warn('⚠️ AdMob SDK not available for boost ads (admob is undefined)');
+      if (boostInitAttempts < MAX_BOOST_INIT_ATTEMPTS) {
+        console.log('🔄 Will retry boost init in 5s...');
+        setTimeout(initializeRewardedAd, 5000);
+      }
       return;
     }
 
     try {
-      if (!admobInitialized) {
+      if (!admobAvailable) {
+        console.log('🚀 admob object found:', typeof admob);
+        console.log('🚀 admob.start:', typeof admob.start);
+        console.log('🚀 admob.RewardedAd:', typeof admob.RewardedAd);
+
         if (typeof admob.start === 'function') {
+          console.log('🚀 Calling admob.start() for boost...');
           await admob.start();
+          console.log('✅ admob.start() completed for boost');
         }
-        admobInitialized = true;
+        admobAvailable = true;
       }
 
-      console.log('🔄 Loading boost rewarded ad...');
+      console.log('🔄 Creating boost RewardedAd with unit:', AD_UNIT_ID);
 
       boostAd = new admob.RewardedAd({
         adUnitId: AD_UNIT_ID,
       });
 
-      // Ad loaded and ready
-      boostAd.on('load', () => {
-        boostAdReady = true;
-        console.log('✅ Boost rewarded ad loaded');
+      console.log('🚀 Boost RewardedAd instance created, id:', boostAd.id);
 
-        // Enable Watch Ad button when ad is ready
-        const watchButton = document.getElementById('watch-ad-button');
-        if (watchButton) {
-          watchButton.onclick = () => {
-            watchRewardedAd();
-          };
-        }
+      // Ad loaded and ready
+      boostAd.on('load', function() {
+        boostAdReady = true;
+        console.log('✅ Boost rewarded ad LOADED and ready to show');
       });
 
       // Ad failed to load
-      boostAd.on('loadfail', (evt) => {
+      boostAd.on('loadfail', function(evt) {
         boostAdReady = false;
-        console.warn('⚠️ Boost ad load failed:', evt);
-        showMessage('No ad available right now. Please try again later.', 'warning');
+        console.warn('⚠️ Boost ad LOAD FAILED:', JSON.stringify(evt));
         setTimeout(initializeRewardedAd, 30000);
       });
 
       // User earned reward (watched full ad) - SERVER AUTHORITATIVE
-      boostAd.on('reward', (evt) => {
+      boostAd.on('reward', function(evt) {
         rewardGranted = true;
-        console.log('🎁 Boost reward granted! Payload:', evt);
+        console.log('🎁 Boost REWARD GRANTED!');
       });
 
       // Ad dismissed (closed)
-      boostAd.on('dismiss', () => {
+      boostAd.on('dismiss', function() {
+        console.log('📱 Boost ad DISMISSED, rewardGranted:', rewardGranted);
         handleAdClosed();
       });
 
       // Ad shown successfully
-      boostAd.on('show', () => {
-        console.log('📺 Boost ad now showing');
+      boostAd.on('show', function() {
+        console.log('📺 Boost ad NOW SHOWING on screen');
       });
 
       // Ad failed to show
-      boostAd.on('showfail', (evt) => {
-        console.error('❌ Boost ad show failed:', evt);
+      boostAd.on('showfail', function(evt) {
+        console.error('❌ Boost ad SHOW FAILED:', JSON.stringify(evt));
         showMessage('Failed to show ad. Please try again.', 'error');
         boostAdReady = false;
         setTimeout(initializeRewardedAd, 5000);
       });
 
       // Load the ad
+      console.log('🚀 Calling boostAd.load()...');
       await boostAd.load();
-
-      console.log('✅ Boost rewarded ad slot initialized');
+      console.log('🚀 boostAd.load() call completed (waiting for load event)');
 
     } catch (error) {
       console.error('❌ Boost ad init error:', error);
+      console.error('❌ Error details:', JSON.stringify(error));
       boostAdReady = false;
-      setTimeout(initializeRewardedAd, 30000);
+      if (boostInitAttempts < MAX_BOOST_INIT_ATTEMPTS) {
+        setTimeout(initializeRewardedAd, 30000);
+      }
     }
   }
 
   // Initialize on Cordova deviceready
-  document.addEventListener('deviceready', () => {
+  document.addEventListener('deviceready', function() {
+    console.log('🚀 deviceready fired - will init Boost AdMob in 800ms');
     setTimeout(initializeRewardedAd, 800);
   }, false);
 
   // Fallback for browser
-  setTimeout(() => {
-    if (!admobInitialized && typeof admob !== 'undefined') {
-      initializeRewardedAd();
+  setTimeout(function() {
+    if (!admobAvailable) {
+      if (typeof admob !== 'undefined') {
+        console.log('🚀 Fallback init: admob found for boost');
+        initializeRewardedAd();
+      } else {
+        console.log('ℹ️ Boost AdMob not available (admob object not found after 5s)');
+      }
     }
   }, 5000);
 
   /**
    * Show the rewarded ad (called from Watch Ad button)
+   * ALWAYS accessible - shows message if ad not loaded
    */
   async function watchRewardedAd() {
+    console.log('📺 watchRewardedAd called, boostAdReady:', boostAdReady, 'admobAvailable:', admobAvailable);
+
     if (!boostAdReady || !boostAd) {
-      console.warn('⚠️ Boost ad not ready');
-      showMessage('Ad not ready. Please wait...', 'warning');
+      console.warn('⚠️ Boost ad not ready yet');
+      showMessage('Ad is loading... Please wait a moment and try again.', 'warning');
+      // Try to reload
+      if (admobAvailable) {
+        initializeRewardedAd();
+      }
       return;
     }
 
     try {
       rewardGranted = false;
       closeAdBoostModal();
+      console.log('📺 Calling boostAd.show()...');
       await boostAd.show();
-      console.log('📺 Showing boost rewarded ad');
+      console.log('📺 boostAd.show() call completed');
     } catch (error) {
       console.error('❌ Error showing boost ad:', error);
       showMessage('Failed to show ad. Please try again.', 'error');
@@ -527,6 +556,18 @@
       console.log('✅ Ad boost UI initialized on dashboard-hashrate-display');
     } else {
       console.warn('⚠️ dashboard-hashrate-display not found');
+    }
+
+    // ALWAYS set the Watch Ad button click handler
+    const watchButton = document.getElementById('watch-ad-button');
+    if (watchButton) {
+      watchButton.onclick = function() {
+        console.log('👆 Watch Ad button clicked! boostAdReady:', boostAdReady);
+        watchRewardedAd();
+      };
+      console.log('✅ Watch Ad button onclick handler attached');
+    } else {
+      console.warn('⚠️ watch-ad-button not found in DOM');
     }
 
     // Close modal button
