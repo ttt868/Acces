@@ -132,7 +132,8 @@
     </universal-links>
     
     <!-- ✅ Custom URL Scheme for accessnetwork:// links -->
-    <preference name="AndroidLaunchMode" value="singleTask" />
+    <!-- singleTop instead of singleTask: prevents destroying ad Activity when returning from background -->
+    <preference name="AndroidLaunchMode" value="singleTop" />
     
     <!-- ✅ Android Intent Filter for Deep Links -->
     <platform name="android">
