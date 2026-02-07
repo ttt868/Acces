@@ -880,7 +880,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log('🔔 [PERMISSION CHECK] Current permission:', currentPermission);
       
       if (currentPermission === 'default') {
-        // Request permission directly from browser (native dialog)
+        // Try to request permission directly from browser (native dialog)
         console.log('🔔 Requesting notification permission from browser...');
         try {
           const permission = await Notification.requestPermission();
@@ -889,8 +889,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             await window.accessNotifications.forceNewSubscription();
           }
         } catch (e) {
-          console.error('🔔 Permission request error:', e);
+          // Native dialog failed (e.g., Firefox needs user gesture)
+          // Show small top bar instead
+          console.log('🔔 Native dialog failed, showing top bar for user gesture');
+          showSmallNotificationBar();
         }
+        
+        // Check if permission is still default after request (Firefox blocks auto-request)
+        setTimeout(() => {
+          if (Notification.permission === 'default') {
+            console.log('🔔 Permission still default - showing top bar');
+            showSmallNotificationBar();
+          }
+        }, 500);
       } else if (currentPermission === 'granted') {
         // Already granted - make sure we have a valid subscription
         console.log('🔔 Notifications granted - ensuring subscription...');
@@ -899,6 +910,98 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 3000);
   }
 });
+
+// 🔔 Small notification bar for browsers that need user gesture (like Firefox)
+function showSmallNotificationBar() {
+  // Don't show if already shown or permission already set
+  if (document.getElementById('notification-top-bar')) return;
+  if (Notification.permission !== 'default') return;
+  if (sessionStorage.getItem('notificationBarDismissed')) return;
+  
+  // Get translations based on device language
+  const lang = (navigator.language || navigator.userLanguage || 'en').split('-')[0];
+  const translations = {
+    en: { text: '🔔 Enable notifications to receive alerts', enable: 'Enable', dismiss: '×' },
+    ar: { text: '🔔 فعّل الإشعارات لتلقي التنبيهات', enable: 'تفعيل', dismiss: '×' },
+    fr: { text: '🔔 Activez les notifications pour recevoir des alertes', enable: 'Activer', dismiss: '×' },
+    es: { text: '🔔 Activa las notificaciones para recibir alertas', enable: 'Activar', dismiss: '×' },
+    de: { text: '🔔 Aktivieren Sie Benachrichtigungen', enable: 'Aktivieren', dismiss: '×' },
+    tr: { text: '🔔 Uyarı almak için bildirimleri etkinleştirin', enable: 'Etkinleştir', dismiss: '×' },
+    pt: { text: '🔔 Ative as notificações para receber alertas', enable: 'Ativar', dismiss: '×' },
+    ru: { text: '🔔 Включите уведомления для получения оповещений', enable: 'Включить', dismiss: '×' },
+    zh: { text: '🔔 启用通知以接收提醒', enable: '启用', dismiss: '×' },
+    ja: { text: '🔔 通知を有効にしてアラートを受け取る', enable: '有効にする', dismiss: '×' },
+    ko: { text: '🔔 알림을 활성화하여 알림 받기', enable: '활성화', dismiss: '×' },
+    it: { text: '🔔 Abilita le notifiche per ricevere avvisi', enable: 'Abilita', dismiss: '×' },
+    hi: { text: '🔔 सूचनाएं प्राप्त करने के लिए सक्षम करें', enable: 'सक्षम करें', dismiss: '×' },
+    id: { text: '🔔 Aktifkan notifikasi untuk menerima peringatan', enable: 'Aktifkan', dismiss: '×' },
+    pl: { text: '🔔 Włącz powiadomienia, aby otrzymywać alerty', enable: 'Włącz', dismiss: '×' }
+  };
+  const t = translations[lang] || translations.en;
+  
+  const bar = document.createElement('div');
+  bar.id = 'notification-top-bar';
+  bar.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: white;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 999999;
+    font-size: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  `;
+  
+  bar.innerHTML = `
+    <span style="flex: 1;">${t.text}</span>
+    <button id="enable-notif-btn" style="
+      background: #00d4ff;
+      color: #000;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 10px;
+    ">${t.enable}</button>
+    <button id="dismiss-notif-btn" style="
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      margin-left: 10px;
+      padding: 0 5px;
+    ">${t.dismiss}</button>
+  `;
+  
+  document.body.appendChild(bar);
+  
+  // Enable button - triggers native permission dialog
+  document.getElementById('enable-notif-btn').addEventListener('click', async () => {
+    bar.remove();
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted' && window.accessNotifications) {
+        await window.accessNotifications.forceNewSubscription();
+      }
+    } catch (e) {
+      console.error('Permission error:', e);
+    }
+  });
+  
+  // Dismiss button
+  document.getElementById('dismiss-notif-btn').addEventListener('click', () => {
+    bar.remove();
+    sessionStorage.setItem('notificationBarDismissed', 'true');
+  });
+}
 
 // 🔔 Show notification BANNER (visible at top of page - mobile friendly) - DISABLED
 function showNotificationBanner() {
