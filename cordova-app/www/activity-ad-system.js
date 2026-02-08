@@ -1,9 +1,11 @@
 /**
- * Activity Ad System - cordova-plugin-ads (cozycodegh)
- * Shows a rewarded ad when user starts activity or sends points
- * User can close the ad anytime - action proceeds on close
+ * Activity Ad System - SINGLE rewarded ad manager for cordova-plugin-ads
+ * This is the ONLY file that loads/shows rewarded ads.
+ * ad-boost-system.js uses window.showRewardedAd() from here.
+ *
+ * Plugin: cordova-plugin-ads v2.0.5 (cozycodegh)
+ * API: adMob.rewarded(id) -> load, adMob.showRewarded() -> show
  * 
- * Plugin: cordova-plugin-ads (survives app background/resume)
  * Test Ad Unit: ca-app-pub-3940256099942544/5224354917
  * Production:   ca-app-pub-3543981710825954/4821776631
  */
@@ -11,129 +13,125 @@
 (function() {
   'use strict';
 
-  const AD_UNIT_ID = 'ca-app-pub-3940256099942544/5224354917';
+  var AD_UNIT_ID = 'ca-app-pub-3940256099942544/5224354917';
 
-  let adReady = false;
-  let adLoading = false;
-  let activityAdShowing = false;
-  let adClosedCallback = null;
-  let adMobAvailable = false;
-  let initAttempts = 0;
-  let loadFailCount = 0;
-  const MAX_INIT_ATTEMPTS = 10;
+  var adReady = false;
+  var adLoading = false;
+  var adShowing = false;
+  var adMobAvailable = false;
+  var initAttempts = 0;
+  var loadFailCount = 0;
+  var MAX_INIT_ATTEMPTS = 15;
+
+  // ========== CORE AD FUNCTIONS ==========
 
   /**
-   * Load a rewarded ad using cordova-plugin-ads API
-   * adMob.rewarded(id) → promise resolves when ad is ready
+   * Load a rewarded ad. Only ONE can be loaded at a time.
    */
-  async function loadRewardedAd() {
-    if (adLoading || adReady) return;
+  function loadRewardedAd() {
+    if (adLoading || adReady || adShowing) return;
+
+    if (typeof adMob === 'undefined') {
+      console.log('[AD] adMob not available yet');
+      return;
+    }
+
+    adMobAvailable = true;
     adLoading = true;
+    console.log('[AD] Loading rewarded ad...');
 
-    try {
-      if (typeof adMob === 'undefined') {
-        adLoading = false;
-        return;
-      }
-      adMobAvailable = true;
-
-      console.log('🔄 Loading activity rewarded ad...');
-      await adMob.rewarded(AD_UNIT_ID);
-      
+    adMob.rewarded(AD_UNIT_ID).then(function() {
       adReady = true;
       adLoading = false;
       loadFailCount = 0;
-      console.log('✅ Activity rewarded ad loaded and ready');
-
-    } catch (error) {
-      console.warn('⚠️ Activity ad load failed:', error);
+      console.log('[AD] Rewarded ad LOADED and ready');
+    })['catch'](function(err) {
+      console.warn('[AD] Load failed:', JSON.stringify(err));
       adReady = false;
       adLoading = false;
       loadFailCount++;
-      var delay = Math.min(5000 * loadFailCount, 20000);
+      var delay = Math.min(5000 * loadFailCount, 30000);
       setTimeout(loadRewardedAd, delay);
-    }
+    });
   }
 
   /**
-   * Initialize - wait for adMob object to be available
+   * Initialize - poll for adMob availability then load first ad
    */
   function initAdMob() {
     initAttempts++;
     if (typeof adMob === 'undefined') {
       if (initAttempts < MAX_INIT_ATTEMPTS) {
-        setTimeout(initAdMob, 3000);
+        console.log('[AD] Waiting for adMob... attempt ' + initAttempts);
+        setTimeout(initAdMob, 2000);
+      } else {
+        console.error('[AD] adMob never became available after ' + MAX_INIT_ATTEMPTS + ' attempts');
       }
       return;
     }
     adMobAvailable = true;
-    console.log('✅ cordova-plugin-ads available for activity ads');
+    console.log('[AD] cordova-plugin-ads available');
     loadRewardedAd();
   }
 
+  // ========== PUBLIC API ==========
+
   /**
-   * Show rewarded ad for activity/send action
-   * adMob.showRewarded() → returns {rewarded: bool, amount: N, type: "..."}
+   * Show a rewarded ad. callback(wasRewarded) fires when ad is dismissed.
+   * If ad not ready, callback fires immediately with false.
+   * Returns true/false synchronously.
    */
-  window.showActivityAd = async function(callback) {
-    if (activityAdShowing) {
-      if (callback) callback();
+  window.showRewardedAd = function(callback) {
+    console.log('[AD] showRewardedAd called, ready=' + adReady + ', showing=' + adShowing);
+
+    if (adShowing) {
+      if (callback) callback(false);
       return false;
     }
 
-    if (callback) adClosedCallback = callback;
-
-    // If ad not ready, proceed with callback immediately
     if (!adReady || !adMobAvailable) {
-      if (adClosedCallback) {
-        adClosedCallback();
-        adClosedCallback = null;
-      }
+      console.log('[AD] Ad not ready, proceeding without ad');
+      if (callback) callback(false);
       if (adMobAvailable && !adLoading) loadRewardedAd();
-      return true;
+      return false;
     }
 
-    try {
-      activityAdShowing = true;
-      adReady = false;
-      console.log('📺 Showing activity rewarded ad...');
-      
-      // showRewarded returns reward info when ad is dismissed
-      var reward = await adMob.showRewarded();
-      
-      activityAdShowing = false;
-      console.log('📺 Activity ad closed, reward:', JSON.stringify(reward));
+    adShowing = true;
+    adReady = false;
+    console.log('[AD] Showing rewarded ad...');
 
-      if (reward && reward.rewarded) {
-        console.log('🎁 Activity ad reward earned');
+    adMob.showRewarded().then(function(reward) {
+      adShowing = false;
+      var wasRewarded = !!(reward && reward.rewarded);
+      console.log('[AD] Ad dismissed, rewarded=' + wasRewarded);
+      if (callback) {
+        try { callback(wasRewarded); } catch(e) { console.error('[AD] Callback error:', e); }
       }
-
-      // Execute callback after ad is dismissed (whether rewarded or not)
-      if (adClosedCallback && typeof adClosedCallback === 'function') {
-        try { adClosedCallback(); } catch(e) { console.error('Callback error:', e); }
-        adClosedCallback = null;
-      }
-
-      // Pre-load next ad
       setTimeout(loadRewardedAd, 1000);
-
-    } catch (error) {
-      console.error('❌ Activity ad show error:', error);
-      activityAdShowing = false;
+    })['catch'](function(err) {
+      console.error('[AD] Show error:', JSON.stringify(err));
+      adShowing = false;
       adReady = false;
-
-      if (adClosedCallback) {
-        adClosedCallback();
-        adClosedCallback = null;
+      if (callback) {
+        try { callback(false); } catch(e) { console.error('[AD] Callback error:', e); }
       }
       setTimeout(loadRewardedAd, 3000);
-    }
+    });
 
     return true;
   };
 
+  /**
+   * Legacy aliases used by script.js
+   */
+  window.showActivityAd = function(callback) {
+    return window.showRewardedAd(function() {
+      if (callback) callback();
+    });
+  };
+
   window.canShowActivityAd = function() {
-    return !activityAdShowing && adReady;
+    return !adShowing && adReady && adMobAvailable;
   };
 
   window.showSendAd = function(callback) {
@@ -144,16 +142,28 @@
     return window.canShowActivityAd();
   };
 
-  // Initialize on deviceready
+  window.isRewardedAdReady = function() {
+    return !adShowing && adReady && adMobAvailable;
+  };
+
+  window.reloadRewardedAd = function() {
+    if (!adLoading && !adReady && !adShowing) {
+      loadRewardedAd();
+    }
+  };
+
+  // ========== INIT ==========
   document.addEventListener('deviceready', function() {
-    setTimeout(initAdMob, 800);
+    console.log('[AD] deviceready - initializing in 500ms...');
+    setTimeout(initAdMob, 500);
   }, false);
 
-  // Fallback
   setTimeout(function() {
     if (!adMobAvailable && typeof adMob !== 'undefined') {
+      console.log('[AD] Fallback init');
       initAdMob();
     }
-  }, 6000);
+  }, 5000);
 
+  console.log('[AD] activity-ad-system.js loaded (single ad manager)');
 })();
