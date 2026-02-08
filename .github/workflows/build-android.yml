@@ -223,8 +223,8 @@ jobs:
       env:
         CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
       run: |
-        echo '🚧 Building Debug APK...'
-        cordova build android --debug --verbose
+        echo '🚧 Building Debug APK (using compile to preserve manifest fixes)...'
+        cordova compile android --debug --verbose
         echo '✅ Debug APK built'
     
     - name: Build Release APK (Signed)
@@ -232,12 +232,12 @@ jobs:
       env:
         CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
       run: |
-        echo '🚧 Building Signed Release APK...'
+        echo '🚧 Building Signed Release APK (using compile to preserve manifest fixes)...'
         echo '📋 Using keystore: access-network.keystore'
         # Verify keystore exists
         ls -la access-network.keystore
-        # Build APK (not AAB) with packageType flag
-        cordova build android --release --buildConfig=build.json -- --packageType=apk --verbose
+        # Build APK (not AAB) with packageType flag - use compile to skip re-prepare
+        cordova compile android --release --buildConfig=build.json -- --packageType=apk --verbose
         echo '✅ Release APK built and signed'
         # Verify the APK was created
         echo '📱 Checking output files:'
