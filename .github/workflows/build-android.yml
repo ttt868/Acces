@@ -148,11 +148,10 @@ jobs:
             if (($_ =~ m/$pat2/g) && ($_ =~ m/$pat2/g)) {
               $_ =~ s/(.*?$pat2)(.*?)$pat2/$1$2/s;
             }
-            # Remove duplicate AdActivity (keep first)
-            my $pat3 = qr/(\s*<activity[^>]*android:name="com\.google\.android\.gms\.ads\.AdActivity"[^>]*\/>)/s;
-            if (($_ =~ m/$pat3/g) && ($_ =~ m/$pat3/g)) {
-              $_ =~ s/(.*?$pat3)(.*?)$pat3/$1$2/s;
-            }
+            # Remove ALL manual AdActivity declarations from plugin
+            # AdMob SDK AAR provides correct AdActivity via manifest merge at compile
+            # Plugin Theme.Translucent declaration can interfere with ad lifecycle on background
+            s/\s*<activity[^>]*android:name="com\.google\.android\.gms\.ads\.AdActivity"[^>]*\/>//gs;
           ' "$MANIFEST"
           echo "After fix:" && grep -c 'APPLICATION_ID' "$MANIFEST" && echo 'APPLICATION_ID occurrences'
           grep -n 'APPLICATION_ID' "$MANIFEST" || true
@@ -175,6 +174,110 @@ jobs:
           grep -n 'MainActivity' "$MANIFEST" || true
         fi
     
+    - name: Patch AdMob plugin Java for background ad survival
+      working-directory: cordova-app
+      run: |
+        echo '🔧 Patching AdMob plugin Java code for background ad survival...'
+        PLUGIN_JAVA="platforms/android/app/src/main/java/ca/cozycode/cordova/ads/AdMobPlugin.java"
+        
+        if [ ! -f "$PLUGIN_JAVA" ]; then
+          echo "❌ Plugin Java not found at expected path"
+          find platforms/android -name "AdMobPlugin.java" 2>/dev/null || true
+          echo "⚠️ Continuing without Java patch"
+          exit 0
+        fi
+        
+        cat > /tmp/patch_admob.py << 'PYEOF'
+        import sys, re
+        
+        filepath = sys.argv[1]
+        with open(filepath, 'r') as f:
+            content = f.read()
+        
+        print("Original file size:", len(content), "bytes")
+        
+        # 1. Add lifecycle tracking fields after existing field
+        old_field = 'Boolean mRewardedAdRewarded = false;'
+        new_fields = ('Boolean mRewardedAdRewarded = false;\n'
+                      '    private boolean mIsAppPaused = false;\n'
+                      '    private boolean mRewardedDismissedWhilePaused = false;\n'
+                      '    private JSONObject mPendingRewardResult = null;')
+        if old_field in content:
+            content = content.replace(old_field, new_fields, 1)
+            print("Step 1 OK: Lifecycle fields added")
+        else:
+            print("Step 1 FAIL: Could not find field marker")
+        
+        # 2. Add onPause/onResume before onDestroy
+        lifecycle = (
+            '    @Override\n'
+            '    public void onPause(boolean multitasking) {\n'
+            '        super.onPause(multitasking);\n'
+            '        mIsAppPaused = true;\n'
+            '        Log.d(TAG, "AdMobPlugin: onPause");\n'
+            '    }\n'
+            '\n'
+            '    @Override\n'
+            '    public void onResume(boolean multitasking) {\n'
+            '        super.onResume(multitasking);\n'
+            '        mIsAppPaused = false;\n'
+            '        Log.d(TAG, "AdMobPlugin: onResume pendingDismiss=" + mRewardedDismissedWhilePaused);\n'
+            '        if (mRewardedDismissedWhilePaused) {\n'
+            '            mRewardedDismissedWhilePaused = false;\n'
+            '            Log.d(TAG, "AdMobPlugin: sending deferred reward callback");\n'
+            '            if (mRewarededNext != null && mPendingRewardResult != null) {\n'
+            '                mRewarededNext.callbackContext.success(mPendingRewardResult);\n'
+            '                mRewarededNext = null;\n'
+            '            }\n'
+            '            mPendingRewardResult = null;\n'
+            '            mRewardedAd = null;\n'
+            '            View mainView = getView();\n'
+            '            if (mainView != null) {\n'
+            '                mainView.requestFocus();\n'
+            '            }\n'
+            '        }\n'
+            '    }\n'
+            '\n'
+        )
+        ondestroy = re.search(r'(\s+@Override\s+public void onDestroy\(\)\s*\{)', content)
+        if ondestroy:
+            pos = ondestroy.start()
+            content = content[:pos] + '\n' + lifecycle + content[pos:]
+            print("Step 2 OK: onPause/onResume added before onDestroy")
+        else:
+            print("Step 2 FAIL: Could not find onDestroy")
+        
+        # 3. Modify rewarded ad onAdDismissedFullScreenContent
+        old_d = 'logInfo("rewarded ad dismissed fullscreen content.");'
+        new_d = (
+            'logInfo("rewarded ad dismissed fullscreen content. isPaused=" + mIsAppPaused);\n'
+            '                                  if (mIsAppPaused) {\n'
+            '                                      Log.d(TAG, "Ad dismissed while paused - deferring callback");\n'
+            '                                      mRewardedDismissedWhilePaused = true;\n'
+            '                                      mPendingRewardResult = rewardObject(mRewardedAdRewarded,mRewardedAdRewardedAmount,mRewardedAdRewardedType);\n'
+            '                                      return;\n'
+            '                                  }'
+        )
+        if old_d in content:
+            content = content.replace(old_d, new_d, 1)
+            print("Step 3 OK: onAdDismissedFullScreenContent patched")
+        else:
+            print("Step 3 FAIL: Could not find dismiss callback")
+        
+        with open(filepath, 'w') as f:
+            f.write(content)
+        print("Patched file size:", len(content), "bytes")
+        print("Patching complete")
+        PYEOF
+        
+        python3 /tmp/patch_admob.py "$PLUGIN_JAVA"
+        
+        echo "📋 Verifying Java patch:"
+        grep -c "mIsAppPaused" "$PLUGIN_JAVA" && echo "  ✅ Lifecycle fields found" || echo "  ❌ Fields missing"
+        grep -c "public void onPause" "$PLUGIN_JAVA" && echo "  ✅ onPause found" || echo "  ❌ onPause missing"
+        grep -c "public void onResume" "$PLUGIN_JAVA" && echo "  ✅ onResume found" || echo "  ❌ onResume missing"
+        grep -c "mRewardedDismissedWhilePaused" "$PLUGIN_JAVA" && echo "  ✅ Defer logic found" || echo "  ❌ Defer missing"
+
     - name: Force compatible dependency versions
       working-directory: cordova-app
       run: |

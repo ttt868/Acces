@@ -152,6 +152,31 @@
     }
   };
 
+  // ========== LIFECYCLE - Background/Foreground tracking ==========
+  var wentToBackgroundWhileAdShowing = false;
+
+  document.addEventListener('pause', function() {
+    if (adShowing) {
+      wentToBackgroundWhileAdShowing = true;
+      console.log('[AD] App went to background while ad is showing');
+    }
+  }, false);
+
+  document.addEventListener('resume', function() {
+    console.log('[AD] App resumed, adShowing=' + adShowing + ', wentToBg=' + wentToBackgroundWhileAdShowing);
+    if (wentToBackgroundWhileAdShowing) {
+      wentToBackgroundWhileAdShowing = false;
+      // Native Java plugin handles deferred callback via onResume
+      // If ad survived (AdActivity alive), it will continue playing
+      // If not, deferred callback will resolve the JS promise
+      console.log('[AD] Was showing ad before background - native plugin handles it');
+    }
+    // Ensure an ad is preloaded for next time
+    if (!adReady && !adLoading && !adShowing) {
+      setTimeout(loadRewardedAd, 2000);
+    }
+  }, false);
+
   // ========== INIT ==========
   document.addEventListener('deviceready', function() {
     console.log('[AD] deviceready - initializing in 500ms...');
@@ -165,5 +190,5 @@
     }
   }, 5000);
 
-  console.log('[AD] activity-ad-system.js loaded (single ad manager)');
+  console.log('[AD] activity-ad-system.js loaded (single ad manager, background-safe)');
 })();
