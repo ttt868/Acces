@@ -137,6 +137,156 @@ jobs:
           echo '⚠️ AdMob.java not found (might be Kotlin version)'
         fi
 
+    - name: Patch AdMob plugin - Fix ad disappearing on background
+      working-directory: cordova-app
+      run: |
+        echo '🔧 Patching admob-plus plugin to prevent ad dismiss on background...'
+        echo ''
+        echo '📋 Root cause: admob-plus calls clear() in onAdShowedFullScreenContent()'
+        echo '   which nullifies the ad reference. Also onDestroy() destroys all ads.'
+        echo '   When app goes to background, the ad Activity gets dismissed.'
+        echo '   Fix: Remove clear()/null assignments that kill ad references.'
+        echo '   Reference: cordova-plugin-ads by cozycodegh does NOT do this and works.'
+        echo ''
+        
+        REWARDED="platforms/android/app/src/main/java/admob/plus/cordova/ads/Rewarded.java"
+        INTERSTITIAL="platforms/android/app/src/main/java/admob/plus/cordova/ads/Interstitial.java"
+        ADMOB="platforms/android/app/src/main/java/admob/plus/cordova/AdMob.java"
+        
+        # === Patch 1: Rewarded.java ===
+        if [ -f "$REWARDED" ]; then
+          echo '--- Patching Rewarded.java ---'
+          python3 << 'PATCH_REWARDED'
+import re
+
+filepath = "platforms/android/app/src/main/java/admob/plus/cordova/ads/Rewarded.java"
+with open(filepath, 'r') as f:
+    content = f.read()
+
+original = content
+
+# Fix 1: Remove clear() from onAdShowedFullScreenContent
+# This is the PRIMARY cause - nullifying ad reference when ad is shown
+# means the ad object can be GC'd and AdActivity loses its backing reference
+content = re.sub(
+    r'(onAdShowedFullScreenContent\(\)\s*\{[\s\n]*?)clear\(\);',
+    r'\1// clear(); // PATCHED: keep ad reference alive for background survival',
+    content
+)
+
+# Fix 2: Remove clear() from onDestroy
+# When CordovaActivity is destroyed (can happen on background),
+# don't nullify the ad - the ad Activity should survive independently
+content = re.sub(
+    r'(public void onDestroy\(\)\s*\{[\s\n]*?)clear\(\);',
+    r'\1// clear(); // PATCHED: skip cleanup for background survival',
+    content
+)
+
+if content != original:
+    with open(filepath, 'w') as f:
+        f.write(content)
+    print('✅ Rewarded.java patched (2 fixes applied)')
+else:
+    print('⚠️ Rewarded.java - no changes made (patterns not found)')
+PATCH_REWARDED
+        else
+          echo '⚠️ Rewarded.java not found'
+        fi
+        
+        # === Patch 2: Interstitial.java ===
+        if [ -f "$INTERSTITIAL" ]; then
+          echo '--- Patching Interstitial.java ---'
+          python3 << 'PATCH_INTERSTITIAL'
+import re
+
+filepath = "platforms/android/app/src/main/java/admob/plus/cordova/ads/Interstitial.java"
+with open(filepath, 'r') as f:
+    content = f.read()
+
+original = content
+
+# Fix 1: Remove mAd = null from onAdShowedFullScreenContent
+content = re.sub(
+    r'(onAdShowedFullScreenContent\(\)\s*\{[\s\n]*?)mAd = null;',
+    r'\1// mAd = null; // PATCHED: keep ad reference alive for background survival',
+    content
+)
+
+# Fix 2: Remove clear() from onDestroy
+content = re.sub(
+    r'(public void onDestroy\(\)\s*\{[\s\n]*?)clear\(\);',
+    r'\1// clear(); // PATCHED: skip cleanup for background survival',
+    content
+)
+
+if content != original:
+    with open(filepath, 'w') as f:
+        f.write(content)
+    print('✅ Interstitial.java patched (2 fixes applied)')
+else:
+    print('⚠️ Interstitial.java - no changes made (patterns not found)')
+PATCH_INTERSTITIAL
+        else
+          echo '⚠️ Interstitial.java not found'
+        fi
+        
+        # === Patch 3: AdMob.java - Remove ad destroy loop in onDestroy ===
+        if [ -f "$ADMOB" ]; then
+          echo '--- Patching AdMob.java onDestroy ---'
+          python3 << 'PATCH_ADMOB'
+filepath = "platforms/android/app/src/main/java/admob/plus/cordova/AdMob.java"
+with open(filepath, 'r') as f:
+    content = f.read()
+
+# Comment out the for loop in onDestroy that destroys all ads
+# This loop iterates every ad and calls ad.onDestroy() which nullifies
+# references and removes from the static ads SparseArray.
+# When CordovaActivity goes to background, this kills all fullscreen ads.
+old_loop = """        for (int i = 0; i < ads.size(); i++) {
+            AdBase ad = (AdBase) ads.valueAt(i);
+            ad.onDestroy();
+        }"""
+
+new_loop = """        // PATCHED: Don't destroy fullscreen ads on activity lifecycle
+        // This prevents rewarded/interstitial ads from being dismissed
+        // when the app goes to background and CordovaActivity is destroyed.
+        // Reference: cordova-plugin-ads (cozycodegh) does not clean up ads in onDestroy.
+        // for (int i = 0; i < ads.size(); i++) {
+        //     AdBase ad = (AdBase) ads.valueAt(i);
+        //     ad.onDestroy();
+        // }"""
+
+if old_loop in content:
+    content = content.replace(old_loop, new_loop)
+    with open(filepath, 'w') as f:
+        f.write(content)
+    print('✅ AdMob.java onDestroy ad cleanup loop commented out')
+else:
+    print('⚠️ AdMob.java - destroy loop pattern not found, trying alternative...')
+    # Try with different whitespace
+    import re
+    content_new = re.sub(
+        r'(\s+)for \(int i = 0; i < ads\.size\(\); i\+\+\) \{\s*\n\s*AdBase ad = \(AdBase\) ads\.valueAt\(i\);\s*\n\s*ad\.onDestroy\(\);\s*\n\s*\}',
+        r'\1// PATCHED: Don\'t destroy ads on background\n\1// for (int i = 0; i < ads.size(); i++) {\n\1//     AdBase ad = (AdBase) ads.valueAt(i);\n\1//     ad.onDestroy();\n\1// }',
+        content
+    )
+    if content_new != content:
+        with open(filepath, 'w') as f:
+            f.write(content_new)
+        print('✅ AdMob.java patched via regex alternative')
+    else:
+        print('❌ Could not patch AdMob.java onDestroy')
+PATCH_ADMOB
+        fi
+        
+        echo ''
+        echo '✅ All admob-plus background patches applied'
+        echo '📋 Summary of changes:'
+        echo '  - Rewarded.java: removed clear() from onAdShowedFullScreenContent + onDestroy'
+        echo '  - Interstitial.java: removed mAd=null from onAdShowedFullScreenContent + clear() from onDestroy'
+        echo '  - AdMob.java: commented out ads destroy loop in onDestroy'
+
     - name: Fix AndroidManifest for AdMob background retention
       working-directory: cordova-app
       run: |
@@ -146,25 +296,31 @@ jobs:
           echo '📋 Original MainActivity entry:'
           grep -n 'MainActivity' "$MANIFEST" || true
           
-          # Add alwaysRetainTaskState="true" to MainActivity
-          # This prevents Android from clearing the activity stack (including AdMob ad Activity)
-          # when user presses Home and returns via app icon or recents
-          sed -i 's/<activity\s\+android:name="MainActivity"/<activity android:name="MainActivity" android:alwaysRetainTaskState="true"/' "$MANIFEST"
+          # Add alwaysRetainTaskState="true" and clearTaskOnLaunch="false" to MainActivity
+          # alwaysRetainTaskState: prevents system from resetting task state after inactivity
+          # clearTaskOnLaunch: prevents clearing activities above root when relaunching from home
+          sed -i 's/<activity\s\+android:name="MainActivity"/<activity android:name="MainActivity" android:alwaysRetainTaskState="true" android:clearTaskOnLaunch="false"/' "$MANIFEST"
           
-          # Also handle if the activity already has attributes on the same line
+          # Verify alwaysRetainTaskState
           if ! grep -q 'alwaysRetainTaskState' "$MANIFEST"; then
-            # Try with full package name
-            sed -i 's/<activity android:name="\([^"]*MainActivity[^"]*\)"/<activity android:name="\1" android:alwaysRetainTaskState="true"/' "$MANIFEST"
+            sed -i '/<activity.*MainActivity/s/android:name/android:alwaysRetainTaskState="true" android:clearTaskOnLaunch="false" android:name/' "$MANIFEST"
           fi
           
-          # Verify the change
+          # Verify clearTaskOnLaunch separately if alwaysRetainTaskState worked but clearTaskOnLaunch didn't
+          if grep -q 'alwaysRetainTaskState' "$MANIFEST" && ! grep -q 'clearTaskOnLaunch' "$MANIFEST"; then
+            sed -i 's/alwaysRetainTaskState="true"/alwaysRetainTaskState="true" android:clearTaskOnLaunch="false"/' "$MANIFEST"
+          fi
+          
+          # Verify results
           if grep -q 'alwaysRetainTaskState="true"' "$MANIFEST"; then
-            echo '✅ alwaysRetainTaskState="true" added to MainActivity'
+            echo '✅ alwaysRetainTaskState="true" added'
           else
-            echo '⚠️ Could not add alwaysRetainTaskState, attempting alternative method...'
-            # Alternative: add it directly after the first <activity line that contains MainActivity
-            sed -i '/<activity.*MainActivity/s/android:name/android:alwaysRetainTaskState="true" android:name/' "$MANIFEST"
-            grep 'alwaysRetainTaskState' "$MANIFEST" && echo '✅ Fixed via alternative method' || echo '❌ FAILED to add alwaysRetainTaskState'
+            echo '❌ FAILED to add alwaysRetainTaskState'
+          fi
+          if grep -q 'clearTaskOnLaunch="false"' "$MANIFEST"; then
+            echo '✅ clearTaskOnLaunch="false" added'
+          else
+            echo '❌ FAILED to add clearTaskOnLaunch'
           fi
           
           echo '📋 Patched MainActivity entry:'
