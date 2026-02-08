@@ -18,6 +18,7 @@
   function watchRewardedAd() {
     console.log('[BOOST] watchRewardedAd called');
 
+    if (!window.showRewardedAd || !window.isRewardedAdReady || !window.isRewardedAdReady()) {
       showMessage('Ad system not ready. Please wait and try again.', 'warning');
       return;
     }
@@ -91,11 +92,13 @@
     .then(function(result) {
       console.log('[BOOST] Eligibility:', JSON.stringify(result));
 
+      if (!result || !result.success) {
         showMessage('Failed to check eligibility', 'error');
         return;
       }
 
       var modal = document.getElementById('ad-boost-modal');
+      if (!modal) {
         showMessage('Ad system not ready. Please refresh the page.', 'error');
         return;
       }
@@ -104,6 +107,7 @@
       modal.style.visibility = 'visible';
       modal.style.opacity = '1';
 
+      if (!result.eligible) {
         var watchButton = document.getElementById('watch-ad-button');
         if (watchButton) watchButton.style.display = 'none';
 
@@ -182,6 +186,7 @@
     var hashrateValue = document.getElementById('dashboard-hashrate-value');
     if (hashrateValue) {
       var adBoostIncluded = hashrateValue.getAttribute('data-ad-boost-active') === 'true';
+      if (!adBoostIncluded) {
         var currentValue = parseFloat(hashrateValue.textContent) || 10.0;
         var newValue = currentValue + boostValue;
         hashrateValue.textContent = newValue.toFixed(1);
@@ -195,6 +200,7 @@
     var activityHashrateDisplay = document.getElementById('hashrate-display');
     if (activityHashrateValue && activityHashrateDisplay) {
       var adBoostIncluded2 = activityHashrateValue.getAttribute('data-ad-boost-active') === 'true';
+      if (!adBoostIncluded2) {
         var currentActivityValue = parseFloat(activityHashrateValue.textContent) || 10.0;
         var newActivityValue = currentActivityValue + boostValue;
         activityHashrateValue.textContent = newActivityValue.toFixed(1);
@@ -255,7 +261,7 @@
         var userId = null;
         if (window.currentUser && window.currentUser.id) {
           userId = window.currentUser.id;
-        }
+        } else {
           try {
             var savedUser = localStorage.getItem('accessoireUser');
             if (savedUser) userId = JSON.parse(savedUser).id;
@@ -305,6 +311,7 @@
 
   function verifyModalExists() {
     var modal = document.getElementById('ad-boost-modal');
+    if (!modal) {
       console.error('[BOOST] ad-boost-modal not found in DOM!');
       return false;
     }
@@ -313,6 +320,7 @@
   }
 
   function checkAdBoostOnLoad() {
+    if (!window.currentUser || !window.currentUser.id) return;
 
     fetch('/api/ad-boost/status?userId=' + window.currentUser.id)
     .then(function(response) { return response.json(); })
