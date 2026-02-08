@@ -136,6 +136,42 @@ jobs:
         else
           echo '⚠️ AdMob.java not found (might be Kotlin version)'
         fi
+
+    - name: Fix AndroidManifest for AdMob background retention
+      working-directory: cordova-app
+      run: |
+        echo '🔧 Patching AndroidManifest.xml for ad background retention...'
+        MANIFEST="platforms/android/app/src/main/AndroidManifest.xml"
+        if [ -f "$MANIFEST" ]; then
+          echo '📋 Original MainActivity entry:'
+          grep -n 'MainActivity' "$MANIFEST" || true
+          
+          # Add alwaysRetainTaskState="true" to MainActivity
+          # This prevents Android from clearing the activity stack (including AdMob ad Activity)
+          # when user presses Home and returns via app icon or recents
+          sed -i 's/<activity\s\+android:name="MainActivity"/<activity android:name="MainActivity" android:alwaysRetainTaskState="true"/' "$MANIFEST"
+          
+          # Also handle if the activity already has attributes on the same line
+          if ! grep -q 'alwaysRetainTaskState' "$MANIFEST"; then
+            # Try with full package name
+            sed -i 's/<activity android:name="\([^"]*MainActivity[^"]*\)"/<activity android:name="\1" android:alwaysRetainTaskState="true"/' "$MANIFEST"
+          fi
+          
+          # Verify the change
+          if grep -q 'alwaysRetainTaskState="true"' "$MANIFEST"; then
+            echo '✅ alwaysRetainTaskState="true" added to MainActivity'
+          else
+            echo '⚠️ Could not add alwaysRetainTaskState, attempting alternative method...'
+            # Alternative: add it directly after the first <activity line that contains MainActivity
+            sed -i '/<activity.*MainActivity/s/android:name/android:alwaysRetainTaskState="true" android:name/' "$MANIFEST"
+            grep 'alwaysRetainTaskState' "$MANIFEST" && echo '✅ Fixed via alternative method' || echo '❌ FAILED to add alwaysRetainTaskState'
+          fi
+          
+          echo '📋 Patched MainActivity entry:'
+          grep -n 'MainActivity' "$MANIFEST" || true
+        else
+          echo '❌ AndroidManifest.xml not found!'
+        fi
     
     - name: Force compatible dependency versions
       working-directory: cordova-app

@@ -61,11 +61,6 @@
             <uses-feature android:name="android.hardware.camera" android:required="false" />
             <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
         </config-file>
-        
-        <!-- ✅ CRITICAL: Keep ad Activity alive when app goes to background -->
-        <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application/activity[@android:name='MainActivity']">
-            <activity android:alwaysRetainTaskState="true" />
-        </edit-config>
     </platform>
     
     <!-- Preferences -->
