@@ -1,137 +1,144 @@
 /**
- * Activity Ad System - SINGLE rewarded ad manager for cordova-plugin-ads
- * This is the ONLY file that loads/shows rewarded ads.
- * ad-boost-system.js uses window.showRewardedAd() from here.
- *
- * Plugin: cordova-plugin-ads v2.0.5 (cozycodegh)
- * API: adMob.rewarded(id) -> load, adMob.showRewarded() -> show
- * 
- * Test Ad Unit: ca-app-pub-3940256099942544/5224354917
- * Production:   ca-app-pub-3543981710825954/4821776631
+ * Activity Ad System - نظام إعلانات موحد
+ * يستخدم لـ Start Activity و Send Points
  */
 
 (function() {
   'use strict';
 
-  var AD_UNIT_ID = 'ca-app-pub-3940256099942544/5224354917';
+  window.googletag = window.googletag || { cmd: [] };
 
-  var adReady = false;
-  var adLoading = false;
-  var adShowing = false;
-  var adMobAvailable = false;
-  var initAttempts = 0;
-  var loadFailCount = 0;
-  var MAX_INIT_ATTEMPTS = 15;
+  let activityRewardedSlot = null;
+  let activityAdShowing = false;
+  let adClosedCallback = null;
+  
+  let activityAdUnitId = '/22639388115/rewarded_web_example';
+  
+  fetch('/api/ad-config')
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.adUnitId) {
+        activityAdUnitId = data.adUnitId;
+        console.log('✅ Activity Ad: تم تحميل معرف الإعلان');
+      }
+    })
+    .catch(() => {
+      console.log('⚠️ Activity Ad: استخدام القيمة الافتراضية');
+    });
 
-  // ========== CORE AD FUNCTIONS ==========
+  function initializeActivityAd() {
+    googletag.cmd.push(() => {
+      if (activityRewardedSlot) {
+        return;
+      }
+      
+      activityRewardedSlot = googletag.defineOutOfPageSlot(
+        activityAdUnitId,
+        googletag.enums.OutOfPageFormat.REWARDED
+      );
 
-  /**
-   * Load a rewarded ad. Only ONE can be loaded at a time.
-   */
-  function loadRewardedAd() {
-    if (adLoading || adReady || adShowing) return;
+      if (activityRewardedSlot) {
+        activityRewardedSlot.addService(googletag.pubads());
 
-    if (typeof adMob === 'undefined') {
-      console.log('[AD] adMob not available yet');
-      return;
-    }
+        googletag.pubads().addEventListener('rewardedSlotReady', (event) => {
+          if (event.slot === activityRewardedSlot) {
+            console.log('✅ Activity Ad جاهز');
+            window.activityAdEvent = event;
+          }
+        });
 
-    adMobAvailable = true;
-    adLoading = true;
-    console.log('[AD] Loading rewarded ad...');
+        googletag.pubads().addEventListener('rewardedSlotClosed', (event) => {
+          if (event.slot === activityRewardedSlot) {
+            console.log('✅ Activity Ad تم إغلاقه');
+            activityAdShowing = false;
+            
+            if (adClosedCallback && typeof adClosedCallback === 'function') {
+              console.log('📺 تنفيذ callback بعد إغلاق الإعلان');
+              adClosedCallback();
+              adClosedCallback = null;
+            }
+            
+            googletag.destroySlots([activityRewardedSlot]);
+            activityRewardedSlot = null;
+            window.activityAdEvent = null;
+            
+            // ⚡ إعادة تهيئة فورية للإعلان التالي
+            initializeActivityAd();
+          }
+        });
 
-    adMob.rewarded(AD_UNIT_ID).then(function() {
-      adReady = true;
-      adLoading = false;
-      loadFailCount = 0;
-      console.log('[AD] Rewarded ad LOADED and ready');
-    })['catch'](function(err) {
-      console.warn('[AD] Load failed:', JSON.stringify(err));
-      adReady = false;
-      adLoading = false;
-      loadFailCount++;
-      var delay = Math.min(5000 * loadFailCount, 30000);
-      setTimeout(loadRewardedAd, delay);
+        googletag.pubads().addEventListener('slotRenderEnded', (event) => {
+          if (event.slot === activityRewardedSlot && event.isEmpty) {
+            console.warn('⚠️ Activity Ad: لا يوجد إعلان متاح');
+            activityAdShowing = false;
+            
+            if (adClosedCallback && typeof adClosedCallback === 'function') {
+              console.log('📺 لا يوجد إعلان - تنفيذ callback مباشرة');
+              adClosedCallback();
+              adClosedCallback = null;
+            }
+          }
+        });
+
+        googletag.enableServices();
+        googletag.display(activityRewardedSlot);
+      }
     });
   }
 
-  /**
-   * Initialize - poll for adMob availability then load first ad
-   */
-  function initAdMob() {
-    initAttempts++;
-    if (typeof adMob === 'undefined') {
-      if (initAttempts < MAX_INIT_ATTEMPTS) {
-        console.log('[AD] Waiting for adMob... attempt ' + initAttempts);
-        setTimeout(initAdMob, 2000);
-      } else {
-        console.error('[AD] adMob never became available after ' + MAX_INIT_ATTEMPTS + ' attempts');
-      }
-      return;
-    }
-    adMobAvailable = true;
-    console.log('[AD] cordova-plugin-ads available');
-    loadRewardedAd();
-  }
+  initializeActivityAd();
 
-  // ========== PUBLIC API ==========
-
-  /**
-   * Show a rewarded ad. callback(wasRewarded) fires when ad is dismissed.
-   * If ad not ready, callback fires immediately with false.
-   * Returns true/false synchronously.
-   */
-  window.showRewardedAd = function(callback) {
-    console.log('[AD] showRewardedAd called, ready=' + adReady + ', showing=' + adShowing);
-
-    if (adShowing) {
-      if (callback) callback(false);
-      return false;
-    }
-
-    if (!adReady || !adMobAvailable) {
-      console.log('[AD] Ad not ready, proceeding without ad');
-      if (callback) callback(false);
-      if (adMobAvailable && !adLoading) loadRewardedAd();
-      return false;
-    }
-
-    adShowing = true;
-    adReady = false;
-    console.log('[AD] Showing rewarded ad...');
-
-    adMob.showRewarded().then(function(reward) {
-      adShowing = false;
-      var wasRewarded = !!(reward && reward.rewarded);
-      console.log('[AD] Ad dismissed, rewarded=' + wasRewarded);
-      if (callback) {
-        try { callback(wasRewarded); } catch(e) { console.error('[AD] Callback error:', e); }
-      }
-      setTimeout(loadRewardedAd, 1000);
-    })['catch'](function(err) {
-      console.error('[AD] Show error:', JSON.stringify(err));
-      adShowing = false;
-      adReady = false;
-      if (callback) {
-        try { callback(false); } catch(e) { console.error('[AD] Callback error:', e); }
-      }
-      setTimeout(loadRewardedAd, 3000);
-    });
-
-    return true;
-  };
-
-  /**
-   * Legacy aliases used by script.js
-   */
   window.showActivityAd = function(callback) {
-    return window.showRewardedAd(function() {
-      if (callback) callback();
-    });
+    if (activityAdShowing) {
+      console.log('Activity Ad معروض بالفعل');
+      // تنفيذ callback مباشرة إذا الإعلان معروض بالفعل
+      if (callback && typeof callback === 'function') {
+        callback();
+      }
+      return false;
+    }
+
+    if (callback && typeof callback === 'function') {
+      adClosedCallback = callback;
+    }
+
+    console.log('📺 عرض Activity Ad...');
+    
+    if (window.activityAdEvent) {
+      window.activityAdEvent.makeRewardedVisible();
+      activityAdShowing = true;
+      console.log('✅ Activity Ad تم عرضه');
+      return true;
+    } else {
+      console.warn('⚠️ Activity Ad غير جاهز - انتظار قصير...');
+      // ✅ انتظار قصير 500ms فقط
+      let waitAttempts = 0;
+      const maxAttempts = 5; // 5 × 100ms = 500ms فقط
+      
+      const waitForAd = setInterval(() => {
+        waitAttempts++;
+        
+        if (window.activityAdEvent) {
+          clearInterval(waitForAd);
+          window.activityAdEvent.makeRewardedVisible();
+          activityAdShowing = true;
+          console.log('✅ Activity Ad تم عرضه بعد الانتظار');
+        } else if (waitAttempts >= maxAttempts) {
+          clearInterval(waitForAd);
+          console.warn('⚠️ الإعلان لم يتحمل - فتح النافذة');
+          if (adClosedCallback) {
+            adClosedCallback();
+            adClosedCallback = null;
+          }
+        }
+      }, 100);
+      
+      return true;
+    }
   };
 
   window.canShowActivityAd = function() {
-    return !adShowing && adReady && adMobAvailable;
+    return !activityAdShowing && window.activityAdEvent;
   };
 
   window.showSendAd = function(callback) {
@@ -142,28 +149,4 @@
     return window.canShowActivityAd();
   };
 
-  window.isRewardedAdReady = function() {
-    return !adShowing && adReady && adMobAvailable;
-  };
-
-  window.reloadRewardedAd = function() {
-    if (!adLoading && !adReady && !adShowing) {
-      loadRewardedAd();
-    }
-  };
-
-  // ========== INIT ==========
-  document.addEventListener('deviceready', function() {
-    console.log('[AD] deviceready - initializing in 500ms...');
-    setTimeout(initAdMob, 500);
-  }, false);
-
-  setTimeout(function() {
-    if (!adMobAvailable && typeof adMob !== 'undefined') {
-      console.log('[AD] Fallback init');
-      initAdMob();
-    }
-  }, 5000);
-
-  console.log('[AD] activity-ad-system.js loaded (single ad manager)');
 })();
