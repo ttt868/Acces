@@ -175,15 +175,15 @@ jobs:
           echo '⚠️ Interstitial.java not found'
         fi
         
-        # === Patch 3: AdMob.java - Neutralize ad destroy loop in onDestroy ===
+        # === Patch 3: AdMob.java - Only neutralize onDestroy ad cleanup ===
         if [ -f "$ADMOB" ]; then
           echo '--- Patching AdMob.java onDestroy ---'
-          # Replace the loop body with no-op comments, keeping the for/brace structure valid
-          # This prevents all ads from being destroyed when CordovaActivity goes to background
-          sed -i 's/AdBase ad = (AdBase) ads.valueAt(i);/\/\/ PATCHED: skip ad cleanup for background survival/' "$ADMOB"
-          sed -i 's/ad.onDestroy();/\/\/ ad.onDestroy();/' "$ADMOB"
-          echo '✅ AdMob.java onDestroy patched'
-          grep -n 'PATCHED\|onDestroy' "$ADMOB" | head -10
+          # IMPORTANT: Only replace ad.onDestroy() - NOT the AdBase ad cast line
+          # because onConfigurationChanged, onPause, onResume use the same cast pattern
+          # We only want to skip the destroy call, keeping the variable assignment
+          sed -i 's/ad\.onDestroy();/\/\/ ad.onDestroy(); \/\/ PATCHED: skip for background/' "$ADMOB"
+          echo '✅ AdMob.java onDestroy patched (only ad.onDestroy() calls commented)'
+          grep -n 'PATCHED\|\.onDestroy' "$ADMOB" | head -10
         fi
         
         echo ''
