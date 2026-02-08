@@ -516,6 +516,16 @@ function setupGoogleSignIn() {
             return;
         }
         
+        // Always disconnect first to force account picker
+        try {
+            await new Promise((resolve) => {
+                window.plugins.googleplus.disconnect(() => {
+                    console.log('✅ Disconnected before login (forces account picker)');
+                    resolve();
+                }, () => resolve());
+            });
+        } catch(e) {}
+        
         // Loading indicator
         const loading = document.createElement('div');
         loading.id = 'google-signin-loading';
@@ -527,7 +537,8 @@ function setupGoogleSignIn() {
             {
                 scopes: 'profile email https://www.googleapis.com/auth/userinfo.profile',
                 webClientId: window.GOOGLE_CLIENT_ID_WEB,
-                offline: true
+                offline: true,
+                prompt: 'select_account'
             },
             function(userData) {
                 console.log('✅ Google Sign-In success:', userData.email);

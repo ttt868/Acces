@@ -14733,9 +14733,21 @@ window.cancelProfileChanges = cancelProfileChanges;
     document.documentElement.classList.add('user-not-logged-in');
     document.documentElement.classList.add('app-ready');
 
-    // 📱 Both Cordova and Web: reload page to reset state completely
+    // 📱 Both Cordova and Web: show login page without reload
     setTimeout(() => {
-      window.location.reload();
+      // Reset UI to login state
+      document.documentElement.classList.remove('user-logged-in');
+      document.documentElement.classList.add('user-not-logged-in');
+      
+      // Navigate to login page if it exists
+      if (typeof showPage === 'function') {
+        showPage('login-page');
+      } else if (typeof navigateToPage === 'function') {
+        navigateToPage('login-page');
+      } else {
+        // Fallback: reload only if no navigation function available
+        window.location.reload();
+      }
     }, 300);
   });
 
