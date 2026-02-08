@@ -549,36 +549,88 @@ function setupGoogleSignIn() {
                 localStorage.removeItem('accessoireUser');
                 localStorage.removeItem('accessoireUserData');
                 
-                // ✅ FINAL: Always use SVG in Cordova - Google pictures don't work
                 const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
                 
-                // Create fake JWT for handleGoogleSignIn
-                const payload = {
-                    email: userData.email,
-                    name: userData.displayName,
-                    picture: DEFAULT_AVATAR,
-                    sub: userData.userId
-                };
+                // ✅ Get Google profile picture URL (try all possible fields)
+                let googlePicUrl = userData.imageUrl || userData.photoUrl || (userData.image && userData.image.url) || '';
                 
-                // UTF-8 safe base64 encoding
-                const b64 = str => {
-                    try {
-                        return btoa(unescape(encodeURIComponent(str)))
-                            .replace(/\+/g, '-')
-                            .replace(/\//g, '_')
-                            .replace(/=+$/, '');
-                    } catch (e) {
-                        return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                // Make it higher resolution (200px instead of 96px)
+                if (googlePicUrl && googlePicUrl.includes('googleusercontent.com')) {
+                    googlePicUrl = googlePicUrl.replace(/=s\d+-c/, '=s200-c');
+                    if (!googlePicUrl.includes('=s200-c')) {
+                        googlePicUrl += (googlePicUrl.includes('?') ? '&' : '?') + 'sz=200';
                     }
-                };
-                const header = b64(JSON.stringify({alg: 'none', typ: 'JWT'}));
-                const body = b64(JSON.stringify(payload));
-                const fakeCredential = header + '.' + body + '.fake';
+                }
                 
-                if (typeof window.handleGoogleSignIn === 'function') {
-                    window.handleGoogleSignIn({ credential: fakeCredential, select_by: 'cordova' });
+                console.log('📷 Google picture URL:', googlePicUrl || 'NONE');
+                
+                // ✅ Function to complete login with a given picture
+                function completeLogin(pictureData) {
+                    const payload = {
+                        email: userData.email,
+                        name: userData.displayName,
+                        picture: pictureData,
+                        sub: userData.userId
+                    };
+                    
+                    const b64 = str => {
+                        try {
+                            return btoa(unescape(encodeURIComponent(str)))
+                                .replace(/\+/g, '-')
+                                .replace(/\//g, '_')
+                                .replace(/=+$/, '');
+                        } catch (e) {
+                            return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                        }
+                    };
+                    const header = b64(JSON.stringify({alg: 'none', typ: 'JWT'}));
+                    const body = b64(JSON.stringify(payload));
+                    const fakeCredential = header + '.' + body + '.fake';
+                    
+                    if (typeof window.handleGoogleSignIn === 'function') {
+                        window.handleGoogleSignIn({ credential: fakeCredential, select_by: 'cordova' });
+                    } else {
+                        alert('Login error. Please try again.');
+                    }
+                }
+                
+                // ✅ Download Google picture and convert to base64 for reliability in Cordova WebView
+                if (googlePicUrl) {
+                    console.log('📷 Downloading Google picture to base64...');
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', googlePicUrl, true);
+                    xhr.responseType = 'blob';
+                    xhr.timeout = 5000; // 5 second timeout
+                    xhr.onload = function() {
+                        if (xhr.status === 200 && xhr.response) {
+                            var reader = new FileReader();
+                            reader.onloadend = function() {
+                                var base64data = reader.result;
+                                console.log('📷 ✅ Google picture converted to base64, size:', base64data.length);
+                                completeLogin(base64data);
+                            };
+                            reader.onerror = function() {
+                                console.warn('📷 ⚠️ FileReader error, using default avatar');
+                                completeLogin(DEFAULT_AVATAR);
+                            };
+                            reader.readAsDataURL(xhr.response);
+                        } else {
+                            console.warn('📷 ⚠️ XHR status:', xhr.status, ', using default avatar');
+                            completeLogin(DEFAULT_AVATAR);
+                        }
+                    };
+                    xhr.onerror = function() {
+                        console.warn('📷 ⚠️ XHR error downloading picture, using default avatar');
+                        completeLogin(DEFAULT_AVATAR);
+                    };
+                    xhr.ontimeout = function() {
+                        console.warn('📷 ⚠️ XHR timeout downloading picture, using default avatar');
+                        completeLogin(DEFAULT_AVATAR);
+                    };
+                    xhr.send();
                 } else {
-                    alert('Login error. Please try again.');
+                    console.log('📷 No Google picture URL available, using default avatar');
+                    completeLogin(DEFAULT_AVATAR);
                 }
             },
             function(error) {
