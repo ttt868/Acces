@@ -73,8 +73,7 @@ jobs:
           --variable PLAY_SERVICES_VERSION="20.7.0"
         echo '🔥 Installing Firebase Cloud Messaging plugin (latest with Android 12 fix)...'
         cordova plugin add cordova-plugin-firebase-messaging@7.0.2 --save
-        echo '📢 Installing AdMob plugin (cordova-plugin-ads - survives background)...'
-        cordova plugin add cordova-plugin-ads@2.0.5 --save
+        echo '📢 AdMob plugin (cordova-plugin-ads) will be installed from config.xml during platform add'
         echo '🔔 Removing local-notification plugin to avoid SDK compatibility issues...'
         cordova plugin remove cordova-plugin-local-notification 2>/dev/null || true
     
@@ -134,13 +133,28 @@ jobs:
           # Replace it with our test app ID (change to production when ready)
           sed -i 's/ca-app-pub-4029587076166791~9642866395/ca-app-pub-3940256099942544~3347511713/g' "$MANIFEST"
           
-          # Remove duplicate entries caused by plugin being processed twice during cordova platform add
+          # Remove duplicate meta-data and activity entries (multi-line XML blocks)
           echo '🔧 Removing duplicate manifest entries...'
-          awk '/com\.google\.android\.gms\.ads\.APPLICATION_ID/ { if (++c1 > 1) next } 1' "$MANIFEST" > "${MANIFEST}.tmp" && mv "${MANIFEST}.tmp" "$MANIFEST"
-          awk '/com\.google\.android\.gms\.ads\.DELAY_APP_MEASUREMENT_INIT/ { if (++c2 > 1) next } 1' "$MANIFEST" > "${MANIFEST}.tmp" && mv "${MANIFEST}.tmp" "$MANIFEST"
-          awk '/com\.google\.android\.gms\.ads\.AdActivity/ { if (++c3 > 1) next } 1' "$MANIFEST" > "${MANIFEST}.tmp" && mv "${MANIFEST}.tmp" "$MANIFEST"
-          
-          echo '✅ APPLICATION_ID fixed and duplicates removed'
+          echo "Before fix:" && grep -c 'APPLICATION_ID' "$MANIFEST" && echo 'APPLICATION_ID occurrences'
+          # Use perl to remove duplicate multi-line meta-data blocks
+          perl -0777 -i -pe '
+            # Remove duplicate APPLICATION_ID meta-data (keep first)
+            my $pat1 = qr/(\s*<meta-data\s+android:name="com\.google\.android\.gms\.ads\.APPLICATION_ID"\s+android:value="[^"]*"\s*\/>)/s;
+            if (($_ =~ m/$pat1/g) && ($_ =~ m/$pat1/g)) {
+              $_ =~ s/(.*?$pat1)(.*?)$pat1/$1$2/s;
+            }
+            # Remove duplicate DELAY_APP_MEASUREMENT_INIT meta-data (keep first)
+            my $pat2 = qr/(\s*<meta-data\s+android:name="com\.google\.android\.gms\.ads\.DELAY_APP_MEASUREMENT_INIT"\s+android:value="[^"]*"\s*\/>)/s;
+            if (($_ =~ m/$pat2/g) && ($_ =~ m/$pat2/g)) {
+              $_ =~ s/(.*?$pat2)(.*?)$pat2/$1$2/s;
+            }
+            # Remove duplicate AdActivity (keep first)
+            my $pat3 = qr/(\s*<activity[^>]*android:name="com\.google\.android\.gms\.ads\.AdActivity"[^>]*\/>)/s;
+            if (($_ =~ m/$pat3/g) && ($_ =~ m/$pat3/g)) {
+              $_ =~ s/(.*?$pat3)(.*?)$pat3/$1$2/s;
+            }
+          ' "$MANIFEST"
+          echo "After fix:" && grep -c 'APPLICATION_ID' "$MANIFEST" && echo 'APPLICATION_ID occurrences'
           grep -n 'APPLICATION_ID' "$MANIFEST" || true
         fi
 
