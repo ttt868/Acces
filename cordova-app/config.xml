@@ -61,6 +61,11 @@
             <uses-feature android:name="android.hardware.camera" android:required="false" />
             <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
         </config-file>
+        
+        <!-- ✅ CRITICAL: Keep ad Activity alive when app goes to background -->
+        <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application/activity[@android:name='MainActivity']">
+            <activity android:alwaysRetainTaskState="true" />
+        </edit-config>
     </platform>
     
     <!-- Preferences -->
@@ -71,6 +76,7 @@
     <preference name="StatusBarOverlaysWebView" value="false" />
     <preference name="Orientation" value="portrait" />
     <preference name="Fullscreen" value="false" />
+    <preference name="KeepRunning" value="true" />
     
     <!-- ✅ CRITICAL: Use HTTP scheme to allow mixed content -->
     <preference name="scheme" value="http" />
