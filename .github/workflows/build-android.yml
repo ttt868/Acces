@@ -175,25 +175,13 @@ jobs:
           echo '⚠️ Interstitial.java not found'
         fi
         
-        # === Patch 3: AdMob.java - Comment out ad destroy loop in onDestroy ===
+        # === Patch 3: AdMob.java - Neutralize ad destroy loop in onDestroy ===
         if [ -f "$ADMOB" ]; then
           echo '--- Patching AdMob.java onDestroy ---'
-          # Comment out the for loop that destroys all ads when activity is destroyed
-          # This loop calls ad.onDestroy() for every ad, which nullifies references
-          # and removes from the static ads SparseArray on background
-          sed -i '/public void onDestroy/,/Banner\.destroyParentView/ {
-            s/for (int i = 0; i < ads.size(); i++) {/\/\/ PATCHED: skip ad cleanup for background survival\n        \/\/ for (int i = 0; i < ads.size(); i++) {/
-            s/AdBase ad = (AdBase) ads.valueAt(i);/\/\/     AdBase ad = (AdBase) ads.valueAt(i);/
-            s/ad.onDestroy();/\/\/     ad.onDestroy();/
-          }' "$ADMOB"
-          # Fix the closing brace of the for loop
-          sed -i '/PATCHED: skip ad cleanup/,/Banner\.destroyParentView/ {
-            /^[[:space:]]*}[[:space:]]*$/ {
-              /Banner/! {
-                0,/^[[:space:]]*}[[:space:]]*$/ s/^([[:space:]]*)}/\1\/\/ }/
-              }
-            }
-          }' "$ADMOB" 2>/dev/null || true
+          # Replace the loop body with no-op comments, keeping the for/brace structure valid
+          # This prevents all ads from being destroyed when CordovaActivity goes to background
+          sed -i 's/AdBase ad = (AdBase) ads.valueAt(i);/\/\/ PATCHED: skip ad cleanup for background survival/' "$ADMOB"
+          sed -i 's/ad.onDestroy();/\/\/ ad.onDestroy();/' "$ADMOB"
           echo '✅ AdMob.java onDestroy patched'
           grep -n 'PATCHED\|onDestroy' "$ADMOB" | head -10
         fi
