@@ -113,10 +113,8 @@
         <variable name="FIREBASE_CRASHLYTICS_COLLECTION_ENABLED" value="false" />
     </plugin>
     
-    <!-- ✅ AdMob Rewarded Ads -->
-    <plugin name="admob-plus-cordova" spec="1.28.0">
-        <variable name="APP_ID_ANDROID" value="ca-app-pub-3940256099942544~3347511713" />
-    </plugin>
+    <!-- ✅ AdMob Rewarded Ads (cordova-plugin-ads - survives background) -->
+    <plugin name="cordova-plugin-ads" spec="2.0.5" />
     
     <!-- Note: Local Notifications removed due to SDK 34 compatibility issues -->
     

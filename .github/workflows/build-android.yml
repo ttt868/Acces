@@ -73,10 +73,9 @@ jobs:
           --variable PLAY_SERVICES_VERSION="20.7.0"
         echo '🔥 Installing Firebase Cloud Messaging plugin (latest with Android 12 fix)...'
         cordova plugin add cordova-plugin-firebase-messaging@7.0.2 --save
-        echo '� Installing AdMob plugin for rewarded ads...'
-        cordova plugin add admob-plus-cordova@1.28.0 --save \
-          --variable APP_ID_ANDROID="ca-app-pub-3940256099942544~3347511713"
-        echo '�🔔 Removing local-notification plugin to avoid SDK compatibility issues...'
+        echo '📢 Installing AdMob plugin (cordova-plugin-ads - survives background)...'
+        cordova plugin add cordova-plugin-ads@2.0.5 --save
+        echo '🔔 Removing local-notification plugin to avoid SDK compatibility issues...'
         cordova plugin remove cordova-plugin-local-notification 2>/dev/null || true
     
     - name: Setup Release Keystore for Signing
@@ -125,110 +124,34 @@ jobs:
         find platforms/android -name "*.gradle" -exec sed -i 's/play-services-identity:\$\{PLAY_SERVICES_VERSION\}/play-services-identity:18.1.0/g' {} \;
         echo '✅ Fixed play-services-identity version'
 
-    - name: Fix AdMob plugin Java compatibility
+    - name: Fix AdMob APPLICATION_ID in AndroidManifest
       working-directory: cordova-app
       run: |
-        echo '🔧 Fixing AdMob getVersionString() for newer SDK...'
-        ADMOB_JAVA="platforms/android/app/src/main/java/admob/plus/cordova/AdMob.java"
-        if [ -f "$ADMOB_JAVA" ]; then
-          sed -i 's/MobileAds.getVersionString()/MobileAds.getVersion().toString()/g' "$ADMOB_JAVA"
-          echo '✅ Fixed getVersionString → getVersion().toString()'
-        else
-          echo '⚠️ AdMob.java not found (might be Kotlin version)'
-        fi
-
-    - name: Patch AdMob plugin - Fix ad disappearing on background
-      working-directory: cordova-app
-      run: |
-        echo '🔧 Patching admob-plus plugin to prevent ad dismiss on background...'
-        echo '📋 Root cause: admob-plus calls clear() in onAdShowedFullScreenContent()'
-        echo '   which nullifies the ad reference. cordova-plugin-ads does NOT do this.'
-        
-        REWARDED="platforms/android/app/src/main/java/admob/plus/cordova/ads/Rewarded.java"
-        INTERSTITIAL="platforms/android/app/src/main/java/admob/plus/cordova/ads/Interstitial.java"
-        ADMOB="platforms/android/app/src/main/java/admob/plus/cordova/AdMob.java"
-        
-        # === Patch 1: Rewarded.java ===
-        if [ -f "$REWARDED" ]; then
-          echo '--- Patching Rewarded.java ---'
-          # Remove clear() from onAdShowedFullScreenContent - PRIMARY FIX
-          # This nullifies mAd immediately when ad shows, killing it on background
-          sed -i '/onAdShowedFullScreenContent/,/}/ s/clear();/\/\/ clear(); \/\/ PATCHED: keep ad ref alive/' "$REWARDED"
-          # Remove clear() from onDestroy - prevents destroying ad on activity lifecycle
-          sed -i '/public void onDestroy/,/super\.onDestroy/ s/clear();/\/\/ clear(); \/\/ PATCHED: skip for background/' "$REWARDED"
-          echo '✅ Rewarded.java patched'
-          grep -n 'PATCHED' "$REWARDED" || echo '⚠️ Patch markers not found'
-        else
-          echo '⚠️ Rewarded.java not found'
-        fi
-        
-        # === Patch 2: Interstitial.java ===
-        if [ -f "$INTERSTITIAL" ]; then
-          echo '--- Patching Interstitial.java ---'
-          # Remove mAd = null from onAdShowedFullScreenContent
-          sed -i '/onAdShowedFullScreenContent/,/}/ s/mAd = null;/\/\/ mAd = null; \/\/ PATCHED: keep ad ref alive/' "$INTERSTITIAL"
-          # Remove clear() from onDestroy
-          sed -i '/public void onDestroy/,/super\.onDestroy/ s/clear();/\/\/ clear(); \/\/ PATCHED: skip for background/' "$INTERSTITIAL"
-          echo '✅ Interstitial.java patched'
-          grep -n 'PATCHED' "$INTERSTITIAL" || echo '⚠️ Patch markers not found'
-        else
-          echo '⚠️ Interstitial.java not found'
-        fi
-        
-        # === Patch 3: AdMob.java - Only neutralize onDestroy ad cleanup ===
-        if [ -f "$ADMOB" ]; then
-          echo '--- Patching AdMob.java onDestroy ---'
-          # IMPORTANT: Only replace ad.onDestroy() - NOT the AdBase ad cast line
-          # because onConfigurationChanged, onPause, onResume use the same cast pattern
-          # We only want to skip the destroy call, keeping the variable assignment
-          sed -i 's/ad\.onDestroy();/\/\/ ad.onDestroy(); \/\/ PATCHED: skip for background/' "$ADMOB"
-          echo '✅ AdMob.java onDestroy patched (only ad.onDestroy() calls commented)'
-          grep -n 'PATCHED\|\.onDestroy' "$ADMOB" | head -10
-        fi
-        
-        echo ''
-        echo '✅ All admob-plus background patches applied'
-
-    - name: Fix AndroidManifest for AdMob background retention
-      working-directory: cordova-app
-      run: |
-        echo '🔧 Patching AndroidManifest.xml for ad background retention...'
+        echo '🔧 Fixing AdMob APPLICATION_ID in AndroidManifest...'
         MANIFEST="platforms/android/app/src/main/AndroidManifest.xml"
         if [ -f "$MANIFEST" ]; then
-          echo '📋 Original MainActivity entry:'
-          grep -n 'MainActivity' "$MANIFEST" || true
-          
-          # Add alwaysRetainTaskState="true" and clearTaskOnLaunch="false" to MainActivity
-          # alwaysRetainTaskState: prevents system from resetting task state after inactivity
-          # clearTaskOnLaunch: prevents clearing activities above root when relaunching from home
+          # cordova-plugin-ads hardcodes the developer's APP_ID in plugin.xml
+          # Replace it with our test app ID (change to production when ready)
+          sed -i 's/ca-app-pub-4029587076166791~9642866395/ca-app-pub-3940256099942544~3347511713/g' "$MANIFEST"
+          echo '✅ APPLICATION_ID updated to test ID'
+          grep 'APPLICATION_ID' "$MANIFEST" || true
+        fi
+
+    - name: Fix AndroidManifest for background retention
+      working-directory: cordova-app
+      run: |
+        echo '🔧 Patching AndroidManifest.xml for background retention...'
+        MANIFEST="platforms/android/app/src/main/AndroidManifest.xml"
+        if [ -f "$MANIFEST" ]; then
+          # Add alwaysRetainTaskState and clearTaskOnLaunch to MainActivity
           sed -i 's/<activity\s\+android:name="MainActivity"/<activity android:name="MainActivity" android:alwaysRetainTaskState="true" android:clearTaskOnLaunch="false"/' "$MANIFEST"
-          
-          # Verify alwaysRetainTaskState
           if ! grep -q 'alwaysRetainTaskState' "$MANIFEST"; then
             sed -i '/<activity.*MainActivity/s/android:name/android:alwaysRetainTaskState="true" android:clearTaskOnLaunch="false" android:name/' "$MANIFEST"
           fi
-          
-          # Verify clearTaskOnLaunch separately if alwaysRetainTaskState worked but clearTaskOnLaunch didn't
-          if grep -q 'alwaysRetainTaskState' "$MANIFEST" && ! grep -q 'clearTaskOnLaunch' "$MANIFEST"; then
-            sed -i 's/alwaysRetainTaskState="true"/alwaysRetainTaskState="true" android:clearTaskOnLaunch="false"/' "$MANIFEST"
-          fi
-          
-          # Verify results
-          if grep -q 'alwaysRetainTaskState="true"' "$MANIFEST"; then
-            echo '✅ alwaysRetainTaskState="true" added'
-          else
-            echo '❌ FAILED to add alwaysRetainTaskState'
-          fi
-          if grep -q 'clearTaskOnLaunch="false"' "$MANIFEST"; then
-            echo '✅ clearTaskOnLaunch="false" added'
-          else
-            echo '❌ FAILED to add clearTaskOnLaunch'
-          fi
-          
+          grep -q 'alwaysRetainTaskState' "$MANIFEST" && echo '✅ alwaysRetainTaskState added' || echo '⚠️ Could not add'
+          grep -q 'clearTaskOnLaunch' "$MANIFEST" && echo '✅ clearTaskOnLaunch added' || echo '⚠️ Could not add'
           echo '📋 Patched MainActivity entry:'
           grep -n 'MainActivity' "$MANIFEST" || true
-        else
-          echo '❌ AndroidManifest.xml not found!'
         fi
     
     - name: Force compatible dependency versions
@@ -266,8 +189,8 @@ jobs:
                     force 'com.google.android.gms:play-services-identity:18.1.0'
                     force 'com.google.android.gms:play-services-base:18.3.0'
                     force 'com.google.android.gms:play-services-basement:18.3.0'
-                    force 'com.google.android.gms:play-services-ads:22.6.0'
-                    force 'com.google.android.gms:play-services-ads-lite:22.6.0'
+                    force 'com.google.android.gms:play-services-ads:22.3.0'
+                    force 'com.google.android.gms:play-services-ads-lite:22.3.0'
                 }
             }
         }
