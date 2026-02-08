@@ -3,19 +3,40 @@
 
 User-agent: *
 Allow: /
+# Block login page from crawlers (no publisher content)
+Disallow: /index.html
 
 # Sitemap location
 Sitemap: https://accesschain.org/sitemap.xml
 
-# Google Adsense crawlers - IMPORTANT for ads
+# Google Adsense crawlers - IMPORTANT for ads approval
 User-agent: Mediapartners-Google
-Allow: /
+Allow: /about.html
+Allow: /access-explorer.html
+Allow: /blocks.html
+Allow: /transactions.html
+Allow: /faq.html
+Allow: /whitepaper.html
+Allow: /contact.html
+Allow: /top-accounts.html
+Allow: /privacy-policy.html
+Allow: /terms-of-service.html
+Disallow: /index.html
 
 User-agent: AdsBot-Google
-Allow: /
+Allow: /about.html
+Allow: /access-explorer.html
+Allow: /blocks.html
+Allow: /transactions.html
+Allow: /faq.html
+Allow: /whitepaper.html
+Allow: /contact.html
+Allow: /top-accounts.html
+Disallow: /index.html
 
 User-agent: Googlebot
 Allow: /
+Disallow: /index.html
 
 # Crawl delay for all bots
 Crawl-delay: 1

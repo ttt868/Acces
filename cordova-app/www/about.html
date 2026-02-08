@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="base-url.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="no">
@@ -1266,6 +1265,68 @@
                 Our network uses advanced consensus mechanisms to ensure maximum throughput while maintaining 
                 the highest levels of security and decentralization.
             </p>
+            <p>
+                Founded with the vision of making blockchain technology accessible to everyone, Access Network 
+                bridges the gap between complex decentralized systems and everyday users. Whether you are a 
+                developer building the next generation of Web3 applications or an individual looking to 
+                participate in the decentralized economy, Access Network provides the infrastructure you need.
+            </p>
+        </div>
+
+        <!-- Our Mission -->
+        <div class="content-card">
+            <h2>🎯 Our Mission</h2>
+            <p>
+                At Access Network, our mission is to democratize access to blockchain technology. We believe 
+                that the power of decentralization should not be limited to technical experts — it should be 
+                available to everyone, regardless of their technical background or geographic location.
+            </p>
+            <p>
+                We are committed to fostering innovation, transparency, and financial inclusion across the globe. 
+                By removing the barriers that have traditionally kept individuals and small businesses from 
+                participating in decentralized systems, we aim to build a more open and equitable digital economy.
+            </p>
+        </div>
+
+        <!-- How It Works -->
+        <div class="content-card">
+            <h2>⚙️ How It Works</h2>
+            <p>
+                Access Network operates on a Proof of Stake (PoS) consensus mechanism, where validators stake 
+                ACCESS tokens to participate in block production and transaction verification. This approach 
+                eliminates the need for energy-intensive mining operations while maintaining robust security 
+                guarantees.
+            </p>
+            <p>
+                Every transaction on Access Network is confirmed in approximately 3 seconds, making it suitable 
+                for real-time applications including payments, gaming, supply chain tracking, and decentralized 
+                finance (DeFi). The network achieves this speed through an optimized block propagation protocol 
+                and efficient validator coordination.
+            </p>
+            <p>
+                Smart contracts on Access Network are fully compatible with the Ethereum Virtual Machine (EVM), 
+                which means developers can deploy existing Solidity contracts without modification. This 
+                compatibility extends to popular tools like MetaMask, Remix, Hardhat, and Truffle, ensuring a 
+                seamless development experience.
+            </p>
+        </div>
+
+        <!-- Technology & Security -->
+        <div class="content-card">
+            <h2>🛡️ Technology &amp; Security</h2>
+            <p>
+                Security is at the core of Access Network's design. The network employs five distinct layers 
+                of protection: cryptographic transaction signing, validator staking requirements, Byzantine 
+                fault tolerance in consensus, real-time network monitoring, and automated threat detection 
+                systems. Together, these layers ensure that the network remains secure against both external 
+                attacks and internal failures.
+            </p>
+            <p>
+                All user data and wallet private keys are encrypted using industry-standard AES-256 encryption. 
+                The network's node software undergoes regular security audits, and our bug bounty program 
+                incentivizes the community to help identify and report potential vulnerabilities before they 
+                can be exploited.
+            </p>
         </div>
 
         <!-- Network Information -->
@@ -1332,6 +1393,54 @@
             <p>
                 Features include real-time transaction tracking, detailed address analytics, gas price 
                 monitoring, and comprehensive API access for developers.
+            </p>
+            <p>
+                With AccessScan, users can verify transactions in real time, track token transfers, monitor 
+                network activity, and analyze smart contract interactions. The explorer supports full-text 
+                search across block numbers, transaction hashes, and wallet addresses, making it easy to find 
+                any on-chain data quickly. Developers can leverage the AccessScan API to integrate blockchain 
+                data into their applications, build analytics dashboards, or automate monitoring workflows.
+            </p>
+        </div>
+
+        <!-- Roadmap -->
+        <div class="content-card">
+            <h2>🗺️ Roadmap &amp; Future Development</h2>
+            <p>
+                Access Network is continuously evolving. Our development roadmap focuses on expanding the 
+                ecosystem, improving network performance, and introducing new features that empower both 
+                users and developers.
+            </p>
+            <p>
+                <strong>Phase 1 — Foundation (Completed):</strong> Launch of the mainnet, core blockchain 
+                infrastructure, AccessScan block explorer, wallet integration, and initial validator onboarding.
+            </p>
+            <p>
+                <strong>Phase 2 — Growth (In Progress):</strong> Mobile application development, enhanced 
+                DeFi support, cross-chain bridge integrations, developer toolkit expansion, and community 
+                governance framework implementation.
+            </p>
+            <p>
+                <strong>Phase 3 — Expansion (Upcoming):</strong> Enterprise partnerships, layer-2 scaling 
+                solutions, NFT marketplace infrastructure, decentralized identity (DID) support, and global 
+                community ambassador program.
+            </p>
+        </div>
+
+        <!-- Why Choose Access Network -->
+        <div class="content-card">
+            <h2>💡 Why Choose Access Network?</h2>
+            <p>
+                In a crowded blockchain landscape, Access Network stands out through its commitment to 
+                usability, performance, and community. Unlike many networks that sacrifice user experience 
+                for technical complexity, Access Network is designed from the ground up to be intuitive and 
+                accessible to users of all experience levels.
+            </p>
+            <p>
+                Whether you are a developer looking to deploy your first smart contract, a business exploring 
+                blockchain-based payment solutions, or an individual interested in decentralized finance, 
+                Access Network provides the tools, documentation, and community support to help you succeed. 
+                Join thousands of users who are already building on Access Network.
             </p>
         </div>
 
@@ -1410,7 +1519,7 @@
         // Load Google Client ID from secure server endpoint
         async function loadGoogleClientId() {
             try {
-                const response = await fetch('https://accesschain.org/api/oauth-config');
+                const response = await fetch('/api/oauth-config');
                 const data = await response.json();
                 if (data.success && data.clientId) {
                     GOOGLE_CLIENT_ID = data.clientId;
@@ -1527,7 +1636,7 @@
 
                 // Save user to database
                 try {
-                    const response = await fetch('https://accesschain.org/api/auth/explorer-google', {
+                    const response = await fetch('/api/auth/explorer-google', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
