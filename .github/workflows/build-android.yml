@@ -133,8 +133,15 @@ jobs:
           # cordova-plugin-ads hardcodes the developer's APP_ID in plugin.xml
           # Replace it with our test app ID (change to production when ready)
           sed -i 's/ca-app-pub-4029587076166791~9642866395/ca-app-pub-3940256099942544~3347511713/g' "$MANIFEST"
-          echo '✅ APPLICATION_ID updated to test ID'
-          grep 'APPLICATION_ID' "$MANIFEST" || true
+          
+          # Remove duplicate entries caused by plugin being processed twice during cordova platform add
+          echo '🔧 Removing duplicate manifest entries...'
+          awk '/com\.google\.android\.gms\.ads\.APPLICATION_ID/ { if (++c1 > 1) next } 1' "$MANIFEST" > "${MANIFEST}.tmp" && mv "${MANIFEST}.tmp" "$MANIFEST"
+          awk '/com\.google\.android\.gms\.ads\.DELAY_APP_MEASUREMENT_INIT/ { if (++c2 > 1) next } 1' "$MANIFEST" > "${MANIFEST}.tmp" && mv "${MANIFEST}.tmp" "$MANIFEST"
+          awk '/com\.google\.android\.gms\.ads\.AdActivity/ { if (++c3 > 1) next } 1' "$MANIFEST" > "${MANIFEST}.tmp" && mv "${MANIFEST}.tmp" "$MANIFEST"
+          
+          echo '✅ APPLICATION_ID fixed and duplicates removed'
+          grep -n 'APPLICATION_ID' "$MANIFEST" || true
         fi
 
     - name: Fix AndroidManifest for background retention
