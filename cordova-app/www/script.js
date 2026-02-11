@@ -8135,9 +8135,9 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         userData._requiresRefresh = true;
         userData._forceUpdate = true; // Add flag to force fresh profile data
         
-        // ✅ FIX: Ensure avatar has default value if missing (for old sessions)
+        // ✅ FIX: If avatar is missing, leave empty - letter avatar will be generated on display
         if (!userData.avatar) {
-          userData.avatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+          userData.avatar = '';
         }
         
         return userData;
@@ -8366,6 +8366,49 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     });
   }
 
+  // Generate a letter avatar SVG with user's initial and a color based on name
+  function generateLetterAvatar(name) {
+    const initial = (name || '?').charAt(0).toUpperCase();
+    // Generate consistent color from name
+    let hash = 0;
+    for (let i = 0; i < (name || '').length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colors = ['#4f46e5','#7c3aed','#db2777','#dc2626','#ea580c','#d97706','#16a34a','#0891b2','#2563eb','#9333ea'];
+    const bg = colors[Math.abs(hash) % colors.length];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+      <rect width="200" height="200" rx="100" fill="${bg}"/>
+      <text x="100" y="100" text-anchor="middle" dy=".35em" font-family="Arial,sans-serif" font-size="90" font-weight="700" fill="#fff">${initial}</text>
+    </svg>`;
+    return 'data:image/svg+xml;base64,' + btoa(svg);
+  }
+
+  // Get avatar source — real avatar, or generate letter avatar from name
+  function getAvatarSrc(user) {
+    if (user.avatar && user.avatar.startsWith('data:image/') && 
+        !user.avatar.startsWith('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDA') &&
+        user.avatar.length > 200) {
+      return user.avatar; // Real base64 image
+    }
+    if (user.avatar && user.avatar.startsWith('http') && user.avatar.length > 20) {
+      return user.avatar; // URL (shouldn't happen anymore but just in case)
+    }
+    // No real avatar — generate letter avatar
+    return generateLetterAvatar(user.name || user.email || '?');
+  }
+
+  // Set avatar on an <img> element with error fallback
+  function setAvatarWithFallback(imgEl, user) {
+    if (!imgEl) return;
+    const src = getAvatarSrc(user);
+    imgEl.src = src;
+    // If the image fails to load, show letter avatar
+    imgEl.onerror = function() {
+      this.onerror = null; // prevent infinite loop
+      this.src = generateLetterAvatar(user.name || user.email || '?');
+    };
+  }
+
   // Update UI with user information, ensuring we display the most recent data
   function updateUserInfo(user) {
     console.log('Updating user interface with current data:', user.email);
@@ -8379,35 +8422,15 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     // Update all UI elements with current user data
     if (profileName) profileName.textContent = user.name || 'User';
     if (profileEmail) profileEmail.textContent = user.email || '';
-    // Default avatar SVG
-    const defaultAvatarSvg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
-
     if (profileAvatar) {
-      // Add cache-busting parameter for images to prevent browser caching the old image
-      const avatarUrl = user.avatar || defaultAvatarSvg;
-      const cacheBuster = `?t=${Date.now()}`;
-
-      // Only add cache buster for URLs that aren't data URLs
-      if (avatarUrl.startsWith('data:')) {
-        profileAvatar.src = avatarUrl;
-      } else {
-        profileAvatar.src = avatarUrl + cacheBuster;
-      }
+      setAvatarWithFallback(profileAvatar, user);
     }
     if (profileNameInput) profileNameInput.value = user.name || 'User';
 
     // Also update user avatar on mobile header if it exists
     const mobileAvatar = document.getElementById('mobile-user-avatar');
     if (mobileAvatar) {
-      const avatarUrl = user.avatar || defaultAvatarSvg;
-      const cacheBuster = `?t=${Date.now()}`;
-
-      // Only add cache buster for URLs that aren't data URLs
-      if (avatarUrl.startsWith('data:')) {
-        mobileAvatar.src = avatarUrl;
-      } else {
-        mobileAvatar.src = avatarUrl + cacheBuster;
-      }
+      setAvatarWithFallback(mobileAvatar, user);
     }
 
     // Also update dashboard avatar and name to match profile
@@ -8415,15 +8438,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     const dashboardUserName = document.getElementById('dashboard-user-name');
     
     if (dashboardAvatar) {
-      const avatarUrl = user.avatar || defaultAvatarSvg;
-      const cacheBuster = `?t=${Date.now()}`;
-
-      // Only add cache buster for URLs that aren't data URLs
-      if (avatarUrl.startsWith('data:')) {
-        dashboardAvatar.src = avatarUrl;
-      } else {
-        dashboardAvatar.src = avatarUrl + cacheBuster;
-      }
+      setAvatarWithFallback(dashboardAvatar, user);
     }
     
     if (dashboardUserName && user.name) {
@@ -8438,25 +8453,11 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           // Update the UI with latest server data
           if (profileName) profileName.textContent = userData.name || 'User';
           if (profileAvatar) {
-            const avatarUrl = userData.avatar || defaultAvatarSvg;
-            const cacheBuster = `?t=${Date.now()}`;
-
-            if (avatarUrl.startsWith('data:')) {
-              profileAvatar.src = avatarUrl;
-            } else {
-              profileAvatar.src = avatarUrl + cacheBuster;
-            }
+            setAvatarWithFallback(profileAvatar, userData);
           }
           if (profileNameInput) profileNameInput.value = userData.name || 'User';
           if (mobileAvatar) {
-            const avatarUrl = userData.avatar || defaultAvatarSvg;
-            const cacheBuster = `?t=${Date.now()}`;
-
-            if (avatarUrl.startsWith('data:')) {
-              mobileAvatar.src = avatarUrl;
-            } else {
-              mobileAvatar.src = avatarUrl + cacheBuster;
-            }
+            setAvatarWithFallback(mobileAvatar, userData);
           }
 
           // Also update dashboard avatar and name
@@ -8464,14 +8465,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           const dashboardUserName = document.getElementById('dashboard-user-name');
           
           if (dashboardAvatar) {
-            const avatarUrl = userData.avatar || defaultAvatarSvg;
-            const cacheBuster = `?t=${Date.now()}`;
-
-            if (avatarUrl.startsWith('data:')) {
-              dashboardAvatar.src = avatarUrl;
-            } else {
-              dashboardAvatar.src = avatarUrl + cacheBuster;
-            }
+            setAvatarWithFallback(dashboardAvatar, userData);
           }
           
           if (dashboardUserName && userData.name) {
@@ -13063,10 +13057,10 @@ if (totalCost > (currentBalance + precision)) {
           // Log final decision 
           console.log(`Final status for ${referral.name}: isActive=${isActive}, statusText=${statusText}`);
 
-          const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+          const referralAvatarSrc = getAvatarSrc({avatar: referral.avatar, name: referral.name, email: referral.email});
           item.innerHTML = `
             <div class="referral-user">
-              <img src="${referral.avatar || defaultAvatar}" alt="User" class="referral-avatar" onerror="this.onerror=null; this.src='${defaultAvatar}';">
+              <img src="${referralAvatarSrc}" alt="User" class="referral-avatar">
               <div class="referral-user-info">
                 <div class="referral-name">${referral.name}</div>
                 <div class="referral-email">${maskedEmail}</div>
@@ -13369,8 +13363,8 @@ window.cancelProfileChanges = cancelProfileChanges;
        // Reset avatar if it was changed
        if (newProfileImage) {
          const profileAvatar = document.getElementById('profile-avatar');
-         if (profileAvatar && currentUser && currentUser.avatar) {
-           profileAvatar.src = currentUser.avatar;
+         if (profileAvatar && currentUser) {
+           setAvatarWithFallback(profileAvatar, currentUser);
          }
          newProfileImage = null;
        }
@@ -13535,11 +13529,10 @@ window.cancelProfileChanges = cancelProfileChanges;
      function deleteProfilePhoto() {
        const profileAvatar = document.getElementById('profile-avatar');
        if (profileAvatar && currentUser) {
-         // Check if user already has default avatar - new clean user icon
-        const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+         // Check if current avatar is a real photo (not empty/null/letter avatar)
+         const hasRealAvatar = currentUser.avatar && currentUser.avatar.length > 200 && currentUser.avatar.startsWith('data:image/');
 
-         // Check if current avatar is already default or null
-         if (!currentUser.avatar || currentUser.avatar === defaultAvatar || currentUser.avatar === null) {
+         if (!hasRealAvatar) {
            // Show single message that there's no photo to delete
            if (typeof showNotification === 'function') {
              const message = (typeof translator !== 'undefined' && translator.translate)
@@ -13550,23 +13543,29 @@ window.cancelProfileChanges = cancelProfileChanges;
            return; // Stop here - don't show any other messages
          }
 
-         // Update avatar image immediately to default
-         profileAvatar.src = defaultAvatar;
+         // Generate letter avatar as replacement
+         const letterAvatar = generateLetterAvatar(currentUser.name || currentUser.email || '?');
+
+         // Update avatar image immediately to letter avatar
+         profileAvatar.src = letterAvatar;
 
          // Update all avatar instances in the page
          const dashboardAvatar = document.getElementById('dashboard-profile-avatar');
          if (dashboardAvatar) {
-           dashboardAvatar.src = defaultAvatar;
+           dashboardAvatar.src = letterAvatar;
+         }
+         const mobileAvatar = document.getElementById('mobile-user-avatar');
+         if (mobileAvatar) {
+           mobileAvatar.src = letterAvatar;
          }
 
-         // Update user data with default avatar (not null)
+         // Clear avatar from user data and save to server
          if (currentUser) {
-           currentUser.avatar = defaultAvatar;
+           currentUser.avatar = '';
 
-           // Save the change immediately to server with default avatar - without additional notification
+           // Save empty avatar to server
            if (typeof saveProfileChanges === 'function') {
-             // Pass true as third parameter to prevent showing "updated successfully" notification
-             saveProfileChanges(currentUser.name, defaultAvatar, true);
+             saveProfileChanges(currentUser.name, '', true);
            }
 
            // Show single success notification only
@@ -14083,25 +14082,30 @@ window.cancelProfileChanges = cancelProfileChanges;
   window.deleteProfilePhoto = function() {
     const profileAvatar = document.getElementById('profile-avatar');
     if (profileAvatar && currentUser) {
-      const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCI`x`sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIicjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAuOHYxYzAtMS0xLTItMi0yaC0xNmMtMSAwLTIgLTEtMi03di0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+      const hasRealAvatar = currentUser.avatar && currentUser.avatar.length > 200 && currentUser.avatar.startsWith('data:image/');
 
-      if (!currentUser.avatar || currentUser.avatar === defaultAvatar || currentUser.avatar === null) {
+      if (!hasRealAvatar) {
         if (typeof showNotification === 'function') {
           showNotification('No profile photo to delete', 'info');
         }
         return;
       }
 
-      profileAvatar.src = defaultAvatar;
+      const letterAvatar = generateLetterAvatar(currentUser.name || currentUser.email || '?');
+      profileAvatar.src = letterAvatar;
       const dashboardAvatar = document.getElementById('dashboard-profile-avatar');
       if (dashboardAvatar) {
-        dashboardAvatar.src = defaultAvatar;
+        dashboardAvatar.src = letterAvatar;
+      }
+      const mobileAvatar = document.getElementById('mobile-user-avatar');
+      if (mobileAvatar) {
+        mobileAvatar.src = letterAvatar;
       }
 
       if (currentUser) {
-        currentUser.avatar = defaultAvatar;
+        currentUser.avatar = '';
         if (typeof saveProfileChanges === 'function') {
-          saveProfileChanges(currentUser.name, defaultAvatar, true);
+          saveProfileChanges(currentUser.name, '', true);
         }
         if (typeof showNotification === 'function') {
           showNotification('Profile photo changed to default', 'success');
@@ -15527,13 +15531,13 @@ function createLeaderboardItem(rank, user) {
   const userEl = document.createElement('div');
   userEl.className = 'leaderboard-user';
   
-  const defaultAvatarLeaderboard = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
   const avatar = document.createElement('img');
   avatar.className = 'leaderboard-avatar';
-  avatar.src = user.profileImage || user.avatar || defaultAvatarLeaderboard;
+  avatar.src = getAvatarSrc({avatar: user.profileImage || user.avatar, name: user.username, email: user.email});
   avatar.alt = user.username || user.email;
   avatar.onerror = function() {
-    this.src = defaultAvatarLeaderboard;
+    this.onerror = null;
+    this.src = generateLetterAvatar(user.username || user.email || '?');
   };
   
   const username = document.createElement('div');
