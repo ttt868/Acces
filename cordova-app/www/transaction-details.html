@@ -2786,6 +2786,40 @@
 
         // Trigger Google Sign In using OAuth 2.0 redirect flow
         function triggerGoogleSignIn() {
+
+            // 📱 Cordova: Use native Google Sign-In (independent from mining)
+            if (window.IS_CORDOVA_APP && window.plugins && window.plugins.googleplus) {
+                console.log('📱 Explorer: Using native Google Sign-In');
+                // Do NOT disconnect - that would affect mining session
+                window.plugins.googleplus.login(
+                    {
+                        scopes: 'profile email',
+                        webClientId: window.GOOGLE_CLIENT_ID_WEB || GOOGLE_CLIENT_ID,
+                        offline: false
+                    },
+                    function(userData) {
+                        console.log('✅ Explorer native sign-in success:', userData.email);
+                        const explorerUser = {
+                            email: userData.email,
+                            name: userData.displayName,
+                            picture: userData.imageUrl || userData.photoUrl || '',
+                            sub: userData.userId
+                        };
+                        // Build fake credential for handleGoogleSignIn
+                        const b64 = str => btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                        const header = b64(JSON.stringify({alg: 'none', typ: 'JWT'}));
+                        const body = b64(JSON.stringify(explorerUser));
+                        const fakeCredential = header + '.' + body + '.explorer';
+                        handleGoogleSignIn({ credential: fakeCredential });
+                    },
+                    function(error) {
+                        console.error('❌ Explorer native sign-in error:', error);
+                        showAuthMessage('Sign in failed. Please try again.');
+                    }
+                );
+                return;
+            }
+
             if (!GOOGLE_CLIENT_ID) {
                 showAuthMessage('Google authentication not configured. Please try again.');
                 return;

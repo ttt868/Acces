@@ -516,11 +516,12 @@ function setupGoogleSignIn() {
             return;
         }
         
-        // Always disconnect first to force account picker
+        // Use logout (not disconnect) to clear cached account but preserve Google connection
+        // disconnect() destroys the session completely and can cause profile picture loss
         try {
             await new Promise((resolve) => {
-                window.plugins.googleplus.disconnect(() => {
-                    console.log('✅ Disconnected before login (forces account picker)');
+                window.plugins.googleplus.logout(() => {
+                    console.log('✅ Logged out before login (allows account picker)');
                     resolve();
                 }, () => resolve());
             });
@@ -655,11 +656,11 @@ function setupGoogleSignIn() {
     console.log('✅ Google Sign-In ready');
 }
 
-// ✅ Google Sign-Out
+// ✅ Google Sign-Out (logout only, NOT disconnect - preserves profile data)
 window.nativeGoogleSignOut = function() {
     return new Promise(resolve => {
         if (window.plugins?.googleplus) {
-            window.plugins.googleplus.disconnect(() => resolve(), () => resolve());
+            window.plugins.googleplus.logout(() => resolve(), () => resolve());
         } else {
             resolve();
         }

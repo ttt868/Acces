@@ -14679,15 +14679,10 @@ window.cancelProfileChanges = cancelProfileChanges;
   });
 
   document.getElementById('logout-confirm').addEventListener('click', async function() {
-    // 📱 Cordova: Sign out from Google first
-    if (window.IS_CORDOVA_APP && typeof window.nativeGoogleSignOut === 'function') {
-      try {
-        await window.nativeGoogleSignOut();
-        console.log('✅ Google Sign-Out complete');
-      } catch(e) {
-        console.log('⚠️ Google Sign-Out error:', e);
-      }
-    }
+    // 📱 Cordova: Do NOT call googleplus.disconnect() - it destroys the Google
+    // session completely and causes profile picture loss on re-login.
+    // We only clear local data. The native Google plugin stays connected.
+    console.log('📱 Logout: Clearing local session only (preserving Google connection)');
 
     // Clear processing timer if exists
     if (activityInterval) {
