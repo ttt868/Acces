@@ -611,27 +611,28 @@ function setupGoogleSignIn() {
                                 completeLogin(base64data);
                             };
                             reader.onerror = function() {
-                                console.warn('📷 ⚠️ FileReader error, using default avatar');
-                                completeLogin(DEFAULT_AVATAR);
+                                console.warn('📷 ⚠️ FileReader error, using Google URL instead');
+                                completeLogin(googlePicUrl);
                             };
                             reader.readAsDataURL(xhr.response);
                         } else {
-                            console.warn('📷 ⚠️ XHR status:', xhr.status, ', using default avatar');
-                            completeLogin(DEFAULT_AVATAR);
+                            console.warn('📷 ⚠️ XHR status:', xhr.status, ', using Google URL instead');
+                            completeLogin(googlePicUrl);
                         }
                     };
                     xhr.onerror = function() {
-                        console.warn('📷 ⚠️ XHR error downloading picture, using default avatar');
-                        completeLogin(DEFAULT_AVATAR);
+                        console.warn('📷 ⚠️ XHR error, using Google URL instead');
+                        completeLogin(googlePicUrl);
                     };
                     xhr.ontimeout = function() {
-                        console.warn('📷 ⚠️ XHR timeout downloading picture, using default avatar');
-                        completeLogin(DEFAULT_AVATAR);
+                        console.warn('📷 ⚠️ XHR timeout, using Google URL instead');
+                        completeLogin(googlePicUrl);
                     };
                     xhr.send();
                 } else {
-                    console.log('📷 No Google picture URL available, using default avatar');
-                    completeLogin(DEFAULT_AVATAR);
+                    console.log('📷 No Google picture URL available, checking DB for existing avatar');
+                    // Don't use default avatar - let server keep whatever avatar is already in DB
+                    completeLogin('');
                 }
             },
             function(error) {
