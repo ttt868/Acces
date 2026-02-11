@@ -1,211 +1,279 @@
-// Offline Detection System - Simple and resource-efficient
+// Professional Offline Detection System - Real ping + smart retry
 class OfflineDetector {
   constructor() {
-    this.isOnline = navigator.onLine;
+    this.isOnline = true;
     this.offlinePage = null;
+    this.isChecking = false;
+    this.retryInterval = null;
+    this.retryCount = 0;
     this.translator = window.translator || { translate: (key) => key };
+    this.PING_TIMEOUT = 6000;
+    this.AUTO_RETRY_MS = 8000;
+    this.pingUrl = this._getPingUrl();
 
     this.initialize();
   }
 
-  initialize() {
-    console.log('Initializing Simple Offline Detection System');
-
-    // ✅ فقط تحقق من حالة الإنترنت (navigator.onLine) - ليس السيرفر
-    if (!navigator.onLine) {
-      this.handleOffline();
+  _getPingUrl() {
+    // Use the app's own healthcheck or a lightweight endpoint
+    if (typeof window.API_BASE_URL !== 'undefined') {
+      return window.API_BASE_URL + '/api/health';
     }
-
-    // Listen for browser events
-    window.addEventListener('online', () => this.handleOnline());
-    window.addEventListener('offline', () => this.handleOffline());
-
-    // Make checkConnection globally available for manual retry button
-    window.checkConnection = () => this.checkConnection();
+    return window.location.origin + '/api/health';
   }
 
-  async checkConnection() {
-    // ✅ فقط تحقق من الإنترنت - ليس السيرفر
-    if (navigator.onLine) {
-      if (!this.isOnline) {
-        this.handleOnline();
-      }
+  initialize() {
+    console.log('[OfflineDetector] Initializing professional offline detection');
+
+    // Listen for browser connectivity events
+    window.addEventListener('online', () => this._onBrowserOnline());
+    window.addEventListener('offline', () => this._onBrowserOffline());
+
+    // Make retry globally available
+    window.checkConnection = () => this.manualRetry();
+
+    // Initial check — if browser says offline, show immediately
+    if (!navigator.onLine) {
+      this._goOffline();
+    }
+  }
+
+  // ── Real connection test via fetch ping ──
+  async _ping() {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), this.PING_TIMEOUT);
+      const res = await fetch(this.pingUrl, {
+        method: 'HEAD',
+        mode: 'no-cors',
+        cache: 'no-store',
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
       return true;
-    } else {
-      if (this.isOnline) {
-        this.handleOffline();
-      }
+    } catch {
       return false;
     }
   }
 
-  handleOnline() {
-    // Double-check with real connection test before going online
-    this.checkConnection().then(isReallyOnline => {
-      if (isReallyOnline) {
-        console.log('Connection restored - reloading page for smooth experience');
-        this.isOnline = true;
-
-        // Hide offline page first
-        this.hideOfflinePage();
-
-        // Show success notification briefly before reload
-        if (typeof showNotification === 'function') {
-          showNotification(this.translator.translate('Connection restored - refreshing...'), 'success');
-        }
-
-        // Reload page after a brief delay to ensure smooth transition
-        // This prevents glitches and ensures all resources load correctly
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
-      }
-    });
+  // ── Browser events ──
+  _onBrowserOnline() {
+    // Browser says online — verify with real ping
+    this._verifyAndRestore();
   }
 
-  handleOffline() {
-    console.log('Connection lost - going offline');
+  _onBrowserOffline() {
+    this._goOffline();
+  }
+
+  // ── Manual retry (button click) ──
+  async manualRetry() {
+    if (this.isChecking) return;
+    this.isChecking = true;
+    this.retryCount++;
+
+    this._setButtonState('loading');
+
+    const online = await this._ping();
+
+    if (online) {
+      this._setButtonState('success');
+      setTimeout(() => this._goOnline(), 600);
+    } else {
+      this._setButtonState('failed');
+      // Reset button after showing failure
+      setTimeout(() => this._setButtonState('idle'), 2000);
+    }
+    this.isChecking = false;
+  }
+
+  // ── Auto-verify when browser fires 'online' ──
+  async _verifyAndRestore() {
+    const online = await this._ping();
+    if (online) {
+      this._goOnline();
+    }
+  }
+
+  // ── State transitions ──
+  _goOffline() {
+    if (!this.isOnline && document.getElementById('connection-offline-page')) return;
+    console.log('[OfflineDetector] Connection lost');
     this.isOnline = false;
-
-    // Show offline page
+    this.retryCount = 0;
     this.showOfflinePage();
+    this._startAutoRetry();
   }
 
-  showOfflinePage() {
-    // Check if offline page already exists
-    let offlinePage = document.getElementById('connection-offline-page');
+  _goOnline() {
+    if (this.isOnline && !document.getElementById('connection-offline-page')) return;
+    console.log('[OfflineDetector] Connection restored');
+    this.isOnline = true;
+    this._stopAutoRetry();
+    this.hideOfflinePage();
 
-    if (offlinePage) {
-      offlinePage.style.display = 'flex';
-      // Prevent background scrolling and interaction
+    if (typeof showNotification === 'function') {
+      showNotification(this.translator.translate('Connection restored'), 'success');
+    }
+    // Reload for a clean state
+    setTimeout(() => window.location.reload(), 700);
+  }
+
+  // ── Auto retry in background ──
+  _startAutoRetry() {
+    this._stopAutoRetry();
+    this.retryInterval = setInterval(async () => {
+      if (this.isChecking) return;
+      const online = await this._ping();
+      if (online) {
+        this._goOnline();
+      } else {
+        // Update status text with attempt count
+        this._updateStatusText();
+      }
+    }, this.AUTO_RETRY_MS);
+  }
+
+  _stopAutoRetry() {
+    if (this.retryInterval) {
+      clearInterval(this.retryInterval);
+      this.retryInterval = null;
+    }
+  }
+
+  // ── Button visual states ──
+  _setButtonState(state) {
+    const btn = document.querySelector('.connection-retry-btn');
+    if (!btn) return;
+
+    const iconEl = btn.querySelector('.retry-btn-icon');
+    const textEl = btn.querySelector('.retry-btn-text');
+    if (!iconEl || !textEl) return;
+
+    btn.classList.remove('is-loading', 'is-success', 'is-failed');
+
+    switch (state) {
+      case 'loading':
+        btn.classList.add('is-loading');
+        btn.disabled = true;
+        iconEl.className = 'retry-btn-icon fas fa-circle-notch fa-spin';
+        textEl.textContent = this.translator.translate('Checking...');
+        break;
+      case 'success':
+        btn.classList.add('is-success');
+        btn.disabled = true;
+        iconEl.className = 'retry-btn-icon fas fa-check';
+        textEl.textContent = this.translator.translate('Connected!');
+        break;
+      case 'failed':
+        btn.classList.add('is-failed');
+        btn.disabled = false;
+        iconEl.className = 'retry-btn-icon fas fa-times';
+        textEl.textContent = this.translator.translate('No connection');
+        break;
+      default: // idle
+        btn.disabled = false;
+        iconEl.className = 'retry-btn-icon fas fa-rotate-right';
+        textEl.textContent = this.translator.translate('Try Again');
+    }
+  }
+
+  _updateStatusText() {
+    const statusEl = document.querySelector('.connection-status-text');
+    if (statusEl) {
+      statusEl.textContent = this.translator.translate('Searching for connection...');
+    }
+  }
+
+  // ── Build offline page DOM ──
+  showOfflinePage() {
+    let page = document.getElementById('connection-offline-page');
+    if (page) {
+      page.style.display = 'flex';
       this.preventBackgroundInteraction();
       return;
     }
 
-    // Create offline page if it doesn't exist
-    offlinePage = document.createElement('div');
-    offlinePage.id = 'connection-offline-page';
-    offlinePage.className = 'connection-offline-page';
+    page = document.createElement('div');
+    page.id = 'connection-offline-page';
+    page.className = 'connection-offline-page';
 
-    // Create structure using safe DOM methods
-    const container = document.createElement('div');
-    container.className = 'connection-offline-container';
+    page.innerHTML = `
+      <div class="connection-offline-container">
+        <div class="connection-offline-hero">
+          <!-- Animated WiFi icon -->
+          <div class="connection-offline-icon-container">
+            <div class="connection-offline-icon">
+              <svg viewBox="0 0 24 24" class="connection-wifi-offline-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 1l22 22"/>
+                <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+                <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                <line x1="12" y1="20" x2="12.01" y2="20"/>
+              </svg>
+            </div>
+            <div class="connection-signal-waves">
+              <div class="connection-wave connection-wave-1"></div>
+              <div class="connection-wave connection-wave-2"></div>
+              <div class="connection-wave connection-wave-3"></div>
+            </div>
+          </div>
 
-    const hero = document.createElement('div');
-    hero.className = 'connection-offline-hero';
+          <!-- Content -->
+          <div class="connection-offline-content">
+            <h1 class="connection-offline-title">${this.translator.translate('No Internet Connection')}</h1>
+            <p class="connection-offline-subtitle">${this.translator.translate('Please check your Wi-Fi or mobile data and try again')}</p>
 
-    // Icon container
-    const iconContainer = document.createElement('div');
-    iconContainer.className = 'connection-offline-icon-container';
+            <!-- Status indicator -->
+            <div class="connection-offline-status">
+              <div class="connection-status-indicator">
+                <span class="connection-status-dot"></span>
+                <span class="connection-status-text">${this.translator.translate('Searching for connection...')}</span>
+              </div>
+            </div>
 
-    const iconDiv = document.createElement('div');
-    iconDiv.className = 'connection-offline-icon';
+            <!-- Retry button -->
+            <div class="connection-offline-actions">
+              <button class="connection-retry-btn" onclick="checkConnection()">
+                <i class="retry-btn-icon fas fa-rotate-right"></i>
+                <span class="retry-btn-text">${this.translator.translate('Try Again')}</span>
+              </button>
+            </div>
 
-    // SVG icon (safe static content)
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 100 100');
-    svg.className = 'connection-wifi-offline-icon';
-    
-    // WiFi paths
-    const paths = [
-      'M50 75 C52 75 54 77 54 79 C54 81 52 83 50 83 C48 83 46 81 46 79 C46 77 48 75 50 75 Z',
-      'M50 65 C55 65 59 67 62 71 L67 66 C62 61 56 58 50 58 C44 58 38 61 33 66 L38 71 C41 67 45 65 50 65 Z',
-      'M50 48 C59 48 67 52 73 58 L78 53 C70 45 60 40 50 40 C40 40 30 45 22 53 L27 58 C33 52 41 48 50 48 Z',
-      'M50 31 C63 31 75 37 83 46 L88 41 C78 31 65 25 50 25 C35 25 22 31 12 41 L17 46 C25 37 37 31 50 31 Z'
-    ];
-    
-    paths.forEach(pathData => {
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', pathData);
-      path.setAttribute('fill', 'currentColor');
-      svg.appendChild(path);
-    });
-    
-    // Diagonal line
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', '15');
-    line.setAttribute('y1', '15');
-    line.setAttribute('x2', '85');
-    line.setAttribute('y2', '85');
-    line.setAttribute('stroke', 'currentColor');
-    line.setAttribute('stroke-width', '4');
-    line.setAttribute('stroke-linecap', 'round');
-    svg.appendChild(line);
+            <!-- Tips -->
+            <div class="connection-offline-tips">
+              <p class="connection-tip"><i class="fas fa-wifi"></i> ${this.translator.translate('Check your Wi-Fi connection')}</p>
+              <p class="connection-tip"><i class="fas fa-signal"></i> ${this.translator.translate('Enable mobile data')}</p>
+              <p class="connection-tip"><i class="fas fa-plane"></i> ${this.translator.translate('Disable airplane mode')}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
 
-    iconDiv.appendChild(svg);
-
-    // Signal waves
-    const signalWaves = document.createElement('div');
-    signalWaves.className = 'connection-signal-waves';
-    
-    for (let i = 1; i <= 3; i++) {
-      const wave = document.createElement('div');
-      wave.className = `connection-wave connection-wave-${i}`;
-      signalWaves.appendChild(wave);
-    }
-
-    iconContainer.appendChild(iconDiv);
-    iconContainer.appendChild(signalWaves);
-
-    // Content section
-    const content = document.createElement('div');
-    content.className = 'connection-offline-content';
-
-    const title = document.createElement('h1');
-    title.className = 'connection-offline-title';
-    title.textContent = this.translator.translate('No Internet Connection');
-
-    const subtitle = document.createElement('p');
-    subtitle.className = 'connection-offline-subtitle';
-    subtitle.textContent = this.translator.translate('Please check your internet connection and try again');
-
-    const actions = document.createElement('div');
-    actions.className = 'connection-offline-actions';
-
-    const retryBtn = document.createElement('button');
-    retryBtn.className = 'connection-retry-btn';
-    retryBtn.onclick = () => checkConnection();
-
-    const icon = document.createElement('i');
-    icon.className = 'fas fa-sync-alt';
-
-    const span = document.createElement('span');
-    span.textContent = this.translator.translate('Try again');
-
-    retryBtn.appendChild(icon);
-    retryBtn.appendChild(span);
-    actions.appendChild(retryBtn);
-
-    content.appendChild(title);
-    content.appendChild(subtitle);
-    content.appendChild(actions);
-
-    hero.appendChild(iconContainer);
-    hero.appendChild(content);
-    container.appendChild(hero);
-    offlinePage.appendChild(container);
-
-    document.body.appendChild(offlinePage);
-    this.offlinePage = offlinePage;
-
-    // Apply current theme
+    document.body.appendChild(page);
+    this.offlinePage = page;
     this.applyCurrentTheme();
-
-    // Prevent background interaction
     this.preventBackgroundInteraction();
+    // Animate entrance
+    requestAnimationFrame(() => page.classList.add('is-visible'));
   }
 
   hideOfflinePage() {
-    const offlinePage = document.getElementById('connection-offline-page');
-    if (offlinePage) {
-      offlinePage.style.display = 'none';
-      // Restore background interaction
+    const page = document.getElementById('connection-offline-page');
+    if (!page) return;
+    page.classList.remove('is-visible');
+    page.classList.add('is-exiting');
+    setTimeout(() => {
+      page.style.display = 'none';
+      page.classList.remove('is-exiting');
       this.restoreBackgroundInteraction();
-    }
+    }, 400);
   }
 
   preventBackgroundInteraction() {
-    // Store original styles
     this.originalBodyStyle = {
       overflow: document.body.style.overflow,
       position: document.body.style.position,
@@ -213,8 +281,6 @@ class OfflineDetector {
       userSelect: document.body.style.userSelect,
       overscrollBehavior: document.body.style.overscrollBehavior
     };
-
-    // Prevent all body interactions
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
@@ -222,35 +288,21 @@ class OfflineDetector {
     document.body.style.touchAction = 'none';
     document.body.style.userSelect = 'none';
     document.body.style.overscrollBehavior = 'none';
-
-    // Also apply to html element
     document.documentElement.style.overflow = 'hidden';
     document.documentElement.style.touchAction = 'none';
     document.documentElement.style.overscrollBehavior = 'none';
 
-    // Prevent touch events on the entire document
     this.touchStartHandler = (e) => {
-      // Only allow touches on the offline page itself
-      const offlinePage = document.getElementById('connection-offline-page');
-      if (offlinePage && !offlinePage.contains(e.target)) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
+      const page = document.getElementById('connection-offline-page');
+      if (page && !page.contains(e.target)) { e.preventDefault(); e.stopPropagation(); }
     };
-
-    this.touchMoveHandler = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-    };
-
+    this.touchMoveHandler = (e) => { e.preventDefault(); e.stopPropagation(); };
     document.addEventListener('touchstart', this.touchStartHandler, { passive: false });
     document.addEventListener('touchmove', this.touchMoveHandler, { passive: false });
     document.addEventListener('wheel', this.touchMoveHandler, { passive: false });
-    document.addEventListener('scroll', this.touchMoveHandler, { passive: false });
   }
 
   restoreBackgroundInteraction() {
-    // Restore original body styles
     if (this.originalBodyStyle) {
       document.body.style.overflow = this.originalBodyStyle.overflow;
       document.body.style.position = this.originalBodyStyle.position;
@@ -260,89 +312,67 @@ class OfflineDetector {
       document.body.style.userSelect = this.originalBodyStyle.userSelect;
       document.body.style.overscrollBehavior = this.originalBodyStyle.overscrollBehavior;
     }
-
-    // Restore html element styles
     document.documentElement.style.overflow = '';
     document.documentElement.style.touchAction = '';
     document.documentElement.style.overscrollBehavior = '';
-
-    // Remove event listeners
     if (this.touchStartHandler) {
       document.removeEventListener('touchstart', this.touchStartHandler);
       document.removeEventListener('touchmove', this.touchMoveHandler);
       document.removeEventListener('wheel', this.touchMoveHandler);
-      document.removeEventListener('scroll', this.touchMoveHandler);
     }
   }
 
   applyCurrentTheme() {
-    const offlinePage = document.getElementById('connection-offline-page');
-    if (!offlinePage) return;
-
-    // Check if dark theme is active
-    const isDarkTheme = document.documentElement.classList.contains('dark-theme') || 
-                       document.body.classList.contains('dark-theme');
-
-    if (isDarkTheme) {
-      offlinePage.classList.add('dark-theme');
-    } else {
-      offlinePage.classList.remove('dark-theme');
-    }
+    const page = document.getElementById('connection-offline-page');
+    if (!page) return;
+    const isDark = document.documentElement.classList.contains('dark-theme') ||
+                   document.body.classList.contains('dark-theme');
+    page.classList.toggle('dark-theme', isDark);
   }
 
-  // Update translations when language changes
   updateTranslations(translator) {
     this.translator = translator;
-
-    const offlinePage = document.getElementById('connection-offline-page');
-    if (offlinePage && offlinePage.style.display !== 'none') {
-      // Update text content safely without re-rendering
-      const title = offlinePage.querySelector('.connection-offline-title');
-      const subtitle = offlinePage.querySelector('.connection-offline-subtitle');
-      const retrySpan = offlinePage.querySelector('.connection-retry-btn span');
-
-      if (title) title.textContent = this.translator.translate('No Internet Connection');
-      if (subtitle) subtitle.textContent = this.translator.translate('Please check your internet connection and try again');
-      if (retrySpan) retrySpan.textContent = this.translator.translate('Try again');
-    }
+    const page = document.getElementById('connection-offline-page');
+    if (!page || page.style.display === 'none') return;
+    const t = (k) => translator.translate(k);
+    const q = (s) => page.querySelector(s);
+    if (q('.connection-offline-title')) q('.connection-offline-title').textContent = t('No Internet Connection');
+    if (q('.connection-offline-subtitle')) q('.connection-offline-subtitle').textContent = t('Please check your Wi-Fi or mobile data and try again');
+    if (q('.connection-status-text')) q('.connection-status-text').textContent = t('Searching for connection...');
+    if (q('.retry-btn-text')) q('.retry-btn-text').textContent = t('Try Again');
+    const tips = page.querySelectorAll('.connection-tip');
+    const tipTexts = ['Check your Wi-Fi connection', 'Enable mobile data', 'Disable airplane mode'];
+    tips.forEach((tip, i) => {
+      const icon = tip.querySelector('i');
+      if (icon && tipTexts[i]) tip.innerHTML = icon.outerHTML + ' ' + t(tipTexts[i]);
+    });
   }
 
-  // Cleanup method
   destroy() {
-    // Remove event listeners
-    window.removeEventListener('online', this.handleOnline);
-    window.removeEventListener('offline', this.handleOffline);
-
-    // Restore background interaction
+    this._stopAutoRetry();
+    window.removeEventListener('online', this._onBrowserOnline);
+    window.removeEventListener('offline', this._onBrowserOffline);
     this.restoreBackgroundInteraction();
-
-    // Remove offline page
-    const offlinePage = document.getElementById('connection-offline-page');
-    if (offlinePage) {
-      offlinePage.remove();
-    }
-
-    console.log('Simple Offline Detection System destroyed');
+    const page = document.getElementById('connection-offline-page');
+    if (page) page.remove();
   }
 }
 
-// Initialize offline detection system when DOM is ready
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-  // Wait a bit to ensure other systems are initialized
   setTimeout(() => {
     window.offlineDetector = new OfflineDetector();
-    console.log('Simple Offline Detection System initialized');
+    console.log('[OfflineDetector] Professional system initialized');
   }, 1000);
 });
 
-// Update translations when language changes
+// Update translations on language change
 document.addEventListener('languageChanged', function(event) {
-  if (window.offlineDetector && event.detail.translator) {
+  if (window.offlineDetector && event.detail && event.detail.translator) {
     window.offlineDetector.updateTranslations(event.detail.translator);
   }
 });
 
-// Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = OfflineDetector;
 }
