@@ -1171,7 +1171,10 @@ global.sendWebPushNotificationToRecipient = sendWebPushNotificationToRecipient;
 global.sendFCMNotificationToRecipient = sendFCMNotificationToRecipient;
 global.sendAllNotificationsToRecipient = sendAllNotificationsToRecipient;
 
+              // CLUSTER SAFETY: Only primary instance initializes blockchain
               // Import and initialize network system
+              const isPrimaryBlockchainInstance = !process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0';
+              if (isPrimaryBlockchainInstance) {
               try {
                 const { startContinuousSync, initializeNetwork, getNetworkNode } = await import('./network-api.js');
                 
@@ -1227,6 +1230,7 @@ global.sendAllNotificationsToRecipient = sendAllNotificationsToRecipient;
                 console.error('Warning: Network initialization failed:', networkError);
                 console.log('Continuing without ledger - transactions will use database only');
               }
+              } // end isPrimaryBlockchainInstance check
 
             } catch (err) {
               console.error('Error creating missing columns:', err);
@@ -3730,9 +3734,8 @@ const server = http.createServer(async (req, res) => {
           // 🔥 مسح جميع الـ caches قبل الحذف من قاعدة البيانات
           try {
             // مسح من ultraCache
-            if (ultraCache && ultraCache.userCache) {
-              ultraCache.userCache.delete(email);
-              ultraCache.userCache.delete(email.toLowerCase());
+            if (ultraCache) {
+              ultraCache.deleteUser(email);
             }
             // مسح من accumulated API cache
             if (accumulatedApiCache) {
@@ -9823,8 +9826,24 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Handle static file requests
-  let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
+  // ============================================================
+  // *** ADSENSE REDIRECT - REMOVE AFTER ADSENSE APPROVAL ***
+  // File: server.js (on server /var/www/Acces/RealisticHonorableDeskscan/server.js)
+  // Line: ~9826
+  // What: Redirects / to /about.html so AdSense crawler sees content page
+  // To remove: Delete this block and uncomment the original line below
+  // After removing, restart PM2: pm2 restart access-network
+  // ============================================================
+  if (pathname === '/') {
+    res.writeHead(301, { 'Location': '/about.html' });
+    res.end();
+    return;
+  }
+  // *** END ADSENSE REDIRECT ***
+
+  // ORIGINAL LINE (uncomment after removing redirect above):
+  // let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
+  let filePath = path.join(__dirname, pathname);
 
   // Check if the URL might be a directory or missing extension
   if (!path.extname(filePath)) {
@@ -9933,11 +9952,16 @@ function startServer(port) {
   // This is critical for deployments
   const httpServer = server.listen(port, '0.0.0.0')
     .on('listening', () => {
-      // Initialize blockchain after server starts
-      try {
-        initializeNetwork();
-      } catch (error) {
-        console.error('Error initializing blockchain:', error);
+      // CLUSTER SAFETY: Only primary instance runs blockchain
+      const isPrimaryInstance = !process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0';
+      if (isPrimaryInstance) {
+        try {
+          initializeNetwork();
+        } catch (error) {
+          console.error('Error initializing blockchain:', error);
+        }
+      } else {
+        console.log('API-only instance ' + (process.env.NODE_APP_INSTANCE || '?') + ' - blockchain on instance 0');
       }
 
       // Log different messages based on environment
