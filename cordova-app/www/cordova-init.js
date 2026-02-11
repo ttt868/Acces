@@ -652,8 +652,16 @@ function setupGoogleSignIn() {
         );
     };
     
-    window.triggerGoogleSignIn = window.signInWithGoogle;
-    console.log('✅ Google Sign-In ready');
+    // Only set triggerGoogleSignIn for index.html (mining page)
+    // Explorer pages define their own independent triggerGoogleSignIn
+    // that saves to explorerGoogleSession instead of accessoireUser
+    const isIndexPage = window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/');
+    if (isIndexPage) {
+        window.triggerGoogleSignIn = window.signInWithGoogle;
+        console.log('✅ Google Sign-In ready (mining mode)');
+    } else {
+        console.log('✅ Google Sign-In ready (explorer mode - using page-local auth)');
+    }
 }
 
 // ✅ Google Sign-Out (logout only, NOT disconnect - preserves profile data)
