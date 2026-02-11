@@ -844,7 +844,7 @@ document.addEventListener('balanceUpdated', function(event) {
                   if (res.isNotDisplayed() || res.isSkippedMoment()) {
                     // Fallback to OAuth2 flow - ensure we have client ID
                     if (window.GOOGLE_CLIENT_ID) {
-                      window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${window.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/oauth2callback')}&response_type=code&scope=openid email profile`;
+                      window.location.href = `https://accounts.google.com/oauth/authorize?client_id=${window.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(window.location.origin)}&response_type=code&scope=openid email profile`;
                     } else {
                       console.error('Google Client ID not configured - OAuth not available');
                     }
@@ -870,8 +870,8 @@ document.addEventListener('balanceUpdated', function(event) {
               return;
             }
             const clientId = window.GOOGLE_CLIENT_ID;
-            const redirectUri = encodeURIComponent(window.location.origin + '/oauth2callback');
-            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid email profile&access_type=online&prompt=select_account`;
+            const redirectUri = encodeURIComponent(window.location.origin);
+            const authUrl = `https://accounts.google.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid email profile&access_type=online&prompt=select_account`;
 
             window.location.href = authUrl;
           } catch (fallbackError) {
@@ -887,8 +887,8 @@ document.addEventListener('balanceUpdated', function(event) {
           return;
         }
         const clientId = window.GOOGLE_CLIENT_ID;
-        const redirectUri = encodeURIComponent(window.location.origin + '/oauth2callback');
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid email profile&access_type=online&prompt=select_account`;
+        const redirectUri = encodeURIComponent(window.location.origin);
+        const authUrl = `https://accounts.google.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid email profile&access_type=online&prompt=select_account`;
 
         window.location.href = authUrl;
       }
