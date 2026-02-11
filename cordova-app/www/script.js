@@ -8380,7 +8380,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
       <rect width="200" height="200" rx="100" fill="${bg}"/>
       <text x="100" y="100" text-anchor="middle" dy=".35em" font-family="Arial,sans-serif" font-size="90" font-weight="700" fill="#fff">${initial}</text>
     </svg>`;
-    return 'data:image/svg+xml;base64,' + btoa(svg);
+    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
   }
 
   // Get avatar source — real avatar, or generate letter avatar from name
