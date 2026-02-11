@@ -20,12 +20,8 @@ let isInitializing = false;
 // Get the network node instance
 export function getNetworkNode() {
   if (!networkNode && !isInitializing) {
-    // CLUSTER SAFETY: Only primary instance auto-initializes blockchain
-    const isPrimary = !process.env.NODE_APP_INSTANCE || process.env.NODE_APP_INSTANCE === '0';
-    if (isPrimary) {
-      console.log('🔧 Auto-initializing network node...');
-      networkNode = initializeNetwork();
-    }
+    console.log('🔧 Auto-initializing network node...');
+    networkNode = initializeNetwork();
   }
   return networkNode;
 }

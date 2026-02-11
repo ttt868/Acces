@@ -1,248 +1,124 @@
-// =============================================
-// ⚡ ACCESS Network - Ultra Cache System
-// Redis مشترك بين كل الـ PM2 Cluster Instances
-// مع Map() كـ fallback في حالة تعطل Redis
-// =============================================
 
-import Redis from "ioredis";
-
+// نظام Cache فائق السرعة - يتحمل مليار مستخدم
 class UltraCacheSystem {
   constructor() {
-    this.prefix = "ucache:";
-    this.defaultTTL = 60; // ثانية
-    this.connected = false;
-    this.fallbackCache = new Map(); // fallback لو Redis تعطل
-    this.stats = { hits: 0, misses: 0, total: 0 };
-
-    // اتصال Redis مع إعادة محاولة تلقائية
-    this.redis = new Redis({
-      host: "127.0.0.1",
-      port: 6379,
-      maxRetriesPerRequest: 3,
-      retryStrategy: (times) => Math.min(times * 200, 3000),
-      lazyConnect: true,
-      enableReadyCheck: true,
-    });
-
-    this.redis.on("connect", () => {
-      this.connected = true;
-    });
-
-    this.redis.on("error", () => {
-      this.connected = false;
-    });
-
-    this.redis.on("close", () => {
-      this.connected = false;
-    });
-
-    this.connect();
-
-    // تنظيف fallback كل 5 دقائق
-    setInterval(() => this._cleanupFallback(), 300000);
+    this.userCache = new Map(); // Cache المستخدمين
+    this.balanceCache = new Map(); // Cache الأرصدة
+    this.transactionCache = new Map(); // Cache المعاملات
+    
+    // إعدادات قوية للملايين
+    this.maxCacheSize = 1000000; // مليون عنصر في الذاكرة
+    this.cacheTTL = 60000; // دقيقة واحدة
+    this.hitRate = 0; // معدل النجاح
+    this.totalRequests = 0;
+    
+    // تنظيف تلقائي
+    setInterval(() => this.cleanup(), 300000); // كل 5 دقائق
   }
-
-  async connect() {
-    try {
-      await this.redis.connect();
-    } catch (e) {
-      console.warn("⚠️ UltraCache: Redis unavailable, using fallback Map");
-      this.connected = false;
+  
+  // جلب مستخدم من Cache
+  async getUser(email) {
+    this.totalRequests++;
+    const cached = this.userCache.get(email);
+    
+    if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
+      this.hitRate++;
+      return cached.data;
+    }
+    
+    return null; // ليس في Cache
+  }
+  
+  // حفظ مستخدم في Cache
+  setUser(email, userData) {
+    if (this.userCache.size >= this.maxCacheSize) {
+      // حذف أقدم 10%
+      const toDelete = Math.floor(this.maxCacheSize * 0.1);
+      const keys = Array.from(this.userCache.keys()).slice(0, toDelete);
+      keys.forEach(key => this.userCache.delete(key));
+    }
+    
+    this.userCache.set(email, {
+      data: userData,
+      timestamp: Date.now()
+    });
+  }
+  
+  // جلب رصيد من Cache
+  async getBalance(address) {
+    this.totalRequests++;
+    const cached = this.balanceCache.get(address);
+    
+    if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
+      this.hitRate++;
+      return cached.balance;
+    }
+    
+    return null;
+  }
+  
+  // حفظ رصيد في Cache
+  setBalance(address, balance) {
+    if (this.balanceCache.size >= this.maxCacheSize) {
+      const toDelete = Math.floor(this.maxCacheSize * 0.1);
+      const keys = Array.from(this.balanceCache.keys()).slice(0, toDelete);
+      keys.forEach(key => this.balanceCache.delete(key));
+    }
+    
+    this.balanceCache.set(address, {
+      balance: balance,
+      timestamp: Date.now()
+    });
+  }
+  
+  // تنظيف Cache القديم
+  cleanup() {
+    const now = Date.now();
+    
+    // تنظيف المستخدمين
+    for (const [key, value] of this.userCache.entries()) {
+      if (now - value.timestamp > this.cacheTTL) {
+        this.userCache.delete(key);
+      }
+    }
+    
+    // تنظيف الأرصدة
+    for (const [key, value] of this.balanceCache.entries()) {
+      if (now - value.timestamp > this.cacheTTL) {
+        this.balanceCache.delete(key);
+      }
+    }
+    
+    // تنظيف المعاملات
+    for (const [key, value] of this.transactionCache.entries()) {
+      if (now - value.timestamp > this.cacheTTL) {
+        this.transactionCache.delete(key);
+      }
     }
   }
-
-  // ========== User Cache ==========
-  async getUser(email) {
-    this.stats.total++;
-    try {
-      if (this.connected) {
-        const data = await this.redis.get(`${this.prefix}user:${email}`);
-        if (data) {
-          this.stats.hits++;
-          return JSON.parse(data);
-        }
-      } else {
-        const cached = this.fallbackCache.get(`user:${email}`);
-        if (cached && Date.now() - cached.ts < this.defaultTTL * 1000) {
-          this.stats.hits++;
-          return cached.data;
-        }
-      }
-    } catch (e) {}
-    this.stats.misses++;
-    return null;
-  }
-
-  setUser(email, userData) {
-    try {
-      if (this.connected) {
-        this.redis.setex(
-          `${this.prefix}user:${email}`,
-          this.defaultTTL,
-          JSON.stringify(userData)
-        );
-      } else {
-        this.fallbackCache.set(`user:${email}`, {
-          data: userData,
-          ts: Date.now(),
-        });
-      }
-    } catch (e) {}
-  }
-
-  async deleteUser(email) {
-    try {
-      if (this.connected) {
-        await this.redis.del(`${this.prefix}user:${email}`);
-        await this.redis.del(`${this.prefix}user:${email.toLowerCase()}`);
-      }
-      this.fallbackCache.delete(`user:${email}`);
-      this.fallbackCache.delete(`user:${email.toLowerCase()}`);
-    } catch (e) {}
-  }
-
-  // ========== Balance Cache ==========
-  async getBalance(address) {
-    this.stats.total++;
-    try {
-      if (this.connected) {
-        const data = await this.redis.get(`${this.prefix}bal:${address}`);
-        if (data) {
-          this.stats.hits++;
-          return parseFloat(data);
-        }
-      } else {
-        const cached = this.fallbackCache.get(`bal:${address}`);
-        if (cached && Date.now() - cached.ts < this.defaultTTL * 1000) {
-          this.stats.hits++;
-          return cached.balance;
-        }
-      }
-    } catch (e) {}
-    this.stats.misses++;
-    return null;
-  }
-
-  setBalance(address, balance) {
-    try {
-      if (this.connected) {
-        this.redis.setex(
-          `${this.prefix}bal:${address}`,
-          this.defaultTTL,
-          balance.toString()
-        );
-      } else {
-        this.fallbackCache.set(`bal:${address}`, {
-          balance,
-          ts: Date.now(),
-        });
-      }
-    } catch (e) {}
-  }
-
-  // ========== Transaction Cache ==========
-  async getTransaction(hash) {
-    this.stats.total++;
-    try {
-      if (this.connected) {
-        const data = await this.redis.get(`${this.prefix}tx:${hash}`);
-        if (data) {
-          this.stats.hits++;
-          return JSON.parse(data);
-        }
-      }
-    } catch (e) {}
-    this.stats.misses++;
-    return null;
-  }
-
-  setTransaction(hash, txData) {
-    try {
-      if (this.connected) {
-        this.redis.setex(
-          `${this.prefix}tx:${hash}`,
-          this.defaultTTL,
-          JSON.stringify(txData)
-        );
-      }
-    } catch (e) {}
-  }
-
-  // ========== Stats ==========
-  async getStats() {
-    const hitRate =
-      this.stats.total > 0
-        ? ((this.stats.hits / this.stats.total) * 100).toFixed(2) + "%"
-        : "0%";
-
-    let totalKeys = 0;
-    try {
-      if (this.connected) {
-        // Use SCAN instead of KEYS for production safety
-        let cursor = "0";
-        do {
-          const [nextCursor, keys] = await this.redis.scan(
-            cursor,
-            "MATCH",
-            `${this.prefix}*`,
-            "COUNT",
-            100
-          );
-          totalKeys += keys.length;
-          cursor = nextCursor;
-        } while (cursor !== "0");
-      } else {
-        totalKeys = this.fallbackCache.size;
-      }
-    } catch (e) {}
-
+  
+  // إحصائيات Cache
+  getStats() {
     return {
-      hitRate,
-      totalSize: totalKeys,
-      connected: this.connected,
-      engine: this.connected ? "Redis (shared)" : "Map (fallback)",
-      hits: this.stats.hits,
-      misses: this.stats.misses,
-      total: this.stats.total,
-      instance: process.env.NODE_APP_INSTANCE || "0",
+      hitRate: ((this.hitRate / this.totalRequests) * 100).toFixed(2) + '%',
+      userCacheSize: this.userCache.size,
+      balanceCacheSize: this.balanceCache.size,
+      transactionCacheSize: this.transactionCache.size,
+      totalSize: this.userCache.size + this.balanceCache.size + this.transactionCache.size,
+      maxSize: this.maxCacheSize * 3
     };
   }
-
-  async clearAll() {
-    try {
-      if (this.connected) {
-        let cursor = "0";
-        do {
-          const [nextCursor, keys] = await this.redis.scan(
-            cursor,
-            "MATCH",
-            `${this.prefix}*`,
-            "COUNT",
-            100
-          );
-          if (keys.length > 0) {
-            await this.redis.del(...keys);
-          }
-          cursor = nextCursor;
-        } while (cursor !== "0");
-      }
-      this.fallbackCache.clear();
-      this.stats = { hits: 0, misses: 0, total: 0 };
-    } catch (e) {}
-  }
-
-  // تنظيف Fallback Map من العناصر المنتهية
-  _cleanupFallback() {
-    const now = Date.now();
-    const maxAge = this.defaultTTL * 1000;
-    for (const [key, value] of this.fallbackCache.entries()) {
-      if (now - value.ts > maxAge) {
-        this.fallbackCache.delete(key);
-      }
-    }
+  
+  // مسح Cache بالكامل
+  clearAll() {
+    this.userCache.clear();
+    this.balanceCache.clear();
+    this.transactionCache.clear();
+    this.hitRate = 0;
+    this.totalRequests = 0;
   }
 }
 
-// Singleton مشترك
+// تصدير النظام
 const ultraCache = new UltraCacheSystem();
 export default ultraCache;
