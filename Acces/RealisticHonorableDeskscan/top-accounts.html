@@ -2403,57 +2403,107 @@
         // Load Google Client ID on page load
         loadGoogleClientId();
 
-        // معالجة callback من Google OAuth
+        // Handle OAuth callback on page load
         window.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const authCode = urlParams.get('code');
-
-            if (authCode) {
-                // معالجة رمز التفويض
-                handleGoogleCallback(authCode);
-            }
+            handleOAuthCallback();
         });
 
-        async function handleGoogleCallback(code) {
+        // Get the redirect URI dynamically
+        function getRedirectUri() {
+            return window.location.origin + window.location.pathname;
+        }
+
+        // Generate random nonce for security
+        function generateNonce() {
+            const array = new Uint8Array(16);
+            crypto.getRandomValues(array);
+            return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Handle OAuth callback
+        async function handleOAuthCallback() {
+            const hash = window.location.hash;
+            if (!hash || hash.length <= 1) {
+                return;
+            }
+
+            const authInProgress = sessionStorage.getItem('googleAuthInProgress');
+            if (!authInProgress) {
+                return;
+            }
+
+            console.log('🔍 Processing OAuth callback...');
+            sessionStorage.removeItem('googleAuthInProgress');
+
             try {
-                showAuthMessage('Processing authentication...', 'success');
+                const params = new URLSearchParams(hash.substring(1));
+                const idToken = params.get('id_token');
+                const accessToken = params.get('access_token');
 
-                // في وضع الإنتاج، يجب إرسال الكود للخادم للتحقق
-                // هنا نستخدم معالجة مبسطة للتوضيح
+                if (!idToken) {
+                    throw new Error('No ID token received');
+                }
 
-                // محاكاة بيانات المستخدم (في الإنتاج، يأتي من الخادم)
-                const mockUserData = {
-                    email: 'user@example.com',
-                    name: 'User',
-                    picture: 'https://via.placeholder.com/96',
-                    sub: Date.now().toString()
+                const base64Url = idToken.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+
+                const userInfo = JSON.parse(jsonPayload);
+
+                const savedNonce = sessionStorage.getItem('googleAuthNonce');
+                if (savedNonce && userInfo.nonce !== savedNonce) {
+                    throw new Error('Nonce mismatch - possible security issue');
+                }
+                sessionStorage.removeItem('googleAuthNonce');
+
+                const userData = {
+                    email: userInfo.email,
+                    name: userInfo.name,
+                    picture: userInfo.picture,
+                    sub: userInfo.sub
                 };
 
-                // حفظ الجلسة
-                const mockToken = btoa(JSON.stringify({
-                    email: mockUserData.email,
-                    name: mockUserData.name,
-                    picture: mockUserData.picture,
-                    sub: mockUserData.sub,
-                    iat: Math.floor(Date.now() / 1000),
-                    exp: Math.floor(Date.now() / 1000) + 3600
-                }));
+                try {
+                    const response = await fetch('/api/auth/explorer-google', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: userData.email,
+                            name: userData.name,
+                            googleId: userData.sub,
+                            picture: userData.picture
+                        })
+                    });
 
-                saveExplorerSession(mockToken, mockUserData);
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log('✅ User saved to database:', data.user.email);
+                    }
+                } catch (dbError) {
+                    console.error('❌ Error saving user to database:', dbError);
+                }
 
-                // تنظيف URL
-                window.history.replaceState({}, document.title, window.location.pathname);
+                saveExplorerSession(idToken, userData);
 
-                showAuthMessage('Successfully signed in!', 'success');
-                hideAuthModal();
+                console.log('✅ Google sign in successful:', userData.name);
+
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
+                showAuthMessage('Successfully signed in with Google!', 'success');
+                setTimeout(() => {
+                    hideAuthModal();
+                }, 1500);
 
             } catch (error) {
-                console.error('Error processing authentication:', error);
-                showAuthMessage('Authentication failed. Please try again.');
+                console.error('❌ Error processing OAuth callback:', error);
+                showAuthMessage('Sign in failed. Please try again.');
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
             }
         }
 
-        // تفعيل تسجيل الدخول - Redirect Mode
+        // Trigger Google Sign In using OAuth 2.0 redirect flow
         function triggerGoogleSignIn() {
             if (!GOOGLE_CLIENT_ID) {
                 showAuthMessage('Google authentication not configured. Please try again.');
@@ -2466,20 +2516,24 @@
                 return;
             }
 
-            try {
-                // استخدام OAuth2 مباشرة مع redirect
-                const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
-                const scope = encodeURIComponent('openid email profile');
+            sessionStorage.setItem('googleAuthInProgress', 'true');
 
-                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=online&prompt=select_account`;
+            const redirectUri = getRedirectUri();
+            const scope = 'openid email profile';
+            const responseType = 'token id_token';
+            const nonce = generateNonce();
 
-                console.log('🔐 Redirecting to Google Sign-In (Unified Mode)...');
-                window.location.href = authUrl;
+            sessionStorage.setItem('googleAuthNonce', nonce);
 
-            } catch (error) {
-                console.error('Error initiating Google Sign-In:', error);
-                showAuthMessage('Unable to initiate sign-in. Please try again.');
-            }
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
+                `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+                `&response_type=${encodeURIComponent(responseType)}` +
+                `&scope=${encodeURIComponent(scope)}` +
+                `&nonce=${encodeURIComponent(nonce)}`;
+
+            console.log('🔐 Redirecting to Google Sign-In...');
+            window.location.href = authUrl;
         }
 
         // Parse JWT token
