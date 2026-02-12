@@ -1155,7 +1155,8 @@ processingTransaction: "Traitement de la transaction en cours...",
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "Ces conditions d'utilisation peuvent être mises à jour périodiquement. Les changements importants seront communiqués via les notifications de la plateforme. L'utilisation continue de la plateforme après les mises à jour constitue l'acceptation des conditions révisées. Les utilisateurs sont encouragés à consulter régulièrement ces conditions.",
     "Acceptance Statement": "Déclaration d'acceptation",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "En créant un compte ou en utilisant AccessDigital, vous confirmez avoir lu, compris et accepté ces conditions d'utilisation. Vous reconnaissez que les points ACCESS sont des récompenses d'engagement communautaire sans valeur financière garantie, et que vous participez pour l'expérience de la plateforme - pas à des fins d'investissement.",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Le livre blanc s'est ouvert dans un nouvel onglet. Vous pouvez le consulter, l'imprimer ou le sauvegarder depuis là."
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Le livre blanc s'est ouvert dans un nouvel onglet. Vous pouvez le consulter, l'imprimer ou le sauvegarder depuis là.",
+    "Your session has expired. Please login again.": "Votre session a expiré. Veuillez vous reconnecter."
   },
 
   es: {
@@ -1854,7 +1855,8 @@ processingTransaction: "Procesando transacción...",
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "Estos Términos de Servicio pueden actualizarse periódicamente. Los cambios significativos se comunicarán a través de notificaciones de la plataforma. El uso continuo de la plataforma después de las actualizaciones constituye la aceptación de los términos revisados. Se anima a los usuarios a revisar estos términos regularmente.",
     "Acceptance Statement": "Declaración de aceptación",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Al crear una cuenta o usar AccessDigital, confirma que ha leído, comprendido y acepta estos Términos de Servicio. Reconoce que los puntos ACCESS son recompensas de participación comunitaria sin valor financiero garantizado, y que está participando por la experiencia de la plataforma, no con fines de inversión.",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "El libro blanco se abrió en una nueva pestaña. Puedes verlo, imprimirlo o guardarlo desde allí."
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "El libro blanco se abrió en una nueva pestaña. Puedes verlo, imprimirlo o guardarlo desde allí.",
+    "Your session has expired. Please login again.": "Tu sesión ha expirado. Por favor, inicia sesión de nuevo."
   },
 
   it: {
@@ -2530,7 +2532,8 @@ processingTransaction: "Elaborazione della transazione in corso...",
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "Questi Termini di Servizio possono essere aggiornati periodicamente. Le modifiche significative saranno comunicate tramite notifiche della piattaforma. L'uso continuato della piattaforma dopo gli aggiornamenti costituisce accettazione dei termini rivisti. Gli utenti sono incoraggiati a rivedere regolarmente questi termini.",
     "Acceptance Statement": "Dichiarazione di accettazione",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Creando un account o utilizzando AccessDigital, confermi di aver letto, compreso e accettato questi Termini di Servizio. Riconosci che i punti ACCESS sono ricompense di coinvolgimento comunitario senza valore finanziario garantito, e che stai partecipando per l'esperienza della piattaforma, non per scopi di investimento.",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Il whitepaper è stato aperto in una nuova scheda. Puoi visualizzarlo, stamparlo o salvarlo da lì."
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Il whitepaper è stato aperto in una nuova scheda. Puoi visualizzarlo, stamparlo o salvarlo da lì.",
+    "Your session has expired. Please login again.": "La tua sessione è scaduta. Effettua nuovamente il login."
   },
 
   tr: {
@@ -3205,7 +3208,8 @@ processingTransaction: "İşlem işleniyor...",
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "Bu Hizmet Şartları periyodik olarak güncellenebilir. Önemli değişiklikler platform bildirimleri aracılığıyla iletilecektir. Güncellemelerden sonra platform kullanmaya devam etmek, revize edilmiş şartların kabulü anlamına gelir. Kullanıcıların bu şartları düzenli olarak gözden geçirmeleri teşvik edilir.",
     "Acceptance Statement": "Kabul Beyanı",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Bir hesap oluşturarak veya AccessDigital kullanarak, bu Hizmet Şartlarını okuduğunuzu, anladığınızı ve kabul ettiğinizi onaylarsınız. ACCESS puanlarının garantili finansal değeri olmayan topluluk etkileşim ödülleri olduğunu ve yatırım amaçlı değil platform deneyimi için katıldığınızı kabul edersiniz.",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Teknik doküman yeni sekmede açıldı. Oradan görüntüleyebilir, yazdırabilir veya kaydedebilirsiniz."
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Teknik doküman yeni sekmede açıldı. Oradan görüntüleyebilir, yazdırabilir veya kaydedebilirsiniz.",
+    "Your session has expired. Please login again.": "Oturumunuz sona erdi. Lütfen tekrar giriş yapın."
   },
 
   hi: {
@@ -3892,7 +3896,8 @@ processingTransaction: "İşlem işleniyor...",
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "ये सेवा की शर्तें समय-समय पर अपडेट की जा सकती हैं। महत्वपूर्ण परिवर्तन प्लेटफ़ॉर्म सूचनाओं के माध्यम से संप्रेषित किए जाएंगे।",
     "Acceptance Statement": "स्वीकृति विवरण",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "खाता बनाकर या AccessDigital का उपयोग करके, आप पुष्टि करते हैं कि आपने इन सेवा की शर्तों को पढ़ा, समझा और स्वीकार किया है।",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "व्हाइटपेपर नई टैब में खुल गया। आप वहां से इसे देख, प्रिंट या सहेज सकते हैं।"
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "व्हाइटपेपर नई टैब में खुल गया। आप वहां से इसे देख, प्रिंट या सहेज सकते हैं।",
+    "Your session has expired. Please login again.": "आपका सत्र समाप्त हो गया है। कृपया फिर से लॉगिन करें।"
   },
 
   zh: {
@@ -4569,7 +4574,8 @@ processingTransaction: "İşlem işleniyor...",
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "这些服务条款可能会定期更新。重大变更将通过平台通知传达。更新后继续使用平台即表示接受修订后的条款。鼓励用户定期查看这些条款。",
     "Acceptance Statement": "接受声明",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "通过创建账户或使用AccessDigital，您确认已阅读、理解并同意这些服务条款。您确认ACCESS积分是没有保证财务价值的社区参与奖励，您参与是为了平台体验——而非投资目的。",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "白皮书已在新标签页中打开。您可以从那里查看、打印或保存它。"
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "白皮书已在新标签页中打开。您可以从那里查看、打印或保存它。",
+    "Your session has expired. Please login again.": "您的会话已过期。请重新登录。"
   },
 
   ja: {
@@ -5261,7 +5267,8 @@ processingTransaction: "İşlem işleniyor...",
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "これらの利用規約は定期的に更新される場合があります。重要な変更はプラットフォーム通知を通じて通知されます。",
     "Acceptance Statement": "承諾声明",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "アカウントを作成するか、AccessDigitalを使用することで、これらの利用規約を読み、理解し、同意したことを確認します。",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "ホワイトペーパーが新しいタブで開きました。そこから表示、印刷、または保存できます。"
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "ホワイトペーパーが新しいタブで開きました。そこから表示、印刷、または保存できます。",
+    "Your session has expired. Please login again.": "セッションが期限切れになりました。再度ログインしてください。"
   },
 
   ko: {
@@ -5952,7 +5959,8 @@ processingTransaction: "İşlem işleniyor...",
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "이 서비스 약관은 정기적으로 업데이트될 수 있습니다. 중요한 변경 사항은 플랫폼 알림을 통해 전달됩니다.",
     "Acceptance Statement": "수락 선언",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "계정을 만들거나 AccessDigital을 사용함으로써 이 서비스 약관을 읽고 이해하며 동의함을 확인합니다.",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "백서가 새 탭에서 열렸습니다. 거기서 보거나, 인쇄하거나, 저장할 수 있습니다."
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "백서가 새 탭에서 열렸습니다. 거기서 보거나, 인쇄하거나, 저장할 수 있습니다.",
+    "Your session has expired. Please login again.": "세션이 만료되었습니다. 다시 로그인해 주세요."
   },
 
   pt: {
@@ -6632,7 +6640,8 @@ processingTransaction: "İşlem işleniyor...",
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "Estes Termos de Serviço podem ser atualizados periodicamente. Mudanças significativas serão comunicadas através de notificações da plataforma.",
     "Acceptance Statement": "Declaração de Aceitação",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Ao criar uma conta ou usar AccessDigital, você confirma que leu, entendeu e concorda com estes Termos de Serviço.",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "O whitepaper foi aberto em uma nova aba. Você pode visualizar, imprimir ou salvar a partir de lá."
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "O whitepaper foi aberto em uma nova aba. Você pode visualizar, imprimir ou salvar a partir de lá.",
+    "Your session has expired. Please login again.": "Sua sessão expirou. Por favor, faça login novamente."
   },
 
   ru: {
@@ -7323,7 +7332,8 @@ insufficientBalance: "Недостаточно средств для этой т
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "Эти Условия использования могут периодически обновляться. Существенные изменения будут сообщены через уведомления платформы.",
     "Acceptance Statement": "Заявление о принятии",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Создавая аккаунт или используя AccessDigital, вы подтверждаете, что прочитали, поняли и согласны с этими Условиями использования.",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Технический документ открыт в новой вкладке. Вы можете просмотреть, распечатать или сохранить его оттуда."
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Технический документ открыт в новой вкладке. Вы можете просмотреть, распечатать или сохранить его оттуда.",
+    "Your session has expired. Please login again.": "Сеанс истёк. Пожалуйста, войдите снова."
   },
 
   de: {
@@ -8019,7 +8029,8 @@ insufficientBalance: "Недостаточно средств для этой т
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "Diese Nutzungsbedingungen können regelmäßig aktualisiert werden. Wesentliche Änderungen werden über Plattformbenachrichtigungen mitgeteilt.",
     "Acceptance Statement": "Annahmeerklärung",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Durch das Erstellen eines Kontos oder die Nutzung von AccessDigital bestätigen Sie, dass Sie diese Nutzungsbedingungen gelesen, verstanden und ihnen zugestimmt haben.",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Das Whitepaper wurde in einem neuen Tab geöffnet. Sie können es dort ansehen, drucken oder speichern."
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Das Whitepaper wurde in einem neuen Tab geöffnet. Sie können es dort ansehen, drucken oder speichern.",
+    "Your session has expired. Please login again.": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
   },
 
   ar: {
@@ -8762,7 +8773,8 @@ insufficientBalance: "Недостаточно средств для этой т
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "قد يتم تحديث شروط الخدمة هذه بشكل دوري. سيتم إبلاغ التغييرات الهامة من خلال إشعارات المنصة.",
     "Acceptance Statement": "بيان القبول",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "بإنشاء حساب أو استخدام أكسيس الرقمية، فإنك تؤكد أنك قرأت وفهمت ووافقت على شروط الخدمة هذه.",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "تم فتح الورقة البيضاء في علامة تبويب جديدة. يمكنك عرضها أو طباعتها أو حفظها من هناك."
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "تم فتح الورقة البيضاء في علامة تبويب جديدة. يمكنك عرضها أو طباعتها أو حفظها من هناك.",
+    "Your session has expired. Please login again.": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى."
   },
 
   id: {
@@ -9467,7 +9479,8 @@ insufficientBalance: "Недостаточно средств для этой т
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "Ketentuan Layanan ini dapat diperbarui secara berkala. Perubahan signifikan akan dikomunikasikan melalui pemberitahuan platform.",
     "Acceptance Statement": "Pernyataan Penerimaan",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Dengan membuat akun atau menggunakan AccessDigital, Anda mengonfirmasi bahwa Anda telah membaca, memahami, dan menyetujui Ketentuan Layanan ini.",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Whitepaper dibuka di tab baru. Anda dapat melihat, mencetak, atau menyimpannya dari sana."
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Whitepaper dibuka di tab baru. Anda dapat melihat, mencetak, atau menyimpannya dari sana.",
+    "Your session has expired. Please login again.": "Sesi Anda telah berakhir. Silakan masuk kembali."
   },
 
   pl: {
@@ -10157,6 +10170,7 @@ insufficientBalance: "Недостаточно средств для этой т
     "These Terms of Service may be updated periodically. Significant changes will be communicated through platform notifications. Continued platform use after updates constitutes acceptance of revised terms. Users are encouraged to review these terms regularly.": "Niniejsze Warunki korzystania z usługi mogą być okresowo aktualizowane. Istotne zmiany będą komunikowane poprzez powiadomienia platformy.",
     "Acceptance Statement": "Oświadczenie o akceptacji",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Tworząc konto lub korzystając z AccessDigital, potwierdzasz, że przeczytałeś, zrozumiałeś i zgadzasz się z niniejszymi Warunkami korzystania z usługi.",
-    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Whitepaper został otwarty w nowej karcie. Możesz go stamtąd przeglądać, drukować lub zapisać."
+    "Whitepaper opened in new tab. You can view, print, or save it from there.": "Whitepaper został otwarty w nowej karcie. Możesz go stamtąd przeglądać, drukować lub zapisać.",
+    "Your session has expired. Please login again.": "Twoja sesja wygasła. Zaloguj się ponownie."
   }
 };
