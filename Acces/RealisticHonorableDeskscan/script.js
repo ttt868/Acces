@@ -13231,46 +13231,67 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
      }
 
-     // Pre-warm file input to reduce first-time delay
+     // ⚡ AGGRESSIVE Pre-warm: Load file input immediately on page load
+     // This eliminates the first-time delay completely
      let fileInputPrewarmed = false;
-     function prewarmFileInput() {
+     
+     function aggressivePrewarmFileInput() {
        if (fileInputPrewarmed) return;
        
        const profileImageUpload = document.getElementById('profile-image-upload');
-       if (profileImageUpload) {
-         // Create a temporary change listener to prime the file picker
+       if (!profileImageUpload) {
+         // Retry if element not ready yet
+         setTimeout(aggressivePrewarmFileInput, 100);
+         return;
+       }
+       
+       try {
+         // Method 1: Create temporary hidden input that triggers file system early
+         const hiddenInput = document.createElement('input');
+         hiddenInput.type = 'file';
+         hiddenInput.accept = 'image/*';
+         hiddenInput.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none';
+         document.body.appendChild(hiddenInput);
+         
+         // Trigger browser's file system initialization
+         setTimeout(() => {
+           try {
+             hiddenInput.focus();
+             hiddenInput.blur();
+             hiddenInput.click(); // محاولة فتح picker بشكل صامت
+           } catch (e) {
+             // تجاهل الأخطاء
+           }
+           // Remove after 2 seconds
+           setTimeout(() => hiddenInput.remove(), 2000);
+         }, 100);
+         
+         // Method 2: Warm up the actual input too
+         profileImageUpload.focus();
+         profileImageUpload.blur();
+         
+         // Method 3: Add early change listener
          const tempListener = () => {
            profileImageUpload.removeEventListener('change', tempListener);
          };
          profileImageUpload.addEventListener('change', tempListener);
          
-         // Trigger a focus event to initialize file system access
-         try {
-           profileImageUpload.focus();
-           profileImageUpload.blur();
-         } catch (e) {
-           // Ignore any errors
-         }
-         
          fileInputPrewarmed = true;
-         console.log('✅ File input prewarmed');
+         console.log('⚡ Aggressive file input pre-warm complete');
+       } catch (e) {
+         console.log('Pre-warm attempt:', e.message);
        }
      }
 
-     // Prewarm on first user interaction
-     function setupPrewarm() {
-       const prewarmOnInteraction = () => {
-         prewarmFileInput();
-         document.removeEventListener('click', prewarmOnInteraction);
-         document.removeEventListener('touchstart', prewarmOnInteraction);
-       };
-       
-       document.addEventListener('click', prewarmOnInteraction, { once: true, passive: true });
-       document.addEventListener('touchstart', prewarmOnInteraction, { once: true, passive: true });
+     // Start aggressive pre-warm IMMEDIATELY after page elements load
+     if (document.readyState === 'loading') {
+       document.addEventListener('DOMContentLoaded', () => {
+         setTimeout(aggressivePrewarmFileInput, 500);
+       });
+     } else {
+       // Already loaded
+       setTimeout(aggressivePrewarmFileInput, 500);
      }
-
-     // Setup prewarm after a short delay
-     setTimeout(setupPrewarm, 1000);
 
      // Show photo options menu
      function showPhotoMenu() {
