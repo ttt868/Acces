@@ -13231,7 +13231,7 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
      }
 
-     // ⚡ Silent Pre-warm: تجهيز النظام في الخلفية بدون فتح أي شيء
+     // ⚡ Optimized Silent Pre-warm: يعمل عندما المتصفح خالي
      let fileInputPrewarmed = false;
      
      function silentPrewarmFileInput() {
@@ -13239,13 +13239,17 @@ window.cancelProfileChanges = cancelProfileChanges;
        
        const profileImageUpload = document.getElementById('profile-image-upload');
        if (!profileImageUpload) {
-         setTimeout(silentPrewarmFileInput, 100);
+         // استخدام requestIdleCallback بدل setTimeout
+         if (window.requestIdleCallback) {
+           requestIdleCallback(() => silentPrewarmFileInput(), { timeout: 500 });
+         } else {
+           setTimeout(silentPrewarmFileInput, 100);
+         }
          return;
        }
        
        try {
-         // ⚠️ تجهيز صامت فقط - بدون فتح
-         // Method 1: Hidden inputs لتحميل file system
+         // Hidden inputs لتحميل file system
          const warmInput = (withCapture) => {
            const input = document.createElement('input');
            input.type = 'file';
@@ -13254,42 +13258,70 @@ window.cancelProfileChanges = cancelProfileChanges;
            input.style.cssText = 'position:fixed;top:-9999px;width:0;height:0;opacity:0;pointer-events:none';
            document.body.appendChild(input);
            
-           // فقط focus/blur - بدون click!
-           setTimeout(() => {
+           // تجهيز متعدد المراحل
+           const warmSequence = () => {
              try {
                input.focus();
                input.blur();
+               // محاولة ثانية بعد 50ms
+               setTimeout(() => {
+                 try {
+                   input.focus();
+                   input.blur();
+                 } catch (e) {}
+               }, 50);
              } catch (e) {}
-             setTimeout(() => input.remove(), 1500);
-           }, 50);
+             setTimeout(() => input.remove(), 2000);
+           };
+           
+           // استخدام requestIdleCallback للتنفيذ عند الفراغ
+           if (window.requestIdleCallback) {
+             requestIdleCallback(warmSequence, { timeout: 100 });
+           } else {
+             setTimeout(warmSequence, 20);
+           }
          };
          
          // تجهيز الكاميرا والمعرض معاً
          warmInput(true);  // Camera
          warmInput(false); // Gallery
          
-         // Method 2: تجهيز الـ input الحقيقي
-         profileImageUpload.focus();
-         profileImageUpload.blur();
+         // تجهيز الـ input الحقيقي بشكل مكثف
+         const warmReal = () => {
+           try {
+             profileImageUpload.focus();
+             profileImageUpload.blur();
+             // إضافة listener مبكر
+             const tempListener = () => profileImageUpload.removeEventListener('change', tempListener);
+             profileImageUpload.addEventListener('change', tempListener);
+           } catch (e) {}
+         };
          
-         // Method 3: إضافة listener مبكر
-         const tempListener = () => profileImageUpload.removeEventListener('change', tempListener);
-         profileImageUpload.addEventListener('change', tempListener);
+         warmReal();
+         setTimeout(warmReal, 100); // محاولة ثانية
+         setTimeout(warmReal, 300); // محاولة ثالثة
          
          fileInputPrewarmed = true;
-         console.log('✅ Silent pre-warm done (no auto-open)');
+         console.log('⚡ Optimized pre-warm complete');
        } catch (e) {
          console.log('Pre-warm:', e.message);
        }
      }
 
-     // بدء التجهيز بعد تحميل الصفحة
+     // بدء التجهيز فوراً مع استخدام requestIdleCallback
+     const startPrewarm = () => {
+       if (window.requestIdleCallback) {
+         // ينفذ عندما المتصفح خالي
+         requestIdleCallback(silentPrewarmFileInput, { timeout: 500 });
+       } else {
+         setTimeout(silentPrewarmFileInput, 100);
+       }
+     };
+     
      if (document.readyState === 'loading') {
-       document.addEventListener('DOMContentLoaded', () => {
-         setTimeout(silentPrewarmFileInput, 300);
-       });
+       document.addEventListener('DOMContentLoaded', startPrewarm);
      } else {
-       setTimeout(silentPrewarmFileInput, 300);
+       startPrewarm();
      }
 
      // Show photo options menu
