@@ -13463,23 +13463,48 @@ window.cancelProfileChanges = cancelProfileChanges;
        const deleteOption = document.getElementById('delete-option');
 
        if (cameraOption) {
-         // ط¥ط²ط§ظ„ط© ط£ظٹ ظ…ط¹ط§ظ„ط¬ط§طھ ط³ط§ط¨ظ‚ط© ظ„ظ…ظ†ط¹ ط§ظ„طھظƒط±ط§ط±
          cameraOption.onclick = null;
          cameraOption.onclick = function(e) {
            e.stopPropagation();
            e.preventDefault();
-
-           console.log('ًں“¸ Camera option clicked');
-           const profileImageUpload = document.getElementById('profile-image-upload');
-
-           if (profileImageUpload) {
-             // ط¥ط¹ط¯ط§ط¯ ط§ظ„ظƒط§ظ…ظٹط±ط§
-             profileImageUpload.setAttribute('capture', 'user');
-             profileImageUpload.setAttribute('accept', 'image/*');
-             profileImageUpload.click();
-             console.log('ًں“¸ Camera opened');
-           }
            hidePhotoMenu();
+           if (navigator.camera && navigator.camera.getPicture) {
+             navigator.camera.getPicture(
+               function(imageData) {
+                 var imgSrc = 'data:image/jpeg;base64,' + imageData;
+                 var profileAvatar = document.getElementById('profile-avatar');
+                 if (profileAvatar) profileAvatar.src = imgSrc;
+                 var dashAvatar = document.getElementById('dashboard-profile-avatar');
+                 if (dashAvatar) dashAvatar.src = imgSrc;
+                 newProfileImage = imgSrc;
+                 hasChanges = true;
+                 isEditing = true;
+                 if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
+                 if (currentUser) currentUser.avatar = imgSrc;
+                 if (typeof showNotification === 'function') {
+                   showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
+                 }
+               },
+               function(err) { console.error('Camera error:', err); },
+               {
+                 quality: 70,
+                 destinationType: Camera.DestinationType.DATA_URL,
+                 sourceType: Camera.PictureSourceType.CAMERA,
+                 cameraDirection: Camera.Direction.FRONT,
+                 encodingType: Camera.EncodingType.JPEG,
+                 targetWidth: 400,
+                 targetHeight: 400,
+                 correctOrientation: true
+               }
+             );
+           } else {
+             var profileImageUpload = document.getElementById('profile-image-upload');
+             if (profileImageUpload) {
+               profileImageUpload.setAttribute('capture', 'user');
+               profileImageUpload.setAttribute('accept', 'image/*');
+               profileImageUpload.click();
+             }
+           }
          };
        }
 
@@ -14188,13 +14213,40 @@ window.cancelProfileChanges = cancelProfileChanges;
         cameraOption.onclick = function(e) {
           e.stopPropagation();
           e.preventDefault();
-          const profileImageUpload = document.getElementById('profile-image-upload');
-          if (profileImageUpload) {
-            profileImageUpload.setAttribute('capture', 'camera');
-            profileImageUpload.setAttribute('accept', 'image/*');
-            profileImageUpload.click();
-          }
           document.querySelector('.photo-options-menu').classList.remove('show');
+          if (navigator.camera && navigator.camera.getPicture) {
+            navigator.camera.getPicture(
+              function(imageData) {
+                var imgSrc = 'data:image/jpeg;base64,' + imageData;
+                var profileAvatar = document.getElementById('profile-avatar');
+                if (profileAvatar) profileAvatar.src = imgSrc;
+                var dashAvatar = document.getElementById('dashboard-profile-avatar');
+                if (dashAvatar) dashAvatar.src = imgSrc;
+                if (typeof currentUser !== 'undefined' && currentUser) currentUser.avatar = imgSrc;
+                if (typeof showNotification === 'function') {
+                  showNotification('Image selected successfully - click Save to update', 'success');
+                }
+              },
+              function(err) { console.error('Camera error:', err); },
+              {
+                quality: 70,
+                destinationType: Camera.DestinationType.DATA_URL,
+                sourceType: Camera.PictureSourceType.CAMERA,
+                cameraDirection: Camera.Direction.FRONT,
+                encodingType: Camera.EncodingType.JPEG,
+                targetWidth: 400,
+                targetHeight: 400,
+                correctOrientation: true
+              }
+            );
+          } else {
+            var profileImageUpload = document.getElementById('profile-image-upload');
+            if (profileImageUpload) {
+              profileImageUpload.setAttribute('capture', 'user');
+              profileImageUpload.setAttribute('accept', 'image/*');
+              profileImageUpload.click();
+            }
+          }
         };
       }
 
