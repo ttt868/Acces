@@ -13558,16 +13558,36 @@ window.cancelProfileChanges = cancelProfileChanges;
          if (dashboardAvatar) {
            dashboardAvatar.src = defaultAvatar;
          }
+         const mobileAvatar = document.getElementById('mobile-user-avatar');
+         if (mobileAvatar) {
+           mobileAvatar.src = defaultAvatar;
+         }
 
          // Update user data with default avatar (not null)
          if (currentUser) {
            currentUser.avatar = defaultAvatar;
 
-           // Save the change immediately to server with default avatar - without additional notification
-           if (typeof saveProfileChanges === 'function') {
-             // Pass true as third parameter to prevent showing "updated successfully" notification
-             saveProfileChanges(currentUser.name, defaultAvatar, true);
-           }
+           // Send delete directly to server
+           const apiBase = (typeof getApiOrigin !== 'undefined' ? getApiOrigin() : window.location.origin);
+           fetch(apiBase + '/api/profile/delete-photo', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ userId: currentUser.id })
+           }).then(function(r) { return r.json(); }).then(function(data) {
+             if (!data.success) {
+               fetch(apiBase + '/api/users/update-profile', {
+                 method: 'PUT',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+               }).catch(function() {});
+             }
+           }).catch(function() {
+             fetch(apiBase + '/api/users/update-profile', {
+               method: 'PUT',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+             }).catch(function() {});
+           });
 
            // Show single success notification only
            if (typeof showNotification === 'function') {
@@ -14083,29 +14103,52 @@ window.cancelProfileChanges = cancelProfileChanges;
   window.deleteProfilePhoto = function() {
     const profileAvatar = document.getElementById('profile-avatar');
     if (profileAvatar && currentUser) {
-      const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCI`x`sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIicjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAuOHYxYzAtMS0xLTItMi0yaC0xNmMtMSAwLTIgLTEtMi03di0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
-
+      const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
       if (!currentUser.avatar || currentUser.avatar === defaultAvatar || currentUser.avatar === null) {
         if (typeof showNotification === 'function') {
-          showNotification('No profile photo to delete', 'info');
+          const msg = (typeof translator !== 'undefined' && translator.translate) ? translator.translate('No profile photo to delete') : 'No profile photo to delete';
+          showNotification(msg, 'info');
         }
         return;
       }
 
+      // Update ALL avatar elements immediately
       profileAvatar.src = defaultAvatar;
       const dashboardAvatar = document.getElementById('dashboard-profile-avatar');
-      if (dashboardAvatar) {
-        dashboardAvatar.src = defaultAvatar;
-      }
+      if (dashboardAvatar) dashboardAvatar.src = defaultAvatar;
+      const mobileAvatar = document.getElementById('mobile-user-avatar');
+      if (mobileAvatar) mobileAvatar.src = defaultAvatar;
 
-      if (currentUser) {
-        currentUser.avatar = defaultAvatar;
-        if (typeof saveProfileChanges === 'function') {
-          saveProfileChanges(currentUser.name, defaultAvatar, true);
+      // Update currentUser in memory immediately
+      currentUser.avatar = defaultAvatar;
+
+      // Send delete directly to server
+      const apiBase = (typeof getApiOrigin !== 'undefined' ? getApiOrigin() : window.location.origin);
+      fetch(apiBase + '/api/profile/delete-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+          console.log('Profile photo deleted on server');
+        } else {
+          fetch(apiBase + '/api/users/update-profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+          }).catch(function() {});
         }
-        if (typeof showNotification === 'function') {
-          showNotification('Profile photo changed to default', 'success');
-        }
+      }).catch(function() {
+        fetch(apiBase + '/api/users/update-profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+        }).catch(function() {});
+      });
+
+      if (typeof showNotification === 'function') {
+        const msg = (typeof translator !== 'undefined' && translator.translate) ? translator.translate('Profile photo changed to default') : 'Profile photo changed to default';
+        showNotification(msg, 'success');
       }
     }
   };
