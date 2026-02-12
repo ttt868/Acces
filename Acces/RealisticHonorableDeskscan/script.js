@@ -15021,8 +15021,15 @@ window.cancelProfileChanges = cancelProfileChanges;
 // Simple translator class
 class Translator {
   constructor() {
-    // Use preloaded language from head script, or check localStorage, fallback to 'en'
-    this.currentLanguage = window.__preloadedLang || localStorage.getItem('preferredLanguage') || 'en';
+    // Use preloaded language from head script, or check localStorage, or auto-detect from device
+    var lang = window.__preloadedLang || localStorage.getItem('preferredLanguage');
+    if (!lang) {
+      var supportedLangs = ['en','fr','es','it','tr','hi','zh','ja','ko','pt','ru','de','ar','id','pl'];
+      var browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase().split('-')[0];
+      lang = supportedLangs.includes(browserLang) ? browserLang : 'en';
+      localStorage.setItem('preferredLanguage', lang);
+    }
+    this.currentLanguage = lang;
     this.translations = window.translations || {};
     this.fallbackLanguage = 'en'; // English as fallback
   }
