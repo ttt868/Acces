@@ -13472,68 +13472,31 @@ window.cancelProfileChanges = cancelProfileChanges;
              // Mark pending camera action for resume handler
              window._pendingCameraAction = true;
              navigator.camera.getPicture(
-               function(imageURI) {
+               function(imageData) {
                  window._pendingCameraAction = false;
-                 console.log('[Camera] Success - FILE_URI:', imageURI ? imageURI.substring(0, 80) : 'null');
+                 console.log('[Camera] Success callback, data length:', imageData ? imageData.length : 0);
                  // Use setTimeout to ensure WebView is fully restored after native camera
                  setTimeout(function() {
-                   // Display image immediately using file URI
+                   var imgSrc = 'data:image/jpeg;base64,' + imageData;
+                   // Display in avatar frame immediately (same as gallery)
                    var profileAvatar = document.getElementById('profile-avatar');
                    if (profileAvatar) {
-                     profileAvatar.src = imageURI;
-                     console.log('[Camera] Avatar src set to file URI');
+                     profileAvatar.src = imgSrc;
+                     console.log('[Camera] Profile avatar updated with base64');
                    }
                    var dashAvatar = document.getElementById('dashboard-profile-avatar');
-                   if (dashAvatar) dashAvatar.src = imageURI;
-
-                   // Convert file to base64 for server upload
-                   window.resolveLocalFileSystemURL(imageURI, function(fileEntry) {
-                     fileEntry.file(function(file) {
-                       var reader = new FileReader();
-                       reader.onloadend = function() {
-                         var base64Data = this.result; // data:image/jpeg;base64,...
-                         console.log('[Camera] Base64 conversion done, length:', base64Data ? base64Data.length : 0);
-                         newProfileImage = base64Data;
-                         hasChanges = true;
-                         isEditing = true;
-                         var btns = document.querySelector('.profile-edit-buttons');
-                         if (btns) btns.style.display = 'flex';
-                         if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
-                         if (currentUser) currentUser.avatar = base64Data;
-                         if (typeof showNotification === 'function') {
-                           showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
-                         }
-                       };
-                       reader.onerror = function(err) {
-                         console.error('[Camera] FileReader error:', err);
-                         // Fallback: use file URI directly as the image data
-                         newProfileImage = imageURI;
-                         hasChanges = true;
-                         isEditing = true;
-                         var btns2 = document.querySelector('.profile-edit-buttons');
-                         if (btns2) btns2.style.display = 'flex';
-                         if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
-                         if (typeof showNotification === 'function') {
-                           showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
-                         }
-                       };
-                       reader.readAsDataURL(file);
-                     }, function(err) {
-                       console.error('[Camera] file() error:', err);
-                     });
-                   }, function(err) {
-                     console.error('[Camera] resolveLocalFileSystemURL error:', err);
-                     // Fallback: try using the URI directly
-                     newProfileImage = imageURI;
-                     hasChanges = true;
-                     isEditing = true;
-                     var btns3 = document.querySelector('.profile-edit-buttons');
-                     if (btns3) btns3.style.display = 'flex';
-                     if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
-                     if (typeof showNotification === 'function') {
-                       showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
-                     }
-                   });
+                   if (dashAvatar) dashAvatar.src = imgSrc;
+                   // Set save data
+                   newProfileImage = imgSrc;
+                   hasChanges = true;
+                   isEditing = true;
+                   var btns = document.querySelector('.profile-edit-buttons');
+                   if (btns) btns.style.display = 'flex';
+                   if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
+                   if (currentUser) currentUser.avatar = imgSrc;
+                   if (typeof showNotification === 'function') {
+                     showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
+                   }
                  }, 200);
                },
                function(err) {
@@ -13544,13 +13507,13 @@ window.cancelProfileChanges = cancelProfileChanges;
                  }
                },
                {
-                 quality: 70,
-                 destinationType: Camera.DestinationType.FILE_URI,
+                 quality: 60,
+                 destinationType: Camera.DestinationType.DATA_URL,
                  sourceType: Camera.PictureSourceType.CAMERA,
                  cameraDirection: Camera.Direction.FRONT,
                  encodingType: Camera.EncodingType.JPEG,
-                 targetWidth: 400,
-                 targetHeight: 400,
+                 targetWidth: 300,
+                 targetHeight: 300,
                  correctOrientation: true
                }
              );
