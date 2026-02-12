@@ -14234,6 +14234,9 @@ window.cancelProfileChanges = cancelProfileChanges;
         const msg = (typeof translator !== 'undefined' && translator.translate) ? translator.translate('Profile photo changed to default') : 'Profile photo changed to default';
         showNotification(msg, 'success');
       }
+
+      // Reinitialize handlers to ensure menu works after photo deletion
+      reinitializeProfileEditing();
     }
   };
 
