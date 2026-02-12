@@ -13471,41 +13471,23 @@ window.cancelProfileChanges = cancelProfileChanges;
            if (navigator.camera && navigator.camera.getPicture) {
              navigator.camera.getPicture(
                function(imageData) {
-                 // Convert base64 to Blob, then use FileReader exactly like gallery does
-                 var byteCharacters = atob(imageData);
-                 var byteNumbers = new Array(byteCharacters.length);
-                 for (var i = 0; i < byteCharacters.length; i++) {
-                   byteNumbers[i] = byteCharacters.charCodeAt(i);
-                 }
-                 var byteArray = new Uint8Array(byteNumbers);
-                 var blob = new Blob([byteArray], {type: 'image/jpeg'});
-
-                 // Use FileReader same as gallery handler
-                 var reader = new FileReader();
-                 reader.onload = function(e) {
-                   var imgSrc = e.target.result;
-
+                 var imgSrc = 'data:image/jpeg;base64,' + imageData;
+                 // Save data immediately
+                 newProfileImage = imgSrc;
+                 hasChanges = true;
+                 isEditing = true;
+                 if (currentUser) currentUser.avatar = imgSrc;
+                 if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
+                 // Display in frame after WebView recovers from native camera
+                 setTimeout(function() {
                    var profileAvatar = document.getElementById('profile-avatar');
                    if (profileAvatar) profileAvatar.src = imgSrc;
-
-                   var dashboardAvatar = document.getElementById('dashboard-profile-avatar');
-                   if (dashboardAvatar) dashboardAvatar.src = imgSrc;
-
-                   newProfileImage = imgSrc;
-                   hasChanges = true;
-                   isEditing = true;
-
-                   if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
-
-                   var photoMenu = document.querySelector('.photo-options-menu');
-                   if (photoMenu) photoMenu.classList.remove('show');
-
-                   if (currentUser) currentUser.avatar = imgSrc;
+                   var dashAvatar = document.getElementById('dashboard-profile-avatar');
+                   if (dashAvatar) dashAvatar.src = imgSrc;
                    if (typeof showNotification === 'function') {
                      showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
                    }
-                 };
-                 reader.readAsDataURL(blob);
+                 }, 500);
                },
                function(err) { console.error('Camera error:', err); },
                {
