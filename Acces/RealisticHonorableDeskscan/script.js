@@ -13231,91 +13231,99 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
      }
 
-     // ⚡ IMMEDIATE Silent Pre-warm: تجهيز فوري جداً في المرة الأولى
+     // ⚡ TRUE PREWARM: .click() صامت فعلي عند أول user gesture
      let fileInputPrewarmed = false;
      let prewarmAttempts = 0;
      const MAX_ATTEMPTS = 5;
      
-     function immediatePrewarm() {
+     function truePrewarmWithClick() {
        if (fileInputPrewarmed) return;
        
        const profileImageUpload = document.getElementById('profile-image-upload');
        if (!profileImageUpload && prewarmAttempts < MAX_ATTEMPTS) {
          prewarmAttempts++;
-         setTimeout(immediatePrewarm, 20);
+         setTimeout(truePrewarmWithClick, 20);
          return;
        }
        
        if (!profileImageUpload) return;
        
        try {
-         // إنشاء 4 hidden inputs (2 للكاميرا، 2 للمعرض) لتجهيز قوي
-         const createWarmInput = (withCapture, index) => {
+         // 1. Create invisible overlay للحصول على user gesture
+         const clickCapture = document.createElement('div');
+         clickCapture.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999999;opacity:0;pointer-events:auto;background:transparent';
+         
+         let gestureObtained = false;
+         
+         clickCapture.addEventListener('click', function warmClick(e) {
+           if (gestureObtained) return;
+           gestureObtained = true;
+           
+           console.log('🎯 User gesture captured - warming file system');
+           
+           // الآن عندنا user gesture - نقدر نعمل .click() فعلي!
+           const warmInput = document.createElement('input');
+           warmInput.type = 'file';
+           warmInput.accept = 'image/*';
+           warmInput.style.cssText = 'position:fixed;top:-9999px;opacity:0;pointer-events:none';
+           document.body.appendChild(warmInput);
+           
+           // .click() فعلي - هذا سيُجهز Gallery app!
+           try {
+             warmInput.click(); // ← هذا هو السحر!
+           } catch (e) {
+             console.log('Warm click failed:', e);
+           }
+           
+           // Remove overlay فوراً
+           clickCapture.remove();
+           
+           // Remove warm input بعد ثانية
+           setTimeout(() => warmInput.remove(), 1000);
+           
+           fileInputPrewarmed = true;
+           console.log('✅ TRUE pre-warm: Gallery app loaded in memory');
+         }, { once: true, passive: false });
+         
+         // Add overlay to DOM
+         document.body.appendChild(clickCapture);
+         
+         // Remove overlay بعد 5 ثواني إذا ما فيه click
+         setTimeout(() => {
+           if (!gestureObtained) {
+             clickCapture.remove();
+             console.log('⏱️ Pre-warm timeout (no user interaction)');
+           }
+         }, 5000);
+         
+         // Fallback: focus/blur للـ inputs
+         const warmWithFocus = (withCapture) => {
            const input = document.createElement('input');
            input.type = 'file';
            input.accept = 'image/*';
            if (withCapture) input.setAttribute('capture', 'user');
-           input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1';
+           input.style.cssText = 'position:fixed;top:-9999px;opacity:0;pointer-events:none';
            document.body.appendChild(input);
            
-           // تجهيز مكثف ومتكرر
-           const warmCycle = () => {
+           setTimeout(() => {
              try {
                input.focus();
                input.blur();
              } catch (e) {}
-           };
-           
-           // 5 محاولات تجهيز لكل input!
-           setTimeout(warmCycle, 0);
-           setTimeout(warmCycle, 10);
-           setTimeout(warmCycle, 30);
-           setTimeout(warmCycle, 60);
-           setTimeout(warmCycle, 100);
-           
-           // حذف بعد 3 ثواني
-           setTimeout(() => {
-             try { input.remove(); } catch (e) {}
-           }, 3000);
+             setTimeout(() => input.remove(), 2000);
+           }, 10);
          };
          
-         // إنشاء 4 inputs (مضاعفة القوة)
-         createWarmInput(true, 1);   // Camera 1
-         createWarmInput(true, 2);   // Camera 2
-         createWarmInput(false, 1);  // Gallery 1
-         createWarmInput(false, 2);  // Gallery 2
+         warmWithFocus(true);  // Camera
+         warmWithFocus(false); // Gallery
          
-         // تجهيز الـ input الحقيقي بشكل مكثف جداً
-         const warmReal = () => {
-           try {
-             profileImageUpload.focus();
-             profileImageUpload.blur();
-             // إضافة listener
-             const tempListener = () => profileImageUpload.removeEventListener('change', tempListener);
-             profileImageUpload.addEventListener('change', tempListener);
-           } catch (e) {}
-         };
-         
-         // 7 محاولات للـ input الحقيقي!
-         warmReal();
-         setTimeout(warmReal, 10);
-         setTimeout(warmReal, 30);
-         setTimeout(warmReal, 60);
-         setTimeout(warmReal, 100);
-         setTimeout(warmReal, 200);
-         setTimeout(warmReal, 400);
-         
-         fileInputPrewarmed = true;
-         console.log('⚡ IMMEDIATE pre-warm: 4 inputs + 7 attempts');
        } catch (e) {
          console.log('Pre-warm error:', e.message);
        }
      }
 
-     // تنفيذ فوري - بدون انتظار!
-     setTimeout(immediatePrewarm, 0);    // فوراً
-     setTimeout(immediatePrewarm, 50);   // احتياطي 1
-     setTimeout(immediatePrewarm, 150);  // احتياطي 2
+     // تنفيذ فوري
+     setTimeout(truePrewarmWithClick, 0);
 
      // Show photo options menu
      function showPhotoMenu() {
