@@ -13231,6 +13231,47 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
      }
 
+     // Pre-warm file input to reduce first-time delay
+     let fileInputPrewarmed = false;
+     function prewarmFileInput() {
+       if (fileInputPrewarmed) return;
+       
+       const profileImageUpload = document.getElementById('profile-image-upload');
+       if (profileImageUpload) {
+         // Create a temporary change listener to prime the file picker
+         const tempListener = () => {
+           profileImageUpload.removeEventListener('change', tempListener);
+         };
+         profileImageUpload.addEventListener('change', tempListener);
+         
+         // Trigger a focus event to initialize file system access
+         try {
+           profileImageUpload.focus();
+           profileImageUpload.blur();
+         } catch (e) {
+           // Ignore any errors
+         }
+         
+         fileInputPrewarmed = true;
+         console.log('✅ File input prewarmed');
+       }
+     }
+
+     // Prewarm on first user interaction
+     function setupPrewarm() {
+       const prewarmOnInteraction = () => {
+         prewarmFileInput();
+         document.removeEventListener('click', prewarmOnInteraction);
+         document.removeEventListener('touchstart', prewarmOnInteraction);
+       };
+       
+       document.addEventListener('click', prewarmOnInteraction, { once: true, passive: true });
+       document.addEventListener('touchstart', prewarmOnInteraction, { once: true, passive: true });
+     }
+
+     // Setup prewarm after a short delay
+     setTimeout(setupPrewarm, 1000);
+
      // Show photo options menu
      function showPhotoMenu() {
        const menu = document.querySelector('.photo-options-menu');
