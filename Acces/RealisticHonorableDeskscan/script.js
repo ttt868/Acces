@@ -13200,30 +13200,22 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
 
        if (galleryOption) {
+         // ط¥ط²ط§ظ„ط© ط£ظٹ ظ…ط¹ط§ظ„ط¬ط§طھ ط³ط§ط¨ظ‚ط© ظ„ظ…ظ†ط¹ ط§ظ„طھظƒط±ط§ط±
          galleryOption.onclick = null;
          galleryOption.onclick = function(e) {
            e.stopPropagation();
            e.preventDefault();
 
-           console.log('🖼️ Gallery clicked');
-           
-           // إنشاء input جديد خاص بالمعرض - فوري!
-           const galleryInput = document.createElement('input');
-           galleryInput.type = 'file';
-           galleryInput.accept = 'image/*';
-           // بدون capture = معرض فقط
-           galleryInput.style.display = 'none';
-           
-           galleryInput.onchange = function(event) {
-             if (event.target.files && event.target.files[0]) {
-               handleProfileImageSelection(event.target.files[0]);
-             }
-             setTimeout(() => galleryInput.remove(), 100);
-           };
-           
-           document.body.appendChild(galleryInput);
-           galleryInput.click();
-           
+           console.log('Gallery option clicked');
+           const profileImageUpload = document.getElementById('profile-image-upload');
+
+           if (profileImageUpload) {
+             // ط¥ط¹ط¯ط§ط¯ ط§ظ„ظ…ط¹ط±ط¶
+             profileImageUpload.removeAttribute('capture');
+             profileImageUpload.setAttribute('accept', 'image/*');
+             profileImageUpload.click();
+             console.log('Gallery opened');
+           }
            hidePhotoMenu();
          };
        }
@@ -13237,78 +13229,6 @@ window.cancelProfileChanges = cancelProfileChanges;
            hidePhotoMenu();
          };
        }
-     }
-
-     // دالة مساعدة لمعالجة الصورة المختارة (مستخدمة من camera و gallery)
-     function handleProfileImageSelection(file) {
-       if (!file) return;
-
-       console.log('File selected:', file.name, file.type, file.size);
-
-       // Check file type
-       if (!file.type.startsWith('image/')) {
-         if (typeof showNotification === 'function') {
-           showNotification(translator.translate('Please select a valid image file'), 'error');
-         } else {
-           alert('Please select a valid image file');
-         }
-         return;
-       }
-
-       // Check file size (15MB)
-       if (file.size > 15 * 1024 * 1024) {
-         if (typeof showNotification === 'function') {
-           showNotification('File size is too large. Maximum 15MB allowed', 'error');
-         } else {
-           alert('File size is too large. Maximum 15MB allowed');
-         }
-         return;
-       }
-
-       // قراءة وعرض الصورة فوراً
-       const reader = new FileReader();
-
-       reader.onload = function(e) {
-         try {
-           const imageData = e.target.result;
-           console.log('Image loaded successfully, data length:', imageData.length);
-
-           // تحديث صورة الملف الشخصي فوراً
-           const profileAvatar = document.getElementById('profile-avatar');
-           if (profileAvatar) {
-             profileAvatar.src = imageData;
-             console.log('✅ Profile avatar updated');
-           }
-
-           // تحديث صورة لوحة التحكم
-           const dashboardAvatar = document.getElementById('dashboard-profile-avatar');
-           if (dashboardAvatar) {
-             dashboardAvatar.src = imageData;
-             console.log('Dashboard avatar updated');
-           }
-
-           // حفظ البيانات وتفعيل التحرير فوراً
-           newProfileImage = imageData;
-           hasChanges = true;
-           enterEditMode();
-           showNotification(translator.translate('Photo updated. Click Save to confirm'), 'success');
-
-         } catch (error) {
-           console.error('Error loading image:', error);
-           if (typeof showNotification === 'function') {
-             showNotification(translator.translate('Failed to load image'), 'error');
-           }
-         }
-       };
-
-       reader.onerror = function(error) {
-         console.error('FileReader error:', error);
-         if (typeof showNotification === 'function') {
-           showNotification(translator.translate('Failed to read image file'), 'error');
-         }
-       };
-
-       reader.readAsDataURL(file);
      }
 
      // Show photo options menu
