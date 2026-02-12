@@ -13231,98 +13231,91 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
      }
 
-     // ⚡ Optimized Silent Pre-warm: يعمل عندما المتصفح خالي
+     // ⚡ IMMEDIATE Silent Pre-warm: تجهيز فوري جداً في المرة الأولى
      let fileInputPrewarmed = false;
+     let prewarmAttempts = 0;
+     const MAX_ATTEMPTS = 5;
      
-     function silentPrewarmFileInput() {
+     function immediatePrewarm() {
        if (fileInputPrewarmed) return;
        
        const profileImageUpload = document.getElementById('profile-image-upload');
-       if (!profileImageUpload) {
-         // استخدام requestIdleCallback بدل setTimeout
-         if (window.requestIdleCallback) {
-           requestIdleCallback(() => silentPrewarmFileInput(), { timeout: 500 });
-         } else {
-           setTimeout(silentPrewarmFileInput, 100);
-         }
+       if (!profileImageUpload && prewarmAttempts < MAX_ATTEMPTS) {
+         prewarmAttempts++;
+         setTimeout(immediatePrewarm, 20);
          return;
        }
        
+       if (!profileImageUpload) return;
+       
        try {
-         // Hidden inputs لتحميل file system
-         const warmInput = (withCapture) => {
+         // إنشاء 4 hidden inputs (2 للكاميرا، 2 للمعرض) لتجهيز قوي
+         const createWarmInput = (withCapture, index) => {
            const input = document.createElement('input');
            input.type = 'file';
            input.accept = 'image/*';
            if (withCapture) input.setAttribute('capture', 'user');
-           input.style.cssText = 'position:fixed;top:-9999px;width:0;height:0;opacity:0;pointer-events:none';
+           input.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1';
            document.body.appendChild(input);
            
-           // تجهيز متعدد المراحل
-           const warmSequence = () => {
+           // تجهيز مكثف ومتكرر
+           const warmCycle = () => {
              try {
                input.focus();
                input.blur();
-               // محاولة ثانية بعد 50ms
-               setTimeout(() => {
-                 try {
-                   input.focus();
-                   input.blur();
-                 } catch (e) {}
-               }, 50);
              } catch (e) {}
-             setTimeout(() => input.remove(), 2000);
            };
            
-           // استخدام requestIdleCallback للتنفيذ عند الفراغ
-           if (window.requestIdleCallback) {
-             requestIdleCallback(warmSequence, { timeout: 100 });
-           } else {
-             setTimeout(warmSequence, 20);
-           }
+           // 5 محاولات تجهيز لكل input!
+           setTimeout(warmCycle, 0);
+           setTimeout(warmCycle, 10);
+           setTimeout(warmCycle, 30);
+           setTimeout(warmCycle, 60);
+           setTimeout(warmCycle, 100);
+           
+           // حذف بعد 3 ثواني
+           setTimeout(() => {
+             try { input.remove(); } catch (e) {}
+           }, 3000);
          };
          
-         // تجهيز الكاميرا والمعرض معاً
-         warmInput(true);  // Camera
-         warmInput(false); // Gallery
+         // إنشاء 4 inputs (مضاعفة القوة)
+         createWarmInput(true, 1);   // Camera 1
+         createWarmInput(true, 2);   // Camera 2
+         createWarmInput(false, 1);  // Gallery 1
+         createWarmInput(false, 2);  // Gallery 2
          
-         // تجهيز الـ input الحقيقي بشكل مكثف
+         // تجهيز الـ input الحقيقي بشكل مكثف جداً
          const warmReal = () => {
            try {
              profileImageUpload.focus();
              profileImageUpload.blur();
-             // إضافة listener مبكر
+             // إضافة listener
              const tempListener = () => profileImageUpload.removeEventListener('change', tempListener);
              profileImageUpload.addEventListener('change', tempListener);
            } catch (e) {}
          };
          
+         // 7 محاولات للـ input الحقيقي!
          warmReal();
-         setTimeout(warmReal, 100); // محاولة ثانية
-         setTimeout(warmReal, 300); // محاولة ثالثة
+         setTimeout(warmReal, 10);
+         setTimeout(warmReal, 30);
+         setTimeout(warmReal, 60);
+         setTimeout(warmReal, 100);
+         setTimeout(warmReal, 200);
+         setTimeout(warmReal, 400);
          
          fileInputPrewarmed = true;
-         console.log('⚡ Optimized pre-warm complete');
+         console.log('⚡ IMMEDIATE pre-warm: 4 inputs + 7 attempts');
        } catch (e) {
-         console.log('Pre-warm:', e.message);
+         console.log('Pre-warm error:', e.message);
        }
      }
 
-     // بدء التجهيز فوراً مع استخدام requestIdleCallback
-     const startPrewarm = () => {
-       if (window.requestIdleCallback) {
-         // ينفذ عندما المتصفح خالي
-         requestIdleCallback(silentPrewarmFileInput, { timeout: 500 });
-       } else {
-         setTimeout(silentPrewarmFileInput, 100);
-       }
-     };
-     
-     if (document.readyState === 'loading') {
-       document.addEventListener('DOMContentLoaded', startPrewarm);
-     } else {
-       startPrewarm();
-     }
+     // تنفيذ فوري - بدون انتظار!
+     setTimeout(immediatePrewarm, 0);    // فوراً
+     setTimeout(immediatePrewarm, 50);   // احتياطي 1
+     setTimeout(immediatePrewarm, 150);  // احتياطي 2
 
      // Show photo options menu
      function showPhotoMenu() {
