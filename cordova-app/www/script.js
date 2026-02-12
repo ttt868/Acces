@@ -13469,67 +13469,23 @@ window.cancelProfileChanges = cancelProfileChanges;
            e.preventDefault();
            hidePhotoMenu();
            if (navigator.camera && navigator.camera.getPicture) {
-             // Mark pending camera action for resume handler
-             window._pendingCameraAction = true;
              navigator.camera.getPicture(
                function(imageData) {
-                 window._pendingCameraAction = false;
-                 console.log('[Camera] Success callback, data length:', imageData ? imageData.length : 0);
-                 try {
-                   var imgSrc = 'data:image/jpeg;base64,' + imageData;
-                   console.log('[Camera] imgSrc created, length:', imgSrc.length);
-
-                   // Update profile avatar immediately (same as gallery)
-                   var profileAvatar = document.getElementById('profile-avatar');
-                   if (profileAvatar) {
-                     profileAvatar.src = imgSrc;
-                     console.log('[Camera] Profile avatar updated');
-                   }
-
-                   // Update dashboard avatar
-                   var dashboardAvatar = document.getElementById('dashboard-profile-avatar');
-                   if (dashboardAvatar) {
-                     dashboardAvatar.src = imgSrc;
-                     console.log('[Camera] Dashboard avatar updated');
-                   }
-
-                   // Save data and enable edit mode (same as gallery)
-                   newProfileImage = imgSrc;
-                   hasChanges = true;
-                   isEditing = true;
-
-                   // Show edit buttons
-                   if (editButtonsContainer) {
-                     editButtonsContainer.style.display = 'flex';
-                     console.log('[Camera] Edit buttons shown');
-                   }
-
-                   // Hide photo menu
-                   var photoMenu = document.querySelector('.photo-options-menu');
-                   if (photoMenu) {
-                     photoMenu.classList.remove('show');
-                   }
-
-                   // Success message
-                   if (typeof showNotification === 'function') {
-                     showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
-                   }
-
-                   console.log('[Camera] Image selection completed successfully');
-                 } catch (error) {
-                   console.error('[Camera] Error processing image:', error);
-                   if (typeof showNotification === 'function') {
-                     showNotification('Error processing image', 'error');
-                   }
-                 }
-               },
-               function(err) {
-                 window._pendingCameraAction = false;
-                 console.error('[Camera] Error:', err);
+                 var imgSrc = 'data:image/jpeg;base64,' + imageData;
+                 var profileAvatar = document.getElementById('profile-avatar');
+                 if (profileAvatar) profileAvatar.src = imgSrc;
+                 var dashAvatar = document.getElementById('dashboard-profile-avatar');
+                 if (dashAvatar) dashAvatar.src = imgSrc;
+                 newProfileImage = imgSrc;
+                 hasChanges = true;
+                 isEditing = true;
+                 if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
+                 if (currentUser) currentUser.avatar = imgSrc;
                  if (typeof showNotification === 'function') {
-                   showNotification('Camera error: ' + (err || 'Unknown error'), 'error');
+                   showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
                  }
                },
+               function(err) { console.error('Camera error:', err); },
                {
                  quality: 70,
                  destinationType: Camera.DestinationType.DATA_URL,
@@ -14227,24 +14183,6 @@ window.cancelProfileChanges = cancelProfileChanges;
   function setupSimpleProfileMenu() {
     // No duplicate handler setup - initializeProfileEditing handles everything
   }
-
-  // Handle Android resume after camera - WebView may have been destroyed and recreated
-  document.addEventListener('resume', function() {
-    console.log('[Resume] App resumed, pendingCameraAction:', window._pendingCameraAction);
-    if (window._pendingCameraAction) {
-      window._pendingCameraAction = false;
-      // Camera plugin stores result internally; re-call getPicture to retrieve it
-      // Actually, the plugin re-delivers via the original callback on supported versions
-      // But if WebView was killed, we need to reinitialize
-      setTimeout(function() {
-        var profilePage = document.getElementById('profile-page');
-        if (profilePage && !profilePage.classList.contains('hidden')) {
-          console.log('[Resume] Reinitializing profile editing after camera return');
-          reinitializeProfileEditing();
-        }
-      }, 300);
-    }
-  }, false);
 
   // Simple global functions
   window.showPhotoMenu = function() {
