@@ -13200,22 +13200,30 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
 
        if (galleryOption) {
-         // ط¥ط²ط§ظ„ط© ط£ظٹ ظ…ط¹ط§ظ„ط¬ط§طھ ط³ط§ط¨ظ‚ط© ظ„ظ…ظ†ط¹ ط§ظ„طھظƒط±ط§ط±
          galleryOption.onclick = null;
          galleryOption.onclick = function(e) {
            e.stopPropagation();
            e.preventDefault();
 
-           console.log('Gallery option clicked');
-           const profileImageUpload = document.getElementById('profile-image-upload');
-
-           if (profileImageUpload) {
-             // ط¥ط¹ط¯ط§ط¯ ط§ظ„ظ…ط¹ط±ط¶
-             profileImageUpload.removeAttribute('capture');
-             profileImageUpload.setAttribute('accept', 'image/*');
-             profileImageUpload.click();
-             console.log('Gallery opened');
-           }
+           console.log('🖼️ Gallery clicked');
+           
+           // إنشاء input جديد خاص بالمعرض - فوري!
+           const galleryInput = document.createElement('input');
+           galleryInput.type = 'file';
+           galleryInput.accept = 'image/*';
+           // بدون capture = معرض فقط
+           galleryInput.style.display = 'none';
+           
+           galleryInput.onchange = function(event) {
+             if (event.target.files && event.target.files[0]) {
+               handleProfileImageSelection(event.target.files[0]);
+             }
+             setTimeout(() => galleryInput.remove(), 100);
+           };
+           
+           document.body.appendChild(galleryInput);
+           galleryInput.click();
+           
            hidePhotoMenu();
          };
        }
@@ -13231,99 +13239,77 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
      }
 
-     // ⚡ TRUE PREWARM: .click() صامت فعلي عند أول user gesture
-     let fileInputPrewarmed = false;
-     let prewarmAttempts = 0;
-     const MAX_ATTEMPTS = 5;
-     
-     function truePrewarmWithClick() {
-       if (fileInputPrewarmed) return;
-       
-       const profileImageUpload = document.getElementById('profile-image-upload');
-       if (!profileImageUpload && prewarmAttempts < MAX_ATTEMPTS) {
-         prewarmAttempts++;
-         setTimeout(truePrewarmWithClick, 20);
+     // دالة مساعدة لمعالجة الصورة المختارة (مستخدمة من camera و gallery)
+     function handleProfileImageSelection(file) {
+       if (!file) return;
+
+       console.log('File selected:', file.name, file.type, file.size);
+
+       // Check file type
+       if (!file.type.startsWith('image/')) {
+         if (typeof showNotification === 'function') {
+           showNotification(translator.translate('Please select a valid image file'), 'error');
+         } else {
+           alert('Please select a valid image file');
+         }
          return;
        }
-       
-       if (!profileImageUpload) return;
-       
-       try {
-         // 1. Create invisible overlay للحصول على user gesture
-         const clickCapture = document.createElement('div');
-         clickCapture.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999999;opacity:0;pointer-events:auto;background:transparent';
-         
-         let gestureObtained = false;
-         
-         clickCapture.addEventListener('click', function warmClick(e) {
-           if (gestureObtained) return;
-           gestureObtained = true;
-           
-           console.log('🎯 User gesture captured - warming file system');
-           
-           // الآن عندنا user gesture - نقدر نعمل .click() فعلي!
-           const warmInput = document.createElement('input');
-           warmInput.type = 'file';
-           warmInput.accept = 'image/*';
-           warmInput.style.cssText = 'position:fixed;top:-9999px;opacity:0;pointer-events:none';
-           document.body.appendChild(warmInput);
-           
-           // .click() فعلي - هذا سيُجهز Gallery app!
-           try {
-             warmInput.click(); // ← هذا هو السحر!
-           } catch (e) {
-             console.log('Warm click failed:', e);
-           }
-           
-           // Remove overlay فوراً
-           clickCapture.remove();
-           
-           // Remove warm input بعد ثانية
-           setTimeout(() => warmInput.remove(), 1000);
-           
-           fileInputPrewarmed = true;
-           console.log('✅ TRUE pre-warm: Gallery app loaded in memory');
-         }, { once: true, passive: false });
-         
-         // Add overlay to DOM
-         document.body.appendChild(clickCapture);
-         
-         // Remove overlay بعد 5 ثواني إذا ما فيه click
-         setTimeout(() => {
-           if (!gestureObtained) {
-             clickCapture.remove();
-             console.log('⏱️ Pre-warm timeout (no user interaction)');
-           }
-         }, 5000);
-         
-         // Fallback: focus/blur للـ inputs
-         const warmWithFocus = (withCapture) => {
-           const input = document.createElement('input');
-           input.type = 'file';
-           input.accept = 'image/*';
-           if (withCapture) input.setAttribute('capture', 'user');
-           input.style.cssText = 'position:fixed;top:-9999px;opacity:0;pointer-events:none';
-           document.body.appendChild(input);
-           
-           setTimeout(() => {
-             try {
-               input.focus();
-               input.blur();
-             } catch (e) {}
-             setTimeout(() => input.remove(), 2000);
-           }, 10);
-         };
-         
-         warmWithFocus(true);  // Camera
-         warmWithFocus(false); // Gallery
-         
-       } catch (e) {
-         console.log('Pre-warm error:', e.message);
-       }
-     }
 
-     // تنفيذ فوري
-     setTimeout(truePrewarmWithClick, 0);
+       // Check file size (15MB)
+       if (file.size > 15 * 1024 * 1024) {
+         if (typeof showNotification === 'function') {
+           showNotification('File size is too large. Maximum 15MB allowed', 'error');
+         } else {
+           alert('File size is too large. Maximum 15MB allowed');
+         }
+         return;
+       }
+
+       // قراءة وعرض الصورة فوراً
+       const reader = new FileReader();
+
+       reader.onload = function(e) {
+         try {
+           const imageData = e.target.result;
+           console.log('Image loaded successfully, data length:', imageData.length);
+
+           // تحديث صورة الملف الشخصي فوراً
+           const profileAvatar = document.getElementById('profile-avatar');
+           if (profileAvatar) {
+             profileAvatar.src = imageData;
+             console.log('✅ Profile avatar updated');
+           }
+
+           // تحديث صورة لوحة التحكم
+           const dashboardAvatar = document.getElementById('dashboard-profile-avatar');
+           if (dashboardAvatar) {
+             dashboardAvatar.src = imageData;
+             console.log('Dashboard avatar updated');
+           }
+
+           // حفظ البيانات وتفعيل التحرير فوراً
+           newProfileImage = imageData;
+           hasChanges = true;
+           enterEditMode();
+           showNotification(translator.translate('Photo updated. Click Save to confirm'), 'success');
+
+         } catch (error) {
+           console.error('Error loading image:', error);
+           if (typeof showNotification === 'function') {
+             showNotification(translator.translate('Failed to load image'), 'error');
+           }
+         }
+       };
+
+       reader.onerror = function(error) {
+         console.error('FileReader error:', error);
+         if (typeof showNotification === 'function') {
+           showNotification(translator.translate('Failed to read image file'), 'error');
+         }
+       };
+
+       reader.readAsDataURL(file);
+     }
 
      // Show photo options menu
      function showPhotoMenu() {
