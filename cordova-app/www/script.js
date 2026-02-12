@@ -13650,6 +13650,7 @@ window.cancelProfileChanges = cancelProfileChanges;
          // Update user data with default avatar (not null)
          if (currentUser) {
            currentUser.avatar = defaultAvatar;
+           currentUser.lastProfileUpdate = Date.now();
 
            // Send delete directly to server
            const apiBase = (typeof getApiOrigin !== 'undefined' ? getApiOrigin() : window.location.origin);
@@ -13672,6 +13673,9 @@ window.cancelProfileChanges = cancelProfileChanges;
                body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
              }).catch(function() {});
            });
+
+           // Save to session immediately
+           saveUserSession(currentUser);
 
            // Show single success notification only
            if (typeof showNotification === 'function') {
@@ -14126,22 +14130,34 @@ window.cancelProfileChanges = cancelProfileChanges;
          showNotification(translator.translate('Profile updated successfully'), 'success');
        }
 
-       // Force reload fresh user data immediately to ensure consistency
+       // FIXED: Delay server verification to allow server time to save the new image
+       // Immediate checkIfUserExists causes race condition - old image is fetched before server saves new one
        if (currentUser.email) {
-         // Force immediate reload instead of waiting
-         checkIfUserExists(currentUser.email).then(userData => {
-           if (userData) {
-             console.log('Verified profile changes with server data');
+         // Wait 2.5 seconds for server to process and save the new image
+         setTimeout(function() {
+           checkIfUserExists(currentUser.email).then(userData => {
+             if (userData) {
+               console.log('Verified profile changes with server data after delay');
 
-             // Make sure our UI reflects the latest server data
-             updateUserInfo(userData);
+               // Only update if server data is newer than our local lastProfileUpdate
+               // This prevents overwriting with stale cached data
+               if (!currentUser.lastProfileUpdate || 
+                   !userData.lastProfileUpdate || 
+                   userData.lastProfileUpdate >= currentUser.lastProfileUpdate) {
+                 
+                 // Make sure our UI reflects the latest server data
+                 updateUserInfo(userData);
 
-             // Save the verified server data
-             saveUserSession(userData);
-           }
-         }).catch(error => {
-           console.error('Error verifying profile update:', error);
-         });
+                 // Save the verified server data
+                 saveUserSession(userData);
+               } else {
+                 console.log('Skipping server data - local data is newer');
+               }
+             }
+           }).catch(error => {
+             console.error('Error verifying profile update:', error);
+           });
+         }, 2500);
        }
      }
 
@@ -14205,6 +14221,7 @@ window.cancelProfileChanges = cancelProfileChanges;
 
       // Update currentUser in memory immediately
       currentUser.avatar = defaultAvatar;
+      currentUser.lastProfileUpdate = Date.now();
 
       // Send delete directly to server
       const apiBase = (typeof getApiOrigin !== 'undefined' ? getApiOrigin() : window.location.origin);
@@ -14230,13 +14247,13 @@ window.cancelProfileChanges = cancelProfileChanges;
         }).catch(function() {});
       });
 
+      // Save to session immediately
+      saveUserSession(currentUser);
+
       if (typeof showNotification === 'function') {
         const msg = (typeof translator !== 'undefined' && translator.translate) ? translator.translate('Profile photo changed to default') : 'Profile photo changed to default';
         showNotification(msg, 'success');
       }
-
-      // Reinitialize handlers to ensure menu works after photo deletion
-      reinitializeProfileEditing();
     }
   };
 
