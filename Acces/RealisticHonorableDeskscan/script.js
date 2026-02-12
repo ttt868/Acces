@@ -13231,66 +13231,65 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
      }
 
-     // ⚡ AGGRESSIVE Pre-warm: Load file input immediately on page load
-     // This eliminates the first-time delay completely
+     // ⚡ Silent Pre-warm: تجهيز النظام في الخلفية بدون فتح أي شيء
      let fileInputPrewarmed = false;
      
-     function aggressivePrewarmFileInput() {
+     function silentPrewarmFileInput() {
        if (fileInputPrewarmed) return;
        
        const profileImageUpload = document.getElementById('profile-image-upload');
        if (!profileImageUpload) {
-         // Retry if element not ready yet
-         setTimeout(aggressivePrewarmFileInput, 100);
+         setTimeout(silentPrewarmFileInput, 100);
          return;
        }
        
        try {
-         // Method 1: Create temporary hidden input that triggers file system early
-         const hiddenInput = document.createElement('input');
-         hiddenInput.type = 'file';
-         hiddenInput.accept = 'image/*';
-         hiddenInput.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none';
-         document.body.appendChild(hiddenInput);
+         // ⚠️ تجهيز صامت فقط - بدون فتح
+         // Method 1: Hidden inputs لتحميل file system
+         const warmInput = (withCapture) => {
+           const input = document.createElement('input');
+           input.type = 'file';
+           input.accept = 'image/*';
+           if (withCapture) input.setAttribute('capture', 'user');
+           input.style.cssText = 'position:fixed;top:-9999px;width:0;height:0;opacity:0;pointer-events:none';
+           document.body.appendChild(input);
+           
+           // فقط focus/blur - بدون click!
+           setTimeout(() => {
+             try {
+               input.focus();
+               input.blur();
+             } catch (e) {}
+             setTimeout(() => input.remove(), 1500);
+           }, 50);
+         };
          
-         // Trigger browser's file system initialization
-         setTimeout(() => {
-           try {
-             hiddenInput.focus();
-             hiddenInput.blur();
-             hiddenInput.click(); // محاولة فتح picker بشكل صامت
-           } catch (e) {
-             // تجاهل الأخطاء
-           }
-           // Remove after 2 seconds
-           setTimeout(() => hiddenInput.remove(), 2000);
-         }, 100);
+         // تجهيز الكاميرا والمعرض معاً
+         warmInput(true);  // Camera
+         warmInput(false); // Gallery
          
-         // Method 2: Warm up the actual input too
+         // Method 2: تجهيز الـ input الحقيقي
          profileImageUpload.focus();
          profileImageUpload.blur();
          
-         // Method 3: Add early change listener
-         const tempListener = () => {
-           profileImageUpload.removeEventListener('change', tempListener);
-         };
+         // Method 3: إضافة listener مبكر
+         const tempListener = () => profileImageUpload.removeEventListener('change', tempListener);
          profileImageUpload.addEventListener('change', tempListener);
          
          fileInputPrewarmed = true;
-         console.log('⚡ Aggressive file input pre-warm complete');
+         console.log('✅ Silent pre-warm done (no auto-open)');
        } catch (e) {
-         console.log('Pre-warm attempt:', e.message);
+         console.log('Pre-warm:', e.message);
        }
      }
 
-     // Start aggressive pre-warm IMMEDIATELY after page elements load
+     // بدء التجهيز بعد تحميل الصفحة
      if (document.readyState === 'loading') {
        document.addEventListener('DOMContentLoaded', () => {
-         setTimeout(aggressivePrewarmFileInput, 500);
+         setTimeout(silentPrewarmFileInput, 300);
        });
      } else {
-       // Already loaded
-       setTimeout(aggressivePrewarmFileInput, 500);
+       setTimeout(silentPrewarmFileInput, 300);
      }
 
      // Show photo options menu
