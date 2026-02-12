@@ -13475,29 +13475,53 @@ window.cancelProfileChanges = cancelProfileChanges;
                function(imageData) {
                  window._pendingCameraAction = false;
                  console.log('[Camera] Success callback, data length:', imageData ? imageData.length : 0);
-                 // Use setTimeout to ensure WebView is fully restored after native camera
-                 setTimeout(function() {
+                 try {
                    var imgSrc = 'data:image/jpeg;base64,' + imageData;
-                   // Display in avatar frame immediately (same as gallery)
+                   console.log('[Camera] imgSrc created, length:', imgSrc.length);
+
+                   // Update profile avatar immediately (same as gallery)
                    var profileAvatar = document.getElementById('profile-avatar');
                    if (profileAvatar) {
                      profileAvatar.src = imgSrc;
-                     console.log('[Camera] Profile avatar updated with base64');
+                     console.log('[Camera] Profile avatar updated');
                    }
-                   var dashAvatar = document.getElementById('dashboard-profile-avatar');
-                   if (dashAvatar) dashAvatar.src = imgSrc;
-                   // Set save data
+
+                   // Update dashboard avatar
+                   var dashboardAvatar = document.getElementById('dashboard-profile-avatar');
+                   if (dashboardAvatar) {
+                     dashboardAvatar.src = imgSrc;
+                     console.log('[Camera] Dashboard avatar updated');
+                   }
+
+                   // Save data and enable edit mode (same as gallery)
                    newProfileImage = imgSrc;
                    hasChanges = true;
                    isEditing = true;
-                   var btns = document.querySelector('.profile-edit-buttons');
-                   if (btns) btns.style.display = 'flex';
-                   if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
-                   if (currentUser) currentUser.avatar = imgSrc;
+
+                   // Show edit buttons
+                   if (editButtonsContainer) {
+                     editButtonsContainer.style.display = 'flex';
+                     console.log('[Camera] Edit buttons shown');
+                   }
+
+                   // Hide photo menu
+                   var photoMenu = document.querySelector('.photo-options-menu');
+                   if (photoMenu) {
+                     photoMenu.classList.remove('show');
+                   }
+
+                   // Success message
                    if (typeof showNotification === 'function') {
                      showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
                    }
-                 }, 200);
+
+                   console.log('[Camera] Image selection completed successfully');
+                 } catch (error) {
+                   console.error('[Camera] Error processing image:', error);
+                   if (typeof showNotification === 'function') {
+                     showNotification('Error processing image', 'error');
+                   }
+                 }
                },
                function(err) {
                  window._pendingCameraAction = false;
@@ -13507,13 +13531,13 @@ window.cancelProfileChanges = cancelProfileChanges;
                  }
                },
                {
-                 quality: 60,
+                 quality: 70,
                  destinationType: Camera.DestinationType.DATA_URL,
                  sourceType: Camera.PictureSourceType.CAMERA,
                  cameraDirection: Camera.Direction.FRONT,
                  encodingType: Camera.EncodingType.JPEG,
-                 targetWidth: 300,
-                 targetHeight: 300,
+                 targetWidth: 400,
+                 targetHeight: 400,
                  correctOrientation: true
                }
              );
