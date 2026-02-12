@@ -162,6 +162,9 @@
   order: 1;
   z-index: 100;
   margin-bottom: -10px;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  -webkit-touch-callout: none;
 }
 
 .profile-avatar {
@@ -175,12 +178,12 @@
 }
 
 .avatar-container:hover .profile-avatar {
-  border-color: var(--primary-color);
-  transform: scale(1.05);
-  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  /* No hover effect - clean look */
 }
 
 .camera-icon-badge {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
   position: absolute;
   bottom: 2px;
   right: 2px;
@@ -205,8 +208,6 @@
 
 .camera-icon-badge:hover {
   background: rgba(0, 0, 0, 0.9);
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .photo-options-menu {
@@ -1563,8 +1564,7 @@ body.dark-theme #profile-page .copy-btn:hover {
   }
 
   .avatar-container:hover .profile-avatar {
-    transform: scale(1.05);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    /* No hover effect on mobile */
   }
 
   /* Staggered animation for cards */
