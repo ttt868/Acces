@@ -13477,22 +13477,24 @@ window.cancelProfileChanges = cancelProfileChanges;
                  console.log('[Camera] Success - FILE_URI:', imageURI ? imageURI.substring(0, 80) : 'null');
                  // Use setTimeout to ensure WebView is fully restored after native camera
                  setTimeout(function() {
-                   // Display image immediately using file URI
-                   var profileAvatar = document.getElementById('profile-avatar');
-                   if (profileAvatar) {
-                     profileAvatar.src = imageURI;
-                     console.log('[Camera] Avatar src set to file URI');
-                   }
-                   var dashAvatar = document.getElementById('dashboard-profile-avatar');
-                   if (dashAvatar) dashAvatar.src = imageURI;
-
-                   // Convert file to base64 for server upload
+                   // Convert file to base64 for display AND server upload
                    window.resolveLocalFileSystemURL(imageURI, function(fileEntry) {
                      fileEntry.file(function(file) {
                        var reader = new FileReader();
                        reader.onloadend = function() {
                          var base64Data = this.result; // data:image/jpeg;base64,...
                          console.log('[Camera] Base64 conversion done, length:', base64Data ? base64Data.length : 0);
+                         
+                         // Display image in frame using base64
+                         var profileAvatar = document.getElementById('profile-avatar');
+                         if (profileAvatar) {
+                           profileAvatar.src = base64Data;
+                           console.log('[Camera] Avatar displayed with base64');
+                         }
+                         var dashAvatar = document.getElementById('dashboard-profile-avatar');
+                         if (dashAvatar) dashAvatar.src = base64Data;
+                         
+                         // Save for server upload
                          newProfileImage = base64Data;
                          hasChanges = true;
                          isEditing = true;
