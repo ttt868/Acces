@@ -13471,21 +13471,36 @@ window.cancelProfileChanges = cancelProfileChanges;
            if (navigator.camera && navigator.camera.getPicture) {
              navigator.camera.getPicture(
                function(imageData) {
-                 var imgSrc = 'data:image/jpeg;base64,' + imageData;
-                 var profileAvatar = document.getElementById('profile-avatar');
-                 if (profileAvatar) profileAvatar.src = imgSrc;
-                 var dashAvatar = document.getElementById('dashboard-profile-avatar');
-                 if (dashAvatar) dashAvatar.src = imgSrc;
-                 newProfileImage = imgSrc;
-                 hasChanges = true;
-                 isEditing = true;
-                 if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
-                 if (currentUser) currentUser.avatar = imgSrc;
+                 console.log('[Camera] Success callback fired, data length:', imageData ? imageData.length : 0);
+                 // Use setTimeout to ensure WebView is fully restored after native camera
+                 setTimeout(function() {
+                   var imgSrc = 'data:image/jpeg;base64,' + imageData;
+                   var profileAvatar = document.getElementById('profile-avatar');
+                   if (profileAvatar) {
+                     profileAvatar.src = imgSrc;
+                     console.log('[Camera] Profile avatar updated');
+                   }
+                   var dashAvatar = document.getElementById('dashboard-profile-avatar');
+                   if (dashAvatar) dashAvatar.src = imgSrc;
+                   newProfileImage = imgSrc;
+                   hasChanges = true;
+                   isEditing = true;
+                   // Re-query editButtonsContainer in case DOM changed
+                   var btns = document.querySelector('.profile-edit-buttons');
+                   if (btns) btns.style.display = 'flex';
+                   if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
+                   if (currentUser) currentUser.avatar = imgSrc;
+                   if (typeof showNotification === 'function') {
+                     showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
+                   }
+                 }, 100);
+               },
+               function(err) {
+                 console.error('[Camera] Error:', err);
                  if (typeof showNotification === 'function') {
-                   showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
+                   showNotification('Camera error: ' + (err || 'Unknown error'), 'error');
                  }
                },
-               function(err) { console.error('Camera error:', err); },
                {
                  quality: 70,
                  destinationType: Camera.DestinationType.DATA_URL,
@@ -14178,162 +14193,10 @@ window.cancelProfileChanges = cancelProfileChanges;
     }
   };
 
-  // Simple Profile Menu System - No conflicts, no complex animations
+  // Simple Profile Menu System - Only provides global utility functions
+  // All option handlers (camera, gallery, delete) are set by initializeProfileEditing() only
   function setupSimpleProfileMenu() {
-    // Simple setup function that runs once
-    function initializePhotoMenu() {
-      const avatarContainer = document.getElementById('avatar-container');
-      if (!avatarContainer) return;
-
-      // Simple menu handler - no animations or complex positioning
-      function simpleMenuHandler(e) {
-        e.stopPropagation();
-        const menu = document.querySelector('.photo-options-menu');
-        if (menu) {
-          if (menu.classList.contains('show')) {
-            menu.classList.remove('show');
-          } else {
-            menu.classList.add('show');
-          }
-        }
-      }
-
-      // Setup camera icon click
-      const cameraIcon = avatarContainer.querySelector('.camera-icon-badge');
-      if (cameraIcon) {
-        cameraIcon.onclick = simpleMenuHandler;
-      }
-
-      // Setup photo options
-      const cameraOption = document.getElementById('camera-option');
-      const galleryOption = document.getElementById('gallery-option');
-      const deleteOption = document.getElementById('delete-option');
-
-      if (cameraOption) {
-        cameraOption.onclick = function(e) {
-          e.stopPropagation();
-          e.preventDefault();
-          document.querySelector('.photo-options-menu').classList.remove('show');
-          if (navigator.camera && navigator.camera.getPicture) {
-            navigator.camera.getPicture(
-              function(imageData) {
-                var imgSrc = 'data:image/jpeg;base64,' + imageData;
-                var profileAvatar = document.getElementById('profile-avatar');
-                if (profileAvatar) profileAvatar.src = imgSrc;
-                var dashAvatar = document.getElementById('dashboard-profile-avatar');
-                if (dashAvatar) dashAvatar.src = imgSrc;
-                if (typeof currentUser !== 'undefined' && currentUser) currentUser.avatar = imgSrc;
-                if (typeof showNotification === 'function') {
-                  showNotification('Image selected successfully - click Save to update', 'success');
-                }
-              },
-              function(err) { console.error('Camera error:', err); },
-              {
-                quality: 70,
-                destinationType: Camera.DestinationType.DATA_URL,
-                sourceType: Camera.PictureSourceType.CAMERA,
-                cameraDirection: Camera.Direction.FRONT,
-                encodingType: Camera.EncodingType.JPEG,
-                targetWidth: 400,
-                targetHeight: 400,
-                correctOrientation: true
-              }
-            );
-          } else {
-            var profileImageUpload = document.getElementById('profile-image-upload');
-            if (profileImageUpload) {
-              profileImageUpload.setAttribute('capture', 'user');
-              profileImageUpload.setAttribute('accept', 'image/*');
-              profileImageUpload.click();
-            }
-          }
-        };
-      }
-
-      if (galleryOption) {
-        galleryOption.onclick = function(e) {
-          e.stopPropagation();
-          e.preventDefault();
-          const profileImageUpload = document.getElementById('profile-image-upload');
-          if (profileImageUpload) {
-            profileImageUpload.removeAttribute('capture');
-            profileImageUpload.setAttribute('accept', 'image/*');
-            profileImageUpload.click();
-          }
-          document.querySelector('.photo-options-menu').classList.remove('show');
-        };
-      }
-
-      if (deleteOption) {
-        deleteOption.onclick = function(e) {
-          e.stopPropagation();
-          if (typeof window.deleteProfilePhoto === 'function') {
-            window.deleteProfilePhoto();
-          }
-          document.querySelector('.photo-options-menu').classList.remove('show');
-        };
-      }
-
-      // Close menu when clicking outside
-      document.onclick = function(e) {
-        const menu = document.querySelector('.photo-options-menu');
-        if (menu && !avatarContainer.contains(e.target)) {
-          menu.classList.remove('show');
-        }
-      };
-    }
-
-    // Initialize once when profile page is loaded
-    const checkProfilePage = setInterval(() => {
-      const profilePage = document.getElementById('profile-page');
-      const avatarContainer = document.getElementById('avatar-container');
-
-      if (profilePage && avatarContainer) {
-        initializePhotoMenu();
-
-        // ط¥ط¶ط§ظپط© ظ…ط¹ط§ظ„ط¬ ط®ط§طµ ظ„ط£ظٹظ‚ظˆظ†ط© ط§ظ„ظƒط§ظ…ظٹط±ط§
-        const cameraIcon = avatarContainer.querySelector('.camera-icon-badge');
-        if (cameraIcon) {
-          // ط¥ط¶ط§ظپط© ظ…ط¹ط§ظ„ط¬ ط¨ط¯ظˆظ† ط§ظ„ط­ط§ط¬ط© ظ„ط¥ط²ط§ظ„ط© ظ…ط¹ط§ظ„ط¬ ط³ط§ط¨ظ‚
-          cameraIcon.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Camera icon clicked - showing photo menu');
-
-            const menu = document.querySelector('.photo-options-menu');
-            if (menu) {
-              if (menu.classList.contains('show')) {
-                menu.classList.remove('show');
-              } else {
-                // ط­ط³ط§ط¨ ظ…ظˆط¶ط¹ ط§ظ„ظ‚ط§ط¦ظ…ط©
-                const rect = avatarContainer.getBoundingClientRect();
-                menu.style.top = (rect.bottom + 8) + 'px';
-                menu.style.left = (rect.right - 200) + 'px';
-
-                // ط§ظ„طھط£ظƒط¯ ظ…ظ† ط¹ط¯ظ… ط®ط±ظˆط¬ ط§ظ„ظ‚ط§ط¦ظ…ط© ظ…ظ† ط§ظ„ط´ط§ط´ط©
-                const menuWidth = 200;
-                const screenWidth = window.innerWidth;
-                if (rect.right - menuWidth < 0) {
-                  menu.style.left = '8px';
-                }
-                if (rect.bottom + 200 > window.innerHeight) {
-                  menu.style.top = (rect.top - 200 - 8) + 'px';
-                }
-
-                menu.classList.add('show');
-              }
-            }
-          });
-        }
-
-        clearInterval(checkProfilePage);
-      }
-    }, 1000);
-
-    // Stop checking after 10 seconds
-    setTimeout(() => {
-      clearInterval(checkProfilePage);
-    }, 10000);
+    // No duplicate handler setup - initializeProfileEditing handles everything
   }
 
   // Simple global functions
