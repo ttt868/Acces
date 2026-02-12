@@ -195,11 +195,11 @@ function urlBase64ToUint8Array(base64String) {
       
       console.log('🔔 [AUTO] Current permission:', Notification.permission);
       
-      // إذا لم يُسأل من قبل، اطلب الإذن
+      // ⚠️ لا نطلب الإذن تلقائياً - notification-system.js يعرض Modal بدلاً من ذلك
+      // المتصفحات الحديثة تحتاج نقرة من المستخدم لطلب الإذن
       if (Notification.permission === 'default') {
-        console.log('🔔 [AUTO] Requesting notification permission...');
-        const permission = await Notification.requestPermission();
-        console.log('🔔 [AUTO] Permission result:', permission);
+        console.log('🔔 [AUTO] Permission is default - waiting for user to click Modal in notification-system.js');
+        return; // ✅ لا نفعل شيء - Modal سيظهر من notification-system.js
       }
       
       // إذا تم منح الإذن، سجل الاشتراك
@@ -964,35 +964,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('User has already viewed privacy policy from login page');
   }
 
-  // 🌐 Auto-detect device language on first visit
-  const SUPPORTED_LANGUAGES = ['en', 'fr', 'es', 'it', 'tr', 'hi', 'zh', 'ja', 'ko', 'pt', 'ru', 'de', 'ar', 'id', 'pl'];
-  
-  function getInitialLanguage() {
-    // 1. Check if user already has a saved preference
-    const saved = window.__preloadedLang || localStorage.getItem('preferredLanguage');
-    if (saved && SUPPORTED_LANGUAGES.includes(saved)) {
-      return saved;
-    }
-    
-    // 2. First time visit - detect device language
-    const deviceLang = (navigator.language || navigator.userLanguage || 'en').substring(0, 2).toLowerCase();
-    console.log('🌐 First visit - Device language detected:', deviceLang);
-    
-    // 3. Check if device language is supported
-    if (SUPPORTED_LANGUAGES.includes(deviceLang)) {
-      console.log('🌐 Using device language:', deviceLang);
-      localStorage.setItem('preferredLanguage', deviceLang);
-      return deviceLang;
-    }
-    
-    // 4. Fallback to English
-    console.log('🌐 Device language not supported, using English');
-    localStorage.setItem('preferredLanguage', 'en');
-    return 'en';
-  }
-
-  // Initialize with auto-detected or saved language
-  const savedLanguage = getInitialLanguage();
+  // Initialize with saved language preference or use preloaded language from head script
+  const savedLanguage = window.__preloadedLang || localStorage.getItem('preferredLanguage') || 'en';
   translator.setLanguage(savedLanguage);
 
   // Store the language in document for immediate access during page load
@@ -1561,11 +1534,6 @@ For more information, visit our platform at: ${window.location.origin}
     // Save language to database for push notifications localization
     if (currentUser && currentUser.id) {
       saveLanguageToDatabase(langCode);
-    }
-    
-    // Update push subscription language for web notifications
-    if (window.accessNotifications && typeof window.accessNotifications.updatePushLanguage === 'function') {
-      window.accessNotifications.updatePushLanguage(langCode);
     }
     
     // Update dashboard language code display immediately
@@ -7997,6 +7965,17 @@ window.addEventListener('load', applyArabicCssIfNeeded);
       };
       localStorage.setItem('accessoireUser', JSON.stringify(minimalUserData));
       console.log('Saved minimal user session for:', minimalUserData.email);
+      
+      // ✅ Dispatch custom event for notification system (same-tab)
+      // This allows notification-system.js to save pending subscriptions
+      try {
+        window.dispatchEvent(new CustomEvent('userLoggedIn', { 
+          detail: { userId: user.id, email: user.email }
+        }));
+        console.log('🔔 Dispatched userLoggedIn event for notification system');
+      } catch (e) {
+        console.error('Error dispatching userLoggedIn event:', e);
+      }
     }
   }
 
@@ -9653,8 +9632,8 @@ function initQRScanner() {
         }
       },
       {
-        highlightScanRegion: false,
-        highlightCodeOutline: false
+        highlightScanRegion: true,
+        highlightCodeOutline: true
       }
     );
 
@@ -9673,9 +9652,6 @@ window.openQRScanner = function() {
 
   // Show scanner modal
   scannerModal.style.display = 'flex';
-  
-  // Add click outside to close
-  scannerModal.addEventListener('click', handleScannerOutsideClick);
 
   // Initialize scanner if needed
   if (!qrScanner) {
@@ -9705,18 +9681,7 @@ window.closeQRScanner = function() {
   if (qrScanner) {
     qrScanner.stop();
   }
-  
-  // Remove click outside listener
-  scannerModal.removeEventListener('click', handleScannerOutsideClick);
 };
-
-// Handle click outside scanner content to close
-function handleScannerOutsideClick(e) {
-  // Only close if clicked on the background (modal itself), not the content
-  if (e.target.id === 'qr-scanner-modal') {
-    closeQRScanner();
-  }
-}
 
 
  // Paste clipboard content into recipient address field
@@ -13061,6 +13026,21 @@ window.cancelProfileChanges = cancelProfileChanges;
      const profileImageUpload = document.getElementById('profile-image-upload');
      const profileNameInput = document.getElementById('profile-name-input');
      const profileNameDisplay = document.getElementById('profile-name');
+
+     // Pre-warm file input by triggering focus/blur after page settles
+     // This forces browser to load native file picker resources in background
+     if (profileImageUpload && !profileImageUpload.dataset.prewarmed) {
+       profileImageUpload.dataset.prewarmed = 'true';
+       setTimeout(function() {
+         try {
+           // Touch the input to trigger OS-level file picker initialization
+           profileImageUpload.focus();
+           profileImageUpload.blur();
+         } catch(e) {
+           // Silent fail - not critical
+         }
+       }, 1500);
+     }
      const editIcon = document.querySelector('.edit-icon'); // This line will still query for the icon, but it's added dynamically later.
      const saveChangesBtn = document.getElementById('save-profile-changes');
      const cancelChangesBtn = document.getElementById('cancel-profile-changes');
@@ -13221,21 +13201,16 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
 
        if (galleryOption) {
-         // ط¥ط²ط§ظ„ط© ط£ظٹ ظ…ط¹ط§ظ„ط¬ط§طھ ط³ط§ط¨ظ‚ط© ظ„ظ…ظ†ط¹ ط§ظ„طھظƒط±ط§ط±
-         galleryOption.onclick = null;
+         // Optimized: Remove delays by using RAF and caching element
          galleryOption.onclick = function(e) {
            e.stopPropagation();
-           e.preventDefault();
-
-           console.log('Gallery option clicked');
-           const profileImageUpload = document.getElementById('profile-image-upload');
-
-           if (profileImageUpload) {
-             // ط¥ط¹ط¯ط§ط¯ ط§ظ„ظ…ط¹ط±ط¶
-             profileImageUpload.removeAttribute('capture');
-             profileImageUpload.setAttribute('accept', 'image/*');
-             profileImageUpload.click();
-             console.log('Gallery opened');
+           var input = document.getElementById("profile-image-upload");
+           if (input) {
+             input.removeAttribute("capture");
+             // Use requestAnimationFrame for smoother experience
+             requestAnimationFrame(function() {
+               input.click();
+             });
            }
            hidePhotoMenu();
          };
@@ -13295,16 +13270,35 @@ window.cancelProfileChanges = cancelProfileChanges;
          if (dashboardAvatar) {
            dashboardAvatar.src = defaultAvatar;
          }
+         const mobileAvatar = document.getElementById('mobile-user-avatar');
+         if (mobileAvatar) {
+           mobileAvatar.src = defaultAvatar;
+         }
 
          // Update user data with default avatar (not null)
          if (currentUser) {
            currentUser.avatar = defaultAvatar;
 
-           // Save the change immediately to server with default avatar - without additional notification
-           if (typeof saveProfileChanges === 'function') {
-             // Pass true as third parameter to prevent showing "updated successfully" notification
-             saveProfileChanges(currentUser.name, defaultAvatar, true);
-           }
+           // Send delete directly to server
+           fetch(window.location.origin + '/api/profile/delete-photo', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ userId: currentUser.id })
+           }).then(function(r) { return r.json(); }).then(function(data) {
+             if (!data.success) {
+               fetch(window.location.origin + '/api/users/update-profile', {
+                 method: 'PUT',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+               }).catch(function() {});
+             }
+           }).catch(function() {
+             fetch(window.location.origin + '/api/users/update-profile', {
+               method: 'PUT',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+             }).catch(function() {});
+           });
 
            // Show single success notification only
            if (typeof showNotification === 'function') {
@@ -13820,29 +13814,53 @@ window.cancelProfileChanges = cancelProfileChanges;
   window.deleteProfilePhoto = function() {
     const profileAvatar = document.getElementById('profile-avatar');
     if (profileAvatar && currentUser) {
-      const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCI`x`sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIicjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAuOHYxYzAtMS0xLTItMi0yaC0xNmMtMSAwLTIgLTEtMi03di0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
-
+      const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
       if (!currentUser.avatar || currentUser.avatar === defaultAvatar || currentUser.avatar === null) {
         if (typeof showNotification === 'function') {
-          showNotification('No profile photo to delete', 'info');
+          const msg = (typeof translator !== 'undefined' && translator.translate) ? translator.translate('No profile photo to delete') : 'No profile photo to delete';
+          showNotification(msg, 'info');
         }
         return;
       }
 
+      // Update ALL avatar elements immediately
       profileAvatar.src = defaultAvatar;
       const dashboardAvatar = document.getElementById('dashboard-profile-avatar');
-      if (dashboardAvatar) {
-        dashboardAvatar.src = defaultAvatar;
-      }
+      if (dashboardAvatar) dashboardAvatar.src = defaultAvatar;
+      const mobileAvatar = document.getElementById('mobile-user-avatar');
+      if (mobileAvatar) mobileAvatar.src = defaultAvatar;
 
-      if (currentUser) {
-        currentUser.avatar = defaultAvatar;
-        if (typeof saveProfileChanges === 'function') {
-          saveProfileChanges(currentUser.name, defaultAvatar, true);
+      // Update currentUser in memory immediately
+      currentUser.avatar = defaultAvatar;
+
+      // Send delete directly to server - no delay
+      fetch(window.location.origin + '/api/profile/delete-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+          console.log('Profile photo deleted on server');
+        } else {
+          // Fallback: try update-profile endpoint
+          fetch(window.location.origin + '/api/users/update-profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+          }).catch(function() {});
         }
-        if (typeof showNotification === 'function') {
-          showNotification('Profile photo changed to default', 'success');
-        }
+      }).catch(function() {
+        // Fallback: try update-profile endpoint
+        fetch(window.location.origin + '/api/users/update-profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+        }).catch(function() {});
+      });
+
+      if (typeof showNotification === 'function') {
+        const msg = (typeof translator !== 'undefined' && translator.translate) ? translator.translate('Profile photo changed to default') : 'Profile photo changed to default';
+        showNotification(msg, 'success');
       }
     }
   };
@@ -13850,6 +13868,8 @@ window.cancelProfileChanges = cancelProfileChanges;
   // Simple Profile Menu System - No conflicts, no complex animations
   function setupSimpleProfileMenu() {
     // Simple setup function that runs once
+    // Skip if initializeProfileEditing already set up handlers
+    if (profileEditingInitialized) return;
     function initializePhotoMenu() {
       const avatarContainer = document.getElementById('avatar-container');
       if (!avatarContainer) return;
@@ -13895,14 +13915,15 @@ window.cancelProfileChanges = cancelProfileChanges;
       if (galleryOption) {
         galleryOption.onclick = function(e) {
           e.stopPropagation();
-          e.preventDefault();
-          const profileImageUpload = document.getElementById('profile-image-upload');
-          if (profileImageUpload) {
-            profileImageUpload.removeAttribute('capture');
-            profileImageUpload.setAttribute('accept', 'image/*');
-            profileImageUpload.click();
+          var input = document.getElementById("profile-image-upload");
+          if (input) {
+            input.removeAttribute("capture");
+            // Use RAF for immediate response
+            requestAnimationFrame(function() {
+              input.click();
+            });
           }
-          document.querySelector('.photo-options-menu').classList.remove('show');
+          document.querySelector(".photo-options-menu").classList.remove("show");
         };
       }
 
@@ -13991,6 +14012,14 @@ window.cancelProfileChanges = cancelProfileChanges;
 
   // Initialize simple system
   setupSimpleProfileMenu();
+
+  // Pre-initialize profile editing on page load for instant gallery open
+  setTimeout(function() {
+    if (document.getElementById("avatar-container")) {
+      profileEditingInitialized = false;
+      initializeProfileEditing();
+    }
+  }, 500);
 
 
 
