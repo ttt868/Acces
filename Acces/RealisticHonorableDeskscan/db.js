@@ -677,6 +677,14 @@ async function initializeDatabase() {
         ) THEN
           ALTER TABLE users ADD COLUMN processing_completed_time BIGINT;
         END IF;
+
+        -- 🔒 إضافة عمود session_token للحماية من الجلسات المتعددة
+        IF NOT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'session_token'
+        ) THEN
+          ALTER TABLE users ADD COLUMN session_token TEXT;
+        END IF;
       END$$;
     `);
 

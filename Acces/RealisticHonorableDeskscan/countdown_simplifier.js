@@ -1,6 +1,19 @@
 import { pool, computeHashrateMultiplier } from './db.js';
 import { initializeActivityCountdownTables, startProcessingCountdown, getProcessingCountdownStatus, completeProcessingCountdown } from './activity_countdown_system.js';
 
+// 🔒 Session Token Validation for countdown simplifier
+async function validateSessionTokenSimplifier(userId, sessionToken) {
+  if (!sessionToken) return false;
+  try {
+    const result = await pool.query('SELECT session_token FROM users WHERE id = $1', [userId]);
+    if (!result.rows[0] || !result.rows[0].session_token) return false;
+    return result.rows[0].session_token === sessionToken;
+  } catch (error) {
+    console.error('🔒 [SIMPLIFIER] Error validating session token:', error);
+    return false;
+  }
+}
+
 /**
  * دالة تقريب المكافأة لتجنب الأرقام العشرية الطويلة (مثل 0.248883)
  * تقرب إلى 8 أماكن عشرية بشكل دقيق
@@ -122,12 +135,23 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
   if (pathname === '/api/processing/countdown/complete' && method === 'POST') {
     try {
       const body = await parseRequestBody(req);
-      const { userId, finalReward } = body;
+      const { userId, finalReward, sessionToken } = body;
 
       if (!userId) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'Missing userId' }));
         return true;
+      }
+
+      // 🔒 SESSION TOKEN VALIDATION
+      if (sessionToken) {
+        const tokenValid = await validateSessionTokenSimplifier(userId, sessionToken);
+        if (!tokenValid) {
+          console.log(`🔒 [SIMPLIFIER] BLOCKED: Invalid session token for user ${userId} on countdown/complete`);
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
+          return true;
+        }
       }
 
       // Get current user data including boost
@@ -245,12 +269,23 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
   // POST /api/processing/countdown/start - Add completed processing reward to history when starting new session
   if (pathname === '/api/processing/countdown/start' && method === 'POST') {
     const body = await parseRequestBody(req);
-    const { userId } = body;
+    const { userId, sessionToken } = body;
 
     if (!userId) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Missing userId' }));
       return true;
+    }
+
+    // 🔒 SESSION TOKEN VALIDATION
+    if (sessionToken) {
+      const tokenValid = await validateSessionTokenSimplifier(userId, sessionToken);
+      if (!tokenValid) {
+        console.log(`🔒 [SIMPLIFIER] BLOCKED: Invalid session token for user ${userId} on countdown/start`);
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
+        return true;
+      }
     }
 
     const now = Math.floor(Date.now() / 1000);

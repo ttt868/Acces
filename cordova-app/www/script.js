@@ -4798,7 +4798,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
             const resp = await fetch('/api/processing/countdown/start', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: currentUser.id })
+              body: JSON.stringify({ userId: currentUser.id, sessionToken: currentUser.sessionToken || currentUser.session_token || '' })
             });
             const data = await resp.json();
             
@@ -5321,10 +5321,24 @@ processingButton.addEventListener('click', async function(e) {
     const response = await fetchWithTimeout('/api/processing/countdown/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: currentUser.id })
+      body: JSON.stringify({ userId: currentUser.id, sessionToken: currentUser.sessionToken || currentUser.session_token || '' })
     }, 10000); // timeout آمن 10 ثواني
 
     console.log(`[SCRIPT] Processing start response status: ${response.status}`);
+
+    // 🔒 SECURITY: Handle 401 - Invalid session token (logged in from another device)
+    if (response.status === 401) {
+      const authData = await response.json();
+      if (authData.requireRelogin) {
+        console.log('🔒 SESSION TOKEN INVALID: User must re-login');
+        showNotification(translator.translate('Your session has expired. Please login again.'), 'error');
+        // Reset button state
+        processingButton.classList.remove('disabled');
+        processingButton.disabled = false;
+        processingButton.innerHTML = '<i class="fas fa-play"></i> ' + translator.translate('Start Activity');
+        return;
+      }
+    }
 
     // 🔒 SECURITY: Handle 409 Conflict - session already active
     if (response.status === 409) {
@@ -6089,7 +6103,8 @@ function startGradualAccumulation() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               userId: currentUser.id,
-              completedReward: finalReward
+              completedReward: finalReward,
+              sessionToken: currentUser.sessionToken || currentUser.session_token || ''
             })
           });
 
@@ -6407,7 +6422,8 @@ function startGradualAccumulation() {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ 
                     userId: currentUser.id,
-                    completedReward: finalReward
+                    completedReward: finalReward,
+                    sessionToken: currentUser.sessionToken || currentUser.session_token || ''
                   })
                 });
                 
@@ -8116,6 +8132,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         id: user.id,
         email: user.email,
         token: user.token,
+        sessionToken: user.session_token || user.sessionToken || '',
         name: user.name || 'User',
         avatar: user.avatar || ''
       };

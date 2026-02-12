@@ -24,6 +24,36 @@ import { startReEngagementScheduler } from './re-engagement-notifications.js';
 const ASSETS_VERSION = '19.0';
 
 // ============================================================================
+// 🔒 SESSION TOKEN PROTECTION - حماية من الجلسات المتعددة
+// ============================================================================
+function generateSessionToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+async function validateSessionToken(userId, sessionToken) {
+  if (!sessionToken) return false;
+  try {
+    const result = await pool.query('SELECT session_token FROM users WHERE id = $1', [userId]);
+    if (!result.rows[0] || !result.rows[0].session_token) return false;
+    return result.rows[0].session_token === sessionToken;
+  } catch (error) {
+    console.error('🔒 Error validating session token:', error);
+    return false;
+  }
+}
+
+async function updateSessionToken(userId) {
+  const token = generateSessionToken();
+  try {
+    await pool.query('UPDATE users SET session_token = $1 WHERE id = $2', [token, userId]);
+    return token;
+  } catch (error) {
+    console.error('🔒 Error updating session token:', error);
+    return null;
+  }
+}
+
+// ============================================================================
 // 🛡️ NEVER DIE PROTECTION - السيرفر لا يسقط أبداً!
 // ============================================================================
 let serverCrashCount = 0;
@@ -3668,6 +3698,12 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
+        // 🔒 Generate new session token on login
+        const newSessionToken = await updateSessionToken(user.id);
+        if (newSessionToken) {
+          user.session_token = newSessionToken;
+        }
+
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ user: user, success: true }));
         return;
@@ -3849,6 +3885,9 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        // 🔒 Generate session token
+        const sessionToken = await updateSessionToken(user.id);
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
           success: true, 
@@ -3856,7 +3895,8 @@ const server = http.createServer(async (req, res) => {
           user: {
             id: user.id,
             email: user.email,
-            name: user.name
+            name: user.name,
+            session_token: sessionToken
           }
         }));
         return;
@@ -3954,6 +3994,9 @@ const server = http.createServer(async (req, res) => {
           // Don't fail signup if wallet creation fails
         }
 
+        // 🔒 Generate session token
+        const sessionToken = await updateSessionToken(newUser.id);
+
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
           success: true, 
@@ -3961,7 +4004,8 @@ const server = http.createServer(async (req, res) => {
           user: {
             id: newUser.id,
             email: newUser.email,
-            name: newUser.name
+            name: newUser.name,
+            session_token: sessionToken
           }
         }));
         return;
@@ -3990,7 +4034,11 @@ const server = http.createServer(async (req, res) => {
         // ✅ EXISTING USER: موجود بالفعل - إرجاع البيانات مباشرة (رمز الإحالة من DB)
         if (existingUser.rows.length > 0) {
           const existingUserData = existingUser.rows[0];
-          // ✅ Removed verbose logging for performance
+          // 🔒 Generate new session token on login
+          const newSessionToken = await updateSessionToken(existingUserData.id);
+          if (newSessionToken) {
+            existingUserData.session_token = newSessionToken;
+          }
           
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
           res.end(JSON.stringify({ user: existingUserData, success: true }));
@@ -4056,11 +4104,14 @@ const server = http.createServer(async (req, res) => {
           // Use name directly - already UTF-8 encoded from JWT
           const safeName = userData.name || userData.email.split('@')[0];
           
+          // 🔒 Generate session token for new user
+          const newUserSessionToken = generateSessionToken();
+          
           const result = await pool.query(
-            `INSERT INTO users (email, name, avatar, referral_code, coins, privacy_accepted, privacy_accepted_date, account_created_date)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `INSERT INTO users (email, name, avatar, referral_code, coins, privacy_accepted, privacy_accepted_date, account_created_date, session_token)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
              RETURNING *`,
-            [userData.email, safeName, userData.avatar, newReferralCode, initialCoins, userData.privacyAccepted || false, userData.privacyAccepted ? Date.now() : null, accountCreatedDate]
+            [userData.email, safeName, userData.avatar, newReferralCode, initialCoins, userData.privacyAccepted || false, userData.privacyAccepted ? Date.now() : null, accountCreatedDate, newUserSessionToken]
           );
           
           await pool.query('COMMIT');
@@ -4219,6 +4270,9 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
+        // 🔒 Generate session token for this login
+        const sessionToken = await updateSessionToken(user.id);
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ 
           success: true, 
@@ -4228,7 +4282,8 @@ const server = http.createServer(async (req, res) => {
             name: user.name,
             avatar: user.avatar,
             googleId: user.google_id,
-            referralCode: user.referral_code
+            referralCode: user.referral_code,
+            session_token: sessionToken
           }
         }));
         return;
@@ -4900,7 +4955,19 @@ const server = http.createServer(async (req, res) => {
     // POST /api/processing/start - Start processing without adding any rewards to balance
     if (pathname === '/api/processing/start' && req.method === 'POST') {
       try {
-        const { userId } = await parseRequestBody(req);
+        const { userId, sessionToken } = await parseRequestBody(req);
+
+        // 🔒 SESSION TOKEN VALIDATION
+        if (sessionToken) {
+          const tokenValid = await validateSessionToken(userId, sessionToken);
+          if (!tokenValid) {
+            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/processing/start`);
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
+            return;
+          }
+        }
+
         const now = Math.floor(Date.now() / 1000);
         const processingDuration = 24 * 60 * 60; // 24 hours
 
@@ -5180,7 +5247,18 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/update-processing' && req.method === 'POST') {
       try {
         const userData = await parseRequestBody(req);
-        const { userId, forceStatus } = userData;
+        const { userId, forceStatus, sessionToken } = userData;
+
+        // 🔒 SESSION TOKEN VALIDATION
+        if (sessionToken) {
+          const tokenValid = await validateSessionToken(userId, sessionToken);
+          if (!tokenValid) {
+            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/update-processing`);
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
+            return;
+          }
+        }
         const now = Date.now();
 
         // First, check the current processing status
@@ -6996,7 +7074,7 @@ const server = http.createServer(async (req, res) => {
     // POST /api/processing/cleanup - Clean up stale processing sessions
     if (pathname === '/api/processing/cleanup' && req.method === 'POST') {
       try {
-        const { userId } = await parseRequestBody(req);
+        const { userId, sessionToken } = await parseRequestBody(req);
         
         if (!userId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -7005,6 +7083,17 @@ const server = http.createServer(async (req, res) => {
             error: 'Missing userId parameter' 
           }));
           return;
+        }
+
+        // 🔒 SESSION TOKEN VALIDATION
+        if (sessionToken) {
+          const tokenValid = await validateSessionToken(userId, sessionToken);
+          if (!tokenValid) {
+            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/processing/cleanup`);
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
+            return;
+          }
         }
         
         console.log(`Cleaning up processing sessions for user ${userId}`);
@@ -7968,7 +8057,18 @@ const server = http.createServer(async (req, res) => {
     // POST /api/processing/payout - Process processing payout
     if (pathname === '/api/processing/payout' && req.method === 'POST') {
       try {
-        const { userId } = await parseRequestBody(req);
+        const { userId, sessionToken } = await parseRequestBody(req);
+
+        // 🔒 SESSION TOKEN VALIDATION
+        if (sessionToken) {
+          const tokenValid = await validateSessionToken(userId, sessionToken);
+          if (!tokenValid) {
+            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/processing/payout`);
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
+            return;
+          }
+        }
         const timestamp = Date.now();
 
         await pool.query(
@@ -8374,12 +8474,23 @@ const server = http.createServer(async (req, res) => {
     // POST /api/processing/save-completed - Save completed processing reward WITHOUT transferring to balance
     if (pathname === '/api/processing/save-completed' && req.method === 'POST') {
       try {
-        const { userId, completedReward } = await parseRequestBody(req);
+        const { userId, completedReward, sessionToken } = await parseRequestBody(req);
         
         if (!userId || completedReward === undefined) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Missing userId or completedReward' }));
           return;
+        }
+
+        // 🔒 SESSION TOKEN VALIDATION
+        if (sessionToken) {
+          const tokenValid = await validateSessionToken(userId, sessionToken);
+          if (!tokenValid) {
+            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/processing/save-completed`);
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
+            return;
+          }
         }
 
         const rewardAmount = parseFloat(completedReward);
@@ -8443,12 +8554,23 @@ const server = http.createServer(async (req, res) => {
     // POST /api/processing/countdown/complete - Complete processing countdown and transfer rewards
     if (pathname === '/api/processing/countdown/complete' && req.method === 'POST') {
       try {
-        const { userId, amount } = await parseRequestBody(req);
+        const { userId, amount, sessionToken } = await parseRequestBody(req);
         
         if (!userId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Missing userId' }));
           return;
+        }
+
+        // 🔒 SESSION TOKEN VALIDATION
+        if (sessionToken) {
+          const tokenValid = await validateSessionToken(userId, sessionToken);
+          if (!tokenValid) {
+            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/processing/countdown/complete`);
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
+            return;
+          }
         }
 
         // Import the completeProcessing function
@@ -8537,7 +8659,7 @@ const server = http.createServer(async (req, res) => {
     // POST /api/processing/countdown/start - Start processing countdown
     if (pathname === '/api/processing/countdown/start' && req.method === 'POST') {
       try {
-        const { userId } = await parseRequestBody(req);
+        const { userId, sessionToken } = await parseRequestBody(req);
         
         console.log(`🔒 [START REQUEST] User ${userId} requesting to start processing session`);
         
@@ -8545,6 +8667,17 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Missing userId' }));
           return;
+        }
+
+        // 🔒 SESSION TOKEN VALIDATION
+        if (sessionToken) {
+          const tokenValid = await validateSessionToken(userId, sessionToken);
+          if (!tokenValid) {
+            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/processing/countdown/start`);
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
+            return;
+          }
         }
 
         const now = Math.floor(Date.now() / 1000);
