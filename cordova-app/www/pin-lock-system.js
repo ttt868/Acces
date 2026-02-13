@@ -90,7 +90,7 @@
           // Show biometric button on lock screen
           const bioBtn = document.getElementById('pin-biometric-btn');
           if (bioBtn && biometricEnabled) {
-            bioBtn.style.display = 'flex';
+            bioBtn.style.visibility = 'visible';
           }
         },
         function(error) {
@@ -507,7 +507,7 @@
     // Show biometric button if enabled
     const bioBtn = document.getElementById('pin-biometric-btn');
     if (bioBtn) {
-      bioBtn.style.display = (biometricEnabled && biometricAvailable) ? 'flex' : 'none';
+      bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
     }
 
     // Auto-trigger biometric if enabled
