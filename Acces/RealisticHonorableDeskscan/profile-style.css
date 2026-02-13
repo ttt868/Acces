@@ -1786,10 +1786,11 @@ body.dark-theme #profile-page .copy-btn:hover {
 
 .pin-key-delete {
   font-size: 22px;
+  background: transparent;
 }
 
 .pin-key-delete:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .pin-key-biometric {

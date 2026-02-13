@@ -458,9 +458,11 @@
   }
 
   // ===== LOCK SCREEN =====
+  let _unlockCooldown = false;
+
   function showLockScreen() {
-    // Prevent showing lock screen if already locked or just unlocked
-    if (isLocked) return;
+    // Prevent showing lock screen if already locked or in cooldown after unlock
+    if (isLocked || _unlockCooldown) return;
     
     isLocked = true;
     pinInput = '';
@@ -486,7 +488,7 @@
     // Auto-trigger biometric immediately if enabled (once only)
     if (biometricEnabled && biometricAvailable && window.Fingerprint) {
       setTimeout(() => {
-        triggerBiometricAuth();
+        if (isLocked) triggerBiometricAuth();
       }, 400);
     }
   }
@@ -496,6 +498,11 @@
     isLocked = false;
     window._pinUnlocked = true;
     window._biometricInProgress = false;
+    
+    // Cooldown: prevent re-locking for 2 seconds after unlock
+    _unlockCooldown = true;
+    setTimeout(() => { _unlockCooldown = false; }, 2000);
+    
     const lockScreen = document.getElementById('pin-lock-screen');
     if (lockScreen) {
       // Smooth fade out
@@ -591,7 +598,6 @@
     window.Fingerprint.show(
       {
         title: t('Unlock Access Network'),
-        description: t('Use your fingerprint to unlock'),
         disableBackup: true
       },
       function() {
