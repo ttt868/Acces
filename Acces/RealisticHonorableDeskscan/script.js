@@ -8233,8 +8233,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     if (profileName) profileName.textContent = user.name || 'User';
     if (profileEmail) profileEmail.textContent = user.email || '';
 
-    // Default avatar SVG (gray placeholder)
-    const defaultAvatarSvg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+    // No default avatar SVG - use empty string so Google picture or server avatar is used
+    const defaultAvatarSvg = '';
 
     if (profileAvatar) {
       // Use real avatar or default SVG
@@ -8497,11 +8497,8 @@ function initializeGoogleSignIn() {
       }).join(''));
       const payload = JSON.parse(jsonPayload);
       
-      // Default avatar SVG - used if no picture provided
-      const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iIzY2NjZmZiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTQiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNOCAzMmMwLTYgNS0xMCAxMi0xMHMxMiA0IDEyIDEwdjJjMCAxLTEgMi0yIDJoLTIwYy0xIDAtMi0xLTItMnYtMnoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
-      
-      // Extract user information - use picture or default avatar
-      const avatarUrl = payload.picture || DEFAULT_AVATAR;
+      // Extract user information - use Google picture directly (no SVG fallback)
+      const avatarUrl = payload.picture || '';
       
       currentUser = {
         email: payload.email,
@@ -12805,10 +12802,10 @@ if (totalCost > (currentBalance + precision)) {
           // Log final decision 
           console.log(`Final status for ${referral.name}: isActive=${isActive}, statusText=${statusText}`);
 
-          const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+          const defaultAvatar = '';
           item.innerHTML = `
             <div class="referral-user">
-              <img src="${referral.avatar || defaultAvatar}" alt="User" class="referral-avatar" onerror="this.onerror=null; this.src='${defaultAvatar}';">
+              <img src="${referral.avatar || defaultAvatar}" alt="User" class="referral-avatar" onerror="this.onerror=null;">
               <div class="referral-user-info">
                 <div class="referral-name">${referral.name}</div>
                 <div class="referral-email">${maskedEmail}</div>

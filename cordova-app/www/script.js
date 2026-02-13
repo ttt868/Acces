@@ -8161,10 +8161,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         userData._requiresRefresh = true;
         userData._forceUpdate = true; // Add flag to force fresh profile data
         
-        // ✅ FIX: Ensure avatar has default value if missing (for old sessions)
-        if (!userData.avatar) {
-          userData.avatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
-        }
+        // ✅ FIX: Old sessions without avatar - leave empty (no SVG fallback)
+        // Avatar will be loaded from server via _requiresRefresh
         
         return userData;
       } catch (e) {
@@ -8405,8 +8403,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     // Update all UI elements with current user data
     if (profileName) profileName.textContent = user.name || 'User';
     if (profileEmail) profileEmail.textContent = user.email || '';
-    // Default avatar SVG
-    const defaultAvatarSvg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+    // No default avatar SVG - use empty string so Google picture or server avatar is used
+    const defaultAvatarSvg = '';
 
     if (profileAvatar) {
       // Add cache-busting parameter for images to prevent browser caching the old image
@@ -13089,10 +13087,10 @@ if (totalCost > (currentBalance + precision)) {
           // Log final decision 
           console.log(`Final status for ${referral.name}: isActive=${isActive}, statusText=${statusText}`);
 
-          const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+          const defaultAvatar = '';
           item.innerHTML = `
             <div class="referral-user">
-              <img src="${referral.avatar || defaultAvatar}" alt="User" class="referral-avatar" onerror="this.onerror=null; this.src='${defaultAvatar}';">
+              <img src="${referral.avatar || defaultAvatar}" alt="User" class="referral-avatar" onerror="this.onerror=null;">
               <div class="referral-user-info">
                 <div class="referral-name">${referral.name}</div>
                 <div class="referral-email">${maskedEmail}</div>
