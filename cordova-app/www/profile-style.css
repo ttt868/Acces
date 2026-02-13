@@ -1917,10 +1917,12 @@ body.dark-theme #profile-page .copy-btn:hover {
 
 .pin-modal-close {
   position: absolute;
-  top: 0px;
-  left: 16px;
+  top: -40px;
+  right: 0px;
   background: none;
   border: none;
+  box-shadow: none;
+  outline: none;
   color: rgba(255, 255, 255, 0.7);
   width: 40px;
   height: 40px;
@@ -1933,6 +1935,8 @@ body.dark-theme #profile-page .copy-btn:hover {
   transition: color 0.2s ease;
   z-index: 10;
   padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .pin-modal-close:hover {
