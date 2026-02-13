@@ -31,6 +31,9 @@
       const userId = getUserId();
       if (!userId) return;
 
+      // Check biometric availability early (before lock screen might show)
+      await checkBiometricAvailabilityAsync();
+
       const response = await fetch(getApiBase() + '/api/pin/status/' + userId);
 
       if (response.ok) {
@@ -49,16 +52,39 @@
     }
   }
 
+  // Pre-check biometric availability (returns promise)
+  function checkBiometricAvailabilityAsync() {
+    return new Promise((resolve) => {
+      if (window.Fingerprint) {
+        window.Fingerprint.isAvailable(
+          function(result) {
+            biometricAvailable = true;
+            resolve(true);
+          },
+          function(error) {
+            biometricAvailable = false;
+            resolve(false);
+          }
+        );
+      } else {
+        biometricAvailable = false;
+        resolve(false);
+      }
+    });
+  }
+
   // ===== SETTINGS UI =====
   function updateSettingsUI() {
     const pinToggle = document.getElementById('pin-toggle');
     const biometricItem = document.getElementById('biometric-setting-item');
     const biometricToggle = document.getElementById('biometric-toggle');
+    const biometricDesc = document.getElementById('biometric-description');
 
     if (pinToggle) {
       pinToggle.checked = pinEnabled;
     }
 
+    // Show biometric setting when PIN is enabled
     if (biometricItem) {
       biometricItem.style.display = pinEnabled ? 'flex' : 'none';
     }
@@ -73,14 +99,24 @@
 
   // ===== BIOMETRIC CHECK =====
   function checkBiometricAvailability() {
+    const biometricItem = document.getElementById('biometric-setting-item');
+    const biometricToggle = document.getElementById('biometric-toggle');
+    const biometricDesc = document.getElementById('biometric-description');
+    const t = (key) => window.translator ? window.translator.translate(key) : key;
+
     // Cordova fingerprint plugin check
     if (window.Fingerprint) {
       window.Fingerprint.isAvailable(
         function(result) {
           biometricAvailable = true;
-          const biometricItem = document.getElementById('biometric-setting-item');
           if (biometricItem && pinEnabled) {
             biometricItem.style.display = 'flex';
+          }
+          if (biometricToggle) {
+            biometricToggle.disabled = false;
+          }
+          if (biometricDesc) {
+            biometricDesc.textContent = t('Use fingerprint to unlock');
           }
           // Show biometric button on lock screen
           const bioBtn = document.getElementById('pin-biometric-btn');
@@ -90,15 +126,33 @@
         },
         function(error) {
           biometricAvailable = false;
-          const biometricItem = document.getElementById('biometric-setting-item');
-          if (biometricItem) biometricItem.style.display = 'none';
+          if (biometricItem && pinEnabled) {
+            biometricItem.style.display = 'flex';
+            biometricItem.style.opacity = '0.5';
+          }
+          if (biometricToggle) {
+            biometricToggle.disabled = true;
+            biometricToggle.checked = false;
+          }
+          if (biometricDesc) {
+            biometricDesc.textContent = t('Biometric not available on this device');
+          }
         }
       );
     } else {
+      // Web browser - no fingerprint plugin
       biometricAvailable = false;
-      // Hide biometric option if not in Cordova or plugin not available
-      const biometricItem = document.getElementById('biometric-setting-item');
-      if (biometricItem) biometricItem.style.display = 'none';
+      if (biometricItem && pinEnabled) {
+        biometricItem.style.display = 'flex';
+        biometricItem.style.opacity = '0.5';
+      }
+      if (biometricToggle) {
+        biometricToggle.disabled = true;
+        biometricToggle.checked = false;
+      }
+      if (biometricDesc) {
+        biometricDesc.textContent = t('Available on mobile app only');
+      }
     }
   }
 
@@ -414,7 +468,11 @@
     hideLockError();
 
     lockScreen.style.display = 'flex';
-    setTimeout(() => lockScreen.classList.add('active'), 10);
+    lockScreen.style.opacity = '0';
+    requestAnimationFrame(() => {
+      lockScreen.classList.add('active');
+      lockScreen.style.opacity = '1';
+    });
 
     // Show biometric button if enabled
     const bioBtn = document.getElementById('pin-biometric-btn');
@@ -422,21 +480,30 @@
       bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
     }
 
-    // Auto-trigger biometric if enabled
-    if (biometricEnabled && biometricAvailable) {
-      setTimeout(() => window.pinBiometricAuth(), 500);
+    // Auto-trigger biometric immediately if enabled
+    if (biometricEnabled && biometricAvailable && window.Fingerprint) {
+      // Small delay to let lock screen render first, then popup fingerprint
+      setTimeout(() => {
+        triggerBiometricAuth();
+      }, 400);
     }
   }
 
   function hideLockScreen() {
     isLocked = false;
     window._pinUnlocked = true;
+    window._biometricInProgress = false;
     const lockScreen = document.getElementById('pin-lock-screen');
     if (lockScreen) {
-      lockScreen.classList.remove('active');
+      // Smooth fade out
+      lockScreen.style.transition = 'opacity 0.25s ease-out';
+      lockScreen.style.opacity = '0';
       setTimeout(() => {
+        lockScreen.classList.remove('active');
         lockScreen.style.display = 'none';
-      }, 300);
+        lockScreen.style.opacity = '';
+        lockScreen.style.transition = '';
+      }, 250);
     }
   }
 
@@ -510,7 +577,7 @@
   }
 
   // ===== BIOMETRIC AUTH =====
-  window.pinBiometricAuth = function() {
+  function triggerBiometricAuth() {
     if (!window.Fingerprint || !biometricAvailable || !biometricEnabled) return;
     // Prevent multiple popups
     if (window._biometricInProgress) return;
@@ -525,16 +592,21 @@
         disableBackup: true
       },
       function() {
-        // Success - unlock and reset flag
+        // Success - unlock immediately, smooth transition
         window._biometricInProgress = false;
         hideLockScreen();
       },
       function(error) {
-        // Failed or cancelled - reset flag, don't retry
+        // Failed or cancelled - just reset flag, user can use PIN or tap bio button
         window._biometricInProgress = false;
         console.log('[PIN] Biometric cancelled/failed:', error);
       }
     );
+  }
+
+  // Expose for button tap (manual trigger)
+  window.pinBiometricAuth = function() {
+    triggerBiometricAuth();
   };
 
   // ===== APP LIFECYCLE =====
