@@ -601,9 +601,9 @@
         disableBackup: true
       },
       function() {
-        // Success - unlock immediately, smooth transition
+        // Success - animate dots filling up then unlock
         window._biometricInProgress = false;
-        hideLockScreen();
+        animateDotsAndUnlock();
       },
       function(error) {
         // Failed or cancelled - just reset flag, user can use PIN or tap bio button
@@ -611,6 +611,30 @@
         console.log('[PIN] Biometric cancelled/failed:', error);
       }
     );
+  }
+
+  // Animate dots filling one by one like typing PIN, then unlock
+  function animateDotsAndUnlock() {
+    const dots = document.querySelectorAll('#pin-dots .pin-dot');
+    if (!dots.length) {
+      hideLockScreen();
+      return;
+    }
+    
+    let i = 0;
+    const fillInterval = setInterval(() => {
+      if (i < dots.length) {
+        dots[i].classList.add('filled');
+        if (navigator.vibrate) navigator.vibrate(15);
+        i++;
+      } else {
+        clearInterval(fillInterval);
+        // Brief pause after all dots filled, then unlock
+        setTimeout(() => {
+          hideLockScreen();
+        }, 200);
+      }
+    }, 80);
   }
 
   // Expose for button tap (manual trigger)
