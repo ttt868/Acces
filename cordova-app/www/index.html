@@ -1612,6 +1612,62 @@ document.addEventListener('balanceUpdated', function(event) {
           </h3>
 
           <div class="settings-grid">
+            <!-- App Lock PIN -->
+            <div class="setting-item" id="pin-setting-item">
+              <div class="setting-info">
+                <div class="setting-icon" style="color: #ef4444; -webkit-background-clip: text; font-size: 32px;">
+                  <i class="fas fa-lock"></i>
+                </div>
+                <div class="setting-content">
+                  <h4 data-translate="App Lock">App Lock</h4>
+                  <p class="setting-description" data-translate="Secure with 6-digit PIN">Secure with 6-digit PIN</p>
+                </div>
+              </div>
+              <div class="setting-value">
+                <label class="pin-toggle-switch">
+                  <input type="checkbox" id="pin-toggle" onchange="window.handlePinToggle(this.checked)">
+                  <span class="pin-toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Biometric (shown only when PIN is enabled) -->
+            <div class="setting-item" id="biometric-setting-item" style="display: none;">
+              <div class="setting-info">
+                <div class="setting-icon" style="color: #10b981; -webkit-background-clip: text; font-size: 32px;">
+                  <i class="fas fa-fingerprint"></i>
+                </div>
+                <div class="setting-content">
+                  <h4 data-translate="Biometric Unlock">Biometric Unlock</h4>
+                  <p class="setting-description" data-translate="Use fingerprint to unlock">Use fingerprint to unlock</p>
+                </div>
+              </div>
+              <div class="setting-value">
+                <label class="pin-toggle-switch">
+                  <input type="checkbox" id="biometric-toggle" onchange="window.handleBiometricToggle(this.checked)">
+                  <span class="pin-toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Change PIN (shown only when PIN is enabled) -->
+            <div class="setting-item" id="change-pin-item" style="display: none;">
+              <div class="setting-info">
+                <div class="setting-icon" style="color: #8b5cf6; -webkit-background-clip: text; font-size: 32px;">
+                  <i class="fas fa-key"></i>
+                </div>
+                <div class="setting-content">
+                  <h4 data-translate="Change PIN">Change PIN</h4>
+                  <p class="setting-description" data-translate="Update your security PIN">Update your security PIN</p>
+                </div>
+              </div>
+              <div class="setting-value">
+                <button class="pin-change-btn" onclick="window.showChangePinModal()">
+                  <i class="fas fa-pen"></i>
+                </button>
+              </div>
+            </div>
+
             <div class="setting-item">
               <div class="setting-info">
                 <div class="setting-icon" style="color: #f59e0b; -webkit-background-clip: text; font-size: 32px;">
@@ -3270,5 +3326,91 @@ Access-Network is a digital rewards platform combining innovation, community fea
     
     <!-- Firebase Cloud Messaging for Push Notifications -->
     <script src="fcm-notifications.js"></script>
+
+    <!-- ========== PIN LOCK SCREEN OVERLAY ========== -->
+    <div id="pin-lock-screen" class="pin-lock-overlay" style="display: none;">
+      <div class="pin-lock-container">
+        <div class="pin-lock-logo">
+          <img src="access-store-192.png" alt="Access" width="80" height="80">
+        </div>
+        <h2 class="pin-lock-title" data-translate="Enter PIN">Enter PIN</h2>
+        <p class="pin-lock-subtitle" data-translate="Enter your 6-digit PIN to unlock">Enter your 6-digit PIN to unlock</p>
+        
+        <div class="pin-dots-container" id="pin-dots">
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+        </div>
+        
+        <p class="pin-error-msg" id="pin-error-msg" style="display: none;" data-translate="Incorrect PIN">Incorrect PIN</p>
+        
+        <div class="pin-keypad">
+          <button class="pin-key" onclick="window.pinKeyPress('1')">1</button>
+          <button class="pin-key" onclick="window.pinKeyPress('2')">2</button>
+          <button class="pin-key" onclick="window.pinKeyPress('3')">3</button>
+          <button class="pin-key" onclick="window.pinKeyPress('4')">4</button>
+          <button class="pin-key" onclick="window.pinKeyPress('5')">5</button>
+          <button class="pin-key" onclick="window.pinKeyPress('6')">6</button>
+          <button class="pin-key" onclick="window.pinKeyPress('7')">7</button>
+          <button class="pin-key" onclick="window.pinKeyPress('8')">8</button>
+          <button class="pin-key" onclick="window.pinKeyPress('9')">9</button>
+          <button class="pin-key pin-key-biometric" id="pin-biometric-btn" onclick="window.pinBiometricAuth()" style="display: none;">
+            <i class="fas fa-fingerprint"></i>
+          </button>
+          <button class="pin-key" onclick="window.pinKeyPress('0')">0</button>
+          <button class="pin-key pin-key-delete" onclick="window.pinKeyDelete()">
+            <i class="fas fa-backspace"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== PIN SETUP MODAL ========== -->
+    <div id="pin-setup-modal" class="pin-modal-overlay" style="display: none;">
+      <div class="pin-modal-container">
+        <button class="pin-modal-close" onclick="window.closePinModal()">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="pin-modal-icon">
+          <i class="fas fa-lock"></i>
+        </div>
+        <h2 class="pin-modal-title" id="pin-modal-title" data-translate="Set PIN">Set PIN</h2>
+        <p class="pin-modal-subtitle" id="pin-modal-subtitle" data-translate="Enter a 6-digit PIN">Enter a 6-digit PIN</p>
+        
+        <div class="pin-dots-container" id="pin-setup-dots">
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+        </div>
+        
+        <p class="pin-error-msg" id="pin-setup-error" style="display: none;"></p>
+        
+        <div class="pin-keypad">
+          <button class="pin-key" onclick="window.pinSetupKeyPress('1')">1</button>
+          <button class="pin-key" onclick="window.pinSetupKeyPress('2')">2</button>
+          <button class="pin-key" onclick="window.pinSetupKeyPress('3')">3</button>
+          <button class="pin-key" onclick="window.pinSetupKeyPress('4')">4</button>
+          <button class="pin-key" onclick="window.pinSetupKeyPress('5')">5</button>
+          <button class="pin-key" onclick="window.pinSetupKeyPress('6')">6</button>
+          <button class="pin-key" onclick="window.pinSetupKeyPress('7')">7</button>
+          <button class="pin-key" onclick="window.pinSetupKeyPress('8')">8</button>
+          <button class="pin-key" onclick="window.pinSetupKeyPress('9')">9</button>
+          <button class="pin-key" style="visibility: hidden;"></button>
+          <button class="pin-key" onclick="window.pinSetupKeyPress('0')">0</button>
+          <button class="pin-key pin-key-delete" onclick="window.pinSetupKeyDelete()">
+            <i class="fas fa-backspace"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIN Lock System -->
+    <script src="pin-lock-system.js"></script>
 </body>
 </html>
