@@ -162,6 +162,9 @@
   order: 1;
   z-index: 100;
   margin-bottom: -10px;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  -webkit-touch-callout: none;
 }
 
 .profile-avatar {
@@ -175,12 +178,12 @@
 }
 
 .avatar-container:hover .profile-avatar {
-  border-color: var(--primary-color);
-  transform: scale(1.05);
-  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+  /* No hover effect - clean look */
 }
 
 .camera-icon-badge {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
   position: absolute;
   bottom: 2px;
   right: 2px;
@@ -205,8 +208,6 @@
 
 .camera-icon-badge:hover {
   background: rgba(0, 0, 0, 0.9);
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .photo-options-menu {
@@ -1563,8 +1564,7 @@ body.dark-theme #profile-page .copy-btn:hover {
   }
 
   .avatar-container:hover .profile-avatar {
-    transform: scale(1.05);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    /* No hover effect on mobile */
   }
 
   /* Staggered animation for cards */
@@ -1650,5 +1650,341 @@ body.dark-theme #profile-page .copy-btn:hover {
   .theme-btn {
     height: 42px;
     font-size: 15px;
+  }
+}/* ===== PIN Lock Screen ===== */
+.pin-lock-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, #0f0f1e 0%, #1a1a3e 50%, #0d0d2b 100%);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.pin-lock-overlay.active {
+  opacity: 1;
+}
+
+.pin-lock-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 360px;
+  padding: 40px 20px;
+}
+
+.pin-lock-logo {
+  margin-bottom: 24px;
+}
+
+.pin-lock-logo img {
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(74, 144, 226, 0.3);
+}
+
+.pin-lock-title {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.pin-lock-subtitle {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  margin: 0 0 32px 0;
+}
+
+/* ===== PIN Dots ===== */
+.pin-dots-container {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  transition: transform 0.1s;
+}
+
+.pin-dots-container.shake {
+  animation: pinShake 0.5s ease;
+}
+
+@keyframes pinShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-8px); }
+  80% { transform: translateX(8px); }
+}
+
+.pin-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.pin-dot.filled {
+  background: #4a90e2;
+  border-color: #4a90e2;
+  box-shadow: 0 0 12px rgba(74, 144, 226, 0.5);
+  transform: scale(1.1);
+}
+
+/* ===== PIN Error Message ===== */
+.pin-error-msg {
+  color: #ef4444;
+  font-size: 14px;
+  margin: 8px 0 16px 0;
+  text-align: center;
+}
+
+/* ===== PIN Keypad ===== */
+.pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 280px;
+  margin-top: 16px;
+}
+
+.pin-key {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 28px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.pin-key:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.pin-key:active {
+  background: rgba(74, 144, 226, 0.3);
+  transform: scale(0.92);
+}
+
+.pin-key-delete {
+  font-size: 22px;
+  background: transparent;
+}
+
+.pin-key-delete:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pin-key-biometric {
+  font-size: 28px;
+  color: #10b981;
+  background: transparent;
+}
+
+.pin-key-biometric:hover {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.pin-key-biometric:active {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+/* ===== PIN Setup/Change Modal ===== */
+.pin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 999998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.pin-modal-overlay.active {
+  opacity: 1;
+}
+
+.pin-modal-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 360px;
+  padding: 40px 20px;
+  position: relative;
+}
+
+.pin-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.pin-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.pin-modal-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #4a90e2, #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.pin-modal-icon i {
+  color: #fff;
+  font-size: 32px;
+}
+
+.pin-modal-title {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.pin-modal-subtitle {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  margin: 0 0 28px 0;
+  text-align: center;
+}
+
+/* ===== PIN Toggle Switch ===== */
+.pin-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.pin-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.pin-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 28px;
+}
+
+.pin-toggle-slider::before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.pin-toggle-switch input:checked + .pin-toggle-slider {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.pin-toggle-switch input:checked + .pin-toggle-slider::before {
+  transform: translateX(24px);
+}
+
+/* ===== Dark Theme Overrides ===== */
+.dark-theme .pin-toggle-slider {
+  background-color: #444;
+}
+
+.dark-theme .pin-change-btn:hover {
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.6);
+}
+
+/* ===== Light Theme Lock Screen ===== */
+/* Lock screen always stays dark for professional look */
+
+/* ===== Responsive ===== */
+@media (max-height: 600px) {
+  .pin-lock-container {
+    padding: 20px;
+  }
+  .pin-lock-logo img {
+    width: 56px;
+    height: 56px;
+  }
+  .pin-lock-title {
+    font-size: 20px;
+  }
+  .pin-key {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+  .pin-keypad {
+    gap: 8px;
+  }
+  .pin-dots-container {
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 340px) {
+  .pin-key {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+  .pin-keypad {
+    gap: 8px;
+    max-width: 240px;
   }
 }
