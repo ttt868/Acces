@@ -171,7 +171,10 @@
   // ===== SETUP MODAL =====
   function showSetupModal(step) {
     setupStep = step;
-    setupPin = '';
+    // Only clear setupPin when starting fresh (not when transitioning to confirm)
+    if (step === 'new' || step === 'current' || step === 'disable' || step === 'change-new') {
+      setupPin = '';
+    }
     pinInput = '';
     clearSetupDots();
     hideSetupError();
