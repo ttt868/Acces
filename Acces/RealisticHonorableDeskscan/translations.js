@@ -1156,7 +1156,9 @@ processingTransaction: "Traitement de la transaction en cours...",
     "Acceptance Statement": "Déclaration d'acceptation",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "En créant un compte ou en utilisant AccessDigital, vous confirmez avoir lu, compris et accepté ces conditions d'utilisation. Vous reconnaissez que les points ACCESS sont des récompenses d'engagement communautaire sans valeur financière garantie, et que vous participez pour l'expérience de la plateforme - pas à des fins d'investissement.",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Le livre blanc s'est ouvert dans un nouvel onglet. Vous pouvez le consulter, l'imprimer ou le sauvegarder depuis là.",
-    "Your session has expired. Please login again.": "Votre session a expiré. Veuillez vous reconnecter."
+    "Your session has expired. Please login again.": "Votre session a expiré. Veuillez vous reconnecter.",
+    "Session expired. Please login again.": "Session expirée. Veuillez vous reconnecter.",
+    "Failed to start processing": "Échec du démarrage du traitement"
   },
 
   es: {
@@ -1856,7 +1858,9 @@ processingTransaction: "Procesando transacción...",
     "Acceptance Statement": "Declaración de aceptación",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Al crear una cuenta o usar AccessDigital, confirma que ha leído, comprendido y acepta estos Términos de Servicio. Reconoce que los puntos ACCESS son recompensas de participación comunitaria sin valor financiero garantizado, y que está participando por la experiencia de la plataforma, no con fines de inversión.",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "El libro blanco se abrió en una nueva pestaña. Puedes verlo, imprimirlo o guardarlo desde allí.",
-    "Your session has expired. Please login again.": "Tu sesión ha expirado. Por favor, inicia sesión de nuevo."
+    "Your session has expired. Please login again.": "Tu sesión ha expirado. Por favor, inicia sesión de nuevo.",
+    "Session expired. Please login again.": "Sesión expirada. Por favor, inicia sesión de nuevo.",
+    "Failed to start processing": "Error al iniciar el procesamiento"
   },
 
   it: {
@@ -2533,7 +2537,9 @@ processingTransaction: "Elaborazione della transazione in corso...",
     "Acceptance Statement": "Dichiarazione di accettazione",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Creando un account o utilizzando AccessDigital, confermi di aver letto, compreso e accettato questi Termini di Servizio. Riconosci che i punti ACCESS sono ricompense di coinvolgimento comunitario senza valore finanziario garantito, e che stai partecipando per l'esperienza della piattaforma, non per scopi di investimento.",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Il whitepaper è stato aperto in una nuova scheda. Puoi visualizzarlo, stamparlo o salvarlo da lì.",
-    "Your session has expired. Please login again.": "La tua sessione è scaduta. Effettua nuovamente il login."
+    "Your session has expired. Please login again.": "La tua sessione è scaduta. Effettua nuovamente il login.",
+    "Session expired. Please login again.": "Sessione scaduta. Effettua nuovamente il login.",
+    "Failed to start processing": "Impossibile avviare l'elaborazione"
   },
 
   tr: {
@@ -3209,7 +3215,9 @@ processingTransaction: "İşlem işleniyor...",
     "Acceptance Statement": "Kabul Beyanı",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Bir hesap oluşturarak veya AccessDigital kullanarak, bu Hizmet Şartlarını okuduğunuzu, anladığınızı ve kabul ettiğinizi onaylarsınız. ACCESS puanlarının garantili finansal değeri olmayan topluluk etkileşim ödülleri olduğunu ve yatırım amaçlı değil platform deneyimi için katıldığınızı kabul edersiniz.",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Teknik doküman yeni sekmede açıldı. Oradan görüntüleyebilir, yazdırabilir veya kaydedebilirsiniz.",
-    "Your session has expired. Please login again.": "Oturumunuz sona erdi. Lütfen tekrar giriş yapın."
+    "Your session has expired. Please login again.": "Oturumunuz sona erdi. Lütfen tekrar giriş yapın.",
+    "Session expired. Please login again.": "Oturum süresi doldu. Lütfen tekrar giriş yapın.",
+    "Failed to start processing": "İşlem başlatılamadı"
   },
 
   hi: {
@@ -3897,7 +3905,9 @@ processingTransaction: "İşlem işleniyor...",
     "Acceptance Statement": "स्वीकृति विवरण",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "खाता बनाकर या AccessDigital का उपयोग करके, आप पुष्टि करते हैं कि आपने इन सेवा की शर्तों को पढ़ा, समझा और स्वीकार किया है।",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "व्हाइटपेपर नई टैब में खुल गया। आप वहां से इसे देख, प्रिंट या सहेज सकते हैं।",
-    "Your session has expired. Please login again.": "आपका सत्र समाप्त हो गया है। कृपया फिर से लॉगिन करें।"
+    "Your session has expired. Please login again.": "आपका सत्र समाप्त हो गया है। कृपया फिर से लॉगिन करें।",
+    "Session expired. Please login again.": "सत्र समाप्त हो गया। कृपया फिर से लॉगिन करें।",
+    "Failed to start processing": "प्रोसेसिंग शुरू करने में विफल"
   },
 
   zh: {
@@ -4575,7 +4585,9 @@ processingTransaction: "İşlem işleniyor...",
     "Acceptance Statement": "接受声明",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "通过创建账户或使用AccessDigital，您确认已阅读、理解并同意这些服务条款。您确认ACCESS积分是没有保证财务价值的社区参与奖励，您参与是为了平台体验——而非投资目的。",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "白皮书已在新标签页中打开。您可以从那里查看、打印或保存它。",
-    "Your session has expired. Please login again.": "您的会话已过期。请重新登录。"
+    "Your session has expired. Please login again.": "您的会话已过期。请重新登录。",
+    "Session expired. Please login again.": "会话已过期。请重新登录。",
+    "Failed to start processing": "启动处理失败"
   },
 
   ja: {
@@ -5268,7 +5280,9 @@ processingTransaction: "İşlem işleniyor...",
     "Acceptance Statement": "承諾声明",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "アカウントを作成するか、AccessDigitalを使用することで、これらの利用規約を読み、理解し、同意したことを確認します。",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "ホワイトペーパーが新しいタブで開きました。そこから表示、印刷、または保存できます。",
-    "Your session has expired. Please login again.": "セッションが期限切れになりました。再度ログインしてください。"
+    "Your session has expired. Please login again.": "セッションが期限切れになりました。再度ログインしてください。",
+    "Session expired. Please login again.": "セッションが期限切れです。再度ログインしてください。",
+    "Failed to start processing": "処理の開始に失敗しました"
   },
 
   ko: {
@@ -5960,7 +5974,9 @@ processingTransaction: "İşlem işleniyor...",
     "Acceptance Statement": "수락 선언",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "계정을 만들거나 AccessDigital을 사용함으로써 이 서비스 약관을 읽고 이해하며 동의함을 확인합니다.",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "백서가 새 탭에서 열렸습니다. 거기서 보거나, 인쇄하거나, 저장할 수 있습니다.",
-    "Your session has expired. Please login again.": "세션이 만료되었습니다. 다시 로그인해 주세요."
+    "Your session has expired. Please login again.": "세션이 만료되었습니다. 다시 로그인해 주세요.",
+    "Session expired. Please login again.": "세션이 만료되었습니다. 다시 로그인해 주세요.",
+    "Failed to start processing": "처리 시작 실패"
   },
 
   pt: {
@@ -6641,7 +6657,9 @@ processingTransaction: "İşlem işleniyor...",
     "Acceptance Statement": "Declaração de Aceitação",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Ao criar uma conta ou usar AccessDigital, você confirma que leu, entendeu e concorda com estes Termos de Serviço.",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "O whitepaper foi aberto em uma nova aba. Você pode visualizar, imprimir ou salvar a partir de lá.",
-    "Your session has expired. Please login again.": "Sua sessão expirou. Por favor, faça login novamente."
+    "Your session has expired. Please login again.": "Sua sessão expirou. Por favor, faça login novamente.",
+    "Session expired. Please login again.": "Sessão expirada. Por favor, faça login novamente.",
+    "Failed to start processing": "Falha ao iniciar o processamento"
   },
 
   ru: {
@@ -7333,7 +7351,9 @@ insufficientBalance: "Недостаточно средств для этой т
     "Acceptance Statement": "Заявление о принятии",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Создавая аккаунт или используя AccessDigital, вы подтверждаете, что прочитали, поняли и согласны с этими Условиями использования.",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Технический документ открыт в новой вкладке. Вы можете просмотреть, распечатать или сохранить его оттуда.",
-    "Your session has expired. Please login again.": "Сеанс истёк. Пожалуйста, войдите снова."
+    "Your session has expired. Please login again.": "Сеанс истёк. Пожалуйста, войдите снова.",
+    "Session expired. Please login again.": "Сеанс истёк. Пожалуйста, войдите снова.",
+    "Failed to start processing": "Не удалось начать обработку"
   },
 
   de: {
@@ -8030,7 +8050,9 @@ insufficientBalance: "Недостаточно средств для этой т
     "Acceptance Statement": "Annahmeerklärung",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Durch das Erstellen eines Kontos oder die Nutzung von AccessDigital bestätigen Sie, dass Sie diese Nutzungsbedingungen gelesen, verstanden und ihnen zugestimmt haben.",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Das Whitepaper wurde in einem neuen Tab geöffnet. Sie können es dort ansehen, drucken oder speichern.",
-    "Your session has expired. Please login again.": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
+    "Your session has expired. Please login again.": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+    "Session expired. Please login again.": "Sitzung abgelaufen. Bitte melden Sie sich erneut an.",
+    "Failed to start processing": "Verarbeitung konnte nicht gestartet werden"
   },
 
   ar: {
@@ -8774,7 +8796,9 @@ insufficientBalance: "Недостаточно средств для этой т
     "Acceptance Statement": "بيان القبول",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "بإنشاء حساب أو استخدام أكسيس الرقمية، فإنك تؤكد أنك قرأت وفهمت ووافقت على شروط الخدمة هذه.",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "تم فتح الورقة البيضاء في علامة تبويب جديدة. يمكنك عرضها أو طباعتها أو حفظها من هناك.",
-    "Your session has expired. Please login again.": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى."
+    "Your session has expired. Please login again.": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.",
+    "Session expired. Please login again.": "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.",
+    "Failed to start processing": "فشل بدء المعالجة"
   },
 
   id: {
@@ -9480,7 +9504,9 @@ insufficientBalance: "Недостаточно средств для этой т
     "Acceptance Statement": "Pernyataan Penerimaan",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Dengan membuat akun atau menggunakan AccessDigital, Anda mengonfirmasi bahwa Anda telah membaca, memahami, dan menyetujui Ketentuan Layanan ini.",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Whitepaper dibuka di tab baru. Anda dapat melihat, mencetak, atau menyimpannya dari sana.",
-    "Your session has expired. Please login again.": "Sesi Anda telah berakhir. Silakan masuk kembali."
+    "Your session has expired. Please login again.": "Sesi Anda telah berakhir. Silakan masuk kembali.",
+    "Session expired. Please login again.": "Sesi telah berakhir. Silakan masuk kembali.",
+    "Failed to start processing": "Gagal memulai pemrosesan"
   },
 
   pl: {
@@ -10171,6 +10197,8 @@ insufficientBalance: "Недостаточно средств для этой т
     "Acceptance Statement": "Oświadczenie o akceptacji",
     "By creating an account or using AccessDigital, you confirm that you have read, understood, and agree to these Terms of Service. You acknowledge that ACCESS points are community engagement rewards without guaranteed financial value, and you are participating for the platform experience—not for investment purposes.": "Tworząc konto lub korzystając z AccessDigital, potwierdzasz, że przeczytałeś, zrozumiałeś i zgadzasz się z niniejszymi Warunkami korzystania z usługi.",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Whitepaper został otwarty w nowej karcie. Możesz go stamtąd przeglądać, drukować lub zapisać.",
-    "Your session has expired. Please login again.": "Twoja sesja wygasła. Zaloguj się ponownie."
+    "Your session has expired. Please login again.": "Twoja sesja wygasła. Zaloguj się ponownie.",
+    "Session expired. Please login again.": "Sesja wygasła. Zaloguj się ponownie.",
+    "Failed to start processing": "Nie udało się rozpocząć przetwarzania"
   }
 };

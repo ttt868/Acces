@@ -4648,6 +4648,15 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
             });
             const data = await resp.json();
             
+            // 🔒 SECURITY: Handle 401 - session expired
+            if (resp.status === 401 && data.requireRelogin) {
+              showNotification(translator.translate('Your session has expired. Please login again.'), 'error');
+              btn.classList.remove('disabled');
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-play"></i> ' + translator.translate('Start Activity');
+              return;
+            }
+
             if (resp.ok && data.success) {
               // يتحقق من كلا الاسمين: reward_transferred (server.js) و previous_reward_transferred (simplifier)
               const transferredReward = data.reward_transferred || data.previous_reward_transferred || 0;
@@ -4720,7 +4729,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
               showNotification(translator.translate('You already have an active processing session'), 'info');
               if (data.remaining_seconds > 0) startCountdown(data.remaining_seconds * 1000);
             } else {
-              showNotification(data.error || translator.translate('Error'), 'error');
+              showNotification(translator.translate(data.error || 'Error'), 'error');
               btn.classList.remove('disabled');
               btn.disabled = false;
               btn.innerHTML = '<i class="fas fa-play"></i> ' + translator.translate('Start Activity');
@@ -5374,7 +5383,7 @@ processingButton.addEventListener('click', async function(e) {
     } else {
       // Server returned success=false
       console.log(`[SCRIPT] Server rejected start: ${data.error}`);
-      showNotification(data.error || 'Failed to start processing', 'error');
+      showNotification(translator.translate(data.error || 'Failed to start processing'), 'error');
       processingStatus.textContent = translator.translate('Processing available');
       updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
       // ✅ السيرفر رفض لكن أكد أنه لا توجد جلسة - يمكن فتح الزر

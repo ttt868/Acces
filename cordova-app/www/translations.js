@@ -1158,7 +1158,9 @@ processingTransaction: "Traitement de la transaction en cours...",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Le livre blanc s'est ouvert dans un nouvel onglet. Vous pouvez le consulter, l'imprimer ou le sauvegarder depuis là.",
     "Your session has expired. Please login again.": "Votre session a expiré. Veuillez vous reconnecter.",
     "No Image Selected": "Aucune image sélectionnée",
-    "Camera error": "Erreur de caméra"
+    "Camera error": "Erreur de caméra",
+    "Session expired. Please login again.": "Session expirée. Veuillez vous reconnecter.",
+    "Failed to start processing": "Échec du démarrage du traitement"
   },
 
   es: {
@@ -1860,7 +1862,9 @@ processingTransaction: "Procesando transacción...",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "El libro blanco se abrió en una nueva pestaña. Puedes verlo, imprimirlo o guardarlo desde allí.",
     "Your session has expired. Please login again.": "Tu sesión ha expirado. Por favor, inicia sesión de nuevo.",
     "No Image Selected": "Ninguna imagen seleccionada",
-    "Camera error": "Error de cámara"
+    "Camera error": "Error de cámara",
+    "Session expired. Please login again.": "Sesión expirada. Por favor, inicia sesión de nuevo.",
+    "Failed to start processing": "Error al iniciar el procesamiento"
   },
 
   it: {
@@ -2539,7 +2543,9 @@ processingTransaction: "Elaborazione della transazione in corso...",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Il whitepaper è stato aperto in una nuova scheda. Puoi visualizzarlo, stamparlo o salvarlo da lì.",
     "Your session has expired. Please login again.": "La tua sessione è scaduta. Effettua nuovamente il login.",
     "No Image Selected": "Nessuna immagine selezionata",
-    "Camera error": "Errore fotocamera"
+    "Camera error": "Errore fotocamera",
+    "Session expired. Please login again.": "Sessione scaduta. Effettua nuovamente il login.",
+    "Failed to start processing": "Impossibile avviare l'elaborazione"
   },
 
   tr: {
@@ -3217,7 +3223,9 @@ processingTransaction: "İşlem işleniyor...",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Teknik doküman yeni sekmede açıldı. Oradan görüntüleyebilir, yazdırabilir veya kaydedebilirsiniz.",
     "Your session has expired. Please login again.": "Oturumunuz sona erdi. Lütfen tekrar giriş yapın.",
     "No Image Selected": "Görüntü seçilmedi",
-    "Camera error": "Kamera hatası"
+    "Camera error": "Kamera hatası",
+    "Session expired. Please login again.": "Oturum süresi doldu. Lütfen tekrar giriş yapın.",
+    "Failed to start processing": "İşlem başlatılamadı"
   },
 
   hi: {
@@ -3907,7 +3915,9 @@ processingTransaction: "İşlem işleniyor...",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "व्हाइटपेपर नई टैब में खुल गया। आप वहां से इसे देख, प्रिंट या सहेज सकते हैं।",
     "Your session has expired. Please login again.": "आपका सत्र समाप्त हो गया है। कृपया फिर से लॉगिन करें।",
     "No Image Selected": "कोई छवि चयनित नहीं",
-    "Camera error": "कैमरा त्रुटि"
+    "Camera error": "कैमरा त्रुटि",
+    "Session expired. Please login again.": "सत्र समाप्त हो गया। कृपया फिर से लॉगिन करें।",
+    "Failed to start processing": "प्रोसेसिंग शुरू करने में विफल"
   },
 
   zh: {
@@ -4587,7 +4597,9 @@ processingTransaction: "İşlem işleniyor...",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "白皮书已在新标签页中打开。您可以从那里查看、打印或保存它。",
     "Your session has expired. Please login again.": "您的会话已过期。请重新登录。",
     "No Image Selected": "未选择图片",
-    "Camera error": "相机错误"
+    "Camera error": "相机错误",
+    "Session expired. Please login again.": "会话已过期。请重新登录。",
+    "Failed to start processing": "启动处理失败"
   },
 
   ja: {
@@ -5282,7 +5294,9 @@ processingTransaction: "İşlem işleniyor...",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "ホワイトペーパーが新しいタブで開きました。そこから表示、印刷、または保存できます。",
     "Your session has expired. Please login again.": "セッションが期限切れになりました。再度ログインしてください。",
     "No Image Selected": "画像が選択されていません",
-    "Camera error": "カメラエラー"
+    "Camera error": "カメラエラー",
+    "Session expired. Please login again.": "セッションが期限切れです。再度ログインしてください。",
+    "Failed to start processing": "処理の開始に失敗しました"
   },
 
   ko: {
@@ -5976,7 +5990,9 @@ processingTransaction: "İşlem işleniyor...",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "백서가 새 탭에서 열렸습니다. 거기서 보거나, 인쇄하거나, 저장할 수 있습니다.",
     "Your session has expired. Please login again.": "세션이 만료되었습니다. 다시 로그인해 주세요.",
     "No Image Selected": "이미지가 선택되지 않았습니다",
-    "Camera error": "카메라 오류"
+    "Camera error": "카메라 오류",
+    "Session expired. Please login again.": "세션이 만료되었습니다. 다시 로그인해 주세요.",
+    "Failed to start processing": "처리 시작 실패"
   },
 
   pt: {
@@ -6659,7 +6675,9 @@ processingTransaction: "İşlem işleniyor...",
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "O whitepaper foi aberto em uma nova aba. Você pode visualizar, imprimir ou salvar a partir de lá.",
     "Your session has expired. Please login again.": "Sua sessão expirou. Por favor, faça login novamente.",
     "No Image Selected": "Nenhuma imagem selecionada",
-    "Camera error": "Erro de câmera"
+    "Camera error": "Erro de câmera",
+    "Session expired. Please login again.": "Sessão expirada. Por favor, faça login novamente.",
+    "Failed to start processing": "Falha ao iniciar o processamento"
   },
 
   ru: {
@@ -7353,7 +7371,9 @@ insufficientBalance: "Недостаточно средств для этой т
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Технический документ открыт в новой вкладке. Вы можете просмотреть, распечатать или сохранить его оттуда.",
     "Your session has expired. Please login again.": "Сеанс истёк. Пожалуйста, войдите снова.",
     "No Image Selected": "Изображение не выбрано",
-    "Camera error": "Ошибка камеры"
+    "Camera error": "Ошибка камеры",
+    "Session expired. Please login again.": "Сеанс истёк. Пожалуйста, войдите снова.",
+    "Failed to start processing": "Не удалось начать обработку"
   },
 
   de: {
@@ -8052,7 +8072,9 @@ insufficientBalance: "Недостаточно средств для этой т
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Das Whitepaper wurde in einem neuen Tab geöffnet. Sie können es dort ansehen, drucken oder speichern.",
     "Your session has expired. Please login again.": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
     "No Image Selected": "Kein Bild ausgewählt",
-    "Camera error": "Kamerafehler"
+    "Camera error": "Kamerafehler",
+    "Session expired. Please login again.": "Sitzung abgelaufen. Bitte melden Sie sich erneut an.",
+    "Failed to start processing": "Verarbeitung konnte nicht gestartet werden"
   },
 
   ar: {
@@ -8798,7 +8820,9 @@ insufficientBalance: "Недостаточно средств для этой т
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "تم فتح الورقة البيضاء في علامة تبويب جديدة. يمكنك عرضها أو طباعتها أو حفظها من هناك.",
     "Your session has expired. Please login again.": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.",
     "No Image Selected": "لم يتم اختيار صورة",
-    "Camera error": "خطأ في الكاميرا"
+    "Camera error": "خطأ في الكاميرا",
+    "Session expired. Please login again.": "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.",
+    "Failed to start processing": "فشل بدء المعالجة"
   },
 
   id: {
@@ -9506,7 +9530,9 @@ insufficientBalance: "Недостаточно средств для этой т
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Whitepaper dibuka di tab baru. Anda dapat melihat, mencetak, atau menyimpannya dari sana.",
     "Your session has expired. Please login again.": "Sesi Anda telah berakhir. Silakan masuk kembali.",
     "No Image Selected": "Tidak ada gambar yang dipilih",
-    "Camera error": "Kesalahan kamera"
+    "Camera error": "Kesalahan kamera",
+    "Session expired. Please login again.": "Sesi telah berakhir. Silakan masuk kembali.",
+    "Failed to start processing": "Gagal memulai pemrosesan"
   },
 
   pl: {
@@ -10199,6 +10225,8 @@ insufficientBalance: "Недостаточно средств для этой т
     "Whitepaper opened in new tab. You can view, print, or save it from there.": "Whitepaper został otwarty w nowej karcie. Możesz go stamtąd przeglądać, drukować lub zapisać.",
     "Your session has expired. Please login again.": "Twoja sesja wygasła. Zaloguj się ponownie.",
     "No Image Selected": "Nie wybrano obrazu",
-    "Camera error": "Błąd aparatu"
+    "Camera error": "Błąd aparatu",
+    "Session expired. Please login again.": "Sesja wygasła. Zaloguj się ponownie.",
+    "Failed to start processing": "Nie udało się rozpocząć przetwarzania"
   }
 };
