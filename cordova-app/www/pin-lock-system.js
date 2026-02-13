@@ -54,7 +54,6 @@
     const pinToggle = document.getElementById('pin-toggle');
     const biometricItem = document.getElementById('biometric-setting-item');
     const biometricToggle = document.getElementById('biometric-toggle');
-    const changePinItem = document.getElementById('change-pin-item');
 
     if (pinToggle) {
       pinToggle.checked = pinEnabled;
@@ -66,10 +65,6 @@
 
     if (biometricToggle) {
       biometricToggle.checked = biometricEnabled;
-    }
-
-    if (changePinItem) {
-      changePinItem.style.display = pinEnabled ? 'flex' : 'none';
     }
 
     // Check biometric availability
@@ -161,15 +156,13 @@
   };
 
   // ===== CHANGE PIN =====
-  window.showChangePinModal = function() {
-    showSetupModal('current');
-  };
+  // Removed - user can disable and re-enable to set new PIN
 
   // ===== SETUP MODAL =====
   function showSetupModal(step) {
     setupStep = step;
     // Only clear setupPin when starting fresh (not when transitioning to confirm)
-    if (step === 'new' || step === 'current' || step === 'disable' || step === 'change-new') {
+    if (step === 'new' || step === 'disable') {
       setupPin = '';
     }
     pinInput = '';
@@ -196,24 +189,6 @@
         title.setAttribute('data-translate', 'Confirm PIN');
         subtitle.textContent = t('Re-enter your PIN to confirm');
         subtitle.setAttribute('data-translate', 'Re-enter your PIN to confirm');
-        break;
-      case 'current':
-        title.textContent = t('Current PIN');
-        title.setAttribute('data-translate', 'Current PIN');
-        subtitle.textContent = t('Enter your current PIN');
-        subtitle.setAttribute('data-translate', 'Enter your current PIN');
-        break;
-      case 'change-new':
-        title.textContent = t('New PIN');
-        title.setAttribute('data-translate', 'New PIN');
-        subtitle.textContent = t('Enter a new 6-digit PIN');
-        subtitle.setAttribute('data-translate', 'Enter a new 6-digit PIN');
-        break;
-      case 'change-confirm':
-        title.textContent = t('Confirm New PIN');
-        title.setAttribute('data-translate', 'Confirm New PIN');
-        subtitle.textContent = t('Re-enter your new PIN');
-        subtitle.setAttribute('data-translate', 'Re-enter your new PIN');
         break;
       case 'disable':
         title.textContent = t('Disable PIN');
@@ -335,37 +310,6 @@
         await setupNewPin(setupPin);
         break;
 
-      case 'current':
-        // Verify current PIN then move to new PIN
-        const verified = await verifyPinOnServer(pinInput);
-        if (!verified) {
-          showSetupError(t('Incorrect PIN'));
-          pinInput = '';
-          clearSetupDots();
-          return;
-        }
-        pinInput = '';
-        clearSetupDots();
-        showSetupModal('change-new');
-        break;
-
-      case 'change-new':
-        setupPin = pinInput;
-        pinInput = '';
-        clearSetupDots();
-        showSetupModal('change-confirm');
-        break;
-
-      case 'change-confirm':
-        if (pinInput !== setupPin) {
-          showSetupError(t('PINs do not match'));
-          pinInput = '';
-          clearSetupDots();
-          return;
-        }
-        await changePinOnServer(pinInput);
-        break;
-
       case 'disable':
         await disablePinOnServer(pinInput);
         break;
@@ -422,38 +366,6 @@
     } catch (error) {
       console.error('[PIN] Error verifying PIN:', error);
       return false;
-    }
-  }
-
-  async function changePinOnServer(newPin) {
-    const t = (key) => window.translator ? window.translator.translate(key) : key;
-    try {
-      const userId = getUserId();
-      // We already verified the current PIN in the 'current' step
-      const response = await fetch(getApiBase() + '/api/pin/setup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ userId, pin: newPin })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        window.closePinModal();
-        if (window.showNotification) {
-          window.showNotification(t('PIN changed successfully'), 'success');
-        }
-      } else {
-        showSetupError(data.error || t('Failed to change PIN'));
-        pinInput = '';
-        clearSetupDots();
-      }
-    } catch (error) {
-      console.error('[PIN] Error changing PIN:', error);
-      showSetupError(t('Network error'));
-      pinInput = '';
-      clearSetupDots();
     }
   }
 
@@ -600,6 +512,9 @@
   // ===== BIOMETRIC AUTH =====
   window.pinBiometricAuth = function() {
     if (!window.Fingerprint || !biometricAvailable || !biometricEnabled) return;
+    // Prevent multiple popups
+    if (window._biometricInProgress) return;
+    window._biometricInProgress = true;
 
     const t = (key) => window.translator ? window.translator.translate(key) : key;
 
@@ -610,12 +525,14 @@
         disableBackup: true
       },
       function() {
-        // Success
+        // Success - unlock and reset flag
+        window._biometricInProgress = false;
         hideLockScreen();
       },
       function(error) {
-        console.log('[PIN] Biometric failed:', error);
-        // User can still use PIN
+        // Failed or cancelled - reset flag, don't retry
+        window._biometricInProgress = false;
+        console.log('[PIN] Biometric cancelled/failed:', error);
       }
     );
   };

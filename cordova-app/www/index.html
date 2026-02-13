@@ -1650,24 +1650,6 @@ document.addEventListener('balanceUpdated', function(event) {
               </div>
             </div>
 
-            <!-- Change PIN (shown only when PIN is enabled) -->
-            <div class="setting-item" id="change-pin-item" style="display: none;">
-              <div class="setting-info">
-                <div class="setting-icon" style="color: #8b5cf6; -webkit-background-clip: text; font-size: 32px;">
-                  <i class="fas fa-key"></i>
-                </div>
-                <div class="setting-content">
-                  <h4 data-translate="Change PIN">Change PIN</h4>
-                  <p class="setting-description" data-translate="Update your security PIN">Update your security PIN</p>
-                </div>
-              </div>
-              <div class="setting-value">
-                <button class="pin-change-btn" onclick="window.showChangePinModal()">
-                  <i class="fas fa-pen"></i>
-                </button>
-              </div>
-            </div>
-
             <div class="setting-item">
               <div class="setting-info">
                 <div class="setting-icon" style="color: #f59e0b; -webkit-background-clip: text; font-size: 32px;">
@@ -3357,12 +3339,12 @@ Access-Network is a digital rewards platform combining innovation, community fea
           <button class="pin-key" onclick="window.pinKeyPress('7')">7</button>
           <button class="pin-key" onclick="window.pinKeyPress('8')">8</button>
           <button class="pin-key" onclick="window.pinKeyPress('9')">9</button>
-          <button class="pin-key pin-key-biometric" id="pin-biometric-btn" onclick="window.pinBiometricAuth()" style="visibility: hidden;">
-            <i class="fas fa-fingerprint"></i>
-          </button>
-          <button class="pin-key" onclick="window.pinKeyPress('0')">0</button>
           <button class="pin-key pin-key-delete" onclick="window.pinKeyDelete()">
             <i class="fas fa-backspace"></i>
+          </button>
+          <button class="pin-key" onclick="window.pinKeyPress('0')">0</button>
+          <button class="pin-key pin-key-biometric" id="pin-biometric-btn" onclick="window.pinBiometricAuth()" style="visibility: hidden;">
+            <i class="fas fa-fingerprint"></i>
           </button>
         </div>
       </div>
@@ -3401,11 +3383,11 @@ Access-Network is a digital rewards platform combining innovation, community fea
           <button class="pin-key" onclick="window.pinSetupKeyPress('7')">7</button>
           <button class="pin-key" onclick="window.pinSetupKeyPress('8')">8</button>
           <button class="pin-key" onclick="window.pinSetupKeyPress('9')">9</button>
-          <button class="pin-key" style="visibility: hidden;"></button>
-          <button class="pin-key" onclick="window.pinSetupKeyPress('0')">0</button>
           <button class="pin-key pin-key-delete" onclick="window.pinSetupKeyDelete()">
             <i class="fas fa-backspace"></i>
           </button>
+          <button class="pin-key" onclick="window.pinSetupKeyPress('0')">0</button>
+          <button class="pin-key" style="visibility: hidden;"></button>
         </div>
       </div>
     </div>
