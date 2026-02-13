@@ -13559,7 +13559,8 @@ window.cancelProfileChanges = cancelProfileChanges;
                  window._pendingCameraAction = false;
                  console.error('[Camera] Error:', err);
                  if (typeof showNotification === 'function') {
-                   showNotification('Camera error: ' + (err || 'Unknown error'), 'error');
+                   const errMsg = err === 'No Image Selected' ? translator.translate('No Image Selected') : (err || translator.translate('Camera error'));
+                   showNotification(errMsg, 'error');
                  }
                },
                {
