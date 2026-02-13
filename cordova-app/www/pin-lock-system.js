@@ -20,20 +20,18 @@
     return (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : 'https://accesschain.org';
   }
 
-  function getToken() {
+  function getUserId() {
     const user = window.currentUser;
-    return user ? user.token : null;
+    return user ? user.id : null;
   }
 
   // ===== PIN STATUS =====
   async function loadPinStatus() {
     try {
-      const token = getToken();
-      if (!token) return;
+      const userId = getUserId();
+      if (!userId) return;
 
-      const response = await fetch(getApiBase() + '/api/pin/status', {
-        headers: { 'Authorization': 'Bearer ' + token }
-      });
+      const response = await fetch(getApiBase() + '/api/pin/status/' + userId);
 
       if (response.ok) {
         const data = await response.json();
@@ -137,16 +135,15 @@
     }
 
     try {
-      const token = getToken();
-      if (!token) return;
+      const userId = getUserId();
+      if (!userId) return;
 
       const response = await fetch(getApiBase() + '/api/pin/biometric', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + token,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ enabled: checked })
+        body: JSON.stringify({ userId, enabled: checked })
       });
 
       if (response.ok) {
@@ -379,14 +376,13 @@
   async function setupNewPin(pin) {
     const t = (key) => window.translator ? window.translator.translate(key) : key;
     try {
-      const token = getToken();
+      const userId = getUserId();
       const response = await fetch(getApiBase() + '/api/pin/setup', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + token,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ pin })
+        body: JSON.stringify({ userId, pin })
       });
 
       const data = await response.json();
@@ -412,14 +408,13 @@
 
   async function verifyPinOnServer(pin) {
     try {
-      const token = getToken();
+      const userId = getUserId();
       const response = await fetch(getApiBase() + '/api/pin/verify', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + token,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ pin })
+        body: JSON.stringify({ userId, pin })
       });
 
       const data = await response.json();
@@ -433,15 +428,14 @@
   async function changePinOnServer(newPin) {
     const t = (key) => window.translator ? window.translator.translate(key) : key;
     try {
-      const token = getToken();
+      const userId = getUserId();
       // We already verified the current PIN in the 'current' step
       const response = await fetch(getApiBase() + '/api/pin/setup', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + token,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ pin: newPin })
+        body: JSON.stringify({ userId, pin: newPin })
       });
 
       const data = await response.json();
@@ -466,14 +460,13 @@
   async function disablePinOnServer(pin) {
     const t = (key) => window.translator ? window.translator.translate(key) : key;
     try {
-      const token = getToken();
+      const userId = getUserId();
       const response = await fetch(getApiBase() + '/api/pin/disable', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + token,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ pin })
+        body: JSON.stringify({ userId, pin })
       });
 
       const data = await response.json();
@@ -648,7 +641,7 @@
     let checkCount = 0;
     const checkInterval = setInterval(() => {
       checkCount++;
-      if (window.currentUser && window.currentUser.token) {
+      if (window.currentUser && window.currentUser.id) {
         clearInterval(checkInterval);
         loadPinStatus();
       }
