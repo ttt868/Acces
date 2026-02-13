@@ -221,7 +221,8 @@ class AccessNotificationSystem {
       }
       
       if (this.userId && subscriptionData) {
-        const saveResponse = await fetch('/api/push/subscribe', {
+        const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+        const saveResponse = await fetch(_apiBase + '/api/push/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -249,7 +250,8 @@ class AccessNotificationSystem {
       }
 
       // Get VAPID public key from server
-      const response = await fetch('/api/push/public-key');
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(_apiBase + '/api/push/public-key');
       const data = await response.json();
       
       if (!data.success || !data.publicKey) {
@@ -285,7 +287,8 @@ class AccessNotificationSystem {
       }
 
       if (this.userId) {
-        const saveResponse = await fetch('/api/push/subscribe', {
+        const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+        const saveResponse = await fetch(_apiBase + '/api/push/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -339,7 +342,8 @@ class AccessNotificationSystem {
       
       if (currentSub) {
         // اختبار صلاحية الاشتراك عبر السيرفر
-        const testResponse = await fetch('/api/push/test-subscription', {
+        const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+        const testResponse = await fetch(_apiBase + '/api/push/test-subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -380,7 +384,8 @@ class AccessNotificationSystem {
       }
 
       // Get VAPID public key from server
-      const response = await fetch('/api/push/public-key');
+      const _apiBase2 = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(_apiBase2 + '/api/push/public-key');
       const data = await response.json();
       
       if (!data.success || !data.publicKey) {
@@ -419,7 +424,8 @@ class AccessNotificationSystem {
 
       if (this.userId) {
         // Send subscription to server
-        const saveResponse = await fetch('/api/push/subscribe', {
+        const _apiBase3 = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+        const saveResponse = await fetch(_apiBase3 + '/api/push/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

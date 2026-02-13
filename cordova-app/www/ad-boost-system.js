@@ -46,7 +46,8 @@
 
     var transactionId = 'ad_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-    fetch('/api/ad-boost/grant', {
+    var _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+    fetch(_apiBase + '/api/ad-boost/grant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -87,7 +88,8 @@
     currentUserId = userId;
     console.log('[BOOST] showAdBoostModal for user:', userId);
 
-    fetch('/api/ad-boost/check?userId=' + userId)
+    var _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+    fetch(_apiBase + '/api/ad-boost/check?userId=' + userId)
     .then(function(response) { return response.json(); })
     .then(function(result) {
       console.log('[BOOST] Eligibility:', JSON.stringify(result));
@@ -297,7 +299,8 @@
   function checkBoostStatus() {
     var userId = window.currentUser && window.currentUser.id;
 
-    fetch('/api/ad-boost/status?userId=' + userId)
+    var _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+    fetch(_apiBase + '/api/ad-boost/status?userId=' + userId)
     .then(function(response) { return response.json(); })
     .then(function(result) {
       if (result.success && result.exists && result.boostActive) {
@@ -322,7 +325,8 @@
   function checkAdBoostOnLoad() {
     if (!window.currentUser || !window.currentUser.id) return;
 
-    fetch('/api/ad-boost/status?userId=' + window.currentUser.id)
+    var _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+    fetch(_apiBase + '/api/ad-boost/status?userId=' + window.currentUser.id)
     .then(function(response) { return response.json(); })
     .then(function(data) {
       if (data.success && data.boostActive) {

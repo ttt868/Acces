@@ -124,7 +124,8 @@ async function registerPushNotifications(userId) {
 
     // Send subscription to server
     console.log('🔔 Sending subscription to server...');
-    const response = await fetch('/api/push/subscribe', {
+    const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+    const response = await fetch(_apiBase + '/api/push/subscribe', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -1330,7 +1331,8 @@ For more information, visit our platform at: ${(typeof getApiOrigin !== "undefin
 
     try {
       // إرسال طلب الحذف للسيرفر وانتظار النتيجة
-      fetch('/api/account/delete', {
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      fetch(_apiBase + '/api/account/delete', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1537,7 +1539,8 @@ For more information, visit our platform at: ${(typeof getApiOrigin !== "undefin
     }
     
     try {
-      const response = await fetch('/api/users/update-profile', {
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(_apiBase + '/api/users/update-profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -4795,7 +4798,8 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
         // ✅ دالة بدء النشاط الفعلية
         async function startActivityNow() {
           try {
-            const resp = await fetch('/api/processing/countdown/start', {
+            const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+            const resp = await fetch(_apiBase + '/api/processing/countdown/start', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ userId: currentUser.id, sessionToken: currentUser.sessionToken || currentUser.session_token || '' })
@@ -5786,7 +5790,8 @@ function startGradualAccumulation() {
     const accumulatedValue = currentUser?.processing_accumulated || currentUser?.accumulatedReward || 0;
     if (accumulatedValue > 0 && currentUser?.id) {
       try {
-        await fetch('/api/activity/sync-accumulated', {
+        const _syncApiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+        await fetch(_syncApiBase + '/api/activity/sync-accumulated', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -5877,7 +5882,8 @@ function startGradualAccumulation() {
       const preciseBalance = parseFloat(parseFloat(newBalance).toFixed(8));
       
       // Update balance in database
-      const response = await fetch('/api/user/update-coins', {
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(_apiBase + '/api/user/update-coins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -6107,7 +6113,8 @@ function startGradualAccumulation() {
         // ✅ Save completed reward to database WITHOUT transferring to balance
         // The reward will be transferred when user clicks "Start Activity" button
         try {
-          const saveResponse = await fetch('/api/processing/save-completed', {
+          const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+          const saveResponse = await fetch(_apiBase + '/api/processing/save-completed', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -6426,7 +6433,8 @@ function startGradualAccumulation() {
             (async () => {
               try {
                 console.log(`✅ Saving completed reward to server: ${finalReward}`);
-                const saveResponse = await fetch('/api/processing/save-completed', {
+                const _apiBase2 = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+                const saveResponse = await fetch(_apiBase2 + '/api/processing/save-completed', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ 
@@ -6754,7 +6762,8 @@ function startGradualAccumulation() {
 
     try {
       //  processing page 
-      const response = await fetch('/api/processing/status', {
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(_apiBase + '/api/processing/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.id })
@@ -7021,7 +7030,8 @@ function startGradualAccumulation() {
             
             // ✅ Also cleanup from database
             try {
-              await fetch('/api/processing/history/cleanup-collecting', {
+              const _cleanupApiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+              await fetch(_cleanupApiBase + '/api/processing/history/cleanup-collecting', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: currentUser.id })
@@ -8530,7 +8540,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
   // Load Google OAuth configuration dynamically - Global function for all pages
   window.loadGoogleOAuthConfig = async function() {
     try {
-      const response = await fetch('/api/oauth-config');
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(_apiBase + '/api/oauth-config');
       const config = await response.json();
       if (config.success) {
         window.GOOGLE_CLIENT_ID = config.clientId;
@@ -9160,7 +9171,8 @@ function initializeGoogleSignIn() {
   // Update user wallet address and private key on server
   async function updateUserWalletOnServer(userId, walletAddress, privateKey) {
     try {
-      const response = await fetch('/api/user/update-wallet', {
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(_apiBase + '/api/user/update-wallet', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
