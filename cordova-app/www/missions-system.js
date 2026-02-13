@@ -174,7 +174,8 @@
       const token = user.token;
 
       console.log('[Missions] Loading state from server...');
-      const response = await fetch('/api/missions/status', {
+      const apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(apiBase + '/api/missions/status', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -214,7 +215,8 @@
       if (!user || !user.token) return;
       const token = user.token;
 
-      await fetch('/api/missions/update', {
+      const apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      await fetch(apiBase + '/api/missions/update', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -398,7 +400,8 @@
       }
       const token = user.token;
 
-      const response = await fetch('/api/missions/claim-daily', {
+      const apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(apiBase + '/api/missions/claim-daily', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -581,7 +584,8 @@
         verifyBtn.textContent = 'Verifying...';
       }
 
-      const response = await fetch('/api/missions/verify-social', {
+      const apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(apiBase + '/api/missions/verify-social', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -651,7 +655,8 @@
       }
       const token = user.token;
 
-      const response = await fetch('/api/missions/check', {
+      const apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(apiBase + '/api/missions/check', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -739,7 +744,8 @@
       }
 
       // Then complete the mission
-      const response = await fetch('/api/missions/complete-visit', {
+      const apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(apiBase + '/api/missions/complete-visit', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -791,7 +797,8 @@
       if (!user || !user.token) return;
       const token = user.token;
 
-      const response = await fetch('/api/missions/claim-bonus', {
+      const apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(apiBase + '/api/missions/claim-bonus', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
