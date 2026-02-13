@@ -13360,6 +13360,7 @@ window.cancelProfileChanges = cancelProfileChanges;
      // Function to enter edit mode
      function enterEditMode() {
        isEditing = true;
+       window._profileIsEditingState = true;
        profileNameInput.classList.add('active');
        profileNameDisplay.classList.add('hidden');
        profileNameInput.value = profileNameDisplay.textContent.replace('User', '').trim();
@@ -13376,6 +13377,7 @@ window.cancelProfileChanges = cancelProfileChanges;
      // Function to cancel edit mode
      function cancelEditMode() {
        isEditing = false;
+       window._profileIsEditingState = false;
        hasChanges = false;
        newProfileImage = null;
        profileNameInput.classList.remove('active');
@@ -13440,44 +13442,54 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
      }
 
-     // Handle cancel button click
+     // Handle cancel button click - use onclick to prevent duplicate listeners on reinitialize
      if (cancelChangesBtn) {
-       cancelChangesBtn.addEventListener('click', function(e) {
+       cancelChangesBtn.onclick = function(e) {
          e.stopPropagation();
          cancelEditMode();
+       };
+     }
+
+     // Handle click outside to cancel editing (only add once)
+     if (!window._profileEditOutsideClickAdded) {
+       window._profileEditOutsideClickAdded = true;
+       document.addEventListener('click', function(e) {
+         // Use window-level editing state since closures may change
+         if (window._profileIsEditingState) {
+           const profileContainer = document.querySelector('.profile-name-container');
+           const editBtns = document.querySelector('.profile-edit-buttons');
+           const nameInput = document.getElementById('profile-name-input');
+           const editIcn = document.querySelector('.edit-icon');
+           const isClickInsideProfile = profileContainer && profileContainer.contains(e.target);
+           const isClickOnButtons = editBtns && editBtns.contains(e.target);
+           const isClickOnInput = nameInput && nameInput.contains(e.target);
+           const isClickOnEditIcon = editIcn && editIcn.contains(e.target);
+
+           if (!isClickInsideProfile || (!isClickOnButtons && !isClickOnInput && !isClickOnEditIcon)) {
+             if (typeof window._profileCancelEditMode === 'function') {
+               window._profileCancelEditMode();
+             }
+           }
+         }
        });
      }
 
-     // Handle click outside to cancel editing
-     document.addEventListener('click', function(e) {
-       if (isEditing) {
-         const profileContainer = document.querySelector('.profile-name-container');
-         const isClickInsideProfile = profileContainer && profileContainer.contains(e.target);
-         const isClickOnButtons = editButtonsContainer && editButtonsContainer.contains(e.target);
-         const isClickOnInput = profileNameInput && profileNameInput.contains(e.target);
-         const isClickOnEditIcon = editIcon && editIcon.contains(e.target); // Check if click is on the edit icon itself
+     // Expose editing state and cancel function to window for outside-click handler
+     window._profileIsEditingState = isEditing;
+     window._profileCancelEditMode = cancelEditMode;
 
-         // Cancel if click is outside the profile container or not on buttons/input/edit icon
-         if (!isClickInsideProfile || (!isClickOnButtons && !isClickOnInput && !isClickOnEditIcon)) {
-           cancelEditMode();
-         }
-       }
-     });
-
-     // Handle input blur - but don't auto-cancel if buttons are visible
+     // Handle input blur - but don't auto-cancel if buttons are visible (use onblur to prevent duplicates)
      if (profileNameInput) {
-       profileNameInput.addEventListener('blur', function(e) {
-         // Small delay to allow button clicks to register
+       profileNameInput.onblur = function(e) {
          setTimeout(() => {
            if (isEditing && !hasChanges) {
-             // Only cancel if no changes and not clicking on buttons or edit icon
              const activeElement = document.activeElement;
              if (activeElement !== saveChangesBtn && activeElement !== cancelChangesBtn && activeElement !== editIcon) {
                cancelEditMode();
              }
            }
          }, 150);
-       });
+       };
      }
 
      // Setup photo options menu event listeners
@@ -13791,8 +13803,9 @@ window.cancelProfileChanges = cancelProfileChanges;
      }
 
      // ظ…ط¹ط§ظ„ط¬ ط§ط®طھظٹط§ط± ط§ظ„طµظˆط± - ظ…ط­ط³ظ† ظ„ط¶ظ…ط§ظ† ط§ظ„ط¹ظ…ظ„ ظ…ظ† ط£ظˆظ„ ظ…ط±ط©
+     // Use onchange to prevent duplicate listeners on reinitialize
      if (profileImageUpload) {
-       profileImageUpload.addEventListener('change', function(event) {
+       profileImageUpload.onchange = function(event) {
          const file = event.target.files[0];
          if (!file) return;
 
@@ -13889,18 +13902,19 @@ window.cancelProfileChanges = cancelProfileChanges;
          setTimeout(() => {
            event.target.value = '';
          }, 100);
-       });
+       };
      }
 
-     // Handle name input change
+     // Handle name input change - use oninput to prevent duplicate listeners on reinitialize
      if (profileNameInput) {
-       profileNameInput.addEventListener('input', function() {
+       profileNameInput.oninput = function() {
          hasChanges = true;
          if (!isEditing) {
            isEditing = true;
+           window._profileIsEditingState = true;
            showEditButtons();
          }
-       });
+       };
      }
 
      // Function to ensure edit buttons are shown when image changes
@@ -13918,9 +13932,9 @@ window.cancelProfileChanges = cancelProfileChanges;
        isEditing = true;
      }
 
-     // Save changes button
+     // Save changes button - use onclick to prevent duplicate listeners on reinitialize
      if (saveChangesBtn) {
-       saveChangesBtn.addEventListener('click', function(e) {
+       saveChangesBtn.onclick = function(e) {
          e.stopPropagation();
          // Validate name length (maximum 22 characters)
          let sanitizedName = profileNameInput.value.trim();
@@ -13931,7 +13945,7 @@ window.cancelProfileChanges = cancelProfileChanges;
            profileNameInput.value = sanitizedName;
          }
          saveProfileChanges(sanitizedName, newProfileImage);
-       });
+       };
      }
 
      // Function to reset profile edit UI
@@ -14185,13 +14199,12 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
      }
 
-     // Direct click handler for profile name editing - no menu needed
+     // Direct click handler for profile name editing - use onclick to prevent duplicates
      if (profileNameDisplay) {
-       profileNameDisplay.addEventListener('click', function(e) {
+       profileNameDisplay.onclick = function(e) {
          e.stopPropagation();
          enterEditMode();
-       });
-       // Make profile name visually clickable
+       };
        profileNameDisplay.style.cursor = 'pointer';
      }
 
