@@ -13761,22 +13761,32 @@ window.cancelProfileChanges = cancelProfileChanges;
          showNotification(translator.translate('Profile updated successfully'), 'success');
        }
 
-       // Force reload fresh user data immediately to ensure consistency
+       // Force reload fresh user data after a delay to ensure server has saved
+       // Use forceRefresh=true to bypass cache, and preserve locally-set avatar
        if (currentUser.email) {
-         // Force immediate reload instead of waiting
-         checkIfUserExists(currentUser.email).then(userData => {
-           if (userData) {
-             console.log('Verified profile changes with server data');
+         const localAvatar = currentUser.avatar; // Preserve what we just set locally
+         const localLastUpdate = currentUser.lastProfileUpdate;
+         setTimeout(function() {
+           checkIfUserExists(currentUser.email, true).then(userData => {
+             if (userData) {
+               console.log('Verified profile changes with server data after delay');
 
-             // Make sure our UI reflects the latest server data
-             updateUserInfo(userData);
+               // If we just deleted/changed the avatar locally, don't let server overwrite with stale data
+               if (localLastUpdate && currentUser.lastProfileUpdate === localLastUpdate) {
+                 // Preserve local avatar if server returns something different (race condition)
+                 userData.avatar = localAvatar;
+               }
 
-             // Save the verified server data
-             saveUserSession(userData);
-           }
-         }).catch(error => {
-           console.error('Error verifying profile update:', error);
-         });
+               // Make sure our UI reflects the latest server data
+               updateUserInfo(userData);
+
+               // Save the verified server data
+               saveUserSession(userData);
+             }
+           }).catch(error => {
+             console.error('Error verifying profile update:', error);
+           });
+         }, 2500);
        }
      }
 
