@@ -14158,7 +14158,8 @@ window.cancelProfileChanges = cancelProfileChanges;
        if (currentUser.email) {
          // Wait 2.5 seconds for server to process and save the new image
          setTimeout(function() {
-           checkIfUserExists(currentUser.email).then(userData => {
+           // Force refresh to bypass cache - cache may have old SVG avatar
+           checkIfUserExists(currentUser.email, true).then(userData => {
              if (userData) {
                console.log('Verified profile changes with server data after delay');
 
@@ -14290,17 +14291,10 @@ window.cancelProfileChanges = cancelProfileChanges;
   document.addEventListener('resume', function() {
     console.log('[Resume] App resumed, pendingCameraAction:', window._pendingCameraAction);
     if (window._pendingCameraAction) {
-      window._pendingCameraAction = false;
-      // Camera plugin stores result internally; re-call getPicture to retrieve it
-      // Actually, the plugin re-delivers via the original callback on supported versions
-      // But if WebView was killed, we need to reinitialize
-      setTimeout(function() {
-        var profilePage = document.getElementById('profile-page');
-        if (profilePage && !profilePage.classList.contains('hidden')) {
-          console.log('[Resume] Reinitializing profile editing after camera return');
-          reinitializeProfileEditing();
-        }
-      }, 300);
+      // Don't reset _pendingCameraAction here - let the camera callback handle it
+      // Don't call reinitializeProfileEditing() - it creates new closures that lose
+      // the camera data (newProfileImage, hasChanges) causing SVG to appear after save
+      console.log('[Resume] Camera action pending, waiting for camera callback to deliver result');
     }
   }, false);
 
