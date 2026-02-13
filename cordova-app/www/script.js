@@ -13727,9 +13727,11 @@ window.cancelProfileChanges = cancelProfileChanges;
        // Setup photo options menu event listeners
        setupPhotoOptionsMenu();
 
-       // Handle click on camera icon specifically to show menu
+       // Handle click on camera icon/avatar to show menu
+       // Use onclick instead of addEventListener to prevent duplicate handlers on reinitialize
        function handleCameraClick(e) {
          e.stopPropagation();
+         e.preventDefault();
          const menu = avatarContainer.querySelector('.photo-options-menu');
 
          // Don't trigger if clicking on menu itself
@@ -13737,20 +13739,16 @@ window.cancelProfileChanges = cancelProfileChanges;
            return;
          }
 
-         // Always show menu when clicking on camera icon
          if (menu) {
-           // Hide menu if already showing
            if (menu.classList.contains('show')) {
-             hidePhotoMenu();
+             menu.classList.remove('show');
            } else {
              // Calculate position relative to avatar container
              const rect = avatarContainer.getBoundingClientRect();
              menu.style.top = (rect.bottom + 8) + 'px';
-             menu.style.left = (rect.right - 200) + 'px'; // 200px is menu width
+             menu.style.left = (rect.right - 200) + 'px';
 
-             // Ensure menu doesn't go off-screen
              const menuWidth = 200;
-             const screenWidth = window.innerWidth;
              if (rect.right - menuWidth < 0) {
                menu.style.left = '8px';
              }
@@ -13758,38 +13756,38 @@ window.cancelProfileChanges = cancelProfileChanges;
                menu.style.top = (rect.top - 200 - 8) + 'px';
              }
 
-             showPhotoMenu();
+             menu.classList.add('show');
            }
          }
        }
 
-       // Add click handler ONLY to camera icon
+       // Use onclick (not addEventListener) to avoid duplicate listeners on reinitialize
        if (cameraIcon) {
-         cameraIcon.addEventListener('click', handleCameraClick);
+         cameraIcon.onclick = handleCameraClick;
        }
 
        // Add click handler to profile avatar image for easy access
        const profileAvatar = avatarContainer.querySelector('.profile-avatar');
        if (profileAvatar) {
-         profileAvatar.addEventListener('click', function(e) {
-           // Stop propagation to prevent conflicts with other elements
+         profileAvatar.onclick = function(e) {
            e.stopPropagation();
-
-           // Only trigger if the click is specifically on the avatar image
-           if (e.target === profileAvatar) {
-             handleCameraClick(e);
-           }
-         });
-         // Add cursor pointer to indicate it's clickable
+           e.preventDefault();
+           handleCameraClick(e);
+         };
          profileAvatar.style.cursor = 'pointer';
        }
 
-       // Hide menu when clicking outside avatar container
-       document.addEventListener('click', function(e) {
-         if (!avatarContainer.contains(e.target)) {
-           hidePhotoMenu();
-         }
-       });
+       // Hide menu when clicking outside avatar container (only add once)
+       if (!window._photoMenuOutsideClickAdded) {
+         window._photoMenuOutsideClickAdded = true;
+         document.addEventListener('click', function(e) {
+           const container = document.getElementById('avatar-container');
+           if (container && !container.contains(e.target)) {
+             const menu = document.querySelector('.photo-options-menu');
+             if (menu) menu.classList.remove('show');
+           }
+         });
+       }
      }
 
      // ظ…ط¹ط§ظ„ط¬ ط§ط®طھظٹط§ط± ط§ظ„طµظˆط± - ظ…ط­ط³ظ† ظ„ط¶ظ…ط§ظ† ط§ظ„ط¹ظ…ظ„ ظ…ظ† ط£ظˆظ„ ظ…ط±ط©
