@@ -459,6 +459,9 @@
 
   // ===== LOCK SCREEN =====
   function showLockScreen() {
+    // Prevent showing lock screen if already locked or just unlocked
+    if (isLocked) return;
+    
     isLocked = true;
     pinInput = '';
     const lockScreen = document.getElementById('pin-lock-screen');
@@ -480,9 +483,8 @@
       bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
     }
 
-    // Auto-trigger biometric immediately if enabled
+    // Auto-trigger biometric immediately if enabled (once only)
     if (biometricEnabled && biometricAvailable && window.Fingerprint) {
-      // Small delay to let lock screen render first, then popup fingerprint
       setTimeout(() => {
         triggerBiometricAuth();
       }, 400);
@@ -490,6 +492,7 @@
   }
 
   function hideLockScreen() {
+    if (!isLocked) return;
     isLocked = false;
     window._pinUnlocked = true;
     window._biometricInProgress = false;
