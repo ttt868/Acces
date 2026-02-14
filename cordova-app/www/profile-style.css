@@ -1862,33 +1862,40 @@ body.dark-theme #profile-page .copy-btn:hover {
 
 .pin-key-delete {
   font-size: 22px;
-  background: transparent;
-  border: none;
-  box-shadow: none;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.pin-key-delete:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.pin-key-delete:active {
-  background: rgba(255, 255, 255, 0.08);
+.pin-key-delete:hover,
+.pin-key-delete:active,
+.pin-key-delete:focus {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none;
 }
 
 .pin-key-biometric {
   font-size: 28px;
   color: #10b981;
-  background: transparent;
-  border: none;
-  box-shadow: none;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.pin-key-biometric:hover {
-  background: rgba(16, 185, 129, 0.15);
+.pin-key-biometric:hover,
+.pin-key-biometric:focus {
+  background: none !important;
+  color: #10b981;
 }
 
 .pin-key-biometric:active {
-  background: rgba(16, 185, 129, 0.3);
+  background: none !important;
+  color: #34d399;
+  transform: scale(0.92);
 }
 
 /* ===== PIN Setup/Change Modal ===== */
