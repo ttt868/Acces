@@ -1998,6 +1998,13 @@ body.dark-theme #profile-page .copy-btn:hover {
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.6);
 }
 
+.dark-theme .pin-key-biometric,
+.dark-theme .pin-key-biometric:hover,
+.dark-theme .pin-key-biometric:focus,
+.dark-theme .pin-key-biometric:active {
+  color: #10b981;
+}
+
 /* ===== Light Theme Lock Screen ===== */
 /* Lock screen always stays dark for professional look */
 
