@@ -1841,7 +1841,7 @@ body.dark-theme #profile-page .copy-btn:hover {
 
 .pin-modal-close {
   position: absolute;
-  top: -40px;
+  top: -20px;
   right: 0px;
   background: none;
   border: none;
