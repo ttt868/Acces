@@ -647,6 +647,8 @@
   function onAppResume() {
     // Skip if watching an ad (AdMob causes pause/resume)
     if (window._watchingAd) return;
+    // Skip if ad finished recently (within 10 seconds)
+    if (window._adFinishedAt && (Date.now() - window._adFinishedAt) < 10000) return;
     
     if (pinEnabled && window._pinUnlocked) {
       window._pinUnlocked = false;

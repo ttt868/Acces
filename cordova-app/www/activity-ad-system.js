@@ -103,7 +103,9 @@
 
     adMob.showRewarded().then(function(reward) {
       adShowing = false;
-      window._watchingAd = false;
+      // Keep _watchingAd true for 5s so resume event doesn't trigger PIN
+      window._adFinishedAt = Date.now();
+      setTimeout(function() { window._watchingAd = false; }, 5000);
       var wasRewarded = !!(reward && reward.rewarded);
       console.log('[AD] Ad dismissed, rewarded=' + wasRewarded);
       if (callback) {
@@ -114,7 +116,9 @@
       console.error('[AD] Show error:', JSON.stringify(err));
       adShowing = false;
       adReady = false;
-      window._watchingAd = false;
+      // Keep _watchingAd true for 5s so resume event doesn't trigger PIN
+      window._adFinishedAt = Date.now();
+      setTimeout(function() { window._watchingAd = false; }, 5000);
       if (callback) {
         try { callback(false); } catch(e) { console.error('[AD] Callback error:', e); }
       }
