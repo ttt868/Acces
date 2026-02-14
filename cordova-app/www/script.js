@@ -13519,9 +13519,11 @@ window.cancelProfileChanges = cancelProfileChanges;
            if (navigator.camera && navigator.camera.getPicture) {
              // Mark pending camera action for resume handler
              window._pendingCameraAction = true;
+             window._nativeUIActive = true;
              navigator.camera.getPicture(
                function(imageURI) {
                  window._pendingCameraAction = false;
+                 window._nativeUIActive = false;
                  console.log('[Camera] Success - FILE_URI:', imageURI ? imageURI.substring(0, 80) : 'null');
                  // Use setTimeout to ensure WebView is fully restored after native camera
                  setTimeout(function() {
@@ -13588,6 +13590,7 @@ window.cancelProfileChanges = cancelProfileChanges;
                },
                function(err) {
                  window._pendingCameraAction = false;
+                 window._nativeUIActive = false;
                  console.error('[Camera] Error:', err);
                  if (typeof showNotification === 'function') {
                    const errMsg = err === 'No Image Selected' ? translator.translate('No Image Selected') : (err || translator.translate('Camera error'));
@@ -13606,6 +13609,7 @@ window.cancelProfileChanges = cancelProfileChanges;
                }
              );
            } else {
+             window._nativeUIActive = true;
              var profileImageUpload = document.getElementById('profile-image-upload');
              if (profileImageUpload) {
                profileImageUpload.setAttribute('capture', 'user');
@@ -13624,6 +13628,7 @@ window.cancelProfileChanges = cancelProfileChanges;
            e.preventDefault();
 
            console.log('Gallery option clicked');
+           window._nativeUIActive = true;
            const profileImageUpload = document.getElementById('profile-image-upload');
 
            if (profileImageUpload) {
@@ -13818,6 +13823,7 @@ window.cancelProfileChanges = cancelProfileChanges;
      // Use onchange to prevent duplicate listeners on reinitialize
      if (profileImageUpload) {
        profileImageUpload.onchange = function(event) {
+         window._nativeUIActive = false;
          const file = event.target.files[0];
          if (!file) return;
 
@@ -14314,12 +14320,21 @@ window.cancelProfileChanges = cancelProfileChanges;
 
   // Handle Android resume after camera - WebView may have been destroyed and recreated
   document.addEventListener('resume', function() {
-    console.log('[Resume] App resumed, pendingCameraAction:', window._pendingCameraAction);
+    console.log('[Resume] App resumed, pendingCameraAction:', window._pendingCameraAction, 'nativeUIActive:', window._nativeUIActive);
     if (window._pendingCameraAction) {
       // Don't reset _pendingCameraAction here - let the camera callback handle it
       // Don't call reinitializeProfileEditing() - it creates new closures that lose
       // the camera data (newProfileImage, hasChanges) causing SVG to appear after save
       console.log('[Resume] Camera action pending, waiting for camera callback to deliver result');
+    }
+    // Safety: clear _nativeUIActive after 5s in case user cancelled gallery without selecting
+    if (window._nativeUIActive) {
+      setTimeout(function() {
+        if (window._nativeUIActive) {
+          console.log('[Resume] Clearing stale _nativeUIActive flag');
+          window._nativeUIActive = false;
+        }
+      }, 5000);
     }
   }, false);
 

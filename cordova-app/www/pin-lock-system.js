@@ -645,10 +645,11 @@
   // ===== APP LIFECYCLE =====
   // Show lock screen when app resumes from background
   function onAppResume() {
-    // Skip if watching an ad (AdMob causes pause/resume)
+    // Skip if any native UI is active (camera, gallery, file picker, QR scanner, ads, etc.)
     if (window._watchingAd) return;
-    // Skip if ad finished recently (within 10 seconds)
     if (window._adFinishedAt && (Date.now() - window._adFinishedAt) < 10000) return;
+    if (window._pendingCameraAction) return;
+    if (window._nativeUIActive) return;
     
     if (pinEnabled && window._pinUnlocked) {
       window._pinUnlocked = false;
