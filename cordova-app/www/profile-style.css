@@ -1862,25 +1862,33 @@ body.dark-theme #profile-page .copy-btn:hover {
 
 .pin-key-delete {
   font-size: 22px;
-  background: transparent;
+  background: none !important;
+  border: none;
+  box-shadow: none;
 }
 
 .pin-key-delete:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: none !important;
+}
+
+.pin-key-delete:active {
+  background: none !important;
 }
 
 .pin-key-biometric {
   font-size: 28px;
   color: #10b981;
-  background: transparent;
+  background: none !important;
+  border: none;
+  box-shadow: none;
 }
 
 .pin-key-biometric:hover {
-  background: rgba(16, 185, 129, 0.15);
+  background: none !important;
 }
 
 .pin-key-biometric:active {
-  background: rgba(16, 185, 129, 0.3);
+  background: none !important;
 }
 
 /* ===== PIN Setup/Change Modal ===== */
@@ -1919,10 +1927,10 @@ body.dark-theme #profile-page .copy-btn:hover {
   position: absolute;
   top: -40px;
   right: 0px;
-  background: none;
-  border: none;
-  box-shadow: none;
-  outline: none;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
   color: rgba(255, 255, 255, 0.7);
   width: 40px;
   height: 40px;
@@ -1941,6 +1949,7 @@ body.dark-theme #profile-page .copy-btn:hover {
 
 .pin-modal-close:hover {
   color: #fff;
+  background: none !important;
 }
 
 .pin-modal-icon {
