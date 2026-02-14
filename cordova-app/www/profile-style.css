@@ -1862,33 +1862,33 @@ body.dark-theme #profile-page .copy-btn:hover {
 
 .pin-key-delete {
   font-size: 22px;
-  background: none !important;
+  background: transparent;
   border: none;
   box-shadow: none;
 }
 
 .pin-key-delete:hover {
-  background: none !important;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .pin-key-delete:active {
-  background: none !important;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .pin-key-biometric {
   font-size: 28px;
   color: #10b981;
-  background: none !important;
+  background: transparent;
   border: none;
   box-shadow: none;
 }
 
 .pin-key-biometric:hover {
-  background: none !important;
+  background: rgba(16, 185, 129, 0.15);
 }
 
 .pin-key-biometric:active {
-  background: none !important;
+  background: rgba(16, 185, 129, 0.3);
 }
 
 /* ===== PIN Setup/Change Modal ===== */
