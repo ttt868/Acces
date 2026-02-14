@@ -645,7 +645,7 @@
   // ===== APP LIFECYCLE =====
   // Track when app goes to background
   var _pausedAt = 0;
-  var PIN_BACKGROUND_THRESHOLD = 5000; // Only show PIN if app was in background > 5 seconds
+  var PIN_BACKGROUND_THRESHOLD = 30000; // Only show PIN if app was in background > 30 seconds
 
   document.addEventListener('pause', function() {
     _pausedAt = Date.now();
