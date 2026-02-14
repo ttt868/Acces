@@ -7,11 +7,15 @@
   padding: 8px;
 }
 
+
+/* يطبق فقط على صفحة dashboard - تقليل المسافة يمين ويسار */
+
+
 /* Page Content */
-.Page-content {
-  max-width: 1200px;
-  margin: 0 auto;
- padding: px;
+.page-content {
+    margin: -2px !important;
+    max-width: 1200px !important;
+    
 }
 
 /* Dashboard Page - توسيع العرض بشكل متساوٍ من اليمين واليسار */
