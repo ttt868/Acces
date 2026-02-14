@@ -645,6 +645,9 @@
   // ===== APP LIFECYCLE =====
   // Show lock screen when app resumes from background
   function onAppResume() {
+    // Skip if watching an ad (AdMob causes pause/resume)
+    if (window._watchingAd) return;
+    
     if (pinEnabled && window._pinUnlocked) {
       window._pinUnlocked = false;
       showLockScreen();

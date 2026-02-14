@@ -98,10 +98,12 @@
 
     adShowing = true;
     adReady = false;
+    window._watchingAd = true;
     console.log('[AD] Showing rewarded ad...');
 
     adMob.showRewarded().then(function(reward) {
       adShowing = false;
+      window._watchingAd = false;
       var wasRewarded = !!(reward && reward.rewarded);
       console.log('[AD] Ad dismissed, rewarded=' + wasRewarded);
       if (callback) {
@@ -112,6 +114,7 @@
       console.error('[AD] Show error:', JSON.stringify(err));
       adShowing = false;
       adReady = false;
+      window._watchingAd = false;
       if (callback) {
         try { callback(false); } catch(e) { console.error('[AD] Callback error:', e); }
       }
