@@ -444,8 +444,7 @@ class NetworkNode {
             nonce: '0x0000000000000000',
             sha3Uncles: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347',
             extraData: '0x',
-            uncles: [],
-            baseFeePerGas: '0x38c42e18' // ✅ سعر غاز صحيح = 952380952 Wei = 0.00002 ACCESS / 21000
+            uncles: []
           }
         }
       };
@@ -2943,13 +2942,13 @@ class NetworkNode {
           
           // baseFeePerGas يجب أن يكون blockCount + 1 عنصر
           for (let i = 0; i <= feeBlockCount; i++) {
-            baseFeePerGasArray.push('0x38c42e18'); // 952380952 Wei
+            baseFeePerGasArray.push('0x0'); // ✅ LEGACY: baseFee = 0 لإجبار استخدام gasPrice
           }
           
           // gasUsedRatio و reward يجب أن يكون blockCount عنصر
           for (let i = 0; i < feeBlockCount; i++) {
             gasUsedRatioArray.push(0.5);
-            rewardArray.push(['0x38c42e18', '0x38c42e18', '0x38c42e18']); // للـ percentiles
+            rewardArray.push(['0x0', '0x0', '0x0']); // ✅ LEGACY: rewards = 0
           }
           
           result = {
@@ -2962,8 +2961,8 @@ class NetworkNode {
           break;
 
         case 'eth_maxPriorityFeePerGas':
-          // Maximum priority fee per gas - محسوب لـ 0.00002 ACCESS
-          result = '0x38c42e18'; // ✅ سعر غاز صحيح = 952380952 Wei
+          // ✅ LEGACY MODE: إرجاع 0 لإجبار استخدام gasPrice فقط
+          result = '0x0';
           break;
 
         case 'web3_sha3':
@@ -4713,7 +4712,6 @@ class NetworkNode {
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
         gasUsed: '0x0',
-        baseFeePerGas: '0x38c42e18',
         extraData: '0x',
         logsBloom: '0x' + '0'.repeat(512),
         receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4758,7 +4756,6 @@ class NetworkNode {
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
         gasUsed: '0x0',
-        baseFeePerGas: '0x38c42e18',
         extraData: '0x',
         logsBloom: '0x' + '0'.repeat(512),
         receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4806,8 +4803,7 @@ class NetworkNode {
       miner: '0x0000000000000000000000000000000000000000',
       gasLimit: '0x1c9c380',
       gasUsed: isVirtualBlock ? '0x0' : '0x5208',
-      // ✅ EIP-1559: baseFeePerGas مطلوب لـ MetaMask لحساب رسوم الغاز
-      baseFeePerGas: '0x38c42e18',
+      // ✅ LEGACY MODE: لا نضيف baseFeePerGas لإجبار MetaMask على استخدام gasPrice الصحيح
       // ✅ حقول إضافية مطلوبة للتوافق الكامل
       extraData: '0x',
       logsBloom: '0x' + '0'.repeat(512),

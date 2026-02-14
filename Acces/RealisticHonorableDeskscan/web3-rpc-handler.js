@@ -77,12 +77,9 @@ export async function handleWeb3RPC(request) {
           // ⚡ NETWORK-ONLY - قراءة مباشرة من Ledger State لضمان التحديث الفوري
           let balance = network.getBalance(address);
           
-          // ✅ METAMASK USE MAX FIX:
-          // خصم رسوم الغاز من الرصيد المعروض
-          const METAMASK_GAS_RESERVE = 0.00002;
-          if (balance > METAMASK_GAS_RESERVE) {
-            balance = balance - METAMASK_GAS_RESERVE;
-          }
+          // ✅ LEGACY GAS FIX: لا نخصم الغاز هنا
+          // MetaMask يحسب الغاز تلقائياً: max = balance - (gasLimit × gasPrice)
+          // gasLimit(21000) × gasPrice(952380953) ≈ 0.00002 ACCESS
           
           // 🔧 FIX: BigInt لتجنب 0.225336999999999904 عند MAX
           // تقريب لـ 8 أرقام ثم تحويل لـ Wei نظيف
@@ -540,34 +537,22 @@ export async function handleWeb3RPC(request) {
         const [blockCount, newestBlock, rewardPercentiles] = params;
         const requestedBlocks = Math.max(1, parseInt(blockCount) || 1);
 
-        // 🔐 سعر الغاز الصحيح = 0.00002 ACCESS / 21000 gas
-        const CORRECT_GAS_PRICE_HEX = '0x38c42e18'; // 952380952 Wei
-
-        // ✅ CRITICAL: Trust Wallet يتوقع baseFeePerGas بطول (blockCount + 1)
-        // و gasUsedRatio و reward بطول (blockCount)
+        // ✅ LEGACY MODE: baseFeePerGas = 0 لإجبار المحافظ على legacy gasPrice
+        // هذا يمنع MetaMask من مضاعفة رسوم الغاز عبر EIP-1559
         const baseFeePerGas = [];
         const gasUsedRatio = [];
         const reward = [];
 
-        // املأ baseFeePerGas: يجب أن يكون طوله = blockCount + 1
         for (let i = 0; i <= requestedBlocks; i++) {
-          baseFeePerGas.push(CORRECT_GAS_PRICE_HEX); // ✅ سعر غاز صحيح
+          baseFeePerGas.push('0x0');
         }
 
-        // املأ gasUsedRatio و reward: يجب أن يكون طولهما = blockCount
         for (let i = 0; i < requestedBlocks; i++) {
-          gasUsedRatio.push(0.5); // 50% استخدام
-
-          // reward: array من arrays حسب عدد percentiles المطلوبة
+          gasUsedRatio.push(0.5);
           if (rewardPercentiles && Array.isArray(rewardPercentiles) && rewardPercentiles.length > 0) {
-            const rewardArray = [];
-            for (let j = 0; j < rewardPercentiles.length; j++) {
-              rewardArray.push(CORRECT_GAS_PRICE_HEX); // ✅ سعر غاز صحيح
-            }
-            reward.push(rewardArray);
+            reward.push(rewardPercentiles.map(() => '0x0'));
           } else {
-            // إذا لم يُطلب percentiles، نرسل قيمة واحدة
-            reward.push([CORRECT_GAS_PRICE_HEX]);
+            reward.push(['0x0']);
           }
         }
 
@@ -587,11 +572,11 @@ export async function handleWeb3RPC(request) {
         };
 
       case 'eth_maxPriorityFeePerGas':
-        // أولوية الرسوم - مطلوب لـ EIP-1559 - محسوب لـ 0.00002 ACCESS
+        // ✅ LEGACY MODE: إرجاع 0 لإجبار المحافظ على استخدام gasPrice فقط
         return {
           jsonrpc: '2.0',
           id: id,
-          result: '0x38c42e18' // ✅ سعر غاز صحيح = 952380952 Wei
+          result: '0x0'
         };
 
       case 'net_listening':
