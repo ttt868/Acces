@@ -643,13 +643,26 @@
   };
 
   // ===== APP LIFECYCLE =====
+  // Track when app goes to background
+  var _pausedAt = 0;
+  var PIN_BACKGROUND_THRESHOLD = 5000; // Only show PIN if app was in background > 5 seconds
+
+  document.addEventListener('pause', function() {
+    _pausedAt = Date.now();
+    console.log('[PIN] App paused at', _pausedAt);
+  }, false);
+
   // Show lock screen when app resumes from background
   function onAppResume() {
-    // Skip if any native UI is active (camera, gallery, file picker, QR scanner, ads, etc.)
-    if (window._watchingAd) return;
-    if (window._adFinishedAt && (Date.now() - window._adFinishedAt) < 10000) return;
-    if (window._pendingCameraAction) return;
-    if (window._nativeUIActive) return;
+    var backgroundDuration = Date.now() - _pausedAt;
+    console.log('[PIN] App resumed, background duration:', backgroundDuration, 'ms');
+
+    // Only show PIN lock if app was in background for more than 5 seconds
+    // Short pauses = camera, gallery, share dialog, modals, ads, etc.
+    if (backgroundDuration < PIN_BACKGROUND_THRESHOLD) {
+      console.log('[PIN] Short pause (' + backgroundDuration + 'ms < ' + PIN_BACKGROUND_THRESHOLD + 'ms), skipping PIN');
+      return;
+    }
     
     if (pinEnabled && window._pinUnlocked) {
       window._pinUnlocked = false;
