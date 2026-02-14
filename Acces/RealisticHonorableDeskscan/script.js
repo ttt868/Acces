@@ -5876,6 +5876,11 @@ function startGradualAccumulation() {
       if (userData && userData.coins !== undefined) {
         updateUserCoins(userData.coins);
         currentUser.coins = userData.coins;
+        // ✅ FIX: Sync session token if server returned a new one
+        if (userData.session_token) {
+          currentUser.sessionToken = userData.session_token;
+          currentUser.session_token = userData.session_token;
+        }
         saveUserSession(currentUser);
         console.log(`Refreshed user data with balance: ${formatNumberSmart(userData.coins)}`);
         return true;
@@ -8336,9 +8341,15 @@ window.addEventListener('load', applyArabicCssIfNeeded);
 
           // Update current user data
           currentUser = {...currentUser, ...userData};
+          // ✅ FIX: Sync session_token field name (server uses snake_case, client uses camelCase)
+          if (userData.session_token) {
+            currentUser.sessionToken = userData.session_token;
+          }
           delete currentUser._forceUpdate;
           delete currentUser._requiresRefresh;
 
+          // ✅ FIX: Persist updated user data to localStorage
+          saveUserSession(currentUser);
           console.log('User data refreshed from server with latest values');
         }
       }).catch(error => {
