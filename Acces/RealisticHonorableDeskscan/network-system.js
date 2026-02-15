@@ -78,7 +78,7 @@ class Transaction {
     this.fromAddress = fromAddress;
     this.toAddress = toAddress;
     this.amount = amount;
-    this.gasPrice = gasPrice || 0.00002; // رسوم الغاز الافتراضية
+    this.gasPrice = gasPrice || 0.000021; // رسوم الغاز الافتراضية
     this.gasFee = this.gasPrice; // الرسوم المطبقة
     this.timestamp = timestamp;
     this.signature = null;
@@ -92,7 +92,7 @@ class Transaction {
 
     // للمعاملات الداخلية من النظام، لا نحتاج رسوم غاز
     if (fromAddress && fromAddress.startsWith('0x') && toAddress && toAddress.startsWith('0x')) {
-      this.gasFee = gasPrice || 0.00002; // رسوم الغاز العادية
+      this.gasFee = gasPrice || 0.000021; // رسوم الغاز العادية
       this.internal = true; // معاملة داخلية
     }
   }
@@ -217,7 +217,7 @@ class AccessNetwork extends EventEmitter {
     this.storage = new EthereumStyleStorage();
     this.stateLoaded = false; // علم لتتبع تحميل State
 
-    this.gasPrice = 0.00002; // سعر الغاز
+    this.gasPrice = 0.000021; // سعر الغاز = 1 Gwei × 21000 = 0.000021 ACCESS
     this.maxGasPerBlock = 21000 * 1000; // الحد الأقصى للغاز في السجل
     this.blockInterval = 10000; // مدة السجل بالميلي ثانية
 
@@ -264,7 +264,7 @@ class AccessNetwork extends EventEmitter {
     this.hexChainId = '0x5968';
 
     // رسوم الشبكة والغاز - يتحكم بها مالك الشبكة فقط
-    this.baseGasFee = 0.00002; // الرسوم الأساسية - لا يمكن للعقود تغييرها
+    this.baseGasFee = 0.000021; // الرسوم الأساسية - لا يمكن للعقود تغييرها
     this.gasPriceAdjustable = false; // 🔒 LOCKED: العقود لا تستطيع تغيير رسوم الغاز
     this.networkControlledGas = true; // الشبكة تتحكم بالكامل في رسوم الغاز
 
@@ -889,7 +889,7 @@ class AccessNetwork extends EventEmitter {
       const fromAddr = (transaction.fromAddress || transaction.from)?.toLowerCase();
       const toAddr = (transaction.toAddress || transaction.to)?.toLowerCase();
       const amount = parseFloat(transaction.amount) || 0;
-      const gasFee = parseFloat(transaction.gasFee || 0.00002) || 0;
+      const gasFee = parseFloat(transaction.gasFee || 0.000021) || 0;
       
       const isSystemTx = !fromAddr || 
                          fromAddr === '0x0000000000000000000000000000000000000000' ||

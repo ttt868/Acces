@@ -148,44 +148,30 @@ export async function handleWeb3RPC(request) {
         }
 
       case 'eth_gasPrice':
-        // 🔐 سعر الغاز المحسوب من رسوم ثابتة 0.00002 ACCESS
-        // gasPrice = 0.00002 ACCESS / 21000 gas = ~952380953 Wei
-        const FIXED_GAS_FEE_ETH = 0.00002;
-        const DEFAULT_GAS_LIMIT = 21000;
-        const gasPriceWei = Math.ceil(FIXED_GAS_FEE_ETH * 1e18 / DEFAULT_GAS_LIMIT);
+        // 🔐 GAS PRICE: 1 Gwei = 1,000,000,000 Wei
+        // 21000 × 1 Gwei = 0.000021 ACCESS (بالضبط بدون تقريب)
         return {
           jsonrpc: '2.0',
           id: id,
-          result: '0x' + gasPriceWei.toString(16) // 0x38c42e19
+          result: '0x3B9ACA00' // 1 Gwei = 1,000,000,000 Wei
         };
 
       case 'eth_estimateGas':
-        // ✅ METAMASK USE MAX FIX (SIMPLE SOLUTION)
-        // بما أننا نخصم 0.00002 ACCESS من الرصيد في eth_getBalance،
-        // نرجع gasEstimate = 1 دائماً حتى MetaMask لا يحسب رسوم إضافية
-        // MetaMask سيحسب: gasCost = 1 × 952380953 Wei ≈ 0.000000001 ACCESS ≈ 0
+        // ✅ تقدير الغاز - بسيط ومتوافق مع جميع المحافظ
         const [transaction] = params;
+        let estimatedGas = 21000;
         
-        // للعقود الذكية فقط نرجع تقدير حقيقي
         if (transaction && transaction.data && transaction.data !== '0x' && transaction.data.length > 10) {
           const dataLength = Math.ceil((transaction.data.length - 2) / 2);
-          let gasEstimate = 21000 + (dataLength * 68);
-          gasEstimate = Math.min(gasEstimate, 200000);
-          console.log(`⛽ web3-rpc eth_estimateGas (contract): ${gasEstimate}`);
-          return {
-            jsonrpc: '2.0',
-            id: id,
-            result: '0x' + gasEstimate.toString(16)
-          };
-        } else {
-          // للتحويلات العادية: 21000 (قياسي)
-          console.log(`⛽ web3-rpc eth_estimateGas (transfer): 21000`);
-          return {
-            jsonrpc: '2.0',
-            id: id,
-            result: '0x5208' // 21000
-          };
+          estimatedGas = 21000 + (dataLength * 68);
+          estimatedGas = Math.min(estimatedGas, 200000);
         }
+        
+        return {
+          jsonrpc: '2.0',
+          id: id,
+          result: '0x' + estimatedGas.toString(16)
+        };
 
       case 'eth_maxTransferAmount':
       case 'wallet_calculateMaxSendable':
@@ -390,10 +376,9 @@ export async function handleWeb3RPC(request) {
           };
         }
 
-        // 🔐 حساب gasPrice الصحيح من رسوم ثابتة 0.00002 ACCESS
+        // 🔐 gasPrice = 1 Gwei, gasLimit = 21000 → fee = 0.000021 ACCESS بالضبط
         const GAS_LIMIT_TX = 21000;
-        const FIXED_GAS_FEE_TX = 0.00002;
-        const gasPriceWeiTx = Math.floor(FIXED_GAS_FEE_TX * 1e18 / GAS_LIMIT_TX);
+        const GAS_PRICE_WEI_TX = 1000000000; // 1 Gwei
 
         return {
           jsonrpc: '2.0',
@@ -408,7 +393,7 @@ export async function handleWeb3RPC(request) {
             to: foundTransaction.toAddress,
             value: '0x' + Math.floor(foundTransaction.amount * 1e18).toString(16),
             gas: '0x' + GAS_LIMIT_TX.toString(16), // ✅ gasLimit صحيح = 21000
-            gasPrice: '0x' + gasPriceWeiTx.toString(16), // ✅ gasPrice صحيح بـ Wei
+            gasPrice: '0x' + GAS_PRICE_WEI_TX.toString(16), // ✅ 1 Gwei
             input: '0x'
           }
         };
@@ -424,8 +409,9 @@ export async function handleWeb3RPC(request) {
           };
         }
 
-        // 🔐 gasUsed صحيح = 21000 (gasLimit)
+        // 🔐 gasPrice = 1 Gwei, gasLimit = 21000
         const RECEIPT_GAS_USED = 21000;
+        const RECEIPT_GAS_PRICE = 1000000000; // 1 Gwei
 
         return {
           jsonrpc: '2.0',
@@ -437,11 +423,14 @@ export async function handleWeb3RPC(request) {
             blockNumber: '0x' + (receiptTx.blockIndex || 0).toString(16),
             from: receiptTx.fromAddress,
             to: receiptTx.toAddress,
-            cumulativeGasUsed: '0x' + RECEIPT_GAS_USED.toString(16), // ✅ صحيح
-            gasUsed: '0x' + RECEIPT_GAS_USED.toString(16), // ✅ صحيح
+            cumulativeGasUsed: '0x' + RECEIPT_GAS_USED.toString(16),
+            gasUsed: '0x' + RECEIPT_GAS_USED.toString(16),
+            effectiveGasPrice: '0x' + RECEIPT_GAS_PRICE.toString(16), // ✅ 1 Gwei
             contractAddress: null,
             logs: [],
-            status: '0x1'
+            logsBloom: '0x' + '0'.repeat(512),
+            status: '0x1',
+            type: '0x0' // ✅ Legacy transaction
           }
         };
 
@@ -533,50 +522,19 @@ export async function handleWeb3RPC(request) {
         };
 
       case 'eth_feeHistory':
-        // Fee history for MetaMask & Trust Wallet - COMPLETE FIX
-        const [blockCount, newestBlock, rewardPercentiles] = params;
-        const requestedBlocks = Math.max(1, parseInt(blockCount) || 1);
-
-        // ✅ LEGACY MODE: baseFeePerGas = 0 لإجبار المحافظ على legacy gasPrice
-        // هذا يمنع MetaMask من مضاعفة رسوم الغاز عبر EIP-1559
-        const baseFeePerGas = [];
-        const gasUsedRatio = [];
-        const reward = [];
-
-        for (let i = 0; i <= requestedBlocks; i++) {
-          baseFeePerGas.push('0x0');
-        }
-
-        for (let i = 0; i < requestedBlocks; i++) {
-          gasUsedRatio.push(0.5);
-          if (rewardPercentiles && Array.isArray(rewardPercentiles) && rewardPercentiles.length > 0) {
-            reward.push(rewardPercentiles.map(() => '0x0'));
-          } else {
-            reward.push(['0x0']);
-          }
-        }
-
-        // حساب oldestBlock
-        const chainLength = network.chain ? network.chain.length : 0;
-        const oldestBlockNumber = Math.max(0, chainLength - requestedBlocks);
-
+        // ✅ LEGACY CHAIN: إرجاع خطأ method not found
         return {
           jsonrpc: '2.0',
           id: id,
-          result: {
-            oldestBlock: '0x' + oldestBlockNumber.toString(16),
-            baseFeePerGas: baseFeePerGas,        // length = blockCount + 1
-            gasUsedRatio: gasUsedRatio,          // length = blockCount
-            reward: reward                        // length = blockCount
-          }
+          error: { code: -32601, message: 'Method eth_feeHistory not found. This is a legacy chain.' }
         };
 
       case 'eth_maxPriorityFeePerGas':
-        // ✅ LEGACY MODE: إرجاع 0 لإجبار المحافظ على استخدام gasPrice فقط
+        // ✅ LEGACY CHAIN: إرجاع خطأ method not found
         return {
           jsonrpc: '2.0',
           id: id,
-          result: '0x0'
+          error: { code: -32601, message: 'Method eth_maxPriorityFeePerGas not found. This is a legacy chain.' }
         };
 
       case 'net_listening':
