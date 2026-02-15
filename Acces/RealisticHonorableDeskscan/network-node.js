@@ -5584,44 +5584,11 @@ class NetworkNode {
       // استخراج function selector (أول 4 bytes)
       const functionSelector = data.substring(0, 10);
 
-      // ✅ للعناوين العادية (EOA) - إرجاع قيم مناسبة بدلاً من revert
-      // هذا يجعل MetaMask يفهم أن العنوان محفظة عادية وليس عقد
+      // ✅ للعناوين العادية (EOA) - إرجاع 0x فارغ مثل Ethereum الحقيقي
+      // على EVM الحقيقي: CALL لعنوان بدون كود = نجاح + returndata فارغ
+      // هذا يجعل MetaMask يفهم أن العنوان محفظة عادية وليس عقد ذكي
       if (!isContract && !isNativeTokenAddress) {
-        // 🔧 FIX: لـ supportsInterface (ERC-165) نرجع false
-        if (functionSelector === '0x01ffc9a7') {
-          console.log(`✅ eth_call supportsInterface on EOA ${to} - returning false`);
-          return '0x0000000000000000000000000000000000000000000000000000000000000000'; // false
-        }
-        
-        // 🔧 FIX: لـ name() نرجع فارغ
-        if (functionSelector === '0x06fdde03') {
-          console.log(`✅ eth_call name() on EOA ${to} - returning empty`);
-          return '0x';
-        }
-        
-        // 🔧 FIX: لـ symbol() نرجع فارغ
-        if (functionSelector === '0x95d89b41') {
-          console.log(`✅ eth_call symbol() on EOA ${to} - returning empty`);
-          return '0x';
-        }
-        
-        // 🔧 FIX: لـ decimals() نرجع فارغ
-        if (functionSelector === '0x313ce567') {
-          console.log(`✅ eth_call decimals() on EOA ${to} - returning empty`);
-          return '0x';
-        }
-        
-        // 🔧 FIX: لـ balanceOf نرجع الرصيد
-        if (functionSelector === '0x70a08231') {
-          const address = '0x' + data.substring(34, 74);
-          const balance = this.blockchain.getBalance(address);
-          const balanceInWei = Math.floor(balance * 1e18);
-          console.log(`✅ eth_call balanceOf on EOA ${to} for ${address} - returning ${balance}`);
-          return '0x' + balanceInWei.toString(16).padStart(64, '0');
-        }
-        
-        // أي استدعاء آخر على EOA - نرجع فارغ بدلاً من revert
-        console.log(`✅ eth_call on EOA ${to} with selector ${functionSelector} - returning empty`);
+        // لا logging مفرط - فقط نُرجع 0x مثل Ethereum
         return '0x';
       }
 
