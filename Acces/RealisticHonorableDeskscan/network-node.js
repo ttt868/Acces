@@ -1529,7 +1529,7 @@ class NetworkNode {
     const { method, params, id } = request;
 
     // 🔍 DEBUG: تسجيل كل الطلبات الواردة (مع حماية من undefined)
-    const paramsStr = params ? JSON.stringify(params).substring(0, 100) : '[]';
+    const paramsStr = params ? JSON.stringify(params).substring(0, 500) : '[]';
     console.log(`📥 RPC: ${method} | id: ${id} | params: ${paramsStr}`);
 
     try {
@@ -2927,21 +2927,33 @@ class NetworkNode {
           result = statusTx ? '0x1' : '0x0';
           break;
 
-        case 'eth_feeHistory':
-          // ✅ LEGACY CHAIN: إرجاع خطأ method not found لإجبار المحافظ على Legacy mode
-          return {
-            jsonrpc: '2.0',
-            id: id,
-            error: { code: -32601, message: 'Method eth_feeHistory not found. This is a legacy chain.' }
+        case 'eth_feeHistory': {
+          // ✅ EIP-1559: baseFeePerGas ثابت = 1 Gwei، بدون priority fee
+          const fhBlockCount = parseInt(params[0], 16) || 4;
+          const fhNewestBlock = params[1] === 'latest' ? this.blockchain.chain.length - 1 : parseInt(params[1], 16);
+          const fhRewardPercentiles = params[2] || [];
+          const fhBaseFees = [];
+          const fhGasRatios = [];
+          const fhRewards = [];
+          for (let i = 0; i < fhBlockCount; i++) {
+            fhBaseFees.push('0x3B9ACA00'); // 1 Gwei
+            fhGasRatios.push('0x0');
+            fhRewards.push(fhRewardPercentiles.map(() => '0x0'));
+          }
+          fhBaseFees.push('0x3B9ACA00'); // next block baseFee
+          result = {
+            oldestBlock: '0x' + Math.max(0, fhNewestBlock - fhBlockCount + 1).toString(16),
+            baseFeePerGas: fhBaseFees,
+            gasUsedRatio: fhGasRatios,
+            reward: fhRewards.length > 0 ? fhRewards : undefined
           };
+          break;
+        }
 
         case 'eth_maxPriorityFeePerGas':
-          // ✅ LEGACY CHAIN: إرجاع خطأ method not found لإجبار المحافظ على Legacy mode
-          return {
-            jsonrpc: '2.0',
-            id: id,
-            error: { code: -32601, message: 'Method eth_maxPriorityFeePerGas not found. This is a legacy chain.' }
-          };
+          // ✅ EIP-1559: لا priority fee (tip = 0)
+          result = '0x0';
+          break;
 
         case 'web3_sha3':
           // Keccak-256 hash
@@ -3070,7 +3082,7 @@ class NetworkNode {
               logs: transferLogs, // ✅ ALWAYS an array (never undefined/null) - CRITICAL for Trust Wallet
               logsBloom: '0x' + '0'.repeat(512), // ✅ 256 bytes = 512 hex chars
               status: '0x1', // ✅ Success
-              type: '0x0', // ✅ Legacy transaction (not EIP-1559)
+              type: '0x2', // ✅ EIP-1559 transaction type
               root: undefined // ✅ Not used in post-Byzantium
             };
           } else {
@@ -3227,11 +3239,9 @@ class NetworkNode {
           throw new Error(`Method ${method} not supported. Supported methods include: eth_getBalance, eth_sendTransaction, eth_sendRawTransaction, eth_chainId, net_version, eth_blockNumber, and more.`);
       }
 
-      // 🔍 DEBUG: Log gas-related responses for MetaMask debugging
-      if (['eth_getBalance', 'eth_gasPrice', 'eth_estimateGas', 'eth_feeHistory', 'eth_maxPriorityFeePerGas'].includes(method)) {
-        const resultStr = typeof result === 'string' ? result : JSON.stringify(result);
-        console.log(`📤 RPC RESPONSE: ${method} → ${resultStr?.substring(0, 200)}`);
-      }
+      // 🔍 DEBUG: Log ALL responses for MetaMask debugging
+      const resultStr = typeof result === 'string' ? result : JSON.stringify(result);
+      console.log(`📤 RPC RESPONSE: ${method} → ${resultStr?.substring(0, 300)}`);
 
       return {
         jsonrpc: '2.0',
@@ -4648,13 +4658,18 @@ class NetworkNode {
       value: '0x' + Math.floor(tx.amount * 1e18).toString(16),
       gas: '0x' + GAS_LIMIT.toString(16),
       gasPrice: '0x' + GAS_PRICE_WEI.toString(16), // ✅ 1 Gwei
+      maxFeePerGas: '0x' + GAS_PRICE_WEI.toString(16), // ✅ EIP-1559: 1 Gwei
+      maxPriorityFeePerGas: '0x0', // ✅ EIP-1559: no tip
+      type: '0x2', // ✅ EIP-1559 transaction type
       blockNumber: blockInfo ? '0x' + blockInfo.index.toString(16) : null,
       blockHash: tx.blockHash,
       transactionIndex: blockInfo ? '0x0' : null, // قد تحتاج إلى حساب هذا بشكل صحيح
       confirmations: blockInfo ? this.blockchain.chain.length - blockInfo.index : 0,
       timestamp: tx.timestamp,
       input: tx.data || '0x', // إضافة حقل الإدخال إذا كان موجوداً
-      nonce: tx.nonce || '0x0' // إضافة حقل nonce إذا كان موجوداً
+      nonce: tx.nonce || '0x0', // إضافة حقل nonce إذا كان موجوداً
+      accessList: [], // ✅ EIP-1559 required field
+      chainId: '0x5968' // ✅ Chain ID 22888
     };
   }
 
@@ -4694,6 +4709,7 @@ class NetworkNode {
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
         gasUsed: '0x0',
+        baseFeePerGas: '0x3B9ACA00',
         extraData: '0x',
         logsBloom: '0x' + '0'.repeat(512),
         receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4738,6 +4754,7 @@ class NetworkNode {
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
         gasUsed: '0x0',
+        baseFeePerGas: '0x3B9ACA00',
         extraData: '0x',
         logsBloom: '0x' + '0'.repeat(512),
         receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4785,8 +4802,7 @@ class NetworkNode {
       miner: '0x0000000000000000000000000000000000000000',
       gasLimit: '0x1c9c380',
       gasUsed: isVirtualBlock ? '0x0' : '0x5208',
-      // ✅ LEGACY MODE: لا نضيف baseFeePerGas لإجبار MetaMask على استخدام gasPrice الصحيح
-      // ✅ حقول إضافية مطلوبة للتوافق الكامل
+      baseFeePerGas: '0x3B9ACA00',
       extraData: '0x',
       logsBloom: '0x' + '0'.repeat(512),
       receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',

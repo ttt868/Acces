@@ -430,7 +430,7 @@ export async function handleWeb3RPC(request) {
             logs: [],
             logsBloom: '0x' + '0'.repeat(512),
             status: '0x1',
-            type: '0x0' // ✅ Legacy transaction
+            type: '0x2' // ✅ EIP-1559 transaction
           }
         };
 
@@ -486,6 +486,7 @@ export async function handleWeb3RPC(request) {
             size: '0x' + JSON.stringify(block).length.toString(16),
             gasLimit: '0x1c9c380',
             gasUsed: '0x5208',
+            baseFeePerGas: '0x3B9ACA00',
             timestamp: '0x' + Math.floor((block.timestamp || Date.now()) / 1000).toString(16),
             transactions: fullTx ? blockTransactions.map(tx => ({
               hash: tx.txId || tx.hash || '0x0',
@@ -521,20 +522,37 @@ export async function handleWeb3RPC(request) {
           result: '0x' + sha3Hash
         };
 
-      case 'eth_feeHistory':
-        // ✅ LEGACY CHAIN: إرجاع خطأ method not found
+      case 'eth_feeHistory': {
+        // ✅ EIP-1559: baseFeePerGas = 1 Gwei, بدون priority fee
+        const fhCount = parseInt(params[0], 16) || 4;
+        const fhBaseFees = [];
+        const fhGasRatios = [];
+        const fhRewards = [];
+        const fhPercentiles = params[2] || [];
+        for (let i = 0; i < fhCount; i++) {
+          fhBaseFees.push('0x3B9ACA00');
+          fhGasRatios.push('0x0');
+          fhRewards.push(fhPercentiles.map(() => '0x0'));
+        }
+        fhBaseFees.push('0x3B9ACA00');
         return {
           jsonrpc: '2.0',
           id: id,
-          error: { code: -32601, message: 'Method eth_feeHistory not found. This is a legacy chain.' }
+          result: {
+            oldestBlock: '0x1',
+            baseFeePerGas: fhBaseFees,
+            gasUsedRatio: fhGasRatios,
+            reward: fhRewards.length > 0 ? fhRewards : undefined
+          }
         };
+      }
 
       case 'eth_maxPriorityFeePerGas':
-        // ✅ LEGACY CHAIN: إرجاع خطأ method not found
+        // ✅ EIP-1559: لا priority fee (tip = 0)
         return {
           jsonrpc: '2.0',
           id: id,
-          error: { code: -32601, message: 'Method eth_maxPriorityFeePerGas not found. This is a legacy chain.' }
+          result: '0x0'
         };
 
       case 'net_listening':
