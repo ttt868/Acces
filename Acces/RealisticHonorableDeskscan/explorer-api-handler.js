@@ -347,28 +347,25 @@ async function handleProxyModule(params) {
                 const normalizedAddr = address.toLowerCase();
                 const network = networkNode.network;
                 
-                // 📊 STEP 1: الحصول على nonce من State Trie
+                // 📊 STEP 1: الحصول على nonce من blockchain.getNonce (يشمل DB + memory)
                 let confirmedNonce = 0;
-                if (network.accessStateStorage) {
+                if (network.getNonce) {
+                    confirmedNonce = await network.getNonce(normalizedAddr, false);
+                } else if (network.accessStateStorage) {
                     const accountData = await network.accessStateStorage.getAccount(normalizedAddr);
                     if (accountData && accountData.nonce !== undefined) {
                         confirmedNonce = parseInt(accountData.nonce) || 0;
                     }
                 }
                 
-                // 📦 STEP 2: عد المعاملات المعلقة
-                let pendingCount = 0;
-                for (const tx of network.pendingTransactions || []) {
-                    if (tx.fromAddress && tx.fromAddress.toLowerCase() === normalizedAddr) {
-                        pendingCount++;
-                    }
+                // ✅ STEP 2: التحقق من _nonceTracker في network-node
+                if (networkNode._nonceTracker) {
+                    const trackedNonce = networkNode._nonceTracker.get(normalizedAddr) || 0;
+                    confirmedNonce = Math.max(confirmedNonce, trackedNonce);
                 }
                 
-                // 🔢 STEP 3: Nonce النهائي
-                const finalNonce = confirmedNonce + pendingCount;
-                
-                console.log(`🔢 eth_getTransactionCount for ${address}: confirmed=${confirmedNonce}, pending=${pendingCount}, final=${finalNonce}`);
-                return '0x' + finalNonce.toString(16);
+                console.log(`🔢 eth_getTransactionCount for ${address}: nonce=${confirmedNonce}`);
+                return '0x' + confirmedNonce.toString(16);
             } catch (nonceError) {
                 console.error('❌ eth_getTransactionCount error:', nonceError);
                 // Fallback: استخدام عدد المعاملات الصادرة

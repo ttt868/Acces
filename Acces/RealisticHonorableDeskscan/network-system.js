@@ -1262,7 +1262,8 @@ class AccessNetwork extends EventEmitter {
 
         // ✅ حفظ فوري في ملفات Ethereum - non-blocking
         if (this.ethereumStorage) {
-          this.ethereumStorage.saveAccountState(normalizedFromAddress, { balance: newFromBalance, nonce: 0 }).catch(() => {});
+          const senderNonceVal = this.accessStateStorage?.accountCache?.[normalizedFromAddress]?.nonce || 0;
+          this.ethereumStorage.saveAccountState(normalizedFromAddress, { balance: newFromBalance, nonce: parseInt(senderNonceVal) || 0 }).catch(() => {});
         }
 
         // 🔔 Emit balance change event for WebSocket notifications
@@ -1336,9 +1337,11 @@ class AccessNetwork extends EventEmitter {
         // ✅ تحديث accountCache أيضاً للـ persistence (تجنب State Trie المعطل)
         if (this.accessStateStorage && this.accessStateStorage.accountCache) {
           const balanceInWei = Math.floor(newToBalance * 1e18).toString();
+          // ✅ NONCE FIX: حفظ الـ nonce الحالي للمستلم - لا نعيده للصفر
+          const existingToNonce = this.accessStateStorage.accountCache[normalizedToAddress]?.nonce || 0;
           this.accessStateStorage.accountCache[normalizedToAddress] = {
             balance: balanceInWei,
-            nonce: 0
+            nonce: existingToNonce
           };
           // ⚡ Non-blocking save - لا تنتظر لتجنب التعليق
           this.accessStateStorage.saveAccountCache().catch(e => 
@@ -1355,7 +1358,8 @@ class AccessNetwork extends EventEmitter {
 
         // ⚡ Non-blocking Ethereum storage save
         if (this.ethereumStorage) {
-          this.ethereumStorage.saveAccountState(normalizedToAddress, { balance: newToBalance, nonce: 0 }).catch(() => {});
+          const recipientNonceVal = this.accessStateStorage?.accountCache?.[normalizedToAddress]?.nonce || 0;
+          this.ethereumStorage.saveAccountState(normalizedToAddress, { balance: newToBalance, nonce: parseInt(recipientNonceVal) || 0 }).catch(() => {});
         }
 
         // 🔔 Emit balance change event for WebSocket notifications

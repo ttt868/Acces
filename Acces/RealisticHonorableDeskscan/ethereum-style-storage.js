@@ -455,9 +455,18 @@ class EthereumStyleStorage {
       // حفظ كل حساب منفرداً أيضاً
       if (stateData.balances) {
         for (const [address, balance] of Object.entries(stateData.balances)) {
+          // ✅ NONCE FIX: قراءة nonce الحالي من الملف بدلاً من كتابة 0
+          let existingNonce = 0;
+          try {
+            const accFile = path.join(this.accountsDir, `${address}.json`);
+            if (fs.existsSync(accFile)) {
+              const accData = JSON.parse(fs.readFileSync(accFile, 'utf8'));
+              existingNonce = accData.nonce || 0;
+            }
+          } catch(e) { /* ignore */ }
           await this.saveAccountState(address, {
             balance: balance,
-            nonce: 0
+            nonce: existingNonce
           });
         }
       }

@@ -108,32 +108,29 @@ export async function handleWeb3RPC(request) {
         try {
           const normalizedAddr = addr.toLowerCase();
           
-          // 📊 STEP 1: الحصول على nonce من State Trie (المعاملات المؤكدة)
+          // 📊 STEP 1: الحصول على nonce من blockchain.getNonce (يشمل DB + memory)
           let confirmedNonce = 0;
-          if (network.accessStateStorage) {
+          if (network.getNonce) {
+            confirmedNonce = await network.getNonce(normalizedAddr, tag === 'pending');
+          } else if (network.accessStateStorage) {
             const accountData = await network.accessStateStorage.getAccount(normalizedAddr);
             if (accountData && accountData.nonce !== undefined) {
               confirmedNonce = parseInt(accountData.nonce) || 0;
             }
           }
           
-          // 📦 STEP 2: عد المعاملات المعلقة من نفس العنوان
-          let pendingCount = 0;
-          for (const tx of network.pendingTransactions || []) {
-            if (tx.fromAddress && tx.fromAddress.toLowerCase() === normalizedAddr) {
-              pendingCount++;
-            }
+          // ✅ STEP 2: التحقق من _nonceTracker في network-node
+          if (networkNode && networkNode._nonceTracker) {
+            const trackedNonce = networkNode._nonceTracker.get(normalizedAddr) || 0;
+            confirmedNonce = Math.max(confirmedNonce, trackedNonce);
           }
           
-          // 🔢 STEP 3: Nonce النهائي = المؤكد + المعلق
-          const finalNonce = confirmedNonce + pendingCount;
-          
-          console.log(`🔢 eth_getTransactionCount for ${addr}: confirmed=${confirmedNonce}, pending=${pendingCount}, final=${finalNonce}`);
+          console.log(`🔢 eth_getTransactionCount for ${addr}: nonce=${confirmedNonce}`);
           
           return {
             jsonrpc: '2.0',
             id: id,
-            result: '0x' + finalNonce.toString(16)
+            result: '0x' + confirmedNonce.toString(16)
           };
         } catch (error) {
           console.error('❌ eth_getTransactionCount error:', error);
