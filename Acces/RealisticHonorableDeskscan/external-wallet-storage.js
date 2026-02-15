@@ -102,7 +102,7 @@ class ExternalWalletStorageManager {
         fromAddress: fromAddress?.toLowerCase(),
         toAddress: toAddress?.toLowerCase(),
         amount: parseFloat(amount),
-        gasFee: parseFloat(gasFee || 0.000021),
+        gasFee: parseFloat(gasFee || 0.00002),
         timestamp: timestamp,
         status: status,
         storedAt: Date.now(),

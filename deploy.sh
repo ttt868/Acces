@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🚀 سكربت التحديث السريع لـ Hetzner
+# 🚀 سكربت التحديث الآمن لـ Hetzner - لا يحذف node_modules
 
 export SSHPASS='Midouyaya1@$.'
 
@@ -12,15 +12,25 @@ sshpass -e scp -o StrictHostKeyChecking=no /tmp/update.tar.gz root@89.167.14.197
 
 echo "🔄 جاري التحديث على السيرفر..."
 sshpass -e ssh -o StrictHostKeyChecking=no root@89.167.14.197 '
-# حفظ .env القديم
-cp /var/www/Acces/RealisticHonorableDeskscan/.env /tmp/.env.backup 2>/dev/null
+set -e
+
+# حفظ .env و node_modules
+cp /var/www/Acces/RealisticHonorableDeskscan/.env /tmp/.env.backup 2>/dev/null || true
+if [ -d /var/www/Acces/RealisticHonorableDeskscan/node_modules ]; then
+  mv /var/www/Acces/RealisticHonorableDeskscan/node_modules /tmp/node_modules_backup
+fi
 
 cd /var/www
 rm -rf Acces
 tar -xzf /tmp/update.tar.gz
 
+# استعادة node_modules
+if [ -d /tmp/node_modules_backup ]; then
+  mv /tmp/node_modules_backup /var/www/Acces/RealisticHonorableDeskscan/node_modules
+fi
+
 # استعادة .env
-cp /tmp/.env.backup /var/www/Acces/RealisticHonorableDeskscan/.env 2>/dev/null
+cp /tmp/.env.backup /var/www/Acces/RealisticHonorableDeskscan/.env 2>/dev/null || true
 
 # إذا لم يوجد .env، أنشئ واحد جديد
 if [ ! -f /var/www/Acces/RealisticHonorableDeskscan/.env ]; then
@@ -45,10 +55,19 @@ sed -i "s|from \x27../database-config.js\x27|from \x27./database-config.js\x27|g
 
 cd /var/www/Acces/RealisticHonorableDeskscan
 npm install --production 2>/dev/null
+
+# إعادة تشغيل والتحقق
 pm2 restart access-network
-echo "✅ تم التحديث بنجاح!"
+sleep 8
+if ss -tlnp | grep -q 3000; then
+  echo "✅ تم التحديث بنجاح! المنفذ 3000 يعمل"
+else
+  echo "⚠️ المنفذ 3000 لم يفتح بعد، انتظر..."
+  sleep 10
+  ss -tlnp | grep 3000 && echo "✅ يعمل الآن" || echo "❌ مشكلة في البدء"
+fi
 pm2 list
 '
 
-rm /tmp/update.tar.gz
+rm -f /tmp/update.tar.gz
 echo "🎉 انتهى!"

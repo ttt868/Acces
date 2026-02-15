@@ -340,7 +340,7 @@ export async function getWalletTransactions(walletAddress) {
         
         // Ensure gas fee is properly parsed
         const gasFee = typeof tx.gas_fee === 'string' ? parseFloat(tx.gas_fee) : 
-                      typeof tx.gas_fee === 'number' ? tx.gas_fee : 0.000021;
+                      typeof tx.gas_fee === 'number' ? tx.gas_fee : 0.00002;
         
         // Format the amount string, preserving leading zeros for small decimals
         // For very small numbers, ensure they display properly by forcing string conversion with fixed precision

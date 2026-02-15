@@ -123,8 +123,11 @@ class WebSocketRPCHandler extends EventEmitter {
           client.address = address;
           let balance = accessNode.network.getBalance(address);
           
-          // ✅ LEGACY GAS FIX: لا نخصم الغاز هنا
-          // MetaMask يحسب الغاز تلقائياً: max = balance - (gasLimit × gasPrice)
+          // ✅ METAMASK USE MAX FIX: خصم رسوم الغاز من الرصيد المعروض
+          const METAMASK_GAS_RESERVE = 0.00002;
+          if (balance > METAMASK_GAS_RESERVE) {
+            balance = balance - METAMASK_GAS_RESERVE;
+          }
           
           // 🔧 FIX: BigInt لتجنب 0.225336999999999904
           const decimal8Val = Math.floor(Math.max(0, balance) * 1e8);

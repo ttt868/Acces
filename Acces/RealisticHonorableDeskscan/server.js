@@ -9802,6 +9802,153 @@ const server = http.createServer(async (req, res) => {
 
     // KYC system removed to reduce resource consumption
 
+    // ========== PIN LOCK SYSTEM API ==========
+
+    // GET /api/pin/status/:userId - Get PIN status
+    if (pathname.startsWith('/api/pin/status/') && req.method === 'GET') {
+      try {
+        const userId = pathname.split('/').pop();
+        const result = await pool.query(
+          'SELECT pin_enabled, biometric_enabled FROM users WHERE id = $1',
+          [userId]
+        );
+        if (result.rows.length > 0) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            pinEnabled: result.rows[0].pin_enabled || false,
+            biometricEnabled: result.rows[0].biometric_enabled || false
+          }));
+        } else {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'User not found' }));
+        }
+      } catch (error) {
+        console.error('[PIN] Error getting status:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Server error' }));
+      }
+      return;
+    }
+
+    // POST /api/pin/setup - Set up new PIN
+    if (pathname === '/api/pin/setup' && req.method === 'POST') {
+      try {
+        const data = await parseRequestBody(req);
+        const { userId, pin } = data;
+        if (!userId || !pin || pin.length !== 6) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid PIN (must be 6 digits)' }));
+          return;
+        }
+        // Hash PIN with crypto
+        const crypto = await import('crypto');
+        const pinHash = crypto.createHash('sha256').update(pin).digest('hex');
+        await pool.query(
+          'UPDATE users SET pin_hash = $1, pin_enabled = true WHERE id = $2',
+          [pinHash, userId]
+        );
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+      } catch (error) {
+        console.error('[PIN] Error setting up:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Server error' }));
+      }
+      return;
+    }
+
+    // POST /api/pin/verify - Verify PIN
+    if (pathname === '/api/pin/verify' && req.method === 'POST') {
+      try {
+        const data = await parseRequestBody(req);
+        const { userId, pin } = data;
+        if (!userId || !pin) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ verified: false, error: 'Missing data' }));
+          return;
+        }
+        const crypto = await import('crypto');
+        const pinHash = crypto.createHash('sha256').update(pin).digest('hex');
+        const result = await pool.query(
+          'SELECT pin_hash FROM users WHERE id = $1 AND pin_enabled = true',
+          [userId]
+        );
+        if (result.rows.length > 0 && result.rows[0].pin_hash === pinHash) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ verified: true }));
+        } else {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ verified: false }));
+        }
+      } catch (error) {
+        console.error('[PIN] Error verifying:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ verified: false, error: 'Server error' }));
+      }
+      return;
+    }
+
+    // POST /api/pin/disable - Disable PIN
+    if (pathname === '/api/pin/disable' && req.method === 'POST') {
+      try {
+        const data = await parseRequestBody(req);
+        const { userId, pin } = data;
+        if (!userId || !pin) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Missing data' }));
+          return;
+        }
+        const crypto = await import('crypto');
+        const pinHash = crypto.createHash('sha256').update(pin).digest('hex');
+        const result = await pool.query(
+          'SELECT pin_hash FROM users WHERE id = $1 AND pin_enabled = true',
+          [userId]
+        );
+        if (result.rows.length > 0 && result.rows[0].pin_hash === pinHash) {
+          await pool.query(
+            'UPDATE users SET pin_enabled = false, pin_hash = NULL, biometric_enabled = false WHERE id = $1',
+            [userId]
+          );
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true }));
+        } else {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Incorrect PIN' }));
+        }
+      } catch (error) {
+        console.error('[PIN] Error disabling:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Server error' }));
+      }
+      return;
+    }
+
+    // POST /api/pin/biometric - Toggle biometric
+    if (pathname === '/api/pin/biometric' && req.method === 'POST') {
+      try {
+        const data = await parseRequestBody(req);
+        const { userId, enabled } = data;
+        if (!userId) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing userId' }));
+          return;
+        }
+        await pool.query(
+          'UPDATE users SET biometric_enabled = $1 WHERE id = $2',
+          [enabled, userId]
+        );
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+      } catch (error) {
+        console.error('[PIN] Error toggling biometric:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Server error' }));
+      }
+      return;
+    }
+
+    // ========== END PIN LOCK SYSTEM API ==========
+
     // POST /api/user/qrcode/save - DEPRECATED: QR codes are now generated dynamically
     // This endpoint is kept for backward compatibility but does nothing
     if (pathname === '/api/user/qrcode/save' && req.method === 'POST') {

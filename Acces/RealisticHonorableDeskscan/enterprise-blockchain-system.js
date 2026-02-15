@@ -720,7 +720,7 @@ class EnterpriseBlockchain extends EventEmitter {
     this.mempool = [];
     this.difficulty = 2;
     this.processingReward = 0.25;
-    this.gasPrice = 0.000021;
+    this.gasPrice = 0.00002;
 
     // Initialize storage manager for save operations
     this.storageManager = {

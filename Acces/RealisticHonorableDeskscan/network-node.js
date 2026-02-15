@@ -444,7 +444,8 @@ class NetworkNode {
             nonce: '0x0000000000000000',
             sha3Uncles: '0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347',
             extraData: '0x',
-            uncles: []
+            uncles: [],
+            baseFeePerGas: '0x38c42e18' // ✅ سعر غاز صحيح = 952380952 Wei = 0.00002 ACCESS / 21000
           }
         }
       };
@@ -1116,7 +1117,7 @@ class NetworkNode {
       // Create RLP-encoded transaction data
       const fields = [
         txData.nonce || 0,
-        txData.gasPrice || 1000000000, // ✅ 1 Gwei
+        txData.gasPrice || 952380952, // ✅ صحيح: 0.00002 ACCESS / 21000 = 952380952 Wei
         txData.gasLimit || 21000,
         txData.to || '0x',
         txData.value || 0,
@@ -1529,7 +1530,7 @@ class NetworkNode {
     const { method, params, id } = request;
 
     // 🔍 DEBUG: تسجيل كل الطلبات الواردة (مع حماية من undefined)
-    const paramsStr = params ? JSON.stringify(params).substring(0, 500) : '[]';
+    const paramsStr = params ? JSON.stringify(params).substring(0, 100) : '[]';
     console.log(`📥 RPC: ${method} | id: ${id} | params: ${paramsStr}`);
 
     try {
@@ -1770,10 +1771,9 @@ class NetworkNode {
 
             // STRICT BALANCE CHECK - MANDATORY FOR ALL TRANSACTIONS
             const senderBalance = this.blockchain.getBalance(txData.from);
-            // 🔐 رسوم الغاز = gasPrice × gasLimit = 1 Gwei × 21000 = 0.000021 ACCESS (بالضبط)
-            const GAS_PRICE_WEI = 1000000000; // 1 Gwei
-            const GAS_LIMIT = 21000;
-            const gasFeeInAccess = (GAS_PRICE_WEI * GAS_LIMIT) / 1e18; // 0.000021 exactly
+            // 🔐 رسوم الغاز الثابتة = 0.00002 ACCESS (لا تتغير بناءً على ما ترسله المحفظة)
+            const FIXED_GAS_FEE = 0.00002;
+            const gasFeeInAccess = FIXED_GAS_FEE;
             const totalRequired = txData.value + gasFeeInAccess;
 
             // Silent - reduce console spam
@@ -1815,41 +1815,6 @@ class NetworkNode {
 
             // تصنيف المحافظ قبل المعالجة
             const walletClassification = await this.classifyWallets(txData.from, txData.to);
-
-            // ✅ NONCE LOCK: قفل لكل عنوان لمنع race condition
-            if (!this._nonceTracker) this._nonceTracker = new Map();
-            if (!this._nonceLocks) this._nonceLocks = new Map();
-            
-            const senderNonceAddr = txData.from.toLowerCase();
-            
-            // انتظار فك القفل السابق (إن وجد)
-            while (this._nonceLocks.get(senderNonceAddr)) {
-              await new Promise(r => setTimeout(r, 50));
-            }
-            this._nonceLocks.set(senderNonceAddr, true);
-            
-            try {
-              // قراءة nonce صحيح بأمان
-              const expectedNonce = this._nonceTracker.get(senderNonceAddr) || 0;
-              const dbNonce = await this.blockchain.getNonce(senderNonceAddr, false);
-              const correctNonce = Math.max(expectedNonce, dbNonce);
-              
-              const txNonce = typeof txData.nonce === 'string' && txData.nonce.startsWith('0x') 
-                ? parseInt(txData.nonce, 16) 
-                : parseInt(txData.nonce) || 0;
-              
-              if (txNonce < correctNonce) {
-                console.log(`🔧 NONCE AUTO-FIX: ${txNonce} → ${correctNonce} for ${senderNonceAddr.slice(0,10)}`);
-                txData.nonce = correctNonce;
-              }
-              
-              // ✅ زيادة الـ nonce فوراً في الذاكرة (قبل حتى معالجة المعاملة)
-              // هذا يمنع أي معاملة متزامنة من الحصول على نفس nonce
-              this._nonceTracker.set(senderNonceAddr, Math.max(correctNonce, txNonce) + 1);
-            } finally {
-              // فك القفل
-              this._nonceLocks.set(senderNonceAddr, false);
-            }
 
             // Create transaction with validated data
             const transaction = new Transaction(
@@ -1929,21 +1894,15 @@ class NetworkNode {
             // FIRST: Add to blockchain (سيتم خصم الرصيد هنا تلقائياً)
             const txHash = await Promise.resolve(this.blockchain.addTransaction(transaction));
 
-            // ✅ NONCE: الزيادة تمت مسبقاً في الـ lock section (قبل addTransaction)
-            // incrementNonce في blockchain للمزامنة مع الأنظمة الأخرى
-            if (this.blockchain.incrementNonce) {
-              this.blockchain.incrementNonce(txData.from.toLowerCase());
-            }
-
             // ✅ TRUST WALLET FIX: حفظ المعاملة في cache فوراً للـ receipt
             if (!this.recentTransactionCache) {
               this.recentTransactionCache = new Map();
             }
             
-            // 🔐 gasPrice = 1 Gwei, gasLimit = 21000 → fee = 0.000021 ACCESS
-            const GAS_FEE_TX = 0.000021;
-            const txGasFee = GAS_FEE_TX;
-            const txGasPrice = GAS_FEE_TX;
+            // 🔐 رسوم الغاز الثابتة = 0.00002 ACCESS
+            const FIXED_GAS_FEE_TX = 0.00002;
+            const txGasFee = FIXED_GAS_FEE_TX;
+            const txGasPrice = FIXED_GAS_FEE_TX;
             
             this.recentTransactionCache.set(txHash, {
               hash: txHash,
@@ -2155,8 +2114,8 @@ class NetworkNode {
           result = '0x5968'; // 22888 في hex - Chain ID فريد - القيمة الصحيحة
           break;
 
-        case 'eth_getTransactionCount': {
-          // ✅ ETHEREUM STANDARD: nonce = عدد المعاملات المرسلة من هذا العنوان
+        case 'eth_getTransactionCount':
+          // حساب nonce صحيح وتراكمي مع الحفظ الدائم - كل معاملة لها nonce فريد
           const nonceAddress = params[0];
           const blockTag = params[1] || 'latest';
 
@@ -2164,47 +2123,203 @@ class NetworkNode {
             result = '0x0';
           } else {
             const normalizedAddress = nonceAddress.toLowerCase();
-            const includePending = (blockTag === 'pending');
+            let currentNonce = 0;
 
             try {
-              // استخدام getNonce المحسن مع دعم pending
-              let currentNonce = await this.blockchain.getNonce(normalizedAddress, includePending);
+              // التأكد من وجود الأعمدة المطلوبة
+              try {
+                await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS is_confirmed BOOLEAN DEFAULT false');
+                await pool.query('ALTER TABLE transactions ADD COLUMN IF NOT EXISTS confirmations INTEGER DEFAULT 0');
+              } catch (alterError) {
+                console.log('Columns already exist or error adding them:', alterError.message);
+              }
 
-              // ✅ التأكد من أن nonce Manager في الذاكرة متسق (الأهم)
-              if (!this._nonceTracker) this._nonceTracker = new Map();
-              const trackedNonce = this._nonceTracker.get(normalizedAddress) || 0;
-              currentNonce = Math.max(currentNonce, trackedNonce);
+              // استخدام الدالة المحسنة من البلوكتشين للحصول على nonce مستمر
+              currentNonce = await this.blockchain.getNonce(normalizedAddress);
 
-              result = '0x' + currentNonce.toString(16);
+              // التأكد من أن nonce لا يتجاوز الحد الأقصى لـ integer
+              if (currentNonce > 2147483647) {
+                currentNonce = (currentNonce % 1000000) + 1; // تحويل إلى رقم آمن
+                // Silent - reduce console spam
+              }
+
+              // حفظ آخر nonce في ذاكرة محلية للجلسة
+              if (!this.lastUsedNonces) {
+                this.lastUsedNonces = new Map();
+              }
+              this.lastUsedNonces.set(normalizedAddress, currentNonce);
+
+              // Silent - reduce console spam
+
             } catch (error) {
-              console.error('Error calculating nonce:', error);
-              result = '0x0';
+              console.error('Error calculating persistent nonce:', error);
+              
+              // Fallback معزز: البحث في قاعدة البيانات يدوياً
+              try {
+                const fallbackResult = await pool.query(`
+                  SELECT MAX(nonce) as max_nonce 
+                  FROM transactions 
+                  WHERE LOWER(from_address) = $1
+                `, [normalizedAddress]);
+
+                currentNonce = parseInt(fallbackResult.rows[0]?.max_nonce || 0) + 1;
+                // Silent - reduce console spam
+              } catch (fallbackError) {
+                // آخر fallback: استخدام timestamp
+                currentNonce = Math.floor(Date.now() / 1000) % 1000000;
+                // Silent - reduce console spam
+              }
             }
+
+            result = '0x' + currentNonce.toString(16);
+            // Silent - reduce console spam
           }
           break;
-        }
 
         case 'eth_gasPrice':
-          // 🔐 GAS PRICE: 1 Gwei (1,000,000,000 Wei)
-          // ✅ يضرب بالضبط: 21000 × 1 Gwei = 21,000,000,000,000 Wei = 0.000021 ACCESS
-          // لا تقريب أو كسور - يعمل مع MetaMask و Trust Wallet بدون مشاكل
-          result = '0x3b9aca00'; // 1 Gwei = 1,000,000,000 Wei
+          // 🔐 سعر الغاز المحسوب من رسوم ثابتة 0.00002 ACCESS
+          // gasPrice = 0.00002 ACCESS / 21000 gas = ~952380952 Wei
+          const FIXED_GAS_FEE_NODE = 0.00002;
+          const GAS_LIMIT_STANDARD = 21000;
+          const gasPriceWeiCalculated = Math.floor(FIXED_GAS_FEE_NODE * 1e18 / GAS_LIMIT_STANDARD);
+          result = '0x' + gasPriceWeiCalculated.toString(16); // ~0x38c42e18 = 952380952 Wei
           break;
 
         case 'eth_estimateGas':
-          // ✅ تقدير الغاز - بسيط ومتوافق مع جميع المحافظ
+          // نظام تقدير الغاز المتقدم مع دعم Use Max مثل MetaMask وTrust Wallet
           const txParams = params[0] || {};
           let gasEstimate = 21000; // الغاز الأساسي للتحويل
 
-          // حساب إضافي للمعاملات المعقدة (عقود ذكية)
-          if (txParams.data && txParams.data !== '0x' && txParams.data.length > 10) {
+          // حساب إضافي للمعاملات المعقدة
+          if (txParams.data && txParams.data !== '0x') {
             const dataLength = Math.ceil((txParams.data.length - 2) / 2);
-            gasEstimate += dataLength * 68;
-            gasEstimate = Math.min(gasEstimate, 200000);
+            gasEstimate += dataLength * 68; // 68 gas لكل byte
+            gasEstimate = Math.min(gasEstimate, 200000); // حد أقصى معقول
           }
 
-          // ✅ إرجاع hex فقط - مثل Ethereum/BSC/Polygon تماماً
-          result = '0x' + gasEstimate.toString(16);
+          // كشف Use Max بطريقة شاملة مثل شبكات العملات الأخرى
+          const isUseMaxRequest = txParams.from && (
+            txParams.value === 'max' ||
+            txParams.value === 'all' ||
+            txParams.useMax === true ||
+            txParams.sendAll === true ||
+            txParams.maxTransfer === true ||
+            txParams.sendEntireBalance === true ||
+            (typeof txParams.value === 'string' && (
+              txParams.value.toLowerCase().includes('max') ||
+              txParams.value.toLowerCase().includes('all') ||
+              txParams.value === '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+            ))
+          );
+
+          if (isUseMaxRequest) {
+            console.log(`🎯 USE MAX DETECTED - Processing like MetaMask/Trust Wallet for ${txParams.from}`);
+
+            // الحصول على الرصيد الدقيق مع مزامنة شاملة
+            let currentBalance = this.blockchain.getBalance(txParams.from);
+
+            try {
+              // مزامنة مع قاعدة البيانات للحصول على الرصيد الصحيح
+              const userResult = await pool.query('SELECT coins FROM users WHERE LOWER(wallet_address) = $1', [txParams.from.toLowerCase()]);
+              if (userResult.rows.length > 0) {
+                const dbBalance = parseFloat(userResult.rows[0].coins) || 0;
+                if (dbBalance > currentBalance) {
+                  this.blockchain.updateBalance(txParams.from, dbBalance);
+                  currentBalance = dbBalance;
+                  // مزامنة صامتة
+                }
+              }
+
+              // REMOVED: external_wallets dependency - Using State Trie only like Ethereum
+            } catch (dbError) {
+              console.warn('Balance sync warning during Use Max:', dbError.message);
+            }
+
+            // حساب رسوم الغاز - ثابت 0.00002 ACCESS (مثل شبكة Access)
+            const FIXED_GAS_FEE = 0.00002; // 🔒 رسوم غاز ثابتة للشبكة
+            const exactGasFeeAccess = FIXED_GAS_FEE;
+            const gasPriceWei = Math.floor(FIXED_GAS_FEE * 1e18 / gasEstimate); // حساب عكسي للمحافظ
+
+            console.log(`💰 USE MAX CALCULATION:`, {
+              totalBalance: currentBalance.toFixed(8) + ' ACCESS',
+              gasFee: exactGasFeeAccess.toFixed(8) + ' ACCESS',
+              gasEstimate: gasEstimate,
+              gasPriceGwei: gasPriceGwei
+            });
+
+            // حساب الحد الأقصى القابل للإرسال (مثل MetaMask تماماً)
+            let maxSendableAmount = 0;
+            let safetyBuffer = 0.00000001; // هامش أمان صغير جداً
+
+            if (currentBalance <= exactGasFeeAccess) {
+              // رصيد غير كافي لدفع رسوم الغاز
+              maxSendableAmount = 0;
+              console.log(`⚠️ Insufficient balance for gas fees. Balance: ${currentBalance.toFixed(8)}, Gas needed: ${exactGasFeeAccess.toFixed(8)}`);
+            } else {
+              // الحساب النهائي: الرصيد - رسوم الغاز - هامش الأمان
+              maxSendableAmount = currentBalance - exactGasFeeAccess - safetyBuffer;
+              maxSendableAmount = Math.max(0, maxSendableAmount);
+
+              // تقريب إلى 8 خانات عشرية (مثل أغلب شبكات العملات)
+              maxSendableAmount = Math.floor(maxSendableAmount * 100000000) / 100000000;
+
+              // فحص أمني أخير: التأكد أن المجموع لا يتجاوز الرصيد
+              const totalRequired = maxSendableAmount + exactGasFeeAccess;
+              if (totalRequired > currentBalance) {
+                maxSendableAmount = Math.max(0, currentBalance - exactGasFeeAccess - 0.00000002);
+                maxSendableAmount = Math.floor(maxSendableAmount * 100000000) / 100000000;
+                console.log(`🔧 AUTO-ADJUSTED for safety: ${maxSendableAmount.toFixed(8)} ACCESS`);
+              }
+            }
+
+            console.log(`✅ USE MAX READY:`, {
+              maxSendable: maxSendableAmount.toFixed(8) + ' ACCESS',
+              totalCost: (maxSendableAmount + exactGasFeeAccess).toFixed(8) + ' ACCESS',
+              remainingBalance: (currentBalance - maxSendableAmount - exactGasFeeAccess).toFixed(8) + ' ACCESS',
+              canSend: maxSendableAmount > 0
+            });
+
+            // إرجاع نتيجة متوافقة مع جميع المحافظ مثل BSC و Ethereum
+            result = {
+              // رقم الغاز المقدر (مطلوب أساسي)
+              gas: '0x' + gasEstimate.toString(16),
+              gasPrice: '0x' + gasPriceWei.toString(16),
+              
+              // معلومات Use Max (MetaMask compatible)
+              maxSendableValue: '0x' + Math.floor(maxSendableAmount * 1e18).toString(16),
+              maxSendableFormatted: maxSendableAmount.toFixed(8) + ' ACCESS',
+              
+              // معلومات الرصيد والرسوم
+              currentBalance: '0x' + Math.floor(currentBalance * 1e18).toString(16),
+              currentBalanceFormatted: currentBalance.toFixed(8) + ' ACCESS',
+              estimatedGasFee: exactGasFeeAccess.toFixed(8) + ' ACCESS',
+              estimatedGasFeeWei: '0x' + totalGasCostWei.toString(16),
+              
+              // معلومات النجاح
+              useMaxSupported: true,
+              canSendMax: maxSendableAmount > 0,
+              smartCalculation: true,
+              
+              // معلومات الشبكة
+              chainId: '0x5968',
+              networkName: 'Access Network',
+              gasLimit: gasEstimate,
+              
+              // تأكيد التوافق
+              walletCompatible: {
+                metamask: true,
+                trustWallet: true,
+                coinbaseWallet: true,
+                binanceSmartChain: true,
+                ethereum: true
+              },
+              
+              success: true
+            };
+          } else {
+            // تقدير غاز عادي للمعاملات التقليدية - إرجاع hex فقط مثل الشبكات الأخرى
+            result = '0x' + gasEstimate.toString(16);
+          }
           break;
 
         case 'wallet_calculateMaxTransfer':
@@ -2238,11 +2353,11 @@ class NetworkNode {
               console.warn('USE MAX: DB sync warning:', dbError.message);
             }
 
-            // gasPrice = 1 Gwei × 21000 = 0.000021 ACCESS بالضبط
-            const GAS_FEE_ACCESS = 0.000021;
-            const exactGasFeeAccess = GAS_FEE_ACCESS;
+            // حساب رسوم الغاز - ثابت 0.00002 ACCESS
+            const FIXED_GAS_FEE = 0.00002; // 🔒 رسوم غاز ثابتة
+            const exactGasFeeAccess = FIXED_GAS_FEE;
             const gasLimit = 21000;
-            const gasPriceWei = 1000000000; // 1 Gwei
+            const gasPriceWei = Math.floor(FIXED_GAS_FEE * 1e18 / gasLimit);
 
             console.log(`💰 USE MAX CALCULATION:`, {
               totalBalance: currentBal.toFixed(8) + ' ACCESS',
@@ -2622,7 +2737,7 @@ class NetworkNode {
                 blockTime: 3,
                 tps: 0,
                 difficulty: 1,
-                gasPrice: 0.000021,
+                gasPrice: 0.00002,
                 pendingTransactions: 0,
                 chainId: '0x5968',
                 networkId: '22888',
@@ -2810,32 +2925,45 @@ class NetworkNode {
           result = statusTx ? '0x1' : '0x0';
           break;
 
-        case 'eth_feeHistory': {
-          // ✅ EIP-1559: baseFeePerGas ثابت = 1 Gwei، بدون priority fee
-          const fhBlockCount = parseInt(params[0], 16) || 4;
-          const fhNewestBlock = params[1] === 'latest' ? this.blockchain.chain.length - 1 : parseInt(params[1], 16);
-          const fhRewardPercentiles = params[2] || [];
-          const fhBaseFees = [];
-          const fhGasRatios = [];
-          const fhRewards = [];
-          for (let i = 0; i < fhBlockCount; i++) {
-            fhBaseFees.push('0x3b9aca00'); // 1 Gwei
-            fhGasRatios.push(0.0); // ✅ MUST be decimal float, NOT hex string
-            fhRewards.push(fhRewardPercentiles.map(() => '0x0'));
+        case 'eth_feeHistory':
+          // Fee history for MetaMask gas estimation
+          const feeBlockCount = parseInt(params[0], 16) || 5;
+          
+          // ⚡ استخدام نفس الصيغة مثل eth_blockNumber بالضبط
+          const feeRealBlockNum = this.blockchain.chain.length - 1;
+          const feeVirtualOffset = this.virtualBlockOffset || 0;
+          const feeSecondsOffset = Math.floor(Date.now() / 1000) % 1000;
+          const currentBlockNum = feeRealBlockNum + feeVirtualOffset + feeSecondsOffset;
+          const oldestBlock = Math.max(1, currentBlockNum - feeBlockCount + 1);
+          
+          // إنشاء مصفوفات بالحجم الصحيح
+          const baseFeePerGasArray = [];
+          const gasUsedRatioArray = [];
+          const rewardArray = [];
+          
+          // baseFeePerGas يجب أن يكون blockCount + 1 عنصر
+          for (let i = 0; i <= feeBlockCount; i++) {
+            baseFeePerGasArray.push('0x38c42e18'); // 952380952 Wei
           }
-          fhBaseFees.push('0x3b9aca00'); // next block baseFee
+          
+          // gasUsedRatio و reward يجب أن يكون blockCount عنصر
+          for (let i = 0; i < feeBlockCount; i++) {
+            gasUsedRatioArray.push(0.5);
+            rewardArray.push(['0x38c42e18', '0x38c42e18', '0x38c42e18']); // للـ percentiles
+          }
+          
           result = {
-            oldestBlock: '0x' + Math.max(0, fhNewestBlock - fhBlockCount + 1).toString(16),
-            baseFeePerGas: fhBaseFees,
-            gasUsedRatio: fhGasRatios,
-            reward: fhRewards.length > 0 ? fhRewards : undefined
+            oldestBlock: '0x' + oldestBlock.toString(16), // ✅ مطلوب من MetaMask
+            baseFeePerGas: baseFeePerGasArray,
+            gasUsedRatio: gasUsedRatioArray,
+            reward: rewardArray
           };
+          console.log(`✅ eth_feeHistory: oldestBlock=${oldestBlock}, blockCount=${feeBlockCount}`);
           break;
-        }
 
         case 'eth_maxPriorityFeePerGas':
-          // ✅ EIP-1559: لا priority fee (tip = 0)
-          result = '0x0';
+          // Maximum priority fee per gas - محسوب لـ 0.00002 ACCESS
+          result = '0x38c42e18'; // ✅ سعر غاز صحيح = 952380952 Wei
           break;
 
         case 'web3_sha3':
@@ -2946,9 +3074,10 @@ class NetworkNode {
               });
             }
             
-            // 🔐 gasPrice = 1 Gwei, gasLimit = 21000 → fee = 0.000021 ACCESS بالضبط
-            const GAS_PRICE_WEI_RECEIPT = 1000000000; // 1 Gwei
+            // 🔐 حساب gasPrice الصحيح من رسوم ثابتة 0.00002 ACCESS
+            const FIXED_GAS_FEE_RECEIPT = 0.00002;
             const GAS_LIMIT_RECEIPT = 21000;
+            const gasPriceWeiReceipt = Math.floor(FIXED_GAS_FEE_RECEIPT * 1e18 / GAS_LIMIT_RECEIPT);
             
             // ✅ ALWAYS return array, even if empty - prevents Trust Wallet errors
             result = {
@@ -2960,12 +3089,12 @@ class NetworkNode {
               to: transaction.toAddress || transaction.to || null, // ✅ null if contract creation
               cumulativeGasUsed: '0x5208', // 21000 in hex
               gasUsed: '0x5208', // 21000 in hex
-              effectiveGasPrice: '0x' + GAS_PRICE_WEI_RECEIPT.toString(16), // ✅ 1 Gwei
+              effectiveGasPrice: '0x' + gasPriceWeiReceipt.toString(16), // ✅ صحيح = 0.00002 ACCESS
               contractAddress: null, // ✅ null for regular transfers
               logs: transferLogs, // ✅ ALWAYS an array (never undefined/null) - CRITICAL for Trust Wallet
               logsBloom: '0x' + '0'.repeat(512), // ✅ 256 bytes = 512 hex chars
               status: '0x1', // ✅ Success
-              type: '0x2', // ✅ EIP-1559 transaction type
+              type: '0x2', // ✅ EIP-1559 transaction
               root: undefined // ✅ Not used in post-Byzantium
             };
           } else {
@@ -3122,10 +3251,6 @@ class NetworkNode {
           throw new Error(`Method ${method} not supported. Supported methods include: eth_getBalance, eth_sendTransaction, eth_sendRawTransaction, eth_chainId, net_version, eth_blockNumber, and more.`);
       }
 
-      // 🔍 DEBUG: Log ALL responses for MetaMask debugging
-      const resultStr = typeof result === 'string' ? result : JSON.stringify(result);
-      console.log(`📤 RPC RESPONSE: ${method} → ${resultStr?.substring(0, 300)}`);
-
       return {
         jsonrpc: '2.0',
         result: result,
@@ -3272,8 +3397,8 @@ class NetworkNode {
 
         } catch (error) {
           console.error('Error calculating auto-nonce:', error);
-          // ✅ NONCE FIX: Fallback بسيط بدون إضافة عشوائية (تمنع فجوات)
-          nonce = await this.blockchain.getNonce(txData.from);
+          // Fallback: استخدام nonce من البلوك تشين + timestamp
+          nonce = await this.blockchain.getNonce(txData.from) + Math.floor(Date.now() / 1000) % 1000;
         }
       }
 
@@ -3302,16 +3427,6 @@ class NetworkNode {
       // ⚠️ CRITICAL: addTransaction يستدعي processTransactionImmediately داخلياً
       // والذي يقوم بتحديث الأرصدة - لذلك لا نحتاج لاستدعاء processTransactionBalances!
       const txHash = await this.blockchain.addTransaction(transaction);
-
-      // ✅ NONCE TRACKING: زيادة nonce في الذاكرة + blockchain
-      if (!this._nonceTracker) this._nonceTracker = new Map();
-      const senderAddrNonce = txData.from.toLowerCase();
-      const dbNonceSend = await this.blockchain.getNonce(senderAddrNonce, false);
-      const memNonceSend = this._nonceTracker.get(senderAddrNonce) || 0;
-      this._nonceTracker.set(senderAddrNonce, Math.max(dbNonceSend, memNonceSend, nonce + 1));
-      if (this.blockchain.incrementNonce) {
-        this.blockchain.incrementNonce(senderAddrNonce);
-      }
 
       // ⚡ INSTANT BALANCE BROADCAST - بث الرصيد الجديد فوراً للمحافظ
       try {
@@ -3630,18 +3745,10 @@ class NetworkNode {
       }
 
       // Check for nonce reuse (double spending attempt)
-      // ✅ تنظيف الـ nonces القديمة أولاً (أكثر من 5 دقائق)
-      const nowCleanup = Date.now();
-      for (const [key, val] of this.activeNonces.entries()) {
-        if (nowCleanup - val.timestamp > 300000) {
-          this.activeNonces.delete(key);
-        }
-      }
-      
       const addressNonceKey = `${fromAddress}:${nonce}`;
       if (this.activeNonces.has(addressNonceKey)) {
-        console.log(`⚠️ Nonce ${nonce} already used for ${fromAddress.slice(0,10)}, allowing (broadcast phase)`);
-        // لا نرمي خطأ — المعاملة أصلاً نجحت، هذا فقط broadcast
+        // Silent - reduce console spam
+        throw new Error('Double spending attempt detected - nonce already in use');
       }
 
       // Check for rapid successive transactions from same address (potential attack)
@@ -4548,29 +4655,25 @@ class NetworkNode {
       blockInfo = this.blockchain.getBlockByHash(tx.blockHash);
     }
 
-    // 🔐 gasPrice = 1 Gwei, gasLimit = 21000 → fee = 0.000021 ACCESS بالضبط
-    const GAS_PRICE_WEI = 1000000000; // 1 Gwei
+    // 🔐 حساب gasPrice الصحيح من رسوم ثابتة 0.00002 ACCESS
+    const FIXED_GAS_FEE = 0.00002;
     const GAS_LIMIT = 21000;
+    const gasPriceWei = Math.floor(FIXED_GAS_FEE * 1e18 / GAS_LIMIT);
 
     return {
       hash: tx.txId,
       from: tx.fromAddress,
       to: tx.toAddress,
       value: '0x' + Math.floor(tx.amount * 1e18).toString(16),
-      gas: '0x' + GAS_LIMIT.toString(16),
-      gasPrice: '0x' + GAS_PRICE_WEI.toString(16), // ✅ 1 Gwei
-      maxFeePerGas: '0x' + GAS_PRICE_WEI.toString(16), // ✅ EIP-1559: 1 Gwei
-      maxPriorityFeePerGas: '0x0', // ✅ EIP-1559: no tip
-      type: '0x2', // ✅ EIP-1559 transaction type
+      gas: '0x' + GAS_LIMIT.toString(16), // ✅ gasLimit صحيح = 21000
+      gasPrice: '0x' + gasPriceWei.toString(16), // ✅ gasPrice صحيح بـ Wei
       blockNumber: blockInfo ? '0x' + blockInfo.index.toString(16) : null,
       blockHash: tx.blockHash,
       transactionIndex: blockInfo ? '0x0' : null, // قد تحتاج إلى حساب هذا بشكل صحيح
       confirmations: blockInfo ? this.blockchain.chain.length - blockInfo.index : 0,
       timestamp: tx.timestamp,
       input: tx.data || '0x', // إضافة حقل الإدخال إذا كان موجوداً
-      nonce: tx.nonce || '0x0', // إضافة حقل nonce إذا كان موجوداً
-      accessList: [], // ✅ EIP-1559 required field
-      chainId: '0x5968' // ✅ Chain ID 22888
+      nonce: tx.nonce || '0x0' // إضافة حقل nonce إذا كان موجوداً
     };
   }
 
@@ -4610,7 +4713,7 @@ class NetworkNode {
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
         gasUsed: '0x0',
-        baseFeePerGas: '0x3b9aca00',
+        baseFeePerGas: '0x38c42e18',
         extraData: '0x',
         logsBloom: '0x' + '0'.repeat(512),
         receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4655,7 +4758,7 @@ class NetworkNode {
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
         gasUsed: '0x0',
-        baseFeePerGas: '0x3b9aca00',
+        baseFeePerGas: '0x38c42e18',
         extraData: '0x',
         logsBloom: '0x' + '0'.repeat(512),
         receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4703,7 +4806,9 @@ class NetworkNode {
       miner: '0x0000000000000000000000000000000000000000',
       gasLimit: '0x1c9c380',
       gasUsed: isVirtualBlock ? '0x0' : '0x5208',
-      baseFeePerGas: '0x3b9aca00',
+      // ✅ EIP-1559: baseFeePerGas مطلوب لـ MetaMask لحساب رسوم الغاز
+      baseFeePerGas: '0x38c42e18',
+      // ✅ حقول إضافية مطلوبة للتوافق الكامل
       extraData: '0x',
       logsBloom: '0x' + '0'.repeat(512),
       receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -5501,11 +5606,44 @@ class NetworkNode {
       // استخراج function selector (أول 4 bytes)
       const functionSelector = data.substring(0, 10);
 
-      // ✅ للعناوين العادية (EOA) - إرجاع 0x فارغ مثل Ethereum الحقيقي
-      // على EVM الحقيقي: CALL لعنوان بدون كود = نجاح + returndata فارغ
-      // هذا يجعل MetaMask يفهم أن العنوان محفظة عادية وليس عقد ذكي
+      // ✅ للعناوين العادية (EOA) - إرجاع قيم مناسبة بدلاً من revert
+      // هذا يجعل MetaMask يفهم أن العنوان محفظة عادية وليس عقد
       if (!isContract && !isNativeTokenAddress) {
-        // لا logging مفرط - فقط نُرجع 0x مثل Ethereum
+        // 🔧 FIX: لـ supportsInterface (ERC-165) نرجع false
+        if (functionSelector === '0x01ffc9a7') {
+          console.log(`✅ eth_call supportsInterface on EOA ${to} - returning false`);
+          return '0x0000000000000000000000000000000000000000000000000000000000000000'; // false
+        }
+        
+        // 🔧 FIX: لـ name() نرجع فارغ
+        if (functionSelector === '0x06fdde03') {
+          console.log(`✅ eth_call name() on EOA ${to} - returning empty`);
+          return '0x';
+        }
+        
+        // 🔧 FIX: لـ symbol() نرجع فارغ
+        if (functionSelector === '0x95d89b41') {
+          console.log(`✅ eth_call symbol() on EOA ${to} - returning empty`);
+          return '0x';
+        }
+        
+        // 🔧 FIX: لـ decimals() نرجع فارغ
+        if (functionSelector === '0x313ce567') {
+          console.log(`✅ eth_call decimals() on EOA ${to} - returning empty`);
+          return '0x';
+        }
+        
+        // 🔧 FIX: لـ balanceOf نرجع الرصيد
+        if (functionSelector === '0x70a08231') {
+          const address = '0x' + data.substring(34, 74);
+          const balance = this.blockchain.getBalance(address);
+          const balanceInWei = Math.floor(balance * 1e18);
+          console.log(`✅ eth_call balanceOf on EOA ${to} for ${address} - returning ${balance}`);
+          return '0x' + balanceInWei.toString(16).padStart(64, '0');
+        }
+        
+        // أي استدعاء آخر على EOA - نرجع فارغ بدلاً من revert
+        console.log(`✅ eth_call on EOA ${to} with selector ${functionSelector} - returning empty`);
         return '0x';
       }
 

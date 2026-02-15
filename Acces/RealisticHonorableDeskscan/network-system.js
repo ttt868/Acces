@@ -78,7 +78,7 @@ class Transaction {
     this.fromAddress = fromAddress;
     this.toAddress = toAddress;
     this.amount = amount;
-    this.gasPrice = gasPrice || 0.000021; // رسوم الغاز الافتراضية
+    this.gasPrice = gasPrice || 0.00002; // رسوم الغاز الافتراضية
     this.gasFee = this.gasPrice; // الرسوم المطبقة
     this.timestamp = timestamp;
     this.signature = null;
@@ -92,7 +92,7 @@ class Transaction {
 
     // للمعاملات الداخلية من النظام، لا نحتاج رسوم غاز
     if (fromAddress && fromAddress.startsWith('0x') && toAddress && toAddress.startsWith('0x')) {
-      this.gasFee = gasPrice || 0.000021; // رسوم الغاز العادية
+      this.gasFee = gasPrice || 0.00002; // رسوم الغاز العادية
       this.internal = true; // معاملة داخلية
     }
   }
@@ -217,7 +217,7 @@ class AccessNetwork extends EventEmitter {
     this.storage = new EthereumStyleStorage();
     this.stateLoaded = false; // علم لتتبع تحميل State
 
-    this.gasPrice = 0.000021; // سعر الغاز = 1 Gwei × 21000 = 0.000021 ACCESS
+    this.gasPrice = 0.00002; // سعر الغاز
     this.maxGasPerBlock = 21000 * 1000; // الحد الأقصى للغاز في السجل
     this.blockInterval = 10000; // مدة السجل بالميلي ثانية
 
@@ -264,7 +264,7 @@ class AccessNetwork extends EventEmitter {
     this.hexChainId = '0x5968';
 
     // رسوم الشبكة والغاز - يتحكم بها مالك الشبكة فقط
-    this.baseGasFee = 0.000021; // الرسوم الأساسية - لا يمكن للعقود تغييرها
+    this.baseGasFee = 0.00002; // الرسوم الأساسية - لا يمكن للعقود تغييرها
     this.gasPriceAdjustable = false; // 🔒 LOCKED: العقود لا تستطيع تغيير رسوم الغاز
     this.networkControlledGas = true; // الشبكة تتحكم بالكامل في رسوم الغاز
 
@@ -652,11 +652,7 @@ class AccessNetwork extends EventEmitter {
 
   async addTransaction(transaction) {
     // ⭐ التحقق من وجود hash موجود مسبقاً - استخدامه بدلاً من إنشاء hash جديد
-    // ✅ NONCE FIX: لا نعيد حساب nonce هنا - نحفظ الـ nonce الموجود إذا كان صحيحاً
-    const existingNonce = (transaction.nonce !== undefined && transaction.nonce !== null && !isNaN(transaction.nonce))
-      ? (typeof transaction.nonce === 'number' ? transaction.nonce : parseInt(transaction.nonce, 10))
-      : null;
-    const nonce = existingNonce !== null ? existingNonce : await this.getNonce(transaction.fromAddress);
+    const nonce = this.getNonce(transaction.fromAddress);
     const timestamp = transaction.timestamp || Date.now();
 
     // ⭐ إذا كان للمعاملة hash موجود، استخدمه (من قاعدة البيانات أو من خطوة سابقة)
@@ -678,10 +674,7 @@ class AccessNetwork extends EventEmitter {
     transaction.txId = singleHash;
     transaction.transactionHash = singleHash;
     transaction.id = singleHash;
-    // ✅ NONCE FIX: حفظ الـ nonce المحسوب (أو الموجود)
-    if (existingNonce === null) {
-      transaction.nonce = nonce; // فقط إذا لم يكن موجوداً مسبقاً
-    }
+    transaction.nonce = nonce;
     transaction.timestamp = timestamp;
 
     // تعريف txId للاستخدام في باقي الدالة
@@ -896,7 +889,7 @@ class AccessNetwork extends EventEmitter {
       const fromAddr = (transaction.fromAddress || transaction.from)?.toLowerCase();
       const toAddr = (transaction.toAddress || transaction.to)?.toLowerCase();
       const amount = parseFloat(transaction.amount) || 0;
-      const gasFee = parseFloat(transaction.gasFee || 0.000021) || 0;
+      const gasFee = parseFloat(transaction.gasFee || 0.00002) || 0;
       
       const isSystemTx = !fromAddr || 
                          fromAddr === '0x0000000000000000000000000000000000000000' ||
@@ -913,9 +906,7 @@ class AccessNetwork extends EventEmitter {
         // تحديث accountCache أيضاً
         if (this.accessStateStorage?.accountCache) {
           const weiBalance = Math.floor(newFrom * 1e18).toString();
-          // ✅ NONCE FIX: حفظ الـ nonce الحالي بدل إعادة ضبطه
-          const existingFromNonce = this.accessStateStorage.accountCache[fromAddr]?.nonce || 0;
-          this.accessStateStorage.accountCache[fromAddr] = { balance: weiBalance, nonce: existingFromNonce + 1 };
+          this.accessStateStorage.accountCache[fromAddr] = { balance: weiBalance, nonce: (transaction.nonce || 0) + 1 };
         }
         
         console.log(`⚡ DEDUCT: ${fromAddr.slice(0,10)}... ${currentFrom.toFixed(4)} - ${totalDeduct.toFixed(4)} = ${newFrom.toFixed(4)}`);
@@ -930,9 +921,7 @@ class AccessNetwork extends EventEmitter {
         // تحديث accountCache أيضاً
         if (this.accessStateStorage?.accountCache) {
           const weiBalance = Math.floor(newTo * 1e18).toString();
-          // ✅ NONCE FIX: حفظ الـ nonce الحالي للمستلم - لا نعيده للصفر
-          const existingToNonce = this.accessStateStorage.accountCache[toAddr]?.nonce || 0;
-          this.accessStateStorage.accountCache[toAddr] = { balance: weiBalance, nonce: existingToNonce };
+          this.accessStateStorage.accountCache[toAddr] = { balance: weiBalance, nonce: 0 };
         }
         
         console.log(`⚡ CREDIT: ${toAddr.slice(0,10)}... ${currentTo.toFixed(4)} + ${amount.toFixed(4)} = ${newTo.toFixed(4)}`);
@@ -1082,10 +1071,9 @@ class AccessNetwork extends EventEmitter {
             this.accessStateStorage.saveAccountCache().catch(() => {});
           }
           
-          // ✅ حفظ في ethereumStorage - حفظ nonce المرسل الحقيقي
+          // ✅ حفظ في ethereumStorage
           if (this.ethereumStorage) {
-            const senderNonce = (transaction.nonce || 0) + 1;
-            this.ethereumStorage.saveAccountState(normalizedFrom, { balance: newBalance, nonce: senderNonce }).catch(() => {});
+            this.ethereumStorage.saveAccountState(normalizedFrom, { balance: newBalance, nonce: 0 }).catch(() => {});
           }
           
           // إشعار بالتغيير
@@ -1111,19 +1099,16 @@ class AccessNetwork extends EventEmitter {
         // ✅ حفظ في accountCache
         if (this.accessStateStorage && this.accessStateStorage.accountCache) {
           const balanceInWei = Math.floor(newBalance * 1e18).toString();
-          // ✅ NONCE FIX: حفظ الـ nonce الحالي للمستلم - لا نعيده للصفر
-          const existingRecipientNonce = this.accessStateStorage.accountCache[normalizedTo]?.nonce || 0;
           this.accessStateStorage.accountCache[normalizedTo] = {
             balance: balanceInWei,
-            nonce: existingRecipientNonce
+            nonce: 0
           };
           this.accessStateStorage.saveAccountCache().catch(() => {});
         }
         
-        // ✅ حفظ في ethereumStorage - استخدام nonce من accountCache (بدون await لأن الدالة sync)
+        // ✅ حفظ في ethereumStorage
         if (this.ethereumStorage) {
-          const existingEthNonce = this.accessStateStorage?.accountCache?.[normalizedTo]?.nonce || 0;
-          this.ethereumStorage.saveAccountState(normalizedTo, { balance: newBalance, nonce: existingEthNonce }).catch(() => {});
+          this.ethereumStorage.saveAccountState(normalizedTo, { balance: newBalance, nonce: 0 }).catch(() => {});
         }
         
         // إشعار بالتغيير
@@ -1262,8 +1247,7 @@ class AccessNetwork extends EventEmitter {
 
         // ✅ حفظ فوري في ملفات Ethereum - non-blocking
         if (this.ethereumStorage) {
-          const senderNonceVal = this.accessStateStorage?.accountCache?.[normalizedFromAddress]?.nonce || 0;
-          this.ethereumStorage.saveAccountState(normalizedFromAddress, { balance: newFromBalance, nonce: parseInt(senderNonceVal) || 0 }).catch(() => {});
+          this.ethereumStorage.saveAccountState(normalizedFromAddress, { balance: newFromBalance, nonce: 0 }).catch(() => {});
         }
 
         // 🔔 Emit balance change event for WebSocket notifications
@@ -1337,11 +1321,9 @@ class AccessNetwork extends EventEmitter {
         // ✅ تحديث accountCache أيضاً للـ persistence (تجنب State Trie المعطل)
         if (this.accessStateStorage && this.accessStateStorage.accountCache) {
           const balanceInWei = Math.floor(newToBalance * 1e18).toString();
-          // ✅ NONCE FIX: حفظ الـ nonce الحالي للمستلم - لا نعيده للصفر
-          const existingToNonce = this.accessStateStorage.accountCache[normalizedToAddress]?.nonce || 0;
           this.accessStateStorage.accountCache[normalizedToAddress] = {
             balance: balanceInWei,
-            nonce: existingToNonce
+            nonce: 0
           };
           // ⚡ Non-blocking save - لا تنتظر لتجنب التعليق
           this.accessStateStorage.saveAccountCache().catch(e => 
@@ -1358,8 +1340,7 @@ class AccessNetwork extends EventEmitter {
 
         // ⚡ Non-blocking Ethereum storage save
         if (this.ethereumStorage) {
-          const recipientNonceVal = this.accessStateStorage?.accountCache?.[normalizedToAddress]?.nonce || 0;
-          this.ethereumStorage.saveAccountState(normalizedToAddress, { balance: newToBalance, nonce: parseInt(recipientNonceVal) || 0 }).catch(() => {});
+          this.ethereumStorage.saveAccountState(normalizedToAddress, { balance: newToBalance, nonce: 0 }).catch(() => {});
         }
 
         // 🔔 Emit balance change event for WebSocket notifications
@@ -1393,8 +1374,15 @@ class AccessNetwork extends EventEmitter {
       transaction.recipientUpdated = true;
       transaction.recipientBalanceConfirmed = true; // علامة إضافية للتأكيد
 
-      // 🔢 NONCE: الزيادة تتم في network-node.js (_nonceTracker) + DB COUNT
-      // لا نزيد هنا لتجنب الزيادة المزدوجة
+      // 🔢 ETHEREUM-STYLE: زيادة nonce في State Trie بعد معالجة المعاملة بنجاح
+      if (fromAddress && !isSystemTransaction && this.accessStateStorage) {
+        const normalizedFromAddress = fromAddress.toLowerCase();
+        try {
+          await this.accessStateStorage.incrementNonce(normalizedFromAddress);
+        } catch (nonceError) {
+          console.error(`❌ Failed to increment nonce for ${normalizedFromAddress}:`, nonceError);
+        }
+      }
 
       // ⚡ INSTANT WALLET NOTIFICATION - إشعار فوري للمحافظ المتصلة (fire-and-forget)
       if (this.instantWalletSync) {
@@ -1777,71 +1765,59 @@ class AccessNetwork extends EventEmitter {
   // 📌 eth_getTransactionCount يُرجع: عدد المعاملات المؤكدة + المعلقة من هذا العنوان
   // 📌 هذا هو الـ nonce التالي الذي يجب استخدامه في المعاملة القادمة
   // ⚠️ لا نحجز الـ nonce هنا - الحجز يتم فقط عند إرسال المعاملة فعلياً
-  async getNonce(address, includePending = false) {
+  async getNonce(address, reserveNonce = false) {
     if (!address) return 0;
 
+    // ⚠️ CRITICAL: توحيد العنوان بصرامة
     const normalizedAddress = address.toLowerCase();
 
+    // التحقق من صحة تنسيق العنوان
     if (!normalizedAddress.match(/^0x[a-f0-9]{40}$/)) {
       console.warn(`⚠️ Invalid address format for nonce: ${address}`);
       return 0;
     }
 
     try {
-      // ✅ NONCE MANAGER: أولاً التحقق من الذاكرة (Nonce Manager المركزي)
-      if (!this._nonceManager) {
-        this._nonceManager = new Map();
-      }
-
-      // 📁 قراءة عدد المعاملات من قاعدة البيانات (كل المعاملات، ليس فقط المؤكدة)
-      let dbNonce = 0;
+      // 📁 STEP 1: قراءة nonce من قاعدة البيانات (عدد المعاملات المؤكدة)
+      let confirmedNonce = 0;
+      
+      // محاولة قراءة من قاعدة البيانات أولاً (الأكثر دقة)
       try {
         const { pool } = await import('./db.js');
         const result = await pool.query(
-          `SELECT COUNT(*) as count FROM transactions WHERE LOWER(from_address) = $1`,
+          `SELECT COUNT(*) as count FROM transactions 
+           WHERE LOWER(from_address) = $1 
+           AND status IN ('confirmed', 'completed', 'success')`,
           [normalizedAddress]
         );
         if (result.rows[0]) {
-          dbNonce = parseInt(result.rows[0].count) || 0;
+          confirmedNonce = parseInt(result.rows[0].count) || 0;
         }
       } catch (dbError) {
+        // Fallback إلى State Trie
         if (this.accessStateStorage) {
           const accountData = await this.accessStateStorage.getAccount(normalizedAddress);
           if (accountData && accountData.nonce !== undefined) {
-            dbNonce = parseInt(accountData.nonce) || 0;
+            confirmedNonce = parseInt(accountData.nonce) || 0;
           }
         }
       }
 
-      // ✅ الـ nonce النهائي = أعلى قيمة بين DB والذاكرة
-      const memoryNonce = this._nonceManager.get(normalizedAddress) || 0;
-      const nextNonce = Math.max(dbNonce, memoryNonce);
+      // 📦 STEP 2: لا نحتاج لحساب pendingCount لأن المعاملات تُحفظ فوراً في قاعدة البيانات
+      // المعاملات تُحفظ مباشرة عند الإرسال، لذا confirmedNonce يشملها بالفعل
+      
+      // 🔢 STEP 3: الـ nonce التالي = عدد المعاملات المحفوظة في قاعدة البيانات
+      // هذا هو أسلوب Ethereum الفعلي: nonce = عدد المعاملات المرسلة من هذا العنوان
+      const nextNonce = confirmedNonce;
 
-      // ✅ حساب pending transactions
-      let pendingCount = 0;
-      if (includePending && this.pendingTransactions) {
-        pendingCount = this.pendingTransactions.filter(
-          tx => (tx.fromAddress || tx.from || '').toLowerCase() === normalizedAddress
-        ).length;
-      }
-
-      const finalNonce = nextNonce + pendingCount;
-
-      return finalNonce;
+      console.log(`🔢 ETHEREUM-STYLE getNonce for ${normalizedAddress.slice(0,10)}...: confirmed=${confirmedNonce}, next=${nextNonce}`);
+      
+      return nextNonce;
 
     } catch (error) {
       console.error('❌ Nonce lookup failed:', error);
       return 0;
     }
-  }
-
-  // ✅ NONCE MANAGER: تسجيل nonce بعد إرسال معاملة بنجاح
-  incrementNonce(address) {
-    if (!address) return;
-    const normalizedAddress = address.toLowerCase();
-    if (!this._nonceManager) this._nonceManager = new Map();
-    const current = this._nonceManager.get(normalizedAddress) || 0;
-    this._nonceManager.set(normalizedAddress, current + 1);
   }
 
   // دالة إنشاء hash موحدة للمعاملات - نفس المنطق في كل مكان
