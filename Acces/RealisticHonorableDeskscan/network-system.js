@@ -652,7 +652,11 @@ class AccessNetwork extends EventEmitter {
 
   async addTransaction(transaction) {
     // ⭐ التحقق من وجود hash موجود مسبقاً - استخدامه بدلاً من إنشاء hash جديد
-    const nonce = this.getNonce(transaction.fromAddress);
+    // ✅ NONCE FIX: لا نعيد حساب nonce هنا - نحفظ الـ nonce الموجود إذا كان صحيحاً
+    const existingNonce = (transaction.nonce !== undefined && transaction.nonce !== null && !isNaN(transaction.nonce))
+      ? (typeof transaction.nonce === 'number' ? transaction.nonce : parseInt(transaction.nonce, 10))
+      : null;
+    const nonce = existingNonce !== null ? existingNonce : await this.getNonce(transaction.fromAddress);
     const timestamp = transaction.timestamp || Date.now();
 
     // ⭐ إذا كان للمعاملة hash موجود، استخدمه (من قاعدة البيانات أو من خطوة سابقة)
@@ -674,7 +678,10 @@ class AccessNetwork extends EventEmitter {
     transaction.txId = singleHash;
     transaction.transactionHash = singleHash;
     transaction.id = singleHash;
-    transaction.nonce = nonce;
+    // ✅ NONCE FIX: حفظ الـ nonce المحسوب (أو الموجود)
+    if (existingNonce === null) {
+      transaction.nonce = nonce; // فقط إذا لم يكن موجوداً مسبقاً
+    }
     transaction.timestamp = timestamp;
 
     // تعريف txId للاستخدام في باقي الدالة
@@ -906,7 +913,9 @@ class AccessNetwork extends EventEmitter {
         // تحديث accountCache أيضاً
         if (this.accessStateStorage?.accountCache) {
           const weiBalance = Math.floor(newFrom * 1e18).toString();
-          this.accessStateStorage.accountCache[fromAddr] = { balance: weiBalance, nonce: (transaction.nonce || 0) + 1 };
+          // ✅ NONCE FIX: حفظ الـ nonce الحالي بدل إعادة ضبطه
+          const existingFromNonce = this.accessStateStorage.accountCache[fromAddr]?.nonce || 0;
+          this.accessStateStorage.accountCache[fromAddr] = { balance: weiBalance, nonce: existingFromNonce + 1 };
         }
         
         console.log(`⚡ DEDUCT: ${fromAddr.slice(0,10)}... ${currentFrom.toFixed(4)} - ${totalDeduct.toFixed(4)} = ${newFrom.toFixed(4)}`);
@@ -921,7 +930,9 @@ class AccessNetwork extends EventEmitter {
         // تحديث accountCache أيضاً
         if (this.accessStateStorage?.accountCache) {
           const weiBalance = Math.floor(newTo * 1e18).toString();
-          this.accessStateStorage.accountCache[toAddr] = { balance: weiBalance, nonce: 0 };
+          // ✅ NONCE FIX: حفظ الـ nonce الحالي للمستلم - لا نعيده للصفر
+          const existingToNonce = this.accessStateStorage.accountCache[toAddr]?.nonce || 0;
+          this.accessStateStorage.accountCache[toAddr] = { balance: weiBalance, nonce: existingToNonce };
         }
         
         console.log(`⚡ CREDIT: ${toAddr.slice(0,10)}... ${currentTo.toFixed(4)} + ${amount.toFixed(4)} = ${newTo.toFixed(4)}`);
@@ -1071,9 +1082,10 @@ class AccessNetwork extends EventEmitter {
             this.accessStateStorage.saveAccountCache().catch(() => {});
           }
           
-          // ✅ حفظ في ethereumStorage
+          // ✅ حفظ في ethereumStorage - حفظ nonce المرسل الحقيقي
           if (this.ethereumStorage) {
-            this.ethereumStorage.saveAccountState(normalizedFrom, { balance: newBalance, nonce: 0 }).catch(() => {});
+            const senderNonce = (transaction.nonce || 0) + 1;
+            this.ethereumStorage.saveAccountState(normalizedFrom, { balance: newBalance, nonce: senderNonce }).catch(() => {});
           }
           
           // إشعار بالتغيير
@@ -1099,16 +1111,19 @@ class AccessNetwork extends EventEmitter {
         // ✅ حفظ في accountCache
         if (this.accessStateStorage && this.accessStateStorage.accountCache) {
           const balanceInWei = Math.floor(newBalance * 1e18).toString();
+          // ✅ NONCE FIX: حفظ الـ nonce الحالي للمستلم - لا نعيده للصفر
+          const existingRecipientNonce = this.accessStateStorage.accountCache[normalizedTo]?.nonce || 0;
           this.accessStateStorage.accountCache[normalizedTo] = {
             balance: balanceInWei,
-            nonce: 0
+            nonce: existingRecipientNonce
           };
           this.accessStateStorage.saveAccountCache().catch(() => {});
         }
         
-        // ✅ حفظ في ethereumStorage
+        // ✅ حفظ في ethereumStorage - استخدام nonce من accountCache (بدون await لأن الدالة sync)
         if (this.ethereumStorage) {
-          this.ethereumStorage.saveAccountState(normalizedTo, { balance: newBalance, nonce: 0 }).catch(() => {});
+          const existingEthNonce = this.accessStateStorage?.accountCache?.[normalizedTo]?.nonce || 0;
+          this.ethereumStorage.saveAccountState(normalizedTo, { balance: newBalance, nonce: existingEthNonce }).catch(() => {});
         }
         
         // إشعار بالتغيير
@@ -1374,15 +1389,8 @@ class AccessNetwork extends EventEmitter {
       transaction.recipientUpdated = true;
       transaction.recipientBalanceConfirmed = true; // علامة إضافية للتأكيد
 
-      // 🔢 ETHEREUM-STYLE: زيادة nonce في State Trie بعد معالجة المعاملة بنجاح
-      if (fromAddress && !isSystemTransaction && this.accessStateStorage) {
-        const normalizedFromAddress = fromAddress.toLowerCase();
-        try {
-          await this.accessStateStorage.incrementNonce(normalizedFromAddress);
-        } catch (nonceError) {
-          console.error(`❌ Failed to increment nonce for ${normalizedFromAddress}:`, nonceError);
-        }
-      }
+      // 🔢 NONCE: الزيادة تتم في network-node.js (_nonceTracker) + DB COUNT
+      // لا نزيد هنا لتجنب الزيادة المزدوجة
 
       // ⚡ INSTANT WALLET NOTIFICATION - إشعار فوري للمحافظ المتصلة (fire-and-forget)
       if (this.instantWalletSync) {

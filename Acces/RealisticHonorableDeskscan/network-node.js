@@ -1816,22 +1816,39 @@ class NetworkNode {
             // تصنيف المحافظ قبل المعالجة
             const walletClassification = await this.classifyWallets(txData.from, txData.to);
 
-            // ✅ NONCE AUTO-CORRECTION: تصحيح nonce تلقائياً إذا كان مكرراً
-            // مثل Ethereum: إذا nonce أقل من المتوقع → nonce too low
-            // لكن في شبكتنا: نصحح تلقائياً لتجنب مشاكل MetaMask
+            // ✅ NONCE LOCK: قفل لكل عنوان لمنع race condition
             if (!this._nonceTracker) this._nonceTracker = new Map();
+            if (!this._nonceLocks) this._nonceLocks = new Map();
+            
             const senderNonceAddr = txData.from.toLowerCase();
-            const expectedNonce = this._nonceTracker.get(senderNonceAddr) || 0;
-            const dbNonce = await this.blockchain.getNonce(senderNonceAddr, false);
-            const correctNonce = Math.max(expectedNonce, dbNonce);
             
-            const txNonce = typeof txData.nonce === 'string' && txData.nonce.startsWith('0x') 
-              ? parseInt(txData.nonce, 16) 
-              : parseInt(txData.nonce) || 0;
+            // انتظار فك القفل السابق (إن وجد)
+            while (this._nonceLocks.get(senderNonceAddr)) {
+              await new Promise(r => setTimeout(r, 50));
+            }
+            this._nonceLocks.set(senderNonceAddr, true);
             
-            if (txNonce < correctNonce) {
-              console.log(`🔧 NONCE AUTO-FIX: ${txNonce} → ${correctNonce} (was too low for ${senderNonceAddr.slice(0,10)})`);
-              txData.nonce = correctNonce;
+            try {
+              // قراءة nonce صحيح بأمان
+              const expectedNonce = this._nonceTracker.get(senderNonceAddr) || 0;
+              const dbNonce = await this.blockchain.getNonce(senderNonceAddr, false);
+              const correctNonce = Math.max(expectedNonce, dbNonce);
+              
+              const txNonce = typeof txData.nonce === 'string' && txData.nonce.startsWith('0x') 
+                ? parseInt(txData.nonce, 16) 
+                : parseInt(txData.nonce) || 0;
+              
+              if (txNonce < correctNonce) {
+                console.log(`🔧 NONCE AUTO-FIX: ${txNonce} → ${correctNonce} for ${senderNonceAddr.slice(0,10)}`);
+                txData.nonce = correctNonce;
+              }
+              
+              // ✅ زيادة الـ nonce فوراً في الذاكرة (قبل حتى معالجة المعاملة)
+              // هذا يمنع أي معاملة متزامنة من الحصول على نفس nonce
+              this._nonceTracker.set(senderNonceAddr, Math.max(correctNonce, txNonce) + 1);
+            } finally {
+              // فك القفل
+              this._nonceLocks.set(senderNonceAddr, false);
             }
 
             // Create transaction with validated data
@@ -1912,14 +1929,10 @@ class NetworkNode {
             // FIRST: Add to blockchain (سيتم خصم الرصيد هنا تلقائياً)
             const txHash = await Promise.resolve(this.blockchain.addTransaction(transaction));
 
-            // ✅ NONCE TRACKING: زيادة nonce بعد نجاح المعاملة
-            if (!this._nonceTracker) this._nonceTracker = new Map();
-            const senderAddr = txData.from.toLowerCase();
-            const currentTracked = this._nonceTracker.get(senderAddr) || 0;
-            this._nonceTracker.set(senderAddr, currentTracked + 1);
-            // زيادة nonce في blockchain أيضاً
+            // ✅ NONCE: الزيادة تمت مسبقاً في الـ lock section (قبل addTransaction)
+            // incrementNonce في blockchain للمزامنة مع الأنظمة الأخرى
             if (this.blockchain.incrementNonce) {
-              this.blockchain.incrementNonce(senderAddr);
+              this.blockchain.incrementNonce(txData.from.toLowerCase());
             }
 
             // ✅ TRUST WALLET FIX: حفظ المعاملة في cache فوراً للـ receipt
@@ -3384,8 +3397,8 @@ class NetworkNode {
 
         } catch (error) {
           console.error('Error calculating auto-nonce:', error);
-          // Fallback: استخدام nonce من البلوك تشين + timestamp
-          nonce = await this.blockchain.getNonce(txData.from) + Math.floor(Date.now() / 1000) % 1000;
+          // ✅ NONCE FIX: Fallback بسيط بدون إضافة عشوائية (تمنع فجوات)
+          nonce = await this.blockchain.getNonce(txData.from);
         }
       }
 
@@ -3415,11 +3428,12 @@ class NetworkNode {
       // والذي يقوم بتحديث الأرصدة - لذلك لا نحتاج لاستدعاء processTransactionBalances!
       const txHash = await this.blockchain.addTransaction(transaction);
 
-      // ✅ NONCE TRACKING: زيادة nonce بعد نجاح المعاملة
+      // ✅ NONCE TRACKING: زيادة nonce في الذاكرة + blockchain
       if (!this._nonceTracker) this._nonceTracker = new Map();
       const senderAddrNonce = txData.from.toLowerCase();
-      const currentTrackedNonce = this._nonceTracker.get(senderAddrNonce) || 0;
-      this._nonceTracker.set(senderAddrNonce, currentTrackedNonce + 1);
+      const dbNonceSend = await this.blockchain.getNonce(senderAddrNonce, false);
+      const memNonceSend = this._nonceTracker.get(senderAddrNonce) || 0;
+      this._nonceTracker.set(senderAddrNonce, Math.max(dbNonceSend, memNonceSend, nonce + 1));
       if (this.blockchain.incrementNonce) {
         this.blockchain.incrementNonce(senderAddrNonce);
       }
