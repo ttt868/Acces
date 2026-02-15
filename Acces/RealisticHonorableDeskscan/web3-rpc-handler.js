@@ -528,7 +528,7 @@ export async function handleWeb3RPC(request) {
         const fhPercentiles = params[2] || [];
         for (let i = 0; i < fhCount; i++) {
           fhBaseFees.push('0x3B9ACA00');
-          fhGasRatios.push('0x0');
+          fhGasRatios.push(0.0); // ✅ MUST be decimal float, NOT hex string
           fhRewards.push(fhPercentiles.map(() => '0x0'));
         }
         fhBaseFees.push('0x3B9ACA00');

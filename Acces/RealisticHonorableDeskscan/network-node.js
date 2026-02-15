@@ -2945,7 +2945,7 @@ class NetworkNode {
           const fhRewards = [];
           for (let i = 0; i < fhBlockCount; i++) {
             fhBaseFees.push('0x3B9ACA00'); // 1 Gwei
-            fhGasRatios.push('0x0');
+            fhGasRatios.push(0.0); // ✅ MUST be decimal float, NOT hex string
             fhRewards.push(fhRewardPercentiles.map(() => '0x0'));
           }
           fhBaseFees.push('0x3B9ACA00'); // next block baseFee
