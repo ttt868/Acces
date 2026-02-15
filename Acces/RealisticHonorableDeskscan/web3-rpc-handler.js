@@ -150,7 +150,7 @@ export async function handleWeb3RPC(request) {
         return {
           jsonrpc: '2.0',
           id: id,
-          result: '0x3B9ACA00' // 1 Gwei = 1,000,000,000 Wei
+          result: '0x3b9aca00' // 1 Gwei = 1,000,000,000 Wei
         };
 
       case 'eth_estimateGas':
@@ -483,7 +483,7 @@ export async function handleWeb3RPC(request) {
             size: '0x' + JSON.stringify(block).length.toString(16),
             gasLimit: '0x1c9c380',
             gasUsed: '0x5208',
-            baseFeePerGas: '0x3B9ACA00',
+            baseFeePerGas: '0x3b9aca00',
             timestamp: '0x' + Math.floor((block.timestamp || Date.now()) / 1000).toString(16),
             transactions: fullTx ? blockTransactions.map(tx => ({
               hash: tx.txId || tx.hash || '0x0',
@@ -527,11 +527,11 @@ export async function handleWeb3RPC(request) {
         const fhRewards = [];
         const fhPercentiles = params[2] || [];
         for (let i = 0; i < fhCount; i++) {
-          fhBaseFees.push('0x3B9ACA00');
+          fhBaseFees.push('0x3b9aca00');
           fhGasRatios.push(0.0); // ✅ MUST be decimal float, NOT hex string
           fhRewards.push(fhPercentiles.map(() => '0x0'));
         }
-        fhBaseFees.push('0x3B9ACA00');
+        fhBaseFees.push('0x3b9aca00');
         return {
           jsonrpc: '2.0',
           id: id,

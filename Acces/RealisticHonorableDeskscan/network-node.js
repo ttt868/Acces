@@ -2188,7 +2188,7 @@ class NetworkNode {
           // 🔐 GAS PRICE: 1 Gwei (1,000,000,000 Wei)
           // ✅ يضرب بالضبط: 21000 × 1 Gwei = 21,000,000,000,000 Wei = 0.000021 ACCESS
           // لا تقريب أو كسور - يعمل مع MetaMask و Trust Wallet بدون مشاكل
-          result = '0x3B9ACA00'; // 1 Gwei = 1,000,000,000 Wei
+          result = '0x3b9aca00'; // 1 Gwei = 1,000,000,000 Wei
           break;
 
         case 'eth_estimateGas':
@@ -2203,133 +2203,8 @@ class NetworkNode {
             gasEstimate = Math.min(gasEstimate, 200000);
           }
 
-          // دائماً إرجاع hex فقط - هذا ما تتوقعه MetaMask
+          // ✅ إرجاع hex فقط - مثل Ethereum/BSC/Polygon تماماً
           result = '0x' + gasEstimate.toString(16);
-          break;
-
-          // كشف Use Max بطريقة شاملة مثل شبكات العملات الأخرى
-          const isUseMaxRequest = txParams.from && (
-            txParams.value === 'max' ||
-            txParams.value === 'all' ||
-            txParams.useMax === true ||
-            txParams.sendAll === true ||
-            txParams.maxTransfer === true ||
-            txParams.sendEntireBalance === true ||
-            (typeof txParams.value === 'string' && (
-              txParams.value.toLowerCase().includes('max') ||
-              txParams.value.toLowerCase().includes('all') ||
-              txParams.value === '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-            ))
-          );
-
-          if (isUseMaxRequest) {
-            console.log(`🎯 USE MAX DETECTED - Processing like MetaMask/Trust Wallet for ${txParams.from}`);
-
-            // الحصول على الرصيد الدقيق مع مزامنة شاملة
-            let currentBalance = this.blockchain.getBalance(txParams.from);
-
-            try {
-              // مزامنة مع قاعدة البيانات للحصول على الرصيد الصحيح
-              const userResult = await pool.query('SELECT coins FROM users WHERE LOWER(wallet_address) = $1', [txParams.from.toLowerCase()]);
-              if (userResult.rows.length > 0) {
-                const dbBalance = parseFloat(userResult.rows[0].coins) || 0;
-                if (dbBalance > currentBalance) {
-                  this.blockchain.updateBalance(txParams.from, dbBalance);
-                  currentBalance = dbBalance;
-                  // مزامنة صامتة
-                }
-              }
-
-              // REMOVED: external_wallets dependency - Using State Trie only like Ethereum
-            } catch (dbError) {
-              console.warn('Balance sync warning during Use Max:', dbError.message);
-            }
-
-            // gasPrice = 1 Gwei × 21000 = 0.000021 ACCESS بالضبط
-            const GAS_FEE_ACCESS = 0.000021;
-            const exactGasFeeAccess = GAS_FEE_ACCESS;
-            const gasPriceWei = 1000000000; // 1 Gwei
-
-            console.log(`💰 USE MAX CALCULATION:`, {
-              totalBalance: currentBalance.toFixed(8) + ' ACCESS',
-              gasFee: exactGasFeeAccess.toFixed(8) + ' ACCESS',
-              gasEstimate: gasEstimate,
-              gasPriceGwei: gasPriceGwei
-            });
-
-            // حساب الحد الأقصى القابل للإرسال (مثل MetaMask تماماً)
-            let maxSendableAmount = 0;
-            let safetyBuffer = 0.00000001; // هامش أمان صغير جداً
-
-            if (currentBalance <= exactGasFeeAccess) {
-              // رصيد غير كافي لدفع رسوم الغاز
-              maxSendableAmount = 0;
-              console.log(`⚠️ Insufficient balance for gas fees. Balance: ${currentBalance.toFixed(8)}, Gas needed: ${exactGasFeeAccess.toFixed(8)}`);
-            } else {
-              // الحساب النهائي: الرصيد - رسوم الغاز - هامش الأمان
-              maxSendableAmount = currentBalance - exactGasFeeAccess - safetyBuffer;
-              maxSendableAmount = Math.max(0, maxSendableAmount);
-
-              // تقريب إلى 8 خانات عشرية (مثل أغلب شبكات العملات)
-              maxSendableAmount = Math.floor(maxSendableAmount * 100000000) / 100000000;
-
-              // فحص أمني أخير: التأكد أن المجموع لا يتجاوز الرصيد
-              const totalRequired = maxSendableAmount + exactGasFeeAccess;
-              if (totalRequired > currentBalance) {
-                maxSendableAmount = Math.max(0, currentBalance - exactGasFeeAccess - 0.00000002);
-                maxSendableAmount = Math.floor(maxSendableAmount * 100000000) / 100000000;
-                console.log(`🔧 AUTO-ADJUSTED for safety: ${maxSendableAmount.toFixed(8)} ACCESS`);
-              }
-            }
-
-            console.log(`✅ USE MAX READY:`, {
-              maxSendable: maxSendableAmount.toFixed(8) + ' ACCESS',
-              totalCost: (maxSendableAmount + exactGasFeeAccess).toFixed(8) + ' ACCESS',
-              remainingBalance: (currentBalance - maxSendableAmount - exactGasFeeAccess).toFixed(8) + ' ACCESS',
-              canSend: maxSendableAmount > 0
-            });
-
-            // إرجاع نتيجة متوافقة مع جميع المحافظ مثل BSC و Ethereum
-            result = {
-              // رقم الغاز المقدر (مطلوب أساسي)
-              gas: '0x' + gasEstimate.toString(16),
-              gasPrice: '0x' + gasPriceWei.toString(16),
-              
-              // معلومات Use Max (MetaMask compatible)
-              maxSendableValue: '0x' + Math.floor(maxSendableAmount * 1e18).toString(16),
-              maxSendableFormatted: maxSendableAmount.toFixed(8) + ' ACCESS',
-              
-              // معلومات الرصيد والرسوم
-              currentBalance: '0x' + Math.floor(currentBalance * 1e18).toString(16),
-              currentBalanceFormatted: currentBalance.toFixed(8) + ' ACCESS',
-              estimatedGasFee: exactGasFeeAccess.toFixed(8) + ' ACCESS',
-              estimatedGasFeeWei: '0x' + totalGasCostWei.toString(16),
-              
-              // معلومات النجاح
-              useMaxSupported: true,
-              canSendMax: maxSendableAmount > 0,
-              smartCalculation: true,
-              
-              // معلومات الشبكة
-              chainId: '0x5968',
-              networkName: 'Access Network',
-              gasLimit: gasEstimate,
-              
-              // تأكيد التوافق
-              walletCompatible: {
-                metamask: true,
-                trustWallet: true,
-                coinbaseWallet: true,
-                binanceSmartChain: true,
-                ethereum: true
-              },
-              
-              success: true
-            };
-          } else {
-            // تقدير غاز عادي للمعاملات التقليدية - إرجاع hex فقط مثل الشبكات الأخرى
-            result = '0x' + gasEstimate.toString(16);
-          }
           break;
 
         case 'wallet_calculateMaxTransfer':
@@ -2944,11 +2819,11 @@ class NetworkNode {
           const fhGasRatios = [];
           const fhRewards = [];
           for (let i = 0; i < fhBlockCount; i++) {
-            fhBaseFees.push('0x3B9ACA00'); // 1 Gwei
+            fhBaseFees.push('0x3b9aca00'); // 1 Gwei
             fhGasRatios.push(0.0); // ✅ MUST be decimal float, NOT hex string
             fhRewards.push(fhRewardPercentiles.map(() => '0x0'));
           }
-          fhBaseFees.push('0x3B9ACA00'); // next block baseFee
+          fhBaseFees.push('0x3b9aca00'); // next block baseFee
           result = {
             oldestBlock: '0x' + Math.max(0, fhNewestBlock - fhBlockCount + 1).toString(16),
             baseFeePerGas: fhBaseFees,
@@ -4735,7 +4610,7 @@ class NetworkNode {
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
         gasUsed: '0x0',
-        baseFeePerGas: '0x3B9ACA00',
+        baseFeePerGas: '0x3b9aca00',
         extraData: '0x',
         logsBloom: '0x' + '0'.repeat(512),
         receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4780,7 +4655,7 @@ class NetworkNode {
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
         gasUsed: '0x0',
-        baseFeePerGas: '0x3B9ACA00',
+        baseFeePerGas: '0x3b9aca00',
         extraData: '0x',
         logsBloom: '0x' + '0'.repeat(512),
         receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4828,7 +4703,7 @@ class NetworkNode {
       miner: '0x0000000000000000000000000000000000000000',
       gasLimit: '0x1c9c380',
       gasUsed: isVirtualBlock ? '0x0' : '0x5208',
-      baseFeePerGas: '0x3B9ACA00',
+      baseFeePerGas: '0x3b9aca00',
       extraData: '0x',
       logsBloom: '0x' + '0'.repeat(512),
       receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
