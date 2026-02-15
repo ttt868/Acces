@@ -1765,59 +1765,71 @@ class AccessNetwork extends EventEmitter {
   // 📌 eth_getTransactionCount يُرجع: عدد المعاملات المؤكدة + المعلقة من هذا العنوان
   // 📌 هذا هو الـ nonce التالي الذي يجب استخدامه في المعاملة القادمة
   // ⚠️ لا نحجز الـ nonce هنا - الحجز يتم فقط عند إرسال المعاملة فعلياً
-  async getNonce(address, reserveNonce = false) {
+  async getNonce(address, includePending = false) {
     if (!address) return 0;
 
-    // ⚠️ CRITICAL: توحيد العنوان بصرامة
     const normalizedAddress = address.toLowerCase();
 
-    // التحقق من صحة تنسيق العنوان
     if (!normalizedAddress.match(/^0x[a-f0-9]{40}$/)) {
       console.warn(`⚠️ Invalid address format for nonce: ${address}`);
       return 0;
     }
 
     try {
-      // 📁 STEP 1: قراءة nonce من قاعدة البيانات (عدد المعاملات المؤكدة)
-      let confirmedNonce = 0;
-      
-      // محاولة قراءة من قاعدة البيانات أولاً (الأكثر دقة)
+      // ✅ NONCE MANAGER: أولاً التحقق من الذاكرة (Nonce Manager المركزي)
+      if (!this._nonceManager) {
+        this._nonceManager = new Map();
+      }
+
+      // 📁 قراءة عدد المعاملات من قاعدة البيانات (كل المعاملات، ليس فقط المؤكدة)
+      let dbNonce = 0;
       try {
         const { pool } = await import('./db.js');
         const result = await pool.query(
-          `SELECT COUNT(*) as count FROM transactions 
-           WHERE LOWER(from_address) = $1 
-           AND status IN ('confirmed', 'completed', 'success')`,
+          `SELECT COUNT(*) as count FROM transactions WHERE LOWER(from_address) = $1`,
           [normalizedAddress]
         );
         if (result.rows[0]) {
-          confirmedNonce = parseInt(result.rows[0].count) || 0;
+          dbNonce = parseInt(result.rows[0].count) || 0;
         }
       } catch (dbError) {
-        // Fallback إلى State Trie
         if (this.accessStateStorage) {
           const accountData = await this.accessStateStorage.getAccount(normalizedAddress);
           if (accountData && accountData.nonce !== undefined) {
-            confirmedNonce = parseInt(accountData.nonce) || 0;
+            dbNonce = parseInt(accountData.nonce) || 0;
           }
         }
       }
 
-      // 📦 STEP 2: لا نحتاج لحساب pendingCount لأن المعاملات تُحفظ فوراً في قاعدة البيانات
-      // المعاملات تُحفظ مباشرة عند الإرسال، لذا confirmedNonce يشملها بالفعل
-      
-      // 🔢 STEP 3: الـ nonce التالي = عدد المعاملات المحفوظة في قاعدة البيانات
-      // هذا هو أسلوب Ethereum الفعلي: nonce = عدد المعاملات المرسلة من هذا العنوان
-      const nextNonce = confirmedNonce;
+      // ✅ الـ nonce النهائي = أعلى قيمة بين DB والذاكرة
+      const memoryNonce = this._nonceManager.get(normalizedAddress) || 0;
+      const nextNonce = Math.max(dbNonce, memoryNonce);
 
-      console.log(`🔢 ETHEREUM-STYLE getNonce for ${normalizedAddress.slice(0,10)}...: confirmed=${confirmedNonce}, next=${nextNonce}`);
-      
-      return nextNonce;
+      // ✅ حساب pending transactions
+      let pendingCount = 0;
+      if (includePending && this.pendingTransactions) {
+        pendingCount = this.pendingTransactions.filter(
+          tx => (tx.fromAddress || tx.from || '').toLowerCase() === normalizedAddress
+        ).length;
+      }
+
+      const finalNonce = nextNonce + pendingCount;
+
+      return finalNonce;
 
     } catch (error) {
       console.error('❌ Nonce lookup failed:', error);
       return 0;
     }
+  }
+
+  // ✅ NONCE MANAGER: تسجيل nonce بعد إرسال معاملة بنجاح
+  incrementNonce(address) {
+    if (!address) return;
+    const normalizedAddress = address.toLowerCase();
+    if (!this._nonceManager) this._nonceManager = new Map();
+    const current = this._nonceManager.get(normalizedAddress) || 0;
+    this._nonceManager.set(normalizedAddress, current + 1);
   }
 
   // دالة إنشاء hash موحدة للمعاملات - نفس المنطق في كل مكان
