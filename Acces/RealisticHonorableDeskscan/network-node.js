@@ -3227,6 +3227,12 @@ class NetworkNode {
           throw new Error(`Method ${method} not supported. Supported methods include: eth_getBalance, eth_sendTransaction, eth_sendRawTransaction, eth_chainId, net_version, eth_blockNumber, and more.`);
       }
 
+      // 🔍 DEBUG: Log gas-related responses for MetaMask debugging
+      if (['eth_getBalance', 'eth_gasPrice', 'eth_estimateGas', 'eth_feeHistory', 'eth_maxPriorityFeePerGas'].includes(method)) {
+        const resultStr = typeof result === 'string' ? result : JSON.stringify(result);
+        console.log(`📤 RPC RESPONSE: ${method} → ${resultStr?.substring(0, 200)}`);
+      }
+
       return {
         jsonrpc: '2.0',
         result: result,
