@@ -17,7 +17,7 @@
         <div class="notification-content">
           <i class="fas ${type === 'success' ? 'fa-check' : type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
           <p>${message}</p>
-          <button class="close-btn"><i class="fas fa-times"></i></button>
+          <span class="close-btn"><i class="fas fa-times"></i></span>
         </div>
       `;
       document.body.appendChild(notification);

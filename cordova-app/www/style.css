@@ -4834,7 +4834,7 @@ html.dark-theme #regenerate-wallet,
   text-shadow: 0 4px 8px rgba(107, 165, 231, 0.25);
 }
 
-.dark-theme button:not(.action-btn):not(.toggle-activity-btn):not(.google-signin-button):not(.Transfer-btn):not(.kyc-submit-btn):not(.chat-send-btn):not(.pin-key):not(.pin-modal-close) {
+.dark-theme button:not(.action-btn):not(.toggle-activity-btn):not(.google-signin-button):not(.Transfer-btn):not(.kyc-submit-btn):not(.chat-send-btn):not(.pin-key):not(.pin-modal-close):not(.close-btn) {
   background-color: #333;
   color: #f5f5f5;
   border: 1px solid #444;
@@ -4964,7 +4964,8 @@ body, input, select, button, .card, .sidebar, .stat-card {
 .notification-content {
   background-color: var(--card-background);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   padding: 15px;
   display: flex;
   align-items: center;
@@ -4981,12 +4982,36 @@ body, input, select, button, .card, .sidebar, .stat-card {
 }
 
 .notification .close-btn {
-  background: none;
-  border: none;
-  color: var(--light-text);
-  cursor: pointer;
-  padding: 0;
-  font-size: 14px;
+  all: unset !important;
+  cursor: pointer !important;
+  color: var(--light-text) !important;
+  font-size: 14px !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  outline: none !important;
+  overflow: visible !important;
+  position: static !important;
+}
+
+.notification .close-btn::before,
+.notification .close-btn::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.notification .close-btn:hover {
+  box-shadow: none !important;
+  transform: none !important;
+  background: transparent !important;
 }
 
 .notification.success i {

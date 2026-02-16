@@ -12948,7 +12948,7 @@ if (totalCost > (currentBalance + precision)) {
         const messagePara = document.createElement('p');
         messagePara.textContent = translatedMessage;
         
-        const closeBtnBonus = document.createElement('button');
+        const closeBtnBonus = document.createElement('span');
         closeBtnBonus.className = 'close-btn';
         const closeIconBonus = document.createElement('i');
         closeIconBonus.className = 'fas fa-times';
@@ -14389,7 +14389,7 @@ window.cancelProfileChanges = cancelProfileChanges;
     const messagePara = document.createElement('p');
     messagePara.textContent = message;
     
-    const closeBtnNotif = document.createElement('button');
+    const closeBtnNotif = document.createElement('span');
     closeBtnNotif.className = 'close-btn';
     const closeIconNotif = document.createElement('i');
     closeIconNotif.className = 'fas fa-times';
