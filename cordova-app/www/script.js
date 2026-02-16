@@ -12658,6 +12658,12 @@ if (totalCost > (currentBalance + precision)) {
 
       // Connect to WebSocket for presence tracking
       if (currentUser.id) {
+        // 🌐 Sync detected device language to database for notifications
+        const detectedLang = localStorage.getItem('preferredLanguage');
+        if (detectedLang) {
+          saveLanguageToDatabase(detectedLang);
+        }
+        
         connectPresenceWebSocket(currentUser.id);
         // Load processing history when restoring session
         addProcessingHistoryEntry();
@@ -12853,7 +12859,8 @@ if (totalCost > (currentBalance + precision)) {
         coins: 0,
         processingActive: false,
         referrerCode: referrerCode,
-        privacyAccepted: user.acceptedPrivacyPolicy || false
+        privacyAccepted: user.acceptedPrivacyPolicy || false,
+        language: localStorage.getItem('preferredLanguage') || 'en'
       };
 
       console.log('📦 User data being sent to server:', userData);

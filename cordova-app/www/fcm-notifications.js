@@ -29,23 +29,42 @@
     pl: { newTransaction: 'Otrzymano nową transakcję', fromLabel: 'Od', amountLabel: 'Kwota' }
   };
 
-  // ✅ Re-engagement notification translations (same as re-engagement-notifications.js)
+  // ✅ Re-engagement notification translations (honest activity-inactive messages)
   const REENGAGEMENT_TRANSLATIONS = {
-    en: { sessionReady: 'Your session is ready! Tap to start a new activity.', welcomeBack: 'Welcome back! 👋', missYou: 'We miss you! 💫' },
-    ar: { sessionReady: 'جلستك جاهزة! اضغط لبدء نشاط جديد.', welcomeBack: 'مرحباً بعودتك! 👋', missYou: 'نفتقدك! 💫' },
-    fr: { sessionReady: 'Votre session est prête ! Appuyez pour démarrer.', welcomeBack: 'Bon retour ! 👋', missYou: 'Vous nous manquez ! 💫' },
-    de: { sessionReady: 'Ihre Sitzung ist bereit! Tippen Sie zum Starten.', welcomeBack: 'Willkommen zurück! 👋', missYou: 'Wir vermissen dich! 💫' },
-    es: { sessionReady: '¡Tu sesión está lista! Toca para iniciar.', welcomeBack: '¡Bienvenido de nuevo! 👋', missYou: '¡Te extrañamos! 💫' },
-    tr: { sessionReady: 'Oturumunuz hazır! Başlatmak için dokunun.', welcomeBack: 'Tekrar hoş geldiniz! 👋', missYou: 'Sizi özledik! 💫' },
-    ru: { sessionReady: 'Ваша сессия готова! Нажмите, чтобы начать.', welcomeBack: 'С возвращением! 👋', missYou: 'Мы скучаем по вам! 💫' },
-    zh: { sessionReady: '您的会话已准备就绪！点击开始。', welcomeBack: '欢迎回来！👋', missYou: '我们想念您！💫' },
-    ja: { sessionReady: 'セッションの準備ができました！タップして開始。', welcomeBack: 'おかえりなさい！👋', missYou: 'お待ちしておりました！💫' },
-    ko: { sessionReady: '세션이 준비되었습니다! 탭하여 시작하세요.', welcomeBack: '다시 오신 것을 환영합니다! 👋', missYou: '보고 싶었어요! 💫' },
-    pt: { sessionReady: 'Sua sessão está pronta! Toque para iniciar.', welcomeBack: 'Bem-vindo de volta! 👋', missYou: 'Sentimos sua falta! 💫' },
-    hi: { sessionReady: 'आपका सत्र तैयार है! शुरू करने के लिए टैप करें।', welcomeBack: 'वापसी पर स्वागत है! 👋', missYou: 'हम आपको याद करते हैं! 💫' },
-    it: { sessionReady: 'La tua sessione è pronta! Tocca per iniziare.', welcomeBack: 'Bentornato! 👋', missYou: 'Ci manchi! 💫' },
-    id: { sessionReady: 'Sesi Anda siap! Ketuk untuk memulai.', welcomeBack: 'Selamat datang kembali! 👋', missYou: 'Kami rindu Anda! 💫' },
-    pl: { sessionReady: 'Twoja sesja jest gotowa! Dotknij, aby rozpocząć.', welcomeBack: 'Witaj ponownie! 👋', missYou: 'Tęsknimy za Tobą! 💫' }
+    en: { sessionReady: 'Your activity session is inactive. Start now to collect your bonuses!', welcomeBack: 'You haven\'t been active in a while. Your bonuses are waiting!', missYou: 'Your activity has been paused for days. Resume to keep your progress!' },
+    ar: { sessionReady: 'نشاطك غير فعّال. ابدأ الآن لجمع نقاطك!', welcomeBack: 'لم تكن نشطاً منذ فترة. نقاطك بانتظارك!', missYou: 'نشاطك متوقف منذ أيام. استأنف للحفاظ على تقدمك!' },
+    fr: { sessionReady: 'Votre session d\'activité est inactive. Commencez pour collecter vos bonus !', welcomeBack: 'Vous n\'avez pas été actif depuis un moment. Vos bonus vous attendent !', missYou: 'Votre activité est en pause depuis des jours. Reprenez pour garder votre progression !' },
+    de: { sessionReady: 'Ihre Aktivitätssitzung ist inaktiv. Starten Sie jetzt und sammeln Sie Ihre Boni!', welcomeBack: 'Sie waren eine Weile nicht aktiv. Ihre Boni warten auf Sie!', missYou: 'Ihre Aktivität ist seit Tagen pausiert. Machen Sie weiter!' },
+    es: { sessionReady: 'Tu sesión de actividad está inactiva. ¡Empieza ahora y recoge tus bonos!', welcomeBack: 'No has estado activo en un tiempo. ¡Tus bonos te esperan!', missYou: 'Tu actividad está pausada hace días. ¡Reanuda para mantener tu progreso!' },
+    tr: { sessionReady: 'Aktivite oturumunuz aktif değil. Bonuslarınızı toplamak için başlayın!', welcomeBack: 'Bir süredir aktif olmadınız. Bonuslarınız bekliyor!', missYou: 'Aktiviteniz günlerdir duraklatıldı. İlerlemenizi korumak için devam edin!' },
+    ru: { sessionReady: 'Ваша сессия активности неактивна. Начните и соберите свои бонусы!', welcomeBack: 'Вы давно не были активны. Ваши бонусы ждут!', missYou: 'Ваша активность приостановлена уже несколько дней. Продолжайте!' },
+    zh: { sessionReady: '您的活动会话未激活。立即开始领取您的奖金！', welcomeBack: '您已有一段时间未活跃。您的奖金在等您！', missYou: '您的活动已暂停多天。继续保持您的进度！' },
+    ja: { sessionReady: 'アクティビティセッションが非アクティブです。今すぐ始めてボーナスを集めましょう！', welcomeBack: 'しばらくアクティブではありません。ボーナスが待っています！', missYou: 'アクティビティが数日間停止中です。進捗を維持するために再開しましょう！' },
+    ko: { sessionReady: '활동 세션이 비활성 상태입니다. 지금 시작하여 보너스를 모으세요!', welcomeBack: '한동안 활동하지 않았습니다. 보너스가 기다리고 있습니다!', missYou: '활동이 며칠째 중단되었습니다. 진행 상황을 유지하려면 계속하세요!' },
+    pt: { sessionReady: 'Sua sessão de atividade está inativa. Comece agora e colete seus bônus!', welcomeBack: 'Você não esteve ativo por um tempo. Seus bônus estão esperando!', missYou: 'Sua atividade está pausada há dias. Retome para manter seu progresso!' },
+    hi: { sessionReady: 'आपका गतिविधि सत्र निष्क्रिय है। अभी शुरू करें और अपने बोनस इकट्ठा करें!', welcomeBack: 'आप कुछ समय से सक्रिय नहीं हैं। आपके बोनस इंतजार कर रहे हैं!', missYou: 'आपकी गतिविधि कई दिनों से रुकी है। अपनी प्रगति बनाए रखने के लिए फिर से शुरू करें!' },
+    it: { sessionReady: 'La tua sessione di attività è inattiva. Inizia ora e raccogli i tuoi bonus!', welcomeBack: 'Non sei stato attivo per un po\'. I tuoi bonus ti aspettano!', missYou: 'La tua attività è in pausa da giorni. Riprendi per mantenere il tuo progresso!' },
+    id: { sessionReady: 'Sesi aktivitas Anda tidak aktif. Mulai sekarang dan kumpulkan bonus Anda!', welcomeBack: 'Anda belum aktif sejak lama. Bonus Anda menunggu!', missYou: 'Aktivitas Anda dijeda berhari-hari. Lanjutkan untuk menjaga kemajuan Anda!' },
+    pl: { sessionReady: 'Twoja sesja aktywności jest nieaktywna. Zacznij teraz i zbieraj swoje bonusy!', welcomeBack: 'Nie byłeś aktywny od jakiegoś czasu. Twoje bonusy czekają!', missYou: 'Twoja aktywność jest wstrzymana od dni. Kontynuuj, aby utrzymać swój postęp!' }
+  };
+
+  // ⚡ Boost reminder notification translations
+  const BOOST_TRANSLATIONS = {
+    en: { mid: 'Your session is running — activate Boost to multiply your bonuses!', end: 'Your session is nearly over. Activate Boost before it ends!' },
+    ar: { mid: 'جلستك قيد التشغيل — فعّل التعزيز لمضاعفة نقاطك!', end: 'جلستك قاربت على الانتهاء. فعّل التعزيز قبل فوات الأوان!' },
+    fr: { mid: 'Votre session est en cours — activez le Boost pour multiplier vos bonus !', end: 'Votre session se termine bientôt. Activez le Boost avant la fin !' },
+    de: { mid: 'Ihre Sitzung läuft — aktivieren Sie den Boost, um Ihre Boni zu vervielfachen!', end: 'Ihre Sitzung endet bald. Aktivieren Sie den Boost!' },
+    es: { mid: '¡Tu sesión está en curso — activa el Boost para multiplicar tus bonos!', end: '¡Tu sesión casi termina. Activa el Boost antes de que acabe!' },
+    tr: { mid: 'Oturumunuz devam ediyor — bonuslarınızı artırmak için Boost aktif edin!', end: 'Oturumunuz sona eriyor. Boost hemen aktif edin!' },
+    ru: { mid: 'Ваша сессия идёт — активируйте Буст для умножения бонусов!', end: 'Ваша сессия скоро закончится. Активируйте Буст!' },
+    zh: { mid: '会话进行中——激活加速以倍增您的奖金！', end: '会话即将结束。赶快激活加速！' },
+    ja: { mid: 'セッション進行中 — ブーストでボーナスを倍増させましょう！', end: 'セッションがまもなく終了します。ブーストを有効にしましょう！' },
+    ko: { mid: '세션 진행 중 — 부스트를 활성화하여 보너스를 늘리세요!', end: '세션이 곧 끝납니다. 부스트를 활성화하세요!' },
+    pt: { mid: 'Sua sessão está ativa — ative o Boost para multiplicar seus bônus!', end: 'Sua sessão está quase no fim. Ative o Boost agora!' },
+    hi: { mid: 'आपका सत्र चल रहा है — बूस्ट सक्रिय करें और बोनस बढ़ाएं!', end: 'सत्र समाप्त होने वाला है। अभी बूस्ट सक्रिय करें!' },
+    it: { mid: 'La sessione è in corso — attiva il Boost per moltiplicare i tuoi bonus!', end: 'La sessione sta per finire. Attiva il Boost ora!' },
+    id: { mid: 'Sesi Anda berjalan — aktifkan Boost untuk melipatgandakan bonus Anda!', end: 'Sesi hampir berakhir. Aktifkan Boost sekarang!' },
+    pl: { mid: 'Twoja sesja trwa — aktywuj Boost, aby zwielokrotnić swoje bonusy!', end: 'Sesja dobiega końca. Aktywuj Boost teraz!' }
   };
 
   // Get device language (like web)
@@ -66,6 +85,13 @@
     var lang = getDeviceLanguage();
     var texts = REENGAGEMENT_TRANSLATIONS[lang] || REENGAGEMENT_TRANSLATIONS['en'];
     return texts[key] || REENGAGEMENT_TRANSLATIONS['en'][key];
+  }
+
+  // Get boost reminder translation
+  function getBoostTranslation(progressPercent) {
+    var lang = getDeviceLanguage();
+    var texts = BOOST_TRANSLATIONS[lang] || BOOST_TRANSLATIONS['en'];
+    return parseInt(progressPercent) >= 75 ? texts.end : texts.mid;
   }
 
   // Wait for device ready
@@ -218,6 +244,12 @@
     } else if (data.type === 're-engagement' || data.type === 'reengagement') {
       // Re-engagement notification - translate locally
       body = getReengagementTranslation('sessionReady');
+    } else if (data.type === 'boost-reminder') {
+      // Boost reminder notification - translate locally
+      var progress = data.progressPercent || 50;
+      title = parseInt(progress) >= 75 ? '⏳' : '⚡';
+      title += ' ACCESS Network';
+      body = getBoostTranslation(progress);
     } else {
       // Use provided title/body
       title = payload.title || payload.notification?.title || 'Access Network';
