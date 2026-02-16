@@ -16,8 +16,9 @@ class UltraCacheSystem {
 
     // اتصال Redis مع إعادة محاولة تلقائية
     this.redis = new Redis({
-      host: "127.0.0.1",
-      port: 6379,
+      host: process.env.REDIS_HOST || "127.0.0.1",
+      port: parseInt(process.env.REDIS_PORT || "6379"),
+      password: process.env.REDIS_PASSWORD || "AccessRedis2026Secure",
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => Math.min(times * 200, 3000),
       lazyConnect: true,
@@ -165,6 +166,49 @@ class UltraCacheSystem {
           JSON.stringify(txData)
         );
       }
+    } catch (e) {}
+  }
+
+
+  // ========== Generic Cache (API Middleware) ==========
+  async get(key) {
+    this.stats.total++;
+    try {
+      if (this.connected) {
+        const data = await this.redis.get(this.prefix + key);
+        if (data) {
+          this.stats.hits++;
+          return data;
+        }
+      } else {
+        const cached = this.fallbackCache.get(key);
+        if (cached && Date.now() - cached.ts < (cached.ttl || this.defaultTTL) * 1000) {
+          this.stats.hits++;
+          return cached.data;
+        }
+      }
+    } catch (e) {}
+    this.stats.misses++;
+    return null;
+  }
+
+  async set(key, value, ttl) {
+    const seconds = ttl || this.defaultTTL;
+    try {
+      if (this.connected) {
+        await this.redis.setex(this.prefix + key, seconds, value);
+      } else {
+        this.fallbackCache.set(key, { data: value, ts: Date.now(), ttl: seconds });
+      }
+    } catch (e) {}
+  }
+
+  async delete(key) {
+    try {
+      if (this.connected) {
+        await this.redis.del(this.prefix + key);
+      }
+      this.fallbackCache.delete(key);
     } catch (e) {}
   }
 

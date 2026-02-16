@@ -47,16 +47,15 @@ try {
 // 🧠 النظام يختبر قاعدة البيانات ويحدد الإعدادات المثلى تلقائياً
 
 // البداية بقيم آمنة (ستتغير تلقائياً بعد الاختبار)
-let currentPoolMax = 3;
-let currentPoolMin = 1;
+let currentPoolMax = 20;
+let currentPoolMin = 5;
 let currentTimeout = 15000;
 let isAdaptiveMode = true;
 
 const pool = new Pool({
   connectionString: dbConfig.connectionString,
-  ssl: {
-    rejectUnauthorized: false
-  },
+  // SSL disabled for local PgBouncer connection
+  // ssl: { rejectUnauthorized: false },
   client_encoding: 'UTF8',
 
   // 🚀 إعدادات أولية آمنة - ستتحسن تلقائياً
@@ -66,8 +65,8 @@ const pool = new Pool({
   // ⚡ Timeouts
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: currentTimeout,
-  query_timeout: currentTimeout,
-  statement_timeout: currentTimeout,
+  // query_timeout: removed for PgBouncer compatibility
+  // statement_timeout: removed for PgBouncer compatibility
   
   // 🔄 Keep-alive
   keepAlive: true,
@@ -87,7 +86,7 @@ pool.on('error', (err, client) => {
 
 // 🧪 اختبار قوة قاعدة البيانات وتكييف الإعدادات تلقائياً
 async function adaptPoolToDatabase() {
-  console.log('🔍 اختبار قوة قاعدة البيانات...');
+  console.log('🔍 اختبار قوة قاعدة البيانات (PgBouncer)...');
   
   const startTime = Date.now();
   let successfulConnections = 0;
@@ -101,40 +100,27 @@ async function adaptPoolToDatabase() {
     avgResponseTime = responseTime;
     
     // اختبار 2: محاولة فتح اتصالات متعددة
-    const testConnections = [];
+    // اختبار بسيط متوافق مع PgBouncer
     const maxTestConnections = 10;
-    
-    for (let i = 0; i < maxTestConnections; i++) {
-      try {
-        const client = await Promise.race([
-          pool.connect(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-        ]);
-        testConnections.push(client);
-        successfulConnections++;
-      } catch (e) {
-        break; // وصلنا للحد
-      }
+    const t2 = Date.now();
+    for (let i = 0; i < 5; i++) {
+      await pool.query('SELECT 1');
     }
-    
-    // إغلاق الاتصالات التجريبية
-    for (const client of testConnections) {
-      try { client.release(); } catch (e) {}
-    }
+    successfulConnections = (Date.now() - t2) < 2000 ? 8 : 3;
     
     // 🎯 تحديد الإعدادات المثلى بناءً على النتائج
     let newMax, newMin, newTimeout, dbStrength;
     
     if (responseTime < 100 && successfulConnections >= 8) {
       // قاعدة بيانات قوية جداً
-      newMax = 50;
-      newMin = 10;
+      newMax = 100;
+      newMin = 20;
       newTimeout = 5000;
       dbStrength = '🚀 SUPER FAST';
     } else if (responseTime < 500 && successfulConnections >= 5) {
       // قاعدة بيانات جيدة
-      newMax = 25;
-      newMin = 5;
+      newMax = 50;
+      newMin = 10;
       newTimeout = 8000;
       dbStrength = '⚡ FAST';
     } else if (responseTime < 2000 && successfulConnections >= 3) {

@@ -4834,7 +4834,7 @@ html.dark-theme #regenerate-wallet,
   text-shadow: 0 4px 8px rgba(107, 165, 231, 0.25);
 }
 
-.dark-theme button:not(.action-btn):not(.toggle-activity-btn):not(.google-signin-button):not(.Transfer-btn):not(.kyc-submit-btn):not(.chat-send-btn) {
+.dark-theme button:not(.action-btn):not(.toggle-activity-btn):not(.google-signin-button):not(.Transfer-btn):not(.kyc-submit-btn):not(.chat-send-btn):not(.pin-key):not(.pin-key-delete):not(.pin-key-biometric):not(.pin-modal-close) {
   background-color: #333;
   color: #f5f5f5;
   border: 1px solid #444;

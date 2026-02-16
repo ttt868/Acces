@@ -35,7 +35,7 @@ export const getDatabaseConfig = () => {
     query_timeout: 20000,
     keepAlive: true,
     keepAliveInitialDelayMillis: 10000,
-    statement_timeout: 20000
+    // statement_timeout: 20000 // disabled for PgBouncer
   };
 };
 

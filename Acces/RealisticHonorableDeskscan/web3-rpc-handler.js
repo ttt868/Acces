@@ -77,12 +77,9 @@ export async function handleWeb3RPC(request) {
           // ⚡ NETWORK-ONLY - قراءة مباشرة من Ledger State لضمان التحديث الفوري
           let balance = network.getBalance(address);
           
-          // ✅ METAMASK USE MAX FIX:
-          // خصم رسوم الغاز من الرصيد المعروض
-          const METAMASK_GAS_RESERVE = 0.00002;
-          if (balance > METAMASK_GAS_RESERVE) {
-            balance = balance - METAMASK_GAS_RESERVE;
-          }
+          // ✅ LEGACY GAS FIX: لا نخصم الغاز هنا
+          // MetaMask يحسب الغاز تلقائياً: max = balance - (gasLimit × gasPrice)
+          // gasLimit(21000) × gasPrice(952380953) ≈ 0.00002 ACCESS
           
           // 🔧 FIX: BigInt لتجنب 0.225336999999999904 عند MAX
           // تقريب لـ 8 أرقام ثم تحويل لـ Wei نظيف
@@ -111,32 +108,29 @@ export async function handleWeb3RPC(request) {
         try {
           const normalizedAddr = addr.toLowerCase();
           
-          // 📊 STEP 1: الحصول على nonce من State Trie (المعاملات المؤكدة)
+          // 📊 STEP 1: الحصول على nonce من blockchain.getNonce (يشمل DB + memory)
           let confirmedNonce = 0;
-          if (network.accessStateStorage) {
+          if (network.getNonce) {
+            confirmedNonce = await network.getNonce(normalizedAddr, tag === 'pending');
+          } else if (network.accessStateStorage) {
             const accountData = await network.accessStateStorage.getAccount(normalizedAddr);
             if (accountData && accountData.nonce !== undefined) {
               confirmedNonce = parseInt(accountData.nonce) || 0;
             }
           }
           
-          // 📦 STEP 2: عد المعاملات المعلقة من نفس العنوان
-          let pendingCount = 0;
-          for (const tx of network.pendingTransactions || []) {
-            if (tx.fromAddress && tx.fromAddress.toLowerCase() === normalizedAddr) {
-              pendingCount++;
-            }
+          // ✅ STEP 2: التحقق من _nonceTracker في network-node
+          if (networkNode && networkNode._nonceTracker) {
+            const trackedNonce = networkNode._nonceTracker.get(normalizedAddr) || 0;
+            confirmedNonce = Math.max(confirmedNonce, trackedNonce);
           }
           
-          // 🔢 STEP 3: Nonce النهائي = المؤكد + المعلق
-          const finalNonce = confirmedNonce + pendingCount;
-          
-          console.log(`🔢 eth_getTransactionCount for ${addr}: confirmed=${confirmedNonce}, pending=${pendingCount}, final=${finalNonce}`);
+          console.log(`🔢 eth_getTransactionCount for ${addr}: nonce=${confirmedNonce}`);
           
           return {
             jsonrpc: '2.0',
             id: id,
-            result: '0x' + finalNonce.toString(16)
+            result: '0x' + confirmedNonce.toString(16)
           };
         } catch (error) {
           console.error('❌ eth_getTransactionCount error:', error);
@@ -151,44 +145,30 @@ export async function handleWeb3RPC(request) {
         }
 
       case 'eth_gasPrice':
-        // 🔐 سعر الغاز المحسوب من رسوم ثابتة 0.00002 ACCESS
-        // gasPrice = 0.00002 ACCESS / 21000 gas = ~952380953 Wei
-        const FIXED_GAS_FEE_ETH = 0.00002;
-        const DEFAULT_GAS_LIMIT = 21000;
-        const gasPriceWei = Math.ceil(FIXED_GAS_FEE_ETH * 1e18 / DEFAULT_GAS_LIMIT);
+        // 🔐 GAS PRICE: 1 Gwei = 1,000,000,000 Wei
+        // 21000 × 1 Gwei = 0.000021 ACCESS (بالضبط بدون تقريب)
         return {
           jsonrpc: '2.0',
           id: id,
-          result: '0x' + gasPriceWei.toString(16) // 0x38c42e19
+          result: '0x3b9aca00' // 1 Gwei = 1,000,000,000 Wei
         };
 
       case 'eth_estimateGas':
-        // ✅ METAMASK USE MAX FIX (SIMPLE SOLUTION)
-        // بما أننا نخصم 0.00002 ACCESS من الرصيد في eth_getBalance،
-        // نرجع gasEstimate = 1 دائماً حتى MetaMask لا يحسب رسوم إضافية
-        // MetaMask سيحسب: gasCost = 1 × 952380953 Wei ≈ 0.000000001 ACCESS ≈ 0
+        // ✅ تقدير الغاز - بسيط ومتوافق مع جميع المحافظ
         const [transaction] = params;
+        let estimatedGas = 21000;
         
-        // للعقود الذكية فقط نرجع تقدير حقيقي
         if (transaction && transaction.data && transaction.data !== '0x' && transaction.data.length > 10) {
           const dataLength = Math.ceil((transaction.data.length - 2) / 2);
-          let gasEstimate = 21000 + (dataLength * 68);
-          gasEstimate = Math.min(gasEstimate, 200000);
-          console.log(`⛽ web3-rpc eth_estimateGas (contract): ${gasEstimate}`);
-          return {
-            jsonrpc: '2.0',
-            id: id,
-            result: '0x' + gasEstimate.toString(16)
-          };
-        } else {
-          // للتحويلات العادية: 21000 (قياسي)
-          console.log(`⛽ web3-rpc eth_estimateGas (transfer): 21000`);
-          return {
-            jsonrpc: '2.0',
-            id: id,
-            result: '0x5208' // 21000
-          };
+          estimatedGas = 21000 + (dataLength * 68);
+          estimatedGas = Math.min(estimatedGas, 200000);
         }
+        
+        return {
+          jsonrpc: '2.0',
+          id: id,
+          result: '0x' + estimatedGas.toString(16)
+        };
 
       case 'eth_maxTransferAmount':
       case 'wallet_calculateMaxSendable':
@@ -393,10 +373,9 @@ export async function handleWeb3RPC(request) {
           };
         }
 
-        // 🔐 حساب gasPrice الصحيح من رسوم ثابتة 0.00002 ACCESS
+        // 🔐 gasPrice = 1 Gwei, gasLimit = 21000 → fee = 0.000021 ACCESS بالضبط
         const GAS_LIMIT_TX = 21000;
-        const FIXED_GAS_FEE_TX = 0.00002;
-        const gasPriceWeiTx = Math.floor(FIXED_GAS_FEE_TX * 1e18 / GAS_LIMIT_TX);
+        const GAS_PRICE_WEI_TX = 1000000000; // 1 Gwei
 
         return {
           jsonrpc: '2.0',
@@ -411,7 +390,7 @@ export async function handleWeb3RPC(request) {
             to: foundTransaction.toAddress,
             value: '0x' + Math.floor(foundTransaction.amount * 1e18).toString(16),
             gas: '0x' + GAS_LIMIT_TX.toString(16), // ✅ gasLimit صحيح = 21000
-            gasPrice: '0x' + gasPriceWeiTx.toString(16), // ✅ gasPrice صحيح بـ Wei
+            gasPrice: '0x' + GAS_PRICE_WEI_TX.toString(16), // ✅ 1 Gwei
             input: '0x'
           }
         };
@@ -427,8 +406,9 @@ export async function handleWeb3RPC(request) {
           };
         }
 
-        // 🔐 gasUsed صحيح = 21000 (gasLimit)
+        // 🔐 gasPrice = 1 Gwei, gasLimit = 21000
         const RECEIPT_GAS_USED = 21000;
+        const RECEIPT_GAS_PRICE = 1000000000; // 1 Gwei
 
         return {
           jsonrpc: '2.0',
@@ -440,11 +420,14 @@ export async function handleWeb3RPC(request) {
             blockNumber: '0x' + (receiptTx.blockIndex || 0).toString(16),
             from: receiptTx.fromAddress,
             to: receiptTx.toAddress,
-            cumulativeGasUsed: '0x' + RECEIPT_GAS_USED.toString(16), // ✅ صحيح
-            gasUsed: '0x' + RECEIPT_GAS_USED.toString(16), // ✅ صحيح
+            cumulativeGasUsed: '0x' + RECEIPT_GAS_USED.toString(16),
+            gasUsed: '0x' + RECEIPT_GAS_USED.toString(16),
+            effectiveGasPrice: '0x' + RECEIPT_GAS_PRICE.toString(16), // ✅ 1 Gwei
             contractAddress: null,
             logs: [],
-            status: '0x1'
+            logsBloom: '0x' + '0'.repeat(512),
+            status: '0x1',
+            type: '0x2' // ✅ EIP-1559 transaction
           }
         };
 
@@ -500,6 +483,7 @@ export async function handleWeb3RPC(request) {
             size: '0x' + JSON.stringify(block).length.toString(16),
             gasLimit: '0x1c9c380',
             gasUsed: '0x5208',
+            baseFeePerGas: '0x3b9aca00',
             timestamp: '0x' + Math.floor((block.timestamp || Date.now()) / 1000).toString(16),
             transactions: fullTx ? blockTransactions.map(tx => ({
               hash: tx.txId || tx.hash || '0x0',
@@ -535,63 +519,45 @@ export async function handleWeb3RPC(request) {
           result: '0x' + sha3Hash
         };
 
-      case 'eth_feeHistory':
-        // Fee history for MetaMask & Trust Wallet - COMPLETE FIX
-        const [blockCount, newestBlock, rewardPercentiles] = params;
-        const requestedBlocks = Math.max(1, parseInt(blockCount) || 1);
-
-        // 🔐 سعر الغاز الصحيح = 0.00002 ACCESS / 21000 gas
-        const CORRECT_GAS_PRICE_HEX = '0x38c42e18'; // 952380952 Wei
-
-        // ✅ CRITICAL: Trust Wallet يتوقع baseFeePerGas بطول (blockCount + 1)
-        // و gasUsedRatio و reward بطول (blockCount)
-        const baseFeePerGas = [];
-        const gasUsedRatio = [];
-        const reward = [];
-
-        // املأ baseFeePerGas: يجب أن يكون طوله = blockCount + 1
-        for (let i = 0; i <= requestedBlocks; i++) {
-          baseFeePerGas.push(CORRECT_GAS_PRICE_HEX); // ✅ سعر غاز صحيح
-        }
-
-        // املأ gasUsedRatio و reward: يجب أن يكون طولهما = blockCount
-        for (let i = 0; i < requestedBlocks; i++) {
-          gasUsedRatio.push(0.5); // 50% استخدام
-
-          // reward: array من arrays حسب عدد percentiles المطلوبة
-          if (rewardPercentiles && Array.isArray(rewardPercentiles) && rewardPercentiles.length > 0) {
-            const rewardArray = [];
-            for (let j = 0; j < rewardPercentiles.length; j++) {
-              rewardArray.push(CORRECT_GAS_PRICE_HEX); // ✅ سعر غاز صحيح
-            }
-            reward.push(rewardArray);
-          } else {
-            // إذا لم يُطلب percentiles، نرسل قيمة واحدة
-            reward.push([CORRECT_GAS_PRICE_HEX]);
+      case 'eth_feeHistory': {
+        // ✅ EIP-1559: Realistic gasUsedRatio for MetaMask compatibility
+        const fhCount = parseInt(params[0], 16) || 4;
+        const fhPercentiles = params[2] || [];
+        const fhBaseFees = [];
+        const fhGasRatios = [];
+        const fhRewards = [];
+        
+        // Generate realistic gas usage (20-50% of block capacity)
+        for (let i = 0; i < fhCount; i++) {
+          fhBaseFees.push('0x3b9aca00');
+          // Simulate realistic block usage like Polygon: 0.2 - 0.5
+          const gasUsage = 0.2 + (Math.random() * 0.3);
+          fhGasRatios.push(gasUsage);
+          // Only add rewards if percentiles requested
+          if (fhPercentiles.length > 0) {
+            fhRewards.push(fhPercentiles.map(() => '0x0'));
           }
         }
-
-        // حساب oldestBlock
-        const chainLength = network.chain ? network.chain.length : 0;
-        const oldestBlockNumber = Math.max(0, chainLength - requestedBlocks);
-
+        fhBaseFees.push('0x3b9aca00');
+        
         return {
           jsonrpc: '2.0',
           id: id,
           result: {
-            oldestBlock: '0x' + oldestBlockNumber.toString(16),
-            baseFeePerGas: baseFeePerGas,        // length = blockCount + 1
-            gasUsedRatio: gasUsedRatio,          // length = blockCount
-            reward: reward                        // length = blockCount
+            oldestBlock: '0x1',
+            baseFeePerGas: fhBaseFees,
+            gasUsedRatio: fhGasRatios,
+            ...(fhRewards.length > 0 && { reward: fhRewards })
           }
         };
+      }
 
       case 'eth_maxPriorityFeePerGas':
-        // أولوية الرسوم - مطلوب لـ EIP-1559 - محسوب لـ 0.00002 ACCESS
+        // ✅ EIP-1559: لا priority fee (tip = 0)
         return {
           jsonrpc: '2.0',
           id: id,
-          result: '0x38c42e18' // ✅ سعر غاز صحيح = 952380952 Wei
+          result: '0x0'
         };
 
       case 'net_listening':

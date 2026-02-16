@@ -22,114 +22,170 @@ const NOTIFICATION_TRANSLATIONS = {
   pl: { newTx: 'Otrzymano nową transakcję', amount: 'Kwota', from: 'Od' }
 };
 
-// Re-engagement notification translations
+// Re-engagement notification translations - HONEST messages (activity inactive)
 const RE_ENGAGEMENT_TRANSLATIONS = {
   en: {
-    day3: { title: 'Access Network', body: 'Your session is ready! Tap to start a new activity.' },
-    day5: { title: 'Welcome back!', body: 'Access Network is waiting for you. Start your session now.' },
-    day7: { title: 'We miss you!', body: 'Your Access Network activity awaits. Come back and explore!' },
-    day14: { title: 'Long time no see!', body: 'Access Network has updates for you. Tap to check in!' },
-    day30: { title: 'Access Network', body: 'Your account is still active. Ready to continue?' }
+    day3: { title: 'ACCESS Network', body: 'Your activity session is inactive. Start now to collect your bonuses!' },
+    day7: { title: 'ACCESS Network', body: 'You haven\'t been active in a while. Your bonuses are waiting!' },
+    day14: { title: 'ACCESS Network', body: 'Your activity has been paused for days. Resume to keep your progress!' },
+    day30: { title: 'ACCESS Network', body: 'Your account is still active but your session is stopped. Come back!' }
   },
   ar: {
-    day3: { title: 'Access Network', body: 'جلستك جاهزة! اضغط لبدء نشاط جديد.' },
-    day5: { title: 'مرحباً بعودتك!', body: 'شبكة Access في انتظارك. ابدأ جلستك الآن.' },
-    day7: { title: 'نفتقدك!', body: 'نشاطك في شبكة Access بانتظارك. عُد واستكشف!' },
-    day14: { title: 'مدة طويلة!', body: 'لديك تحديثات في شبكة Access. اضغط للاطلاع!' },
-    day30: { title: 'Access Network', body: 'حسابك لا يزال نشطاً. هل أنت مستعد للمتابعة؟' }
+    day3: { title: 'ACCESS Network', body: 'نشاطك غير فعّال. ابدأ الآن لجمع نقاطك!' },
+    day7: { title: 'ACCESS Network', body: 'لم تكن نشطاً منذ فترة. نقاطك بانتظارك!' },
+    day14: { title: 'ACCESS Network', body: 'نشاطك متوقف منذ أيام. استأنف للحفاظ على تقدمك!' },
+    day30: { title: 'ACCESS Network', body: 'حسابك نشط لكن جلستك متوقفة. عد وابدأ من جديد!' }
   },
   fr: {
-    day3: { title: 'Access Network', body: 'Votre session est prête ! Appuyez pour démarrer.' },
-    day5: { title: 'Bon retour !', body: 'Access Network vous attend. Commencez maintenant.' },
-    day7: { title: 'Vous nous manquez !', body: 'Votre activité Access Network vous attend.' },
-    day14: { title: 'Ça fait longtemps !', body: 'Access Network a des mises à jour pour vous.' },
-    day30: { title: 'Access Network', body: 'Votre compte est toujours actif. Prêt à continuer ?' }
+    day3: { title: 'ACCESS Network', body: 'Votre session d\'activité est inactive. Commencez pour collecter vos bonus !' },
+    day7: { title: 'ACCESS Network', body: 'Vous n\'avez pas été actif depuis un moment. Vos bonus vous attendent !' },
+    day14: { title: 'ACCESS Network', body: 'Votre activité est en pause depuis des jours. Reprenez pour garder votre progression !' },
+    day30: { title: 'ACCESS Network', body: 'Votre compte est actif mais votre session est arrêtée. Revenez !' }
   },
   de: {
-    day3: { title: 'Access Network', body: 'Ihre Sitzung ist bereit! Tippen Sie, um zu starten.' },
-    day5: { title: 'Willkommen zurück!', body: 'Access Network wartet auf Sie.' },
-    day7: { title: 'Wir vermissen dich!', body: 'Ihre Access Network-Aktivität wartet.' },
-    day14: { title: 'Lange nicht gesehen!', body: 'Access Network hat Updates für Sie.' },
-    day30: { title: 'Access Network', body: 'Ihr Konto ist noch aktiv. Bereit weiterzumachen?' }
+    day3: { title: 'ACCESS Network', body: 'Ihre Aktivitätssitzung ist inaktiv. Starten Sie jetzt und sammeln Sie Ihre Boni!' },
+    day7: { title: 'ACCESS Network', body: 'Sie waren eine Weile nicht aktiv. Ihre Boni warten auf Sie!' },
+    day14: { title: 'ACCESS Network', body: 'Ihre Aktivität ist seit Tagen pausiert. Machen Sie weiter!' },
+    day30: { title: 'ACCESS Network', body: 'Ihr Konto ist aktiv, aber Ihre Sitzung ist gestoppt. Kommen Sie zurück!' }
   },
   es: {
-    day3: { title: 'Access Network', body: '¡Tu sesión está lista! Toca para iniciar.' },
-    day5: { title: '¡Bienvenido de nuevo!', body: 'Access Network te espera. Comienza ahora.' },
-    day7: { title: '¡Te extrañamos!', body: 'Tu actividad en Access Network te espera.' },
-    day14: { title: '¡Cuánto tiempo!', body: 'Access Network tiene actualizaciones para ti.' },
-    day30: { title: 'Access Network', body: 'Tu cuenta sigue activa. ¿Listo para continuar?' }
+    day3: { title: 'ACCESS Network', body: 'Tu sesión de actividad está inactiva. ¡Empieza ahora y recoge tus bonos!' },
+    day7: { title: 'ACCESS Network', body: 'No has estado activo en un tiempo. ¡Tus bonos te esperan!' },
+    day14: { title: 'ACCESS Network', body: 'Tu actividad está pausada hace días. ¡Reanuda para mantener tu progreso!' },
+    day30: { title: 'ACCESS Network', body: 'Tu cuenta está activa pero tu sesión está detenida. ¡Vuelve!' }
   },
   tr: {
-    day3: { title: 'Access Network', body: 'Oturumunuz hazır! Başlamak için dokunun.' },
-    day5: { title: 'Tekrar hoş geldiniz!', body: 'Access Network sizi bekliyor.' },
-    day7: { title: 'Sizi özledik!', body: 'Access Network aktiviteniz sizi bekliyor.' },
-    day14: { title: 'Uzun zaman oldu!', body: 'Access Network sizin için güncellemeler var.' },
-    day30: { title: 'Access Network', body: 'Hesabınız hala aktif. Devam etmeye hazır mısınız?' }
+    day3: { title: 'ACCESS Network', body: 'Aktivite oturumunuz aktif değil. Bonuslarınızı toplamak için başlayın!' },
+    day7: { title: 'ACCESS Network', body: 'Bir süredir aktif olmadınız. Bonuslarınız bekliyor!' },
+    day14: { title: 'ACCESS Network', body: 'Aktiviteniz günlerdir duraklatıldı. İlerlemenizi korumak için devam edin!' },
+    day30: { title: 'ACCESS Network', body: 'Hesabınız aktif ama oturumunuz durdu. Geri dönün!' }
   },
   ru: {
-    day3: { title: 'Access Network', body: 'Ваша сессия готова! Нажмите, чтобы начать.' },
-    day5: { title: 'С возвращением!', body: 'Access Network ждет вас.' },
-    day7: { title: 'Мы скучаем по вам!', body: 'Ваша активность в Access Network ждет.' },
-    day14: { title: 'Давно не виделись!', body: 'Access Network имеет обновления для вас.' },
-    day30: { title: 'Access Network', body: 'Ваш аккаунт все еще активен. Готовы продолжить?' }
-  },
-  zh: {
-    day3: { title: 'Access Network', body: '您的会话已准备就绪！点击开始。' },
-    day5: { title: '欢迎回来！', body: 'Access Network 正在等您。' },
-    day7: { title: '我们想念您！', body: '您的 Access Network 活动正在等待您。' },
-    day14: { title: '好久不见！', body: 'Access Network 有更新给您。' },
-    day30: { title: 'Access Network', body: '您的账户仍然活跃。准备好继续了吗？' }
-  },
-  ja: {
-    day3: { title: 'Access Network', body: 'セッションの準備ができました！タップして開始。' },
-    day5: { title: 'おかえりなさい！', body: 'Access Network がお待ちしています。' },
-    day7: { title: 'お待ちしておりました！', body: 'Access Network でのアクティビティがお待ちしています。' },
-    day14: { title: 'お久しぶりです！', body: 'Access Network に更新があります。' },
-    day30: { title: 'Access Network', body: 'アカウントはまだアクティブです。続ける準備はできましたか？' }
-  },
-  ko: {
-    day3: { title: 'Access Network', body: '세션이 준비되었습니다! 탭하여 시작하세요.' },
-    day5: { title: '다시 오신 것을 환영합니다!', body: 'Access Network가 기다리고 있습니다.' },
-    day7: { title: '보고 싶었어요!', body: 'Access Network 활동이 기다리고 있습니다.' },
-    day14: { title: '오랜만이에요!', body: 'Access Network에 업데이트가 있습니다.' },
-    day30: { title: 'Access Network', body: '계정이 아직 활성 상태입니다. 계속할 준비가 되셨나요?' }
-  },
-  pt: {
-    day3: { title: 'Access Network', body: 'Sua sessão está pronta! Toque para iniciar.' },
-    day5: { title: 'Bem-vindo de volta!', body: 'Access Network está esperando por você.' },
-    day7: { title: 'Sentimos sua falta!', body: 'Sua atividade no Access Network está esperando.' },
-    day14: { title: 'Há quanto tempo!', body: 'Access Network tem atualizações para você.' },
-    day30: { title: 'Access Network', body: 'Sua conta ainda está ativa. Pronto para continuar?' }
-  },
-  hi: {
-    day3: { title: 'Access Network', body: 'आपका सत्र तैयार है! शुरू करने के लिए टैप करें।' },
-    day5: { title: 'वापसी पर स्वागत है!', body: 'Access Network आपका इंतजार कर रहा है।' },
-    day7: { title: 'हम आपको याद करते हैं!', body: 'आपकी Access Network गतिविधि आपका इंतजार कर रही है।' },
-    day14: { title: 'बहुत समय हो गया!', body: 'Access Network में आपके लिए अपडेट हैं।' },
-    day30: { title: 'Access Network', body: 'आपका खाता अभी भी सक्रिय है। जारी रखने के लिए तैयार?' }
+    day3: { title: 'ACCESS Network', body: 'Ваша сессия активности неактивна. Начните и соберите свои бонусы!' },
+    day7: { title: 'ACCESS Network', body: 'Вы давно не были активны. Ваши бонусы ждут!' },
+    day14: { title: 'ACCESS Network', body: 'Ваша активность приостановлена уже несколько дней. Продолжайте!' },
+    day30: { title: 'ACCESS Network', body: 'Ваш аккаунт активен, но сессия остановлена. Вернитесь!' }
   },
   it: {
-    day3: { title: 'Access Network', body: 'La tua sessione è pronta! Tocca per iniziare.' },
-    day5: { title: 'Bentornato!', body: 'Access Network ti aspetta.' },
-    day7: { title: 'Ci manchi!', body: 'La tua attività su Access Network ti aspetta.' },
-    day14: { title: 'È passato tanto tempo!', body: 'Access Network ha aggiornamenti per te.' },
-    day30: { title: 'Access Network', body: 'Il tuo account è ancora attivo. Pronto a continuare?' }
+    day3: { title: 'ACCESS Network', body: 'La tua sessione di attività è inattiva. Inizia ora e raccogli i tuoi bonus!' },
+    day7: { title: 'ACCESS Network', body: 'Non sei stato attivo per un po\'. I tuoi bonus ti aspettano!' },
+    day14: { title: 'ACCESS Network', body: 'La tua attività è in pausa da giorni. Riprendi per mantenere il tuo progresso!' },
+    day30: { title: 'ACCESS Network', body: 'Il tuo account è attivo ma la sessione è ferma. Torna!' }
+  },
+  pt: {
+    day3: { title: 'ACCESS Network', body: 'Sua sessão de atividade está inativa. Comece agora e colete seus bônus!' },
+    day7: { title: 'ACCESS Network', body: 'Você não esteve ativo por um tempo. Seus bônus estão esperando!' },
+    day14: { title: 'ACCESS Network', body: 'Sua atividade está pausada há dias. Retome para manter seu progresso!' },
+    day30: { title: 'ACCESS Network', body: 'Sua conta está ativa mas a sessão parou. Volte!' }
+  },
+  zh: {
+    day3: { title: 'ACCESS Network', body: '您的活动会话未激活。立即开始领取您的奖金！' },
+    day7: { title: 'ACCESS Network', body: '您已有一段时间未活跃。您的奖金在等您！' },
+    day14: { title: 'ACCESS Network', body: '您的活动已暂停多天。继续保持您的进度！' },
+    day30: { title: 'ACCESS Network', body: '您的账户仍然活跃但会话已停止。回来吧！' }
+  },
+  ja: {
+    day3: { title: 'ACCESS Network', body: 'アクティビティセッションが非アクティブです。今すぐ始めてボーナスを集めましょう！' },
+    day7: { title: 'ACCESS Network', body: 'しばらくアクティブではありません。ボーナスが待っています！' },
+    day14: { title: 'ACCESS Network', body: 'アクティビティが数日間停止中です。進捗を維持するために再開しましょう！' },
+    day30: { title: 'ACCESS Network', body: 'アカウントはアクティブですがセッションは停止中です。' }
+  },
+  ko: {
+    day3: { title: 'ACCESS Network', body: '활동 세션이 비활성 상태입니다. 지금 시작하여 보너스를 모으세요!' },
+    day7: { title: 'ACCESS Network', body: '한동안 활동하지 않았습니다. 보너스가 기다리고 있습니다!' },
+    day14: { title: 'ACCESS Network', body: '활동이 며칠째 중단되었습니다. 진행 상황을 유지하려면 계속하세요!' },
+    day30: { title: 'ACCESS Network', body: '계정은 활성 상태이지만 세션이 중단되었습니다.' }
+  },
+  hi: {
+    day3: { title: 'ACCESS Network', body: 'आपका गतिविधि सत्र निष्क्रिय है। अभी शुरू करें और अपने बोनस इकट्ठा करें!' },
+    day7: { title: 'ACCESS Network', body: 'आप कुछ समय से सक्रिय नहीं हैं। आपके बोनस इंतजार कर रहे हैं!' },
+    day14: { title: 'ACCESS Network', body: 'आपकी गतिविधि कई दिनों से रुकी है। अपनी प्रगति बनाए रखने के लिए फिर से शुरू करें!' },
+    day30: { title: 'ACCESS Network', body: 'खाता सक्रिय है लेकिन सत्र बंद है। वापस आएं!' }
   },
   id: {
-    day3: { title: 'Access Network', body: 'Sesi Anda siap! Ketuk untuk memulai.' },
-    day5: { title: 'Selamat datang kembali!', body: 'Access Network menunggu Anda.' },
-    day7: { title: 'Kami rindu Anda!', body: 'Aktivitas Access Network Anda menunggu.' },
-    day14: { title: 'Sudah lama!', body: 'Access Network punya pembaruan untuk Anda.' },
-    day30: { title: 'Access Network', body: 'Akun Anda masih aktif. Siap melanjutkan?' }
+    day3: { title: 'ACCESS Network', body: 'Sesi aktivitas Anda tidak aktif. Mulai sekarang dan kumpulkan bonus Anda!' },
+    day7: { title: 'ACCESS Network', body: 'Anda belum aktif sejak lama. Bonus Anda menunggu!' },
+    day14: { title: 'ACCESS Network', body: 'Aktivitas Anda dijeda berhari-hari. Lanjutkan untuk menjaga kemajuan Anda!' },
+    day30: { title: 'ACCESS Network', body: 'Akun aktif tapi sesi berhenti. Kembali!' }
   },
   pl: {
-    day3: { title: 'Access Network', body: 'Twoja sesja jest gotowa! Dotknij, aby rozpocząć.' },
-    day5: { title: 'Witaj ponownie!', body: 'Access Network czeka na Ciebie.' },
-    day7: { title: 'Tęsknimy za Tobą!', body: 'Twoja aktywność w Access Network czeka.' },
-    day14: { title: 'Dawno Cię nie było!', body: 'Access Network ma dla Ciebie aktualizacje.' },
-    day30: { title: 'Access Network', body: 'Twoje konto jest nadal aktywne. Gotowy kontynuować?' }
+    day3: { title: 'ACCESS Network', body: 'Twoja sesja aktywności jest nieaktywna. Zacznij teraz i zbieraj swoje bonusy!' },
+    day7: { title: 'ACCESS Network', body: 'Nie byłeś aktywny od jakiegoś czasu. Twoje bonusy czekają!' },
+    day14: { title: 'ACCESS Network', body: 'Twoja aktywność jest wstrzymana od dni. Kontynuuj, aby utrzymać swój postęp!' },
+    day30: { title: 'ACCESS Network', body: 'Konto aktywne ale sesja zatrzymana. Wróć!' }
   }
 };
+
+
+// Boost reminder notification translations
+const BOOST_REMINDER_TRANSLATIONS = {
+  en: {
+    mid: { title: 'Boost Your Session ⚡', body: 'Your session is running — activate Boost to multiply your bonuses!' },
+    end: { title: 'Session Almost Done ⏳', body: 'Your session is nearly over. Activate Boost before it ends!' }
+  },
+  ar: {
+    mid: { title: 'عزّز جلستك ⚡', body: 'جلستك قيد التشغيل — فعّل التعزيز لمضاعفة نقاطك!' },
+    end: { title: 'الجلسة على وشك الانتهاء ⏳', body: 'جلستك قاربت على الانتهاء. فعّل التعزيز قبل فوات الأوان!' }
+  },
+  fr: {
+    mid: { title: 'Boostez votre session ⚡', body: 'Votre session est en cours — activez le Boost pour multiplier vos bonus !' },
+    end: { title: 'Session presque terminée ⏳', body: 'Votre session se termine bientôt. Activez le Boost avant la fin !' }
+  },
+  de: {
+    mid: { title: 'Sitzung boosten ⚡', body: 'Ihre Sitzung läuft — aktivieren Sie den Boost, um Ihre Boni zu vervielfachen!' },
+    end: { title: 'Sitzung fast vorbei ⏳', body: 'Ihre Sitzung endet bald. Aktivieren Sie den Boost!' }
+  },
+  es: {
+    mid: { title: 'Potencia tu sesión ⚡', body: '¡Tu sesión está en curso — activa el Boost para multiplicar tus bonos!' },
+    end: { title: 'Sesión casi terminada ⏳', body: '¡Tu sesión casi termina. Activa el Boost antes de que acabe!' }
+  },
+  tr: {
+    mid: { title: 'Oturumunuzu güçlendirin ⚡', body: 'Oturumunuz devam ediyor — bonuslarınızı artırmak için Boost aktif edin!' },
+    end: { title: 'Oturum bitmek üzere ⏳', body: 'Oturumunuz sona eriyor. Boost hemen aktif edin!' }
+  },
+  ru: {
+    mid: { title: 'Усильте сессию ⚡', body: 'Ваша сессия идёт — активируйте Буст для умножения бонусов!' },
+    end: { title: 'Сессия почти завершена ⏳', body: 'Ваша сессия скоро закончится. Активируйте Буст!' }
+  },
+  zh: {
+    mid: { title: '加速会话 ⚡', body: '会话进行中——激活加速以倍增您的奖金！' },
+    end: { title: '会话即将结束 ⏳', body: '会话即将结束。赶快激活加速！' }
+  },
+  ja: {
+    mid: { title: 'セッションをブースト ⚡', body: 'セッション進行中 — ブーストでボーナスを倍増させましょう！' },
+    end: { title: 'セッション間もなく終了 ⏳', body: 'セッションがまもなく終了します。ブーストを有効にしましょう！' }
+  },
+  ko: {
+    mid: { title: '세션 부스트 ⚡', body: '세션 진행 중 — 부스트를 활성화하여 보너스를 늘리세요!' },
+    end: { title: '세션 곧 종료 ⏳', body: '세션이 곧 끝납니다. 부스트를 활성화하세요!' }
+  },
+  pt: {
+    mid: { title: 'Turbine sua sessão ⚡', body: 'Sua sessão está ativa — ative o Boost para multiplicar seus bônus!' },
+    end: { title: 'Sessão quase acabando ⏳', body: 'Sua sessão está quase no fim. Ative o Boost agora!' }
+  },
+  hi: {
+    mid: { title: 'सत्र बूस्ट करें ⚡', body: 'आपका सत्र चल रहा है — बूस्ट सक्रिय करें और बोनस बढ़ाएं!' },
+    end: { title: 'सत्र लगभग समाप्त ⏳', body: 'सत्र समाप्त होने वाला है। अभी बूस्ट सक्रिय करें!' }
+  },
+  it: {
+    mid: { title: 'Potenzia la sessione ⚡', body: 'La sessione è in corso — attiva il Boost per moltiplicare i tuoi bonus!' },
+    end: { title: 'Sessione quasi finita ⏳', body: 'La sessione sta per finire. Attiva il Boost ora!' }
+  },
+  id: {
+    mid: { title: 'Boost Sesi Anda ⚡', body: 'Sesi Anda berjalan — aktifkan Boost untuk melipatgandakan bonus Anda!' },
+    end: { title: 'Sesi Hampir Selesai ⏳', body: 'Sesi hampir berakhir. Aktifkan Boost sekarang!' }
+  },
+  pl: {
+    mid: { title: 'Przyspiesz sesję ⚡', body: 'Twoja sesja trwa — aktywuj Boost, aby zwielokrotnić swoje bonusy!' },
+    end: { title: 'Sesja prawie skończona ⏳', body: 'Sesja dobiega końca. Aktywuj Boost teraz!' }
+  }
+};
+
+function getBoostReminderMessage(lang, progressPercent) {
+  const shortLang = (lang || 'en').substring(0, 2).toLowerCase();
+  const messages = BOOST_REMINDER_TRANSLATIONS[shortLang] || BOOST_REMINDER_TRANSLATIONS.en;
+  return progressPercent >= 75 ? messages.end : messages.mid;
+}
 
 // Format amount: 1000 → 1,000 | 1 → 1 | 0.5 → 0.50 | 1.5 → 1.50
 function formatAmountSmart(amount) {
@@ -165,11 +221,9 @@ function getTranslation(lang) {
 function getReEngagementMessage(lang, daysInactive) {
   const shortLang = (lang || 'en').substring(0, 2).toLowerCase();
   const messages = RE_ENGAGEMENT_TRANSLATIONS[shortLang] || RE_ENGAGEMENT_TRANSLATIONS.en;
-  
-  if (daysInactive >= 15) return messages.day30;
+  if (daysInactive >= 21) return messages.day30;
   if (daysInactive >= 11) return messages.day14;
-  if (daysInactive >= 7) return messages.day7;
-  if (daysInactive >= 5) return messages.day5;
+  if (daysInactive >= 6) return messages.day7;
   return messages.day3;
 }
 
@@ -313,6 +367,12 @@ self.addEventListener('push', (event) => {
     const msg = getReEngagementMessage(deviceLang, data.daysInactive);
     title = msg.title;
     body = msg.body;
+  } else if (data.type === 'boost-reminder') {
+    // Boost reminder notification - translate based on device language
+    const progress = parseInt(data.progressPercent) || 50;
+    const boostMsg = getBoostReminderMessage(deviceLang, progress);
+    title = boostMsg.title;
+    body = boostMsg.body;
   } else if (data.body) {
     body = data.body;
     if (data.title) title = data.title;

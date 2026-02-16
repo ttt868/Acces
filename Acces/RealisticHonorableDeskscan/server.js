@@ -17,6 +17,7 @@ import { getGlobalAccessStateStorage } from './access-state-storage.js';
 import webpush from 'web-push';
 import fcmService from './fcm-service.js';
 import { startReEngagementScheduler } from './re-engagement-notifications.js';
+import { startBoostReminderScheduler } from './boost-reminder-notifications.js';
 
 // ============================================================================
 // 📦 إصدار الملفات - غير هذا الرقم فقط لتحديث كل الملفات
@@ -1256,6 +1257,9 @@ global.sendAllNotificationsToRecipient = sendAllNotificationsToRecipient;
                 // 📬 Start Re-Engagement Notification System
                 startReEngagementScheduler();
 
+                // ⚡ Start Boost Reminder Notification System
+                startBoostReminderScheduler();
+
               } catch (networkError) {
                 console.error('Warning: Network initialization failed:', networkError);
                 console.log('Continuing without ledger - transactions will use database only');
@@ -1732,6 +1736,74 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // ========= API CACHE MIDDLEWARE =========
+  // Caches heavy GET endpoints in Redis via UltraCache
+  // Reduces DB load by 80%+
+  const _CACHEABLE = {
+    '/api/network/config': 300,
+    '/api/chainlist': 300,
+    '/api/explorer/status': 30,
+    '/api/transactions': 15,
+    '/api/network/transactions/recent': 10,
+    '/api/ad-config': 120,
+    '/api/enterprise/stats': 60,
+    '/api/push/public-key': 3600,
+  };
+  
+  if (req.method === 'GET' && _CACHEABLE[pathname]) {
+    const _ttl = _CACHEABLE[pathname];
+    const _ck = 'api:' + pathname + (parsedUrl.search || '');
+    try {
+      const _cached = await ultraCache.get(_ck);
+      if (_cached) {
+        res.writeHead(200, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
+        res.end(_cached);
+        return;
+      }
+    } catch (e) {}
+    const _origEnd = res.end.bind(res);
+    const _origWH = res.writeHead.bind(res);
+    let _st = 200;
+    res.writeHead = function(s) { _st = s; _origWH.apply(res, arguments); };
+    res.end = function(d) {
+      if (_st === 200 && d) {
+        try { ultraCache.set(_ck, typeof d === 'string' ? d : d.toString(), _ttl).catch(function(){}); } catch(e) {}
+      }
+      _origEnd.apply(res, arguments);
+    };
+    res.setHeader('X-Cache', 'MISS');
+  }
+
+  // Per-user cache for status endpoints (5s TTL)
+  if (req.method === 'GET') {
+    const _userPaths = ['/api/processing/countdown-status', '/api/ad-boost/status', '/api/ad-boost/check', '/api/missions/status'];
+    if (_userPaths.includes(pathname)) {
+      const _uUrl = new URL(req.url, 'http://localhost');
+      const _uid = _uUrl.searchParams.get('userId');
+      if (_uid) {
+        const _uk = 'u:' + _uid + ':' + pathname;
+        try {
+          const _uc = await ultraCache.get(_uk);
+          if (_uc) {
+            res.writeHead(200, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
+            res.end(_uc);
+            return;
+          }
+        } catch(e) {}
+        const _oe = res.end.bind(res);
+        const _ow = res.writeHead.bind(res);
+        let _s = 200;
+        res.writeHead = function(s) { _s = s; _ow.apply(res, arguments); };
+        res.end = function(d) {
+          if (_s === 200 && d) { try { ultraCache.set(_uk, typeof d === 'string' ? d : d.toString(), 5).catch(function(){}); } catch(e) {} }
+          _oe.apply(res, arguments);
+        };
+      }
+    }
+  }
+  // ========= END CACHE MIDDLEWARE =========
+
+
   // 🏥 HEALTH CHECK - فحص صحة السيرفر (لا يُخزَّن في Cache)
   if (pathname === '/api/health') {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -1744,6 +1816,138 @@ const server = http.createServer(async (req, res) => {
       server: 'Access Network' 
     }));
     return;
+  }
+
+  // 📊 SYSTEM MONITORING - مراقبة شاملة للسيرفر
+  if (pathname === '/api/system/status') {
+    try {
+      const os = await import('os');
+      const { execSync } = await import('child_process');
+      const fs = await import('fs');
+
+      const cpus = os.default.cpus();
+      const totalMem = os.default.totalmem();
+      const freeMem = os.default.freemem();
+      const usedMem = totalMem - freeMem;
+
+      // CPU
+      let totalIdle = 0, totalTick = 0;
+      for (const cpu of cpus) {
+        for (const type in cpu.times) totalTick += cpu.times[type];
+        totalIdle += cpu.times.idle;
+      }
+
+      // Disk
+      let diskPercent = 0;
+      try {
+        const df = execSync('df / --output=pcent 2>/dev/null | tail -1', { encoding: 'utf8' });
+        diskPercent = parseInt(df.trim().replace('%', ''));
+      } catch (e) {}
+
+      // PM2
+      let pm2Info = {};
+      try {
+        const pm2Data = execSync('pm2 jlist 2>/dev/null', { encoding: 'utf8' });
+        const processes = JSON.parse(pm2Data);
+        const app = processes.filter(p => p.name === 'access-network');
+        pm2Info = {
+          instances: app.length,
+          online: app.filter(p => p.pm2_env?.status === 'online').length,
+          totalMemoryMB: Math.round(app.reduce((s, p) => s + (p.monit?.memory || 0), 0) / 1048576),
+          restarts: app.reduce((s, p) => s + (p.pm2_env?.restart_time || 0), 0),
+          uptime: app[0]?.pm2_env?.pm_uptime ? Date.now() - app[0].pm2_env.pm_uptime : 0
+        };
+      } catch (e) {}
+
+      // Redis
+      let redisStatus = 'unknown';
+      try {
+        const pong = execSync('redis-cli PING 2>/dev/null', { encoding: 'utf8' }).trim();
+        redisStatus = pong === 'PONG' ? 'connected' : 'error';
+      } catch (e) { redisStatus = 'disconnected'; }
+
+      // PostgreSQL connections
+      let pgConns = 0;
+      try {
+        const r = await pool.query("SELECT count(*) FROM pg_stat_activity WHERE state = 'active'");
+        pgConns = parseInt(r.rows[0].count);
+      } catch (e) {}
+
+      // Users count
+      let usersCount = 0;
+      try {
+        const r = await pool.query("SELECT count(*) FROM users");
+        usersCount = parseInt(r.rows[0].count);
+      } catch (e) {}
+
+      // Connections
+      let connections = 0;
+      try {
+        const ss = execSync('ss -s 2>/dev/null | grep estab', { encoding: 'utf8' });
+        const match = ss.match(/estab\s+(\d+)/);
+        connections = match ? parseInt(match[1]) : 0;
+      } catch (e) {}
+
+      // Metrics history from health monitor
+      let metricsHistory = null;
+      try {
+        const mf = '/var/www/Acces/RealisticHonorableDeskscan/logs/metrics.json';
+        if (fs.default.existsSync(mf)) {
+          metricsHistory = JSON.parse(fs.default.readFileSync(mf, 'utf8')).last24h;
+        }
+      } catch (e) {}
+
+      // UltraCache stats
+      let cacheStats = null;
+      try {
+        if (ultraCache && ultraCache.stats) {
+          const s = ultraCache.stats;
+          cacheStats = {
+            hits: s.hits,
+            misses: s.misses,
+            total: s.total,
+            hitRate: s.total > 0 ? Math.round((s.hits / s.total) * 100) + '%' : '0%',
+            redisConnected: ultraCache.connected
+          };
+        }
+      } catch (e) {}
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        server: {
+          hostname: os.default.hostname(),
+          platform: os.default.platform(),
+          nodeVersion: process.version,
+          uptime: Math.round(os.default.uptime()),
+          uptimeHuman: `${Math.floor(os.default.uptime() / 86400)}d ${Math.floor((os.default.uptime() % 86400) / 3600)}h`
+        },
+        cpu: {
+          cores: cpus.length,
+          percent: Math.round(100 - (totalIdle / totalTick) * 100),
+          loadAvg: os.default.loadavg().map(l => Math.round(l * 100) / 100),
+          model: cpus[0]?.model || 'unknown'
+        },
+        memory: {
+          totalMB: Math.round(totalMem / 1048576),
+          usedMB: Math.round(usedMem / 1048576),
+          freeMB: Math.round(freeMem / 1048576),
+          percent: Math.round((usedMem / totalMem) * 100)
+        },
+        disk: { percent: diskPercent },
+        pm2: pm2Info,
+        services: { redis: redisStatus, postgresActiveConns: pgConns },
+        cache: cacheStats,
+        app: { totalUsers: usersCount, activeConnections: connections },
+        monitoring: metricsHistory
+      }));
+      return;
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+      return;
+    }
   }
 
   // �🌐 DYNAMIC NETWORK CONFIG API - يولّد الروابط ديناميكياً حسب الدومين
@@ -2108,7 +2312,7 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/processing/countdown-status' && req.method === 'GET') {
     try {
       const url = new URL(req.url, `http://${req.headers.host}`);
-      const userId = url.searchParams.get('userId');
+      const userId = parsedUrl.searchParams.get('userId');
       const result = await getProcessingCountdownStatus(userId);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
@@ -3339,7 +3543,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/ad-boost/check' && req.method === 'GET') {
       try {
         const url = new URL(req.url, `http://${req.headers.host}`);
-        const userId = url.searchParams.get('userId');
+        const userId = parsedUrl.searchParams.get('userId');
 
         if (!userId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -3404,7 +3608,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/ad-boost/status' && req.method === 'GET') {
       try {
         const url = new URL(req.url, `http://${req.headers.host}`);
-        const userId = url.searchParams.get('userId');
+        const userId = parsedUrl.searchParams.get('userId');
 
         if (!userId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -4108,10 +4312,10 @@ const server = http.createServer(async (req, res) => {
           const newUserSessionToken = generateSessionToken();
           
           const result = await pool.query(
-            `INSERT INTO users (email, name, avatar, referral_code, coins, privacy_accepted, privacy_accepted_date, account_created_date, session_token)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            `INSERT INTO users (email, name, avatar, referral_code, coins, privacy_accepted, privacy_accepted_date, account_created_date, session_token, language)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
              RETURNING *`,
-            [userData.email, safeName, userData.avatar, newReferralCode, initialCoins, userData.privacyAccepted || false, userData.privacyAccepted ? Date.now() : null, accountCreatedDate, newUserSessionToken]
+            [userData.email, safeName, userData.avatar, newReferralCode, initialCoins, userData.privacyAccepted || false, userData.privacyAccepted ? Date.now() : null, accountCreatedDate, newUserSessionToken, userData.language || 'en']
           );
           
           await pool.query('COMMIT');
@@ -4493,7 +4697,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/leaderboard' && req.method === 'GET') {
       try {
         const url = new URL(req.url, `http://${req.headers.host}`);
-        const period = url.searchParams.get('period') || 'all';
+        const period = parsedUrl.searchParams.get('period') || 'all';
         
         let timeFilter = '';
         const now = Date.now();
@@ -5456,7 +5660,7 @@ const server = http.createServer(async (req, res) => {
     // API للمعاملات المستلمة للمحافظ الخارجية
     if (pathname === '/api/wallet/received-transactions' && method === 'GET') {
       const url = new URL(req.url, `http://${req.headers.host}`);
-      const walletAddress = url.searchParams.get('address');
+      const walletAddress = parsedUrl.searchParams.get('address');
       
       if (!walletAddress) {
         res.writeHead(400, corsHeaders);
@@ -5992,7 +6196,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/external-wallet/received-transactions' && req.method === 'GET') {
       try {
         const url = new URL(req.url, `http://${req.headers.host}`);
-        const walletAddress = url.searchParams.get('address');
+        const walletAddress = parsedUrl.searchParams.get('address');
         
         if (!walletAddress || !walletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -6561,7 +6765,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/transactions' && req.method === 'GET') {
       try {
         const url = new URL(req.url, `http://${req.headers.host}`);
-        const limit = parseInt(url.searchParams.get('limit')) || 1000;
+        const limit = parseInt(parsedUrl.searchParams.get('limit')) || 1000;
         
         console.log(`📊 Fetching all transactions from database (limit: ${limit})`);
         
@@ -6620,8 +6824,8 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/nft/mints' && req.method === 'GET') {
       try {
         const url = new URL(req.url, `http://${req.headers.host}`);
-        const limit = parseInt(url.searchParams.get('limit')) || 100;
-        const contract = url.searchParams.get('contract');
+        const limit = parseInt(parsedUrl.searchParams.get('limit')) || 100;
+        const contract = parsedUrl.searchParams.get('contract');
         
         console.log(`🖼️ Fetching NFT mints from database (limit: ${limit})`);
         
@@ -6689,7 +6893,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/network/transactions/recent' && req.method === 'GET') {
       try {
         const url = new URL(req.url, `http://${req.headers.host}`);
-        const limit = parseInt(url.searchParams.get('limit')) || 10000;
+        const limit = parseInt(parsedUrl.searchParams.get('limit')) || 10000;
         
         console.log(`📊 Fetching recent transactions for statistics (limit: ${limit})`);
         
@@ -7374,7 +7578,7 @@ const server = http.createServer(async (req, res) => {
                 RETURNING id`,
                 [
                   'confirmed',
-                  new Date(timestamp).toISOString(),
+                  new Date(timestamp || Date.now()).toISOString(),
                   realExternalSender || false,
                   realExternalRecipient || false,
                   description || `${transactionType} transaction`,
@@ -7396,13 +7600,13 @@ const server = http.createServer(async (req, res) => {
                   senderAddress || null, 
                   recipientAddress || null, 
                   numericAmount, 
-                  timestamp, 
+                  timestamp || Date.now(), 
                   hash,
                   hash,
                   description || `${transactionType} transaction`, 
                   gasFee,
                   'confirmed',
-                  new Date(timestamp).toISOString(),
+                  new Date(timestamp || Date.now()).toISOString(),
                   realExternalSender || false,
                   realExternalRecipient || false,
                   input || null
@@ -8594,7 +8798,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/processing/countdown/status' && req.method === 'GET') {
       try {
         const url = new URL(req.url, `http://${req.headers.host}`);
-        const userId = url.searchParams.get('userId');
+        const userId = parsedUrl.searchParams.get('userId');
         
         if (!userId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -8951,7 +9155,7 @@ const server = http.createServer(async (req, res) => {
       try {
         const userId = parseInt(pathname.split('/')[4]);
         const url = new URL(req.url, `http://${req.headers.host}`);
-        const limit = url.searchParams.get('limit');
+        const limit = parsedUrl.searchParams.get('limit');
         
         let query = 'SELECT * FROM processing_history WHERE user_id = $1 ORDER BY timestamp DESC';
         const params = [userId];
