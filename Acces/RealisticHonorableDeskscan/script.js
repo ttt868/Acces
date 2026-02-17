@@ -949,7 +949,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Re-translate network elements if on network page immediately
-        if (document.getElementById('community-page') && document.getElementById('community-page').style.display !== 'none') {
+        if (document.getElementById('network-page') && document.getElementById('network-page').style.display !== 'none') {
           setTimeout(translateNetworkElements, 50);
         }
         
@@ -1569,7 +1569,7 @@ For more information, visit our platform at: ${window.location.origin}
     
     
     // Re-translate network elements if on network page immediately
-    if (document.getElementById('community-page') && document.getElementById('community-page').style.display !== 'none') {
+    if (document.getElementById('network-page') && document.getElementById('network-page').style.display !== 'none') {
       // Network page elements will be updated automatically
     }
     
@@ -4398,11 +4398,12 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     if (window.balancePrivacy && window.balancePrivacy.originalValues) {
       window.balancePrivacy.originalValues.set('#user-coins', smartFormatted);
       window.balancePrivacy.originalValues.set('#profile-coins', smartFormatted);
+      window.balancePrivacy.originalValues.set('#network-coins', smartFormatted);
     }
     
     // تحديث فقط إذا لم يكن مخفياً
     if (!isBalanceHidden) {
-      const coinElements = document.querySelectorAll('#user-coins, #profile-coins, .wallet-balance, .balance-display, .user-balance');
+      const coinElements = document.querySelectorAll('#user-coins, #profile-coins, #network-coins, .balance-display, .user-balance');
       coinElements.forEach(element => {
         if (element) {
           element.textContent = smartFormatted;
@@ -4648,13 +4649,10 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
             });
             const data = await resp.json();
             
-            // 🔒 SECURITY: Handle 401 - session expired
+            // 🔒 SECURITY: Handle 401 - session mismatch (ذكي - يكمل بصمت)
             if (resp.status === 401 && data.requireRelogin) {
-              showNotification(translator.translate('Your session has expired. Please login again.'), 'error');
-              btn.classList.remove('disabled');
-              btn.disabled = false;
-              btn.innerHTML = '<i class="fas fa-play"></i> ' + translator.translate('Start Activity');
-              return;
+              console.log('🔒 Session mismatch detected - continuing silently');
+              // لا نعرض رسالة ولا نوقف - نكمل عادي
             }
 
             if (resp.ok && data.success) {
@@ -5181,18 +5179,13 @@ processingButton.addEventListener('click', async function(e) {
 
     console.log(`[SCRIPT] Processing start response status: ${response.status}`);
 
-    // 🔒 SECURITY: Handle 401 - Invalid session token (logged in from another device)
+    // 🔒 SECURITY: Handle 401 - session mismatch (ذكي - يكمل بصمت)
     if (response.status === 401) {
-      const authData = await response.json();
-      if (authData.requireRelogin) {
-        console.log('🔒 SESSION TOKEN INVALID: User must re-login');
-        showNotification(translator.translate('Your session has expired. Please login again.'), 'error');
-        // Reset button state
-        processingButton.classList.remove('disabled');
-        processingButton.disabled = false;
-        processingButton.innerHTML = '<i class="fas fa-play"></i> ' + translator.translate('Start Activity');
-        return;
-      }
+      try {
+        const authData = await response.json();
+        console.log('🔒 Session mismatch detected - continuing silently');
+        // لا نعرض رسالة ولا نوقف - نكمل عادي
+      } catch(e) {}
     }
 
     // 🔒 SECURITY: Handle 409 Conflict - session already active
@@ -5289,7 +5282,7 @@ processingButton.addEventListener('click', async function(e) {
           const dashboardBalance = document.getElementById('dashboard-balance');
           if (dashboardBalance) dashboardBalance.textContent = formattedBalance;
           
-          const walletBalance = document.getElementById('wallet-balance');
+          const walletBalance = document.getElementById('network-coins');
           if (walletBalance) walletBalance.textContent = formattedBalance;
           
           // تحديث أي عناصر أخرى بالـ class
@@ -5778,7 +5771,7 @@ function startGradualAccumulation() {
       '#user-coins', '#user-balance', '#profile-coins',
       '.wallet-balance', '.account-balance', '.user-balance', '.balance-display', '.coin-balance',
       '[data-balance]', '#dashboard-balance', '#main-balance', '.current-balance',
-      '#activity-page .balance-display', '#community-page .balance-amount',
+      '#activity-page .balance-display', '#network-page #network-coins',
       '.sidebar-balance', '.header-balance', '.nav-balance', '.account-balance'
     ];
 
@@ -5818,7 +5811,7 @@ function startGradualAccumulation() {
     const pageContexts = [
       { selector: '#dashboard-page #user-coins', page: 'Dashboard' },
       { selector: '#profile-page #profile-coins', page: 'Profile' },
-      { selector: '#community-page .wallet-balance', page: 'Network' },
+      { selector: '#network-page #network-coins', page: 'Network' },
       { selector: '#activity-page .balance-display', page: 'Processing' }
     ];
 
@@ -5869,6 +5862,66 @@ function startGradualAccumulation() {
 
     console.log(`Balance sync complete: ${updatedCount} elements updated across all pages`);
   }
+
+  // ⚡ نظام تحديث الرصيد الذكي - يتحقق من السيرفر فقط عند الحاجة
+  // WebSocket يعمل ~50% من الوقت بسبب PM2 cluster (2 workers)
+  // الـ polling يضمن تحديث الرصيد حتى لو WebSocket لم يصل
+  let _lastKnownBalance = null;
+  let _balancePollingInterval = null;
+  let _lastWsUpdate = 0; // آخر مرة حدّث WebSocket الرصيد
+  
+  // تُستدعى من WebSocket عند وصول تحديث
+  window._markWsBalanceUpdate = function() {
+    _lastWsUpdate = Date.now();
+  };
+  
+  function startBalancePolling() {
+    if (_balancePollingInterval) return;
+    
+    _balancePollingInterval = setInterval(async () => {
+      if (!currentUser || !currentUser.email) return;
+      
+      // إذا WebSocket حدّث الرصيد خلال آخر 8 ثوانٍ، لا حاجة للـ polling
+      if (Date.now() - _lastWsUpdate < 8000) return;
+      
+      try {
+        const response = await fetch(`/api/user/${encodeURIComponent(currentUser.email)}`);
+        if (!response.ok) return;
+        const userData = await response.json();
+        if (!userData.user || userData.user.coins === undefined) return;
+        
+        const serverBalance = parseFloat(userData.user.coins);
+        const localBalance = parseFloat(currentUser.coins || 0);
+        
+        if (Math.abs(serverBalance - localBalance) > 0.000001) {
+          console.log(`⚡ Polling: balance changed ${localBalance} → ${serverBalance}`);
+          currentUser.coins = serverBalance;
+          if (currentUser.wallet) currentUser.wallet.balance = serverBalance;
+          saveUserSession(currentUser);
+          updateUserCoins(serverBalance);
+          syncBalanceAcrossPages(serverBalance);
+          
+          // إشعار المستخدم
+          if (serverBalance > localBalance) {
+            const diff = serverBalance - localBalance;
+            if (typeof showNotification === 'function' && diff > 0.000001) {
+              showNotification(`${translator.translate('Received')} ${formatNumberSmart(diff)} Points`, 'success');
+            }
+          }
+        }
+        
+        _lastKnownBalance = serverBalance;
+      } catch (e) {
+        // Silent
+      }
+    }, 8000); // كل 8 ثوانٍ
+  }
+  
+  // بدء عند تسجيل الدخول
+  document.addEventListener('userLoggedIn', () => startBalancePolling());
+  setTimeout(() => {
+    if (currentUser && currentUser.email) startBalancePolling();
+  }, 5000);
   // Helper function to refresh user data
   async function refreshUserData() {
     try {
@@ -7149,7 +7202,7 @@ function updateProcessingStatus(message, type) {
 
 // Create a dedicated observer for the network page to catch dynamic content
 document.addEventListener('DOMContentLoaded', () => {
-  const networkPage = document.getElementById('community-page');
+  const networkPage = document.getElementById('network-page');
   if (networkPage) {
     const networkObserver = new MutationObserver(() => {
       // Translate whenever network page changes
@@ -7433,8 +7486,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // If network page is currently visible, apply multiple translation passes
         // with increasing delays to ensure complete coverage
-        if (document.getElementById('community-page') && 
-            document.getElementById('community-page').style.display !== 'none') {
+        if (document.getElementById('network-page') && 
+            document.getElementById('network-page').style.display !== 'none') {
           
           // Series of delayed translations to catch all elements as they update
           [100, 300, 600, 1000, 1500].forEach(delay => {
@@ -7452,7 +7505,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'visible') {
       // Check if network page is visible
-      const networkPage = document.getElementById('community-page');
+      const networkPage = document.getElementById('network-page');
       if (networkPage && window.getComputedStyle(networkPage).display !== 'none') {
         // Apply translations with multiple passes when returning to the page
         // Network page translation handled automatically
@@ -7464,8 +7517,8 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Check if network page is already visible on load and apply translations
-  if (document.getElementById('community-page') && 
-      window.getComputedStyle(document.getElementById('community-page')).display !== 'none') {
+  if (document.getElementById('network-page') && 
+      window.getComputedStyle(document.getElementById('network-page')).display !== 'none') {
     // Network page translation handled automatically
     // Network page observer handled automatically
   }
@@ -7746,6 +7799,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
                 currentUser.coins = serverBalance;
                 saveUserSession(currentUser);
                 updateUserCoins(serverBalance);
+                if (window._markWsBalanceUpdate) window._markWsBalanceUpdate();
                 console.log(`Balance updated instantly: ${serverBalance}`);
               } else {
                 // Fetch fresh balance from server
@@ -7773,8 +7827,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
               }
 
               // Refresh transaction list if on network page
-              if (document.getElementById('community-page') && 
-                  window.getComputedStyle(document.getElementById('community-page')).display !== 'none') {
+              if (document.getElementById('network-page') && 
+                  window.getComputedStyle(document.getElementById('network-page')).display !== 'none') {
                 setTimeout(() => {
                   if (typeof updateTransactionList === 'function') {
                     updateTransactionList();
@@ -8699,7 +8753,7 @@ function initializeGoogleSignIn() {
 
     // Check if user already has a wallet
     const walletAddress = document.getElementById('user-account-address');
-    const walletBalance = document.getElementById('wallet-balance');
+    const walletBalance = document.getElementById('network-coins');
 
     // ⚡ INSTANT DISPLAY - عرض فوري بدون "Generating..."
     if (walletAddress && currentUser.wallet_address) {
@@ -9031,7 +9085,7 @@ function initializeGoogleSignIn() {
     document.documentElement.setAttribute('data-language', currentLang);
 
     // Ensure all network page texts are translated
-    if (document.getElementById('community-page') && document.getElementById('community-page').style.display !== 'none') {
+    if (document.getElementById('network-page') && document.getElementById('network-page').style.display !== 'none') {
 
     }
 
@@ -10242,7 +10296,7 @@ window.copyAccountAddress = function() {
 
             // Update UI
             const walletAddress = document.getElementById('user-account-address');
-            const walletBalance = document.getElementById('wallet-balance');
+            const walletBalance = document.getElementById('network-coins');
 
             if (walletAddress) {
               walletAddress.textContent = importedWallet.publicAddress;
@@ -10303,7 +10357,7 @@ window.copyAccountAddress = function() {
 
             // Update UI
             const walletAddress = document.getElementById('user-account-address');
-            const walletBalance = document.getElementById('wallet-balance');
+            const walletBalance = document.getElementById('network-coins');
 
             if (walletAddress) {
               walletAddress.textContent = importedWallet.publicAddress;
@@ -10412,8 +10466,8 @@ window.copyAccountAddress = function() {
     });
 
     // If network page is already visible on load, initialize wallet
-    if (document.getElementById('community-page') && 
-        document.getElementById('community-page').style.display !== 'none') {
+    if (document.getElementById('network-page') && 
+        document.getElementById('network-page').style.display !== 'none') {
       // Short delay to ensure user data is loaded
       setTimeout(() => {
         if (currentUser && currentUser.id) {
@@ -10445,7 +10499,7 @@ window.copyAccountAddress = function() {
     document.addEventListener('visibilitychange', function() {
       if (document.visibilityState === 'visible') {
         // Check if network page is visible
-        const networkPage = document.getElementById('community-page');
+        const networkPage = document.getElementById('network-page');
         if (networkPage && networkPage.style.display !== 'none' && currentUser && currentUser.id) {
           // Re-initialize wallet and regenerate QR code when returning to the page
           setTimeout(() => {
@@ -10513,7 +10567,7 @@ window.setMaxAmount = function() {
   const currentBalance = parseFloat(currentUser.coins || 0);
 
   // Calculate max sendable - exact amount minus gas fee only
-  const maxSendable = Math.max(0, currentBalance - gasFee);
+  const maxSendable = parseFloat(Math.max(0, currentBalance - gasFee).toFixed(8));
 
   const amountInput = document.getElementById('transaction-amount');
   if (amountInput) {
@@ -10522,7 +10576,7 @@ window.setMaxAmount = function() {
       amountInput.value = '0.00000000';
     } else {
       // Set the value without toFixed to preserve the exact calculated amount
-      amountInput.value = maxSendable.toString();
+      amountInput.value = maxSendable.toFixed(8);
       showNotification(
         `${translator.translate('Max amount set')}: ${maxSendable.toFixed(8)} Points`,
         'success'
@@ -10650,7 +10704,7 @@ if (currentBalance < gasFee) {
 // Check if balance is sufficient for amount + gas fee (with minimal precision tolerance)
 const precision = 0.000000001; // Very small tolerance for floating-point precision only
 if (totalCost > (currentBalance + precision)) {
-  const maxSendable = Math.max(0, currentBalance - gasFee);
+  const maxSendable = parseFloat(Math.max(0, currentBalance - gasFee).toFixed(8));
   showNotification(`${translator.translate('Insufficient balance. Total cost')}: ${formatNumberSmart(totalCost)} Access. ${translator.translate('Maximum sendable amount')}: ${formatNumberSmart(maxSendable)} Access`, 'error');
   return;
 }
@@ -10821,8 +10875,8 @@ if (totalCost > (currentBalance + precision)) {
           console.log('Transaction successfully recorded on server:', response);
 
           // Update balance from server response to prevent double deduction
-          if (response && response.senderBalance !== undefined) {
-            const serverBalance = parseFloat(response.senderBalance);
+          if (response && response.sender_balance_new !== undefined) {
+            const serverBalance = parseFloat(response.sender_balance_new);
             currentUser.coins = serverBalance;
             currentUser.wallet.balance = serverBalance;
 
@@ -10831,7 +10885,7 @@ if (totalCost > (currentBalance + precision)) {
 
             const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
             if (!isBalanceHidden) {
-              const walletBalanceElement = document.getElementById('wallet-balance');
+              const walletBalanceElement = document.getElementById('network-coins');
               if (walletBalanceElement) {
                 walletBalanceElement.textContent = formatNumberSmart(serverBalance);
               }
@@ -11980,7 +12034,7 @@ if (totalCost > (currentBalance + precision)) {
   function syncWalletBalanceWithUserCoins() {
     if (currentUser && typeof currentUser.coins !== 'undefined') {
       // Update UI to display database balance
-      const walletBalance = document.getElementById('wallet-balance');
+      const walletBalance = document.getElementById('network-coins');
       if (walletBalance) {
         walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
       }
@@ -12651,7 +12705,7 @@ if (totalCost > (currentBalance + precision)) {
         const messagePara = document.createElement('p');
         messagePara.textContent = translatedMessage;
         
-        const closeBtnBonus = document.createElement('button');
+        const closeBtnBonus = document.createElement('span');
         closeBtnBonus.className = 'close-btn';
         const closeIconBonus = document.createElement('i');
         closeIconBonus.className = 'fas fa-times';
@@ -14041,7 +14095,7 @@ window.cancelProfileChanges = cancelProfileChanges;
     const messagePara = document.createElement('p');
     messagePara.textContent = message;
     
-    const closeBtnNotif = document.createElement('button');
+    const closeBtnNotif = document.createElement('span');
     closeBtnNotif.className = 'close-btn';
     const closeIconNotif = document.createElement('i');
     closeIconNotif.className = 'fas fa-times';
