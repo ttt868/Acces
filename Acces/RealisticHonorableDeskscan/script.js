@@ -10578,7 +10578,7 @@ window.setMaxAmount = function() {
       // Smart display - no trailing zeros
       amountInput.value = maxSendable.toString();
       showNotification(
-        `${translator.translate('Max amount set')}: ${maxSendable.toFixed(8)} Points`,
+        `${translator.translate('Max amount set')}: ${maxSendable} Points`,
         'success'
       );
     }
