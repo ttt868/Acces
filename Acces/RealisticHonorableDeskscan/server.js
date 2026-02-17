@@ -13,6 +13,7 @@ import { WebSocketServer } from 'ws';
 import { pool, initializeDatabase, saveUser, getUser, processReferral, getUserReferrals, updateProcessingStatus, getProcessingHistory, updateAccumulatedReward, getAccumulatedReward } from './db.js';
 import ultraCache from './ultra-cache-system.js';
 import WebSocketRPCHandler from './websocket-rpc-handler.js';
+import wsBridge from './ws-cluster-bridge.js';
 import { getGlobalAccessStateStorage } from './access-state-storage.js';
 import webpush from 'web-push';
 import fcmService from './fcm-service.js';
@@ -22,7 +23,7 @@ import { startBoostReminderScheduler } from './boost-reminder-notifications.js';
 // ============================================================================
 // 📦 إصدار الملفات - غير هذا الرقم فقط لتحديث كل الملفات
 // ============================================================================
-const ASSETS_VERSION = '19.0';
+const ASSETS_VERSION = '20.1';
 
 // ============================================================================
 // 🔒 SESSION TOKEN PROTECTION - حماية من الجلسات المتعددة
@@ -810,38 +811,8 @@ async function notifyExternalWallets(transactionData) {
     // Track connections we've already sent to (to avoid duplicates)
     const sentConnections = new Set();
 
-    // Broadcast to wss.clients
-    if (wss && wss.clients) {
-      wss.clients.forEach(client => {
-        if (client.readyState === 1) {
-          sentConnections.add(client);
-          notifications.forEach(notification => {
-            try {
-              client.send(JSON.stringify(notification));
-            } catch (sendErr) {
-              console.error('Error sending external wallet notification:', sendErr.message);
-            }
-          });
-        }
-      });
-    }
-
-    // Also broadcast to activeUsers presence connections
-    if (activeUsers && activeUsers.size > 0) {
-      for (const [userId, session] of activeUsers.entries()) {
-        if (session && session.ws && session.ws.readyState === 1) {
-          if (!sentConnections.has(session.ws)) {
-            notifications.forEach(notification => {
-              try {
-                session.ws.send(JSON.stringify(notification));
-              } catch (sendErr) {
-                console.error(`Error sending external notification to user ${userId}:`, sendErr.message);
-              }
-            });
-          }
-        }
-      }
-    }
+    // ✅ Redis Pub/Sub Bridge: external wallet notifications across ALL workers
+    wsBridge.sendToAll(notifications);
 
     // ✅ Removed verbose Arabic logging for performance
     
@@ -930,41 +901,8 @@ async function broadcastTransactionLog(transactionData) {
     // Track connections we've already sent to (to avoid duplicates)
     const sentConnections = new Set();
 
-    // Broadcast to wss.clients (general WebSocket connections)
-    if (wss && wss.clients) {
-      wss.clients.forEach(client => {
-        if (client.readyState === 1) {
-          sentConnections.add(client);
-          logNotifications.forEach(notification => {
-            try {
-              client.send(JSON.stringify(notification));
-            } catch (sendErr) {
-              console.error('Error sending to wss client:', sendErr.message);
-            }
-          });
-        }
-      });
-    }
-
-    // Also broadcast to activeUsers presence connections (ensures all connected users receive notifications)
-    if (activeUsers && activeUsers.size > 0) {
-      let presenceCount = 0;
-      for (const [userId, session] of activeUsers.entries()) {
-        if (session && session.ws && session.ws.readyState === 1) {
-          // Skip if already sent via wss.clients
-          if (!sentConnections.has(session.ws)) {
-            logNotifications.forEach(notification => {
-              try {
-                session.ws.send(JSON.stringify(notification));
-              } catch (sendErr) {
-                console.error(`Error sending to presence user ${userId}:`, sendErr.message);
-              }
-            });
-            presenceCount++;
-          }
-        }
-      }
-    }
+    // ✅ Redis Pub/Sub Bridge: broadcast transaction log across ALL workers
+    wsBridge.sendToAll(logNotifications);
 
     // Send Web Push + FCM notifications to recipient (for web + Cordova app)
     await sendAllNotificationsToRecipient(transactionData);
@@ -5161,14 +5099,13 @@ const server = http.createServer(async (req, res) => {
       try {
         const { userId, sessionToken } = await parseRequestBody(req);
 
-        // 🔒 SESSION TOKEN VALIDATION
+        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
+        let _sessionValid = true;
         if (sessionToken) {
           const tokenValid = await validateSessionToken(userId, sessionToken);
           if (!tokenValid) {
-            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/processing/start`);
-            res.writeHead(401, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
-            return;
+            console.log(`🔒 Session mismatch for user ${userId} on /api/processing/start - continuing silently`);
+            _sessionValid = false;
           }
         }
 
@@ -5453,14 +5390,13 @@ const server = http.createServer(async (req, res) => {
         const userData = await parseRequestBody(req);
         const { userId, forceStatus, sessionToken } = userData;
 
-        // 🔒 SESSION TOKEN VALIDATION
+        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
+        let _sessionValid = true;
         if (sessionToken) {
           const tokenValid = await validateSessionToken(userId, sessionToken);
           if (!tokenValid) {
-            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/update-processing`);
-            res.writeHead(401, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
-            return;
+            console.log(`🔒 Session mismatch for user ${userId} on /api/update-processing - continuing silently`);
+            _sessionValid = false;
           }
         }
         const now = Date.now();
@@ -7289,14 +7225,13 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // 🔒 SESSION TOKEN VALIDATION
+        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
+        let _sessionValid = true;
         if (sessionToken) {
           const tokenValid = await validateSessionToken(userId, sessionToken);
           if (!tokenValid) {
-            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/processing/cleanup`);
-            res.writeHead(401, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
-            return;
+            console.log(`🔒 Session mismatch for user ${userId} on /api/processing/cleanup - continuing silently`);
+            _sessionValid = false;
           }
         }
         
@@ -7715,26 +7650,8 @@ const server = http.createServer(async (req, res) => {
                 ];
 
                 // إرسال الإشعارات فقط للمستخدم المستلم (لتجنب التكرار)
-                const clientPromises = Array.from(wss.clients).map(client => {
-                  return new Promise((resolve) => {
-                    // فقط أرسل للمستخدم المستلم (recipient) وليس لجميع العملاء
-                    if (client.readyState === 1 && client.userId && client.userId.toString() === recipient.toString()) {
-                      try {
-                        // إرسال جميع الإشعارات للمستلم فقط
-                        fastNotifications.forEach(notification => {
-                          client.send(JSON.stringify(notification));
-                        });
-                        console.log(`📨 Notifications sent to recipient userId: ${recipient}`);
-                      } catch (clientError) {
-                        console.error('خطأ في إرسال إشعار للعميل:', clientError);
-                      }
-                    }
-                    resolve();
-                  });
-                });
-
-                // انتظار إرسال جميع الإشعارات
-                await Promise.all(clientPromises);
+                // ✅ Redis Pub/Sub Bridge: send notifications to recipient across ALL workers
+                wsBridge.sendToUser(recipient, fastNotifications);
 
                 // إرسال إشعارات Web3 متقدمة للمحافظ الخارجية
                 const blockNumber = '0x' + Math.floor(Date.now() / 1000).toString(16);
@@ -7763,53 +7680,24 @@ const server = http.createServer(async (req, res) => {
                   console.warn('External wallet notification skipped:', notifyError.message);
                 }
 
-                // إشعار خاص للمحفظة المستقبلة
-                if (wss && wss.clients) {
-                  const receivedNotification = {
-                    type: 'external_received_transaction',
-                    walletAddress: recipientAddress.toLowerCase(),
-                    transactionHash: hash,
-                    amount: numericAmount,
-                    from: senderAddress.toLowerCase(),
-                    timestamp: timestamp,
-                    status: 'confirmed',
-                    chainId: '0x5968',
-                    networkId: '22888',
-                    message: `استلمت ${numericAmount.toFixed(8)} ACCESS`,
-                    showNotification: true
-                  };
-
-                  wss.clients.forEach(client => {
-                    if (client.readyState === 1) {
-                      client.send(JSON.stringify(receivedNotification));
-                    }
-                  });
-                }
+                // ✅ Redis Pub/Sub Bridge: external received transaction across ALL workers
+                const receivedNotification = {
+                  type: 'external_received_transaction',
+                  walletAddress: recipientAddress.toLowerCase(),
+                  transactionHash: hash,
+                  amount: numericAmount,
+                  from: senderAddress.toLowerCase(),
+                  timestamp: timestamp,
+                  status: 'confirmed',
+                  chainId: '0x5968',
+                  networkId: '22888',
+                  showNotification: true
+                };
+                wsBridge.sendToAll([receivedNotification]);
 
                 // Silent - reduce console spam
 
-                // إرسال جميع الإشعارات بالتوازي للسرعة القصوى
-            Array.from(wss.clients).map(client => {
-                  return new Promise((resolve) => {
-                    if (client.readyState === 1) {
-                      try {
-                        // إرسال جميع الإشعارات دفعة واحدة
-                        fastNotifications.forEach(notification => {
-                          client.send(JSON.stringify(notification));
-                        });
-                        resolve(true);
-                      } catch (wsError) {
-                        console.error('خطأ في إرسال إشعار WebSocket:', wsError);
-                        resolve(false);
-                      }
-                    } else {
-                      resolve(false);
-                    }
-                  });
-                });
-
-                // تنفيذ جميع الإرسالات بالتوازي
-                await Promise.all(clientPromises);
+                // ✅ Redis Pub/Sub Bridge: second broadcast merged into sendToUser above
               }
 
               // إشعارات خاصة للمحافظ الخارجية (Coinbase, Trust, MetaMask)
@@ -7857,24 +7745,8 @@ const server = http.createServer(async (req, res) => {
                 ];
 
                 // إرسال الإشعارات للمحافظ الخارجية بالتوازي
-                const externalPromises = Array.from(wss.clients).map(client => {
-                  return new Promise((resolve) => {
-                    if (client.readyState === 1) {
-                      try {
-                        externalWalletNotifications.forEach(notification => {
-                          client.send(JSON.stringify(notification));
-                        });
-                        resolve(true);
-                      } catch (error) {
-                        resolve(false);
-                      }
-                    } else {
-                      resolve(false);
-                    }
-                  });
-                });
-
-                await Promise.all(externalPromises);
+                // ✅ Redis Pub/Sub Bridge: external wallet notifications across ALL workers
+                wsBridge.sendToAll(externalWalletNotifications);
                 // Silent - reduce console spam
               }
 
@@ -7970,15 +7842,8 @@ const server = http.createServer(async (req, res) => {
                     balanceSource: 'blockchain_state' // الرصيد من حالة الشبكة
                   });
 
-                  wss.clients.forEach(client => {
-                    if (client.readyState === 1) {
-                      try {
-                        client.send(externalUpdateMessage);
-                      } catch (wsError) {
-                        console.error('خطأ في إرسال إشعار محفظة خارجية:', wsError);
-                      }
-                    }
-                  });
+                  // ✅ Redis Pub/Sub Bridge: external update across ALL workers
+                  wsBridge.sendToAll([JSON.parse(externalUpdateMessage)]);
 
                   // Silent - reduce console spam
                 } catch (notificationError) {
@@ -8101,26 +7966,7 @@ const server = http.createServer(async (req, res) => {
 
           await client.query('COMMIT');
 
-          // Silent - reduce console spam
-
-          // 📱 إرسال Web Push + FCM Notification للمستلم (للويب + Cordova)
-          try {
-            const transactionDataForPush = {
-              hash: hash,
-              from: senderAddress,
-              to: recipientAddress,
-              amount: numericAmount,
-              blockNumber: '0x' + Math.floor(Date.now() / 1000).toString(16),
-              blockHash: '0x' + crypto.randomBytes(32).toString('hex'),
-              timestamp: timestamp
-            };
-            
-            await global.sendAllNotificationsToRecipient(transactionDataForPush);
-            // Silent - reduce console spam
-          } catch (pushError) {
-            console.warn('Push notification failed (non-critical):', pushError.message);
-          }
-
+          // ⚡ إرسال الاستجابة فوراً بعد COMMIT - لا ننتظر الإشعارات
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ 
             success: true, 
@@ -8135,6 +7981,23 @@ const server = http.createServer(async (req, res) => {
             recipient_balance_new: recipientBalanceNew,
             timestamp: timestamp
           }));
+
+          // 📱 إرسال Push Notifications في الخلفية (fire-and-forget)
+          try {
+            const transactionDataForPush = {
+              hash: hash,
+              from: senderAddress,
+              to: recipientAddress,
+              amount: numericAmount,
+              blockNumber: '0x' + Math.floor(Date.now() / 1000).toString(16),
+              blockHash: '0x' + crypto.randomBytes(32).toString('hex'),
+              timestamp: timestamp
+            };
+            
+            global.sendAllNotificationsToRecipient(transactionDataForPush).catch(() => {});
+          } catch (pushError) {
+            // silent
+          }
 
         } catch (err) {
           await client.query('ROLLBACK');
@@ -8263,14 +8126,13 @@ const server = http.createServer(async (req, res) => {
       try {
         const { userId, sessionToken } = await parseRequestBody(req);
 
-        // 🔒 SESSION TOKEN VALIDATION
+        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
+        let _sessionValid = true;
         if (sessionToken) {
           const tokenValid = await validateSessionToken(userId, sessionToken);
           if (!tokenValid) {
-            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/processing/payout`);
-            res.writeHead(401, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
-            return;
+            console.log(`🔒 Session mismatch for user ${userId} on /api/processing/payout - continuing silently`);
+            _sessionValid = false;
           }
         }
         const timestamp = Date.now();
@@ -8686,14 +8548,13 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // 🔒 SESSION TOKEN VALIDATION
+        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
+        let _sessionValid = true;
         if (sessionToken) {
           const tokenValid = await validateSessionToken(userId, sessionToken);
           if (!tokenValid) {
-            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/processing/save-completed`);
-            res.writeHead(401, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
-            return;
+            console.log(`🔒 Session mismatch for user ${userId} on /api/processing/save-completed - continuing silently`);
+            _sessionValid = false;
           }
         }
 
@@ -8766,14 +8627,13 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // 🔒 SESSION TOKEN VALIDATION
+        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
+        let _sessionValid = true;
         if (sessionToken) {
           const tokenValid = await validateSessionToken(userId, sessionToken);
           if (!tokenValid) {
-            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/processing/countdown/complete`);
-            res.writeHead(401, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
-            return;
+            console.log(`🔒 Session mismatch for user ${userId} on /api/processing/countdown/complete - continuing silently`);
+            _sessionValid = false;
           }
         }
 
@@ -8873,14 +8733,13 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // 🔒 SESSION TOKEN VALIDATION
+        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
+        let _sessionValid = true;
         if (sessionToken) {
           const tokenValid = await validateSessionToken(userId, sessionToken);
           if (!tokenValid) {
-            console.log(`🔒 BLOCKED: Invalid session token for user ${userId} on /api/processing/countdown/start`);
-            res.writeHead(401, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
-            return;
+            console.log(`🔒 Session mismatch for user ${userId} on /api/processing/countdown/start - continuing silently`);
+            _sessionValid = false;
           }
         }
 
@@ -10515,6 +10374,13 @@ function initializeWebSockets(httpServer) {
     pingTimeout: 30000, // 30 second ping timeout
     pingInterval: 25000 // 25 second ping interval
   });
+  // Initialize Redis Pub/Sub bridge for cross-worker WebSocket communication
+  wsBridge.init(wss, activeUsers, {
+    host: "127.0.0.1",
+    port: 6379,
+    password: "AccessRedis2026Secure"
+  });
+
 
   // Manually handle upgrade events to prevent duplicate handling
   httpServer.removeAllListeners('upgrade');
