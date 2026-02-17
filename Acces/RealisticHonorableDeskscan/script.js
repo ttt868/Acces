@@ -10567,7 +10567,7 @@ window.setMaxAmount = function() {
   const currentBalance = parseFloat(currentUser.coins || 0);
 
   // Calculate max sendable - exact amount minus gas fee only
-  const maxSendable = parseFloat(Math.max(0, currentBalance - gasFee).toFixed(8));
+  const maxSendable = Math.max(0, currentBalance - gasFee);
 
   const amountInput = document.getElementById('transaction-amount');
   if (amountInput) {
@@ -10576,7 +10576,7 @@ window.setMaxAmount = function() {
       amountInput.value = '0.00000000';
     } else {
       // Set the value without toFixed to preserve the exact calculated amount
-      amountInput.value = maxSendable.toFixed(8);
+      amountInput.value = maxSendable.toString();
       showNotification(
         `${translator.translate('Max amount set')}: ${maxSendable.toFixed(8)} Points`,
         'success'
@@ -10704,7 +10704,7 @@ if (currentBalance < gasFee) {
 // Check if balance is sufficient for amount + gas fee (with minimal precision tolerance)
 const precision = 0.000000001; // Very small tolerance for floating-point precision only
 if (totalCost > (currentBalance + precision)) {
-  const maxSendable = parseFloat(Math.max(0, currentBalance - gasFee).toFixed(8));
+  const maxSendable = Math.max(0, currentBalance - gasFee);
   showNotification(`${translator.translate('Insufficient balance. Total cost')}: ${formatNumberSmart(totalCost)} Access. ${translator.translate('Maximum sendable amount')}: ${formatNumberSmart(maxSendable)} Access`, 'error');
   return;
 }
