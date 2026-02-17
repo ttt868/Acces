@@ -4806,13 +4806,10 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
             });
             const data = await resp.json();
             
-            // 🔒 SECURITY: Handle 401 - session expired
+            // 🔒 SECURITY: Handle 401 - session mismatch (ذكي - يكمل بصمت)
             if (resp.status === 401 && data.requireRelogin) {
-              showNotification(translator.translate('Your session has expired. Please login again.'), 'error');
-              btn.classList.remove('disabled');
-              btn.disabled = false;
-              btn.innerHTML = '<i class="fas fa-play"></i> ' + translator.translate('Start Activity');
-              return;
+              console.log('🔒 Session mismatch detected - continuing silently');
+              // لا نعرض رسالة ولا نوقف - نكمل عادي
             }
 
             if (resp.ok && data.success) {
@@ -5339,18 +5336,10 @@ processingButton.addEventListener('click', async function(e) {
 
     console.log(`[SCRIPT] Processing start response status: ${response.status}`);
 
-    // 🔒 SECURITY: Handle 401 - Invalid session token (logged in from another device)
+    // 🔒 SECURITY: Handle 401 - session mismatch (ذكي - يكمل بصمت)
     if (response.status === 401) {
-      const authData = await response.json();
-      if (authData.requireRelogin) {
-        console.log('🔒 SESSION TOKEN INVALID: User must re-login');
-        showNotification(translator.translate('Your session has expired. Please login again.'), 'error');
-        // Reset button state
-        processingButton.classList.remove('disabled');
-        processingButton.disabled = false;
-        processingButton.innerHTML = '<i class="fas fa-play"></i> ' + translator.translate('Start Activity');
-        return;
-      }
+      console.log('🔒 Session mismatch detected - continuing silently');
+      // لا نوقف المستخدم - نكمل عادي
     }
 
     // 🔒 SECURITY: Handle 409 Conflict - session already active
