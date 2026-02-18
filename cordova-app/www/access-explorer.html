@@ -2658,7 +2658,7 @@
                             <span>From: <a href="address-details.html?address=${encodeURIComponent(from)}" class="address-link">${formatAddress(from)}</a></span>
                             <span style="margin: 0 10px;">→</span>
                             <span>To: <a href="${to ? `address-details.html?address=${encodeURIComponent(to)}` : '#'}" class="address-link">${to ? formatAddress(to) : 'Contract Creation'}</a></span>
-                            <span class="tx-amount">${parseFloat(amount).toFixed(6)} ACCESS</span>
+                            <span class="tx-amount">${formatAccessAmount(amount)}</span>
                         </div>
                     </div>
                 `;
@@ -3408,6 +3408,29 @@
         // Google OAuth 2.0 authentication system with redirect flow
         let currentExplorerUser = null;
         let explorerSessionToken = null;
+
+        // Smart number formatting for ACCESS amounts
+        function formatAccessAmount(value) {
+            const num = parseFloat(value) || 0;
+            if (num === 0) return '0 ACCESS';
+            const abs = Math.abs(num);
+            if (abs >= 1) {
+                const str = num.toFixed(8);
+                const parts = str.split('.');
+                let intPart = parseInt(parts[0]).toLocaleString('en-US');
+                let decPart = parts[1].replace(/0+$/, '');
+                if (decPart.length === 1) decPart += '0';
+                if (decPart.length === 0) return (num < 0 ? '-' : '') + intPart + ' ACCESS';
+                return (num < 0 ? '-' : '') + intPart + '.' + decPart + ' ACCESS';
+            } else {
+                const str = num.toFixed(8);
+                const trimmed = str.replace(/0+$/, '');
+                const parts = trimmed.split('.');
+                let decPart = parts[1] || '';
+                if (decPart.length < 2) decPart = decPart.padEnd(2, '0');
+                return parts[0] + '.' + decPart + ' ACCESS';
+            }
+        }
 
         // Google Client ID - loaded securely from server
         let GOOGLE_CLIENT_ID = null;

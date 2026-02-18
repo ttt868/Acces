@@ -1821,6 +1821,29 @@
             }
         }
 
+        // Smart number formatting for ACCESS amounts
+        function formatAccessAmount(value) {
+            const num = parseFloat(value) || 0;
+            if (num === 0) return '0 ACCESS';
+            const abs = Math.abs(num);
+            if (abs >= 1) {
+                const str = num.toFixed(8);
+                const parts = str.split('.');
+                let intPart = parseInt(parts[0]).toLocaleString('en-US');
+                let decPart = parts[1].replace(/0+$/, '');
+                if (decPart.length === 1) decPart += '0';
+                if (decPart.length === 0) return (num < 0 ? '-' : '') + intPart + ' ACCESS';
+                return (num < 0 ? '-' : '') + intPart + '.' + decPart + ' ACCESS';
+            } else {
+                const str = num.toFixed(8);
+                const trimmed = str.replace(/0+$/, '');
+                const parts = trimmed.split('.');
+                let decPart = parts[1] || '';
+                if (decPart.length < 2) decPart = decPart.padEnd(2, '0');
+                return parts[0] + '.' + decPart + ' ACCESS';
+            }
+        }
+
         // Google Client ID - loaded securely from server
         let GOOGLE_CLIENT_ID = null;
 
@@ -2284,11 +2307,11 @@
             document.getElementById('fromAddress').textContent = tx.from || 'Unknown';
             document.getElementById('toAddress').textContent = tx.to || 'Unknown';
 
-            document.getElementById('txValue').textContent = `${value.toFixed(8)} ACCESS`;
+            document.getElementById('txValue').textContent = formatAccessAmount(value);
             document.getElementById('txValueUSD').textContent = 'Currency not listed yet';
 
             const feeInAccess = (gasUsed * gasPrice) / 1e18;
-            document.getElementById('txFee').textContent = `${feeInAccess.toFixed(8)} ACCESS`;
+            document.getElementById('txFee').textContent = formatAccessAmount(feeInAccess);
             document.getElementById('txFeeUSD').textContent = 'Currency not listed yet';
 
             document.getElementById('gasLimit').textContent = gasUsed.toLocaleString();
@@ -2477,12 +2500,12 @@
 
             const realAmount = tx.value || tx.amount || 0;
             const numericAmount = typeof realAmount === 'string' ? parseFloat(realAmount) : realAmount;
-            document.getElementById('txValue').textContent = `${numericAmount.toFixed(8)} ACCESS`;
+            document.getElementById('txValue').textContent = formatAccessAmount(numericAmount);
             document.getElementById('txValueUSD').textContent = 'Currency not listed yet';
 
             const realGasFee = parseFloat(tx.gasFee) || parseFloat(tx.gasPrice) || 0.00002;
 
-            document.getElementById('txFee').textContent = `${realGasFee.toFixed(8)} ACCESS`;
+            document.getElementById('txFee').textContent = formatAccessAmount(realGasFee);
             document.getElementById('txFeeUSD').textContent = 'Currency not listed yet';
 
             const currentNonceDisplay = document.getElementById('txNonce').textContent;
@@ -2571,7 +2594,7 @@
 
             const realGasPrice = 0.00002;
 
-            document.getElementById('gasPrice').textContent = `${realGasPrice.toFixed(8)} ACCESS`;
+            document.getElementById('gasPrice').textContent = formatAccessAmount(realGasPrice);
             document.getElementById('gasPriceWei').textContent = `(20,000,000,000 Wei)`;
 
             // Transaction type removed per user request

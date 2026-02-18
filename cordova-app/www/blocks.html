@@ -1826,6 +1826,29 @@
         let currentExplorerUser = null;
         let explorerSessionToken = null;
 
+        // Smart number formatting for ACCESS amounts
+        function formatAccessAmount(value) {
+            const num = parseFloat(value) || 0;
+            if (num === 0) return '0 ACCESS';
+            const abs = Math.abs(num);
+            if (abs >= 1) {
+                const str = num.toFixed(8);
+                const parts = str.split('.');
+                let intPart = parseInt(parts[0]).toLocaleString('en-US');
+                let decPart = parts[1].replace(/0+$/, '');
+                if (decPart.length === 1) decPart += '0';
+                if (decPart.length === 0) return (num < 0 ? '-' : '') + intPart + ' ACCESS';
+                return (num < 0 ? '-' : '') + intPart + '.' + decPart + ' ACCESS';
+            } else {
+                const str = num.toFixed(8);
+                const trimmed = str.replace(/0+$/, '');
+                const parts = trimmed.split('.');
+                let decPart = parts[1] || '';
+                if (decPart.length < 2) decPart = decPart.padEnd(2, '0');
+                return parts[0] + '.' + decPart + ' ACCESS';
+            }
+        }
+
         // Google Client ID - loaded securely from server
         let GOOGLE_CLIENT_ID = null;
 
@@ -2003,10 +2026,10 @@
             document.getElementById('blockSize').textContent = formatBytes(avgBlockSize);
 
             // Total Block Rewards (24H)
-            document.getElementById('blockRewards').textContent = `${totalRewards.toFixed(2)} ACCESS`;
+            document.getElementById('blockRewards').textContent = formatAccessAmount(totalRewards);
 
             // Burnt Fees
-            document.getElementById('burntFees').textContent = `${totalBurntFees.toFixed(2)} ACCESS`;
+            document.getElementById('burntFees').textContent = formatAccessAmount(totalBurntFees);
         }
 
         function formatBytes(bytes) {
@@ -2068,7 +2091,7 @@
                         ${gasUsed.toLocaleString()} (${gasUsedPercent}%)
                     </td>
                     <td class="gas-value">${gasLimit.toLocaleString()}</td>
-                    <td class="reward-value">${(block.reward || 0).toFixed(8)} ACCESS</td>
+                    <td class="reward-value">${formatAccessAmount(block.reward || 0)}</td>
                     <td class="gas-value">0.00000000 ACCESS</td>
                 `;
 
@@ -2194,7 +2217,7 @@
                     actualTxCount = block.transactionCount;
                 }
 
-                csvContent += `${block.index || block.number},${age},${actualTxCount},${block.validator || block.processor || 'AccessValidator'},${gasUsed},${gasLimit},${(block.reward || 0).toFixed(8)} ACCESS,0.00000000 ACCESS\n`;
+                csvContent += `${block.index || block.number},${age},${actualTxCount},${block.validator || block.processor || 'AccessValidator'},${gasUsed},${gasLimit},${formatAccessAmount(block.reward || 0)},0 ACCESS\n`;
             });
 
             // Download CSV
