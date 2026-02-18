@@ -966,7 +966,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Re-translate network elements if on network page immediately
-        if (document.getElementById('community-page') && document.getElementById('community-page').style.display !== 'none') {
+        if (document.getElementById('network-page') && document.getElementById('network-page').style.display !== 'none') {
           setTimeout(translateNetworkElements, 50);
         }
         
@@ -1615,7 +1615,7 @@ For more information, visit our platform at: ${(typeof getApiOrigin !== "undefin
     
     
     // Re-translate network elements if on network page immediately
-    if (document.getElementById('community-page') && document.getElementById('community-page').style.display !== 'none') {
+    if (document.getElementById('network-page') && document.getElementById('network-page').style.display !== 'none') {
       // Network page elements will be updated automatically
     }
     
@@ -5436,7 +5436,7 @@ processingButton.addEventListener('click', async function(e) {
           const dashboardBalance = document.getElementById('dashboard-balance');
           if (dashboardBalance) dashboardBalance.textContent = formattedBalance;
           
-          const walletBalance = document.getElementById('wallet-balance');
+          const walletBalance = document.getElementById('network-coins');
           if (walletBalance) walletBalance.textContent = formattedBalance;
           
           // تحديث أي عناصر أخرى بالـ class
@@ -5927,7 +5927,7 @@ function startGradualAccumulation() {
       '#user-coins', '#user-balance', '#profile-coins',
       '.wallet-balance', '.account-balance', '.user-balance', '.balance-display', '.coin-balance',
       '[data-balance]', '#dashboard-balance', '#main-balance', '.current-balance',
-      '#activity-page .balance-display', '#community-page .balance-amount',
+      '#activity-page .balance-display', '#network-page .balance-amount',
       '.sidebar-balance', '.header-balance', '.nav-balance', '.account-balance'
     ];
 
@@ -5967,7 +5967,7 @@ function startGradualAccumulation() {
     const pageContexts = [
       { selector: '#dashboard-page #user-coins', page: 'Dashboard' },
       { selector: '#profile-page #profile-coins', page: 'Profile' },
-      { selector: '#community-page .wallet-balance', page: 'Network' },
+      { selector: '#network-page #network-coins', page: 'Network' },
       { selector: '#activity-page .balance-display', page: 'Processing' }
     ];
 
@@ -7302,7 +7302,7 @@ function updateProcessingStatus(message, type) {
 
 // Create a dedicated observer for the network page to catch dynamic content
 document.addEventListener('DOMContentLoaded', () => {
-  const networkPage = document.getElementById('community-page');
+  const networkPage = document.getElementById('network-page');
   if (networkPage) {
     const networkObserver = new MutationObserver(() => {
       // Translate whenever network page changes
@@ -7586,8 +7586,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // If network page is currently visible, apply multiple translation passes
         // with increasing delays to ensure complete coverage
-        if (document.getElementById('community-page') && 
-            document.getElementById('community-page').style.display !== 'none') {
+        if (document.getElementById('network-page') && 
+            document.getElementById('network-page').style.display !== 'none') {
           
           // Series of delayed translations to catch all elements as they update
           [100, 300, 600, 1000, 1500].forEach(delay => {
@@ -7605,7 +7605,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'visible') {
       // Check if network page is visible
-      const networkPage = document.getElementById('community-page');
+      const networkPage = document.getElementById('network-page');
       if (networkPage && window.getComputedStyle(networkPage).display !== 'none') {
         // Apply translations with multiple passes when returning to the page
         // Network page translation handled automatically
@@ -7617,8 +7617,8 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Check if network page is already visible on load and apply translations
-  if (document.getElementById('community-page') && 
-      window.getComputedStyle(document.getElementById('community-page')).display !== 'none') {
+  if (document.getElementById('network-page') && 
+      window.getComputedStyle(document.getElementById('network-page')).display !== 'none') {
     // Network page translation handled automatically
     // Network page observer handled automatically
   }
@@ -7926,8 +7926,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
               }
 
               // Refresh transaction list if on network page
-              if (document.getElementById('community-page') && 
-                  window.getComputedStyle(document.getElementById('community-page')).display !== 'none') {
+              if (document.getElementById('network-page') && 
+                  window.getComputedStyle(document.getElementById('network-page')).display !== 'none') {
                 setTimeout(() => {
                   if (typeof updateTransactionList === 'function') {
                     updateTransactionList();
@@ -8882,7 +8882,7 @@ function initializeGoogleSignIn() {
 
     // Check if user already has a wallet
     const walletAddress = document.getElementById('user-account-address');
-    const walletBalance = document.getElementById('wallet-balance');
+    const walletBalance = document.getElementById('network-coins');
 
     // ⚡ INSTANT DISPLAY - عرض فوري بدون "Generating..."
     if (walletAddress && currentUser.wallet_address) {
@@ -9215,7 +9215,7 @@ function initializeGoogleSignIn() {
     document.documentElement.setAttribute('data-language', currentLang);
 
     // Ensure all network page texts are translated
-    if (document.getElementById('community-page') && document.getElementById('community-page').style.display !== 'none') {
+    if (document.getElementById('network-page') && document.getElementById('network-page').style.display !== 'none') {
 
     }
 
@@ -10520,7 +10520,7 @@ window.copyAccountAddress = function() {
 
             // Update UI
             const walletAddress = document.getElementById('user-account-address');
-            const walletBalance = document.getElementById('wallet-balance');
+            const walletBalance = document.getElementById('network-coins');
 
             if (walletAddress) {
               walletAddress.textContent = importedWallet.publicAddress;
@@ -10581,7 +10581,7 @@ window.copyAccountAddress = function() {
 
             // Update UI
             const walletAddress = document.getElementById('user-account-address');
-            const walletBalance = document.getElementById('wallet-balance');
+            const walletBalance = document.getElementById('network-coins');
 
             if (walletAddress) {
               walletAddress.textContent = importedWallet.publicAddress;
@@ -10690,8 +10690,8 @@ window.copyAccountAddress = function() {
     });
 
     // If network page is already visible on load, initialize wallet
-    if (document.getElementById('community-page') && 
-        document.getElementById('community-page').style.display !== 'none') {
+    if (document.getElementById('network-page') && 
+        document.getElementById('network-page').style.display !== 'none') {
       // Short delay to ensure user data is loaded
       setTimeout(() => {
         if (currentUser && currentUser.id) {
@@ -10723,7 +10723,7 @@ window.copyAccountAddress = function() {
     document.addEventListener('visibilitychange', function() {
       if (document.visibilityState === 'visible') {
         // Check if network page is visible
-        const networkPage = document.getElementById('community-page');
+        const networkPage = document.getElementById('network-page');
         if (networkPage && networkPage.style.display !== 'none' && currentUser && currentUser.id) {
           // Re-initialize wallet and regenerate QR code when returning to the page
           setTimeout(() => {
@@ -11109,7 +11109,7 @@ if (totalCost > (currentBalance + precision)) {
 
             const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
             if (!isBalanceHidden) {
-              const walletBalanceElement = document.getElementById('wallet-balance');
+              const walletBalanceElement = document.getElementById('network-coins');
               if (walletBalanceElement) {
                 walletBalanceElement.textContent = formatNumberSmart(serverBalance);
               }
@@ -12258,7 +12258,7 @@ if (totalCost > (currentBalance + precision)) {
   function syncWalletBalanceWithUserCoins() {
     if (currentUser && typeof currentUser.coins !== 'undefined') {
       // Update UI to display database balance
-      const walletBalance = document.getElementById('wallet-balance');
+      const walletBalance = document.getElementById('network-coins');
       if (walletBalance) {
         walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
       }
