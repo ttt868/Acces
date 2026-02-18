@@ -27,9 +27,10 @@ module.exports = {
       script: 'server.js',
       cwd: '/var/www/Acces/RealisticHonorableDeskscan',
 
-      // ⚡ Cluster: نسخة لكل CPU = load balancing تلقائي
-      instances: cpuCount,          // 2 CPU = 2 نسخ، 4 CPU = 4 نسخ...
-      exec_mode: 'cluster',         // Round-robin بين النسخ
+      // ⚡ Fork: نسخة واحدة فقط - البلوكتشين يحتاج ذاكرة موحدة للأرصدة
+      // Cluster يسبب عدم تزامن الأرصدة بين العاملين (كل عامل Map مختلف)
+      instances: 1,
+      exec_mode: 'fork',
 
       // 🔄 Auto-Restart - لا يموت أبداً
       autorestart: true,
