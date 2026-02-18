@@ -10575,7 +10575,7 @@ window.setMaxAmount = function() {
       showNotification(translator.translate('Insufficient balance to cover gas fees'), 'error');
       amountInput.value = '0';
     } else {
-      // Smart display - no trailing zeros
+      // Set the value without toFixed to preserve the exact calculated amount
       amountInput.value = maxSendable.toString();
       showNotification(
         `${translator.translate('Max amount set')}: ${maxSendable} Points`,
