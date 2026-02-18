@@ -2047,6 +2047,29 @@
     </footer>
 
     <script>
+        // Smart number formatting for ACCESS amounts
+        function formatAccessAmount(value) {
+            const num = parseFloat(value) || 0;
+            if (num === 0) return '0 ACCESS';
+            const abs = Math.abs(num);
+            if (abs >= 1) {
+                const str = num.toFixed(8);
+                const parts = str.split('.');
+                let intPart = parseInt(parts[0]).toLocaleString('en-US');
+                let decPart = parts[1].replace(/0+$/, '');
+                if (decPart.length === 1) decPart += '0';
+                if (decPart.length === 0) return (num < 0 ? '-' : '') + intPart + ' ACCESS';
+                return (num < 0 ? '-' : '') + intPart + '.' + decPart + ' ACCESS';
+            } else {
+                const str = num.toFixed(8);
+                const trimmed = str.replace(/0+$/, '');
+                const parts = trimmed.split('.');
+                let decPart = parts[1] || '';
+                if (decPart.length < 2) decPart = decPart.padEnd(2, '0');
+                return parts[0] + '.' + decPart + ' ACCESS';
+            }
+        }
+
         // Global variables
         let currentPage = 1;
         let entriesPerPage = 50; // Default value
@@ -2607,8 +2630,8 @@ This is Access Network's own API, completely independent from Ethereum.`;
                                     age: formatAge(tx.timestamp),
                                     from: tx.from_address || tx.from || tx.sender_address,
                                     to: tx.to_address || tx.to || tx.recipient_address,
-                                    amount: parseFloat(tx.amount || tx.value || 0).toFixed(8) + ' ACCESS',
-                                    fee: parseFloat(tx.gas_fee || tx.fee || 0.00002).toFixed(8) + ' ACCESS',
+                                    amount: formatAccessAmount(tx.amount || tx.value || 0),
+                                    fee: formatAccessAmount(tx.gas_fee || tx.fee || 0.00002),
                                     timestamp: tx.timestamp,
                                     status: tx.status || 'confirmed'
                                 }));
@@ -2640,8 +2663,8 @@ This is Access Network's own API, completely independent from Ethereum.`;
                                     age: formatAge(tx.timestamp),
                                     from: tx.from || tx.from_address,
                                     to: tx.to || tx.to_address,
-                                    amount: parseFloat(tx.value || tx.amount || 0).toFixed(8) + ' ACCESS',
-                                    fee: '0.00002000 ACCESS',
+                                    amount: formatAccessAmount(tx.value || tx.amount || 0),
+                                    fee: formatAccessAmount(0.000021),
                                     timestamp: tx.timestamp,
                                     status: 'confirmed'
                                 }));
@@ -2719,16 +2742,16 @@ This is Access Network's own API, completely independent from Ethereum.`;
                                 totalTransactions: allTransactions.length,
                                 dailyTransactions: transactionCount,
                                 standardGasFee: STANDARD_GAS_FEE + ' access per tx',
-                                totalGasFees: totalRealisticGasFees.toFixed(8) + ' access',
-                                avgGasFee: avgRealisticFee.toFixed(8) + ' accesd'
+                                totalGasFees: formatAccessAmount(totalRealisticGasFees),
+                                avgGasFee: formatAccessAmount(avgRealisticFee)
                             });
 
                             // Update statistics with REALISTIC data
                             updateStatElement('totalTxCount', allTransactions.length.toLocaleString());
                             updateStatElement('dailyTxCount', transactionCount);
                             updateStatElement('pendingTxCount', '0');
-                            updateStatElement('dailyFees', totalRealisticGasFees.toFixed(8) + ' access');
-                            updateStatElement('avgFee', avgRealisticFee.toFixed(8) + ' access');
+                            updateStatElement('dailyFees', formatAccessAmount(totalRealisticGasFees));
+                            updateStatElement('avgFee', formatAccessAmount(avgRealisticFee));
 
                             // Update transaction range display
                             updateStatElement('startTxNumber', '0');
@@ -2763,8 +2786,8 @@ This is Access Network's own API, completely independent from Ethereum.`;
                             updateStatElement('totalTxCount', (stats.totalTransactions || 0).toLocaleString());
                             updateStatElement('dailyTxCount', stats.dailyTransactions || 0);
                             updateStatElement('pendingTxCount', stats.pendingTransactions || '0');
-                            updateStatElement('dailyFees', parseFloat(stats.totalGasFees || 0).toFixed(8) + ' access');
-                            updateStatElement('avgFee', parseFloat(stats.avgGasFee || 0).toFixed(8) + ' access');
+                            updateStatElement('dailyFees', formatAccessAmount(stats.totalGasFees || 0));
+                            updateStatElement('avgFee', formatAccessAmount(stats.avgGasFee || 0));
 
                             // Update transaction range display
                             updateStatElement('startTxNumber', '0');
@@ -2799,15 +2822,15 @@ This is Access Network's own API, completely independent from Ethereum.`;
                             console.log(`⛽ NODE ESTIMATED REAL GAS:`, {
                                 totalTransactions: totalTransactions,
                                 estimatedDailyTx: estimatedDailyTx,
-                                gasPrice: gasPrice.toFixed(8) + ' access',
-                                totalEstimatedFees: estimatedGasFees.toFixed(8) + ' access'
+                                gasPrice: formatAccessAmount(gasPrice),
+                                totalEstimatedFees: formatAccessAmount(estimatedGasFees)
                             });
 
                             updateStatElement('totalTxCount', totalTransactions.toLocaleString());
                             updateStatElement('dailyTxCount', estimatedDailyTx);
                             updateStatElement('pendingTxCount', nodeData.stats?.pendingTransactions || '0');
-                            updateStatElement('dailyFees', estimatedGasFees.toFixed(8) + ' access');
-                            updateStatElement('avgFee', gasPrice.toFixed(8) + ' access');
+                            updateStatElement('dailyFees', formatAccessAmount(estimatedGasFees));
+                            updateStatElement('avgFee', formatAccessAmount(gasPrice));
 
                             // Update transaction range display
                             updateStatElement('startTxNumber', '0');
@@ -2826,8 +2849,8 @@ This is Access Network's own API, completely independent from Ethereum.`;
                 updateStatElement('totalTxCount', '0');
                 updateStatElement('dailyTxCount', '0');
                 updateStatElement('pendingTxCount', '0');
-                updateStatElement('dailyFees', '0.00000000 ACCESS');
-                updateStatElement('avgFee', '0.00000000 ACCESS');
+                updateStatElement('dailyFees', '0 ACCESS');
+                updateStatElement('avgFee', '0 ACCESS');
 
                 // Update transaction range display
                 updateStatElement('startTxNumber', '0');
@@ -2979,7 +3002,7 @@ This is Access Network's own API, completely independent from Ethereum.`;
                         </div>
                     </div>
                 </td>
-                <td class="amount-value">${amount.toFixed(8)} ACCESS</td>
+                <td class="amount-value">${formatAccessAmount(amount)}</td>
                 <td class="tx-fee">${fee}</td>
             `;
 
@@ -3023,7 +3046,7 @@ This is Access Network's own API, completely independent from Ethereum.`;
                 const age = formatAge(tx.timestamp);
                 const from = tx.from || tx.fromAddress || '';
                 const to = tx.to || tx.toAddress || '';
-                const amount = parseFloat(tx.amount || tx.value || 0).toFixed(8) + ' ACCESS';
+                const amount = formatAccessAmount(tx.amount || tx.value || 0);
                 const fee = tx.fee || '0.00002000 ACCESS';
 
                 csvContent += `"${hash}","${method}","${block}","${age}","${from}","${to}","${amount}","${fee}"\n`;

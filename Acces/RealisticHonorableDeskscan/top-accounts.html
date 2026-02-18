@@ -2381,6 +2381,33 @@
 
         // نظام تسجيل الدخول الموحد - Redirect Mode (نفس access-explorer.html)
 
+        // Smart number formatting for ACCESS amounts
+        function formatAccessAmount(value) {
+            const num = parseFloat(value) || 0;
+            if (num === 0) return '0 ACCESS';
+            const abs = Math.abs(num);
+            if (abs >= 1) {
+                const str = num.toFixed(8);
+                const parts = str.split('.');
+                let intPart = parseInt(parts[0]).toLocaleString('en-US');
+                let decPart = parts[1].replace(/0+$/, '');
+                if (decPart.length === 1) decPart += '0';
+                if (decPart.length === 0) return (num < 0 ? '-' : '') + intPart + ' ACCESS';
+                return (num < 0 ? '-' : '') + intPart + '.' + decPart + ' ACCESS';
+            } else {
+                const str = num.toFixed(8);
+                const trimmed = str.replace(/0+$/, '');
+                const parts = trimmed.split('.');
+                let decPart = parts[1] || '';
+                if (decPart.length < 2) decPart = decPart.padEnd(2, '0');
+                return parts[0] + '.' + decPart + ' ACCESS';
+            }
+        }
+
+        function formatAccessNumber(value) {
+            return formatAccessAmount(value).replace(' ACCESS', '');
+        }
+
         // Google Client ID - loaded securely from server
         let GOOGLE_CLIENT_ID = null;
 
@@ -2782,12 +2809,12 @@
 
                     // Update statistics
                     updateStatElement('totalAccounts', totalAccounts.toLocaleString());
-                    updateStatElement('totalSupply', totalSupply.toFixed(2) + ' ACCESS');
+                    updateStatElement('totalSupply', formatAccessAmount(totalSupply));
                     updateStatElement('top10Holdings', top10Percentage + '%');
                     // Assuming there's a placeholder for top 100 holdings if needed
                     // updateStatElement('top100Holdings', top100Percentage + '%');
                     updateStatElement('totalAccountsCount', totalAccounts.toLocaleString());
-                    updateStatElement('totalSupplyText', totalSupply.toFixed(8)); // Assuming this element exists
+                    updateStatElement('totalSupplyText', formatAccessNumber(totalSupply)); // Assuming this element exists
                 } else {
                      // Set default values if no accounts or totalSupply is 0
                     updateStatElement('totalAccounts', '0');
@@ -3094,7 +3121,7 @@
                         </div>
                     </td>
                     <td>${account.nameTag || '-'}</td>
-                    <td>${parseFloat(account.balance).toFixed(8)} ACCESS</td>
+                    <td>${formatAccessAmount(account.balance)}</td>
                     <td>${parseFloat(account.percentage).toFixed(4)}%</td>
                     <td style="text-align: center;">${account.txCount.toLocaleString()}</td>
                 `;
@@ -3239,7 +3266,7 @@
                     rank,
                     account.address,
                     `"${account.nameTag || '-'}"`, // Enclose name tag in quotes in case of commas
-                    parseFloat(account.balance).toFixed(8),
+                    formatAccessNumber(account.balance),
                     parseFloat(account.percentage).toFixed(4),
                     account.txCount.toLocaleString()
                 ];

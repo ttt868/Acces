@@ -1965,6 +1965,33 @@
     </footer>
 
     <script>
+        // Smart number formatting for ACCESS amounts
+        function formatAccessAmount(value) {
+            const num = parseFloat(value) || 0;
+            if (num === 0) return '0 ACCESS';
+            const abs = Math.abs(num);
+            if (abs >= 1) {
+                const str = num.toFixed(8);
+                const parts = str.split('.');
+                let intPart = parseInt(parts[0]).toLocaleString('en-US');
+                let decPart = parts[1].replace(/0+$/, '');
+                if (decPart.length === 1) decPart += '0';
+                if (decPart.length === 0) return (num < 0 ? '-' : '') + intPart + ' ACCESS';
+                return (num < 0 ? '-' : '') + intPart + '.' + decPart + ' ACCESS';
+            } else {
+                const str = num.toFixed(8);
+                const trimmed = str.replace(/0+$/, '');
+                const parts = trimmed.split('.');
+                let decPart = parts[1] || '';
+                if (decPart.length < 2) decPart = decPart.padEnd(2, '0');
+                return parts[0] + '.' + decPart + ' ACCESS';
+            }
+        }
+        // Format ACCESS amount without 'ACCESS' suffix (for balance display)
+        function formatAccessNumber(value) {
+            return formatAccessAmount(value).replace(' ACCESS', '');
+        }
+
         // Global variables
         let currentAddress = null;
         let currentExplorerUser = null;
@@ -2234,7 +2261,7 @@
 
                 if (data.success && data.data) {
                     const balance = parseFloat(data.data.balance) || 0;
-                    document.getElementById('addressBalance').textContent = balance.toFixed(8);
+                    document.getElementById('addressBalance').textContent = formatAccessNumber(balance);
 
                     // Update transaction count
                     const txCount = data.data.transactionCount || 0;
@@ -2442,7 +2469,7 @@
                             <a href="${tx.to ? `address-details.html?address=${encodeURIComponent(otherAddress)}` : '#'}" 
                                class="address-link">${otherAddress === 'Contract Creation' ? 'New Contract' : `${(otherAddress || 'N/A').substring(0, 8)}...${(otherAddress || '').substring(34)}`}</a>
                             <span class="tx-amount" style="color: ${amountColor}">
-                                ${amount > 0 ? (isIncoming ? '+' : '-') + amount.toFixed(6) + ' ACCESS' : ''}
+                                ${amount > 0 ? (isIncoming ? '+' : '-') + formatAccessAmount(amount) : ''}
                             </span>
                         </div>
                     </div>
@@ -2463,8 +2490,8 @@
                 if (totalSent > 1000000) totalSent = totalSent / 1e18;
                 if (totalReceived > 1000000) totalReceived = totalReceived / 1e18;
                 
-                document.getElementById('addressTotalSent').textContent = totalSent.toFixed(8);
-                document.getElementById('addressTotalReceived').textContent = totalReceived.toFixed(8);
+                document.getElementById('addressTotalSent').textContent = formatAccessNumber(totalSent);
+                document.getElementById('addressTotalReceived').textContent = formatAccessNumber(totalReceived);
                 return;
             }
 
@@ -2503,8 +2530,8 @@
             });
 
             document.getElementById('addressTxCount').textContent = txCount.toLocaleString();
-            document.getElementById('addressTotalSent').textContent = totalSent.toFixed(8);
-            document.getElementById('addressTotalReceived').textContent = totalReceived.toFixed(8);
+            document.getElementById('addressTotalSent').textContent = formatAccessNumber(totalSent);
+            document.getElementById('addressTotalReceived').textContent = formatAccessNumber(totalReceived);
         }
 
         // Show no transactions message

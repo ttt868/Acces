@@ -1656,6 +1656,29 @@
     </footer>
 
     <script>
+        // Smart number formatting for ACCESS amounts
+        function formatAccessAmount(value) {
+            const num = parseFloat(value) || 0;
+            if (num === 0) return '0 ACCESS';
+            const abs = Math.abs(num);
+            if (abs >= 1) {
+                const str = num.toFixed(8);
+                const parts = str.split('.');
+                let intPart = parseInt(parts[0]).toLocaleString('en-US');
+                let decPart = parts[1].replace(/0+$/, '');
+                if (decPart.length === 1) decPart += '0';
+                if (decPart.length === 0) return (num < 0 ? '-' : '') + intPart + ' ACCESS';
+                return (num < 0 ? '-' : '') + intPart + '.' + decPart + ' ACCESS';
+            } else {
+                const str = num.toFixed(8);
+                const trimmed = str.replace(/0+$/, '');
+                const parts = trimmed.split('.');
+                let decPart = parts[1] || '';
+                if (decPart.length < 2) decPart = decPart.padEnd(2, '0');
+                return parts[0] + '.' + decPart + ' ACCESS';
+            }
+        }
+
         // Google Client ID - loaded securely from server
         let GOOGLE_CLIENT_ID = null;
 
@@ -1856,7 +1879,7 @@
             document.getElementById('blockTimestamp').textContent = dateTime;
             document.getElementById('transactionCount').textContent = txCount.toLocaleString();
             document.getElementById('blockMiner').textContent = validator;
-            document.getElementById('blockReward').textContent = (block.reward || 0.25).toFixed(8) + ' ACCESS';
+            document.getElementById('blockReward').textContent = formatAccessAmount(block.reward || 0.25);
             document.getElementById('blockDifficulty').textContent = (block.difficulty || 1).toLocaleString();
             document.getElementById('totalDifficulty').textContent = (block.totalDifficulty || (number + 1)).toLocaleString();
             document.getElementById('blockSize').textContent = (block.size || 1024).toLocaleString() + ' bytes';
@@ -1976,11 +1999,11 @@
                             </div>
                             <div class="tx-detail">
                                 <span style="color: var(--text-secondary); font-weight: 500;">Amount:</span>
-                                <span style="font-weight: 600; margin-left: 8px;">${parseFloat(amount).toFixed(8)} ACCESS</span>
+                                <span style="font-weight: 600; margin-left: 8px;">${formatAccessAmount(amount)}</span>
                             </div>
                             <div class="tx-detail">
                                 <span style="color: var(--text-secondary); font-weight: 500;">Gas Fee:</span>
-                                <span style="margin-left: 8px;">${parseFloat(gasFee).toFixed(8)} ACCESS</span>
+                                <span style="margin-left: 8px;">${formatAccessAmount(gasFee)}</span>
                             </div>
                             <div class="tx-detail">
                                 <span style="color: var(--text-secondary); font-weight: 500;">Gas Used:</span>
