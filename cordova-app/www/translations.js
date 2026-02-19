@@ -9181,11 +9181,11 @@ insufficientBalance: "Недостаточно средств для этой т
     "Failed to set PIN": "فشل تعيين رمز PIN",
     "PIN disabled": "تم تعطيل رمز PIN",
     "Unlock Access Network": "فتح قفل Access Network",
-    "Google Sign-In not available": "تسجيل الدخول بـ Google غير متاح",
-    "Login error. Please try again.": "خطأ في تسجيل الدخول. يرجى المحاولة مرة أخرى.",
-    "Sign-in cancelled.": "تم إلغاء تسجيل الدخول.",
-    "Configuration error (Error 10). Check SHA-1 fingerprint.": "خطأ في التكوين (خطأ 10). تحقق من بصمة SHA-1.",
-    "Sign-in failed.": "فشل تسجيل الدخول."
+    "Google Sign-In not available": "تسجيل الدخول بجوجل غير متاح",
+    "Login error. Please try again.": ".خطأ في تسجيل الدخول. يرجى المحاولة مرة أخرى",
+    "Sign-in cancelled.": ".تم إلغاء تسجيل الدخول",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "خطأ في التكوين يرجى التحقق من بصمة SHA-1 (الخطأ 10).",
+    "Sign-in failed.": ".فشل تسجيل الدخول"
 
   },
 
