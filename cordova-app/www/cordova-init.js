@@ -512,7 +512,9 @@ function setupGoogleSignIn() {
         
         if (!window.plugins || !window.plugins.googleplus) {
             console.error('❌ Google Plus plugin not available');
-            alert('Google Sign-In not available');
+            const _msg = window.translator?.translate('Google Sign-In not available') || 'Google Sign-In not available';
+            if (typeof showNotification === 'function') showNotification(_msg, 'error');
+            else if (typeof window.showNotification === 'function') window.showNotification(_msg, 'error');
             return;
         }
         
@@ -591,7 +593,8 @@ function setupGoogleSignIn() {
                     if (typeof window.handleGoogleSignIn === 'function') {
                         window.handleGoogleSignIn({ credential: fakeCredential, select_by: 'cordova' });
                     } else {
-                        alert('Login error. Please try again.');
+                        const _msg2 = window.translator?.translate('Login error. Please try again.') || 'Login error. Please try again.';
+                        if (typeof window.showNotification === 'function') window.showNotification(_msg2, 'error');
                     }
                 }
                 
@@ -641,14 +644,16 @@ function setupGoogleSignIn() {
                 
                 let msg = 'Sign-in failed. ';
                 const errStr = String(error);
+                const _t = window.translator?.translate.bind(window.translator);
                 if (errStr.includes('12501') || errStr.includes('CANCELLED')) {
-                    msg = 'Sign-in cancelled.';
+                    msg = _t?.('Sign-in cancelled.') || 'Sign-in cancelled.';
                 } else if (errStr.includes('10')) {
-                    msg = 'Configuration error (Error 10). Check SHA-1 fingerprint.';
+                    msg = _t?.('Configuration error (Error 10). Check SHA-1 fingerprint.') || 'Configuration error (Error 10). Check SHA-1 fingerprint.';
                 } else {
-                    msg += errStr;
+                    msg = (_t?.('Sign-in failed.') || 'Sign-in failed.') + ' ' + errStr;
                 }
-                alert(msg);
+                const notifType = errStr.includes('12501') || errStr.includes('CANCELLED') ? 'warning' : 'error';
+                if (typeof window.showNotification === 'function') window.showNotification(msg, notifType);
             }
         );
     };

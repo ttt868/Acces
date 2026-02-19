@@ -465,7 +465,12 @@ window.translations = {
     "PIN enabled successfully": "PIN enabled successfully",
     "Failed to set PIN": "Failed to set PIN",
     "PIN disabled": "PIN disabled",
-    "Unlock Access Network": "Unlock Access Network"
+    "Unlock Access Network": "Unlock Access Network",
+    "Google Sign-In not available": "Google Sign-In not available",
+    "Login error. Please try again.": "Login error. Please try again.",
+    "Sign-in cancelled.": "Sign-in cancelled.",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "Configuration error (Error 10). Check SHA-1 fingerprint.",
+    "Sign-in failed.": "Sign-in failed."
 
   },
 
@@ -1205,7 +1210,12 @@ processingTransaction: "Traitement de la transaction en cours...",
     "PIN enabled successfully": "PIN activé avec succès",
     "Failed to set PIN": "Échec de la définition du PIN",
     "PIN disabled": "PIN désactivé",
-    "Unlock Access Network": "Déverrouiller Access Network"
+    "Unlock Access Network": "Déverrouiller Access Network",
+    "Google Sign-In not available": "Connexion Google non disponible",
+    "Login error. Please try again.": "Erreur de connexion. Veuillez réessayer.",
+    "Sign-in cancelled.": "Connexion annulée.",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "Erreur de configuration (Erreur 10). Vérifiez l'empreinte SHA-1.",
+    "Sign-in failed.": "Échec de la connexion."
 
   },
 
@@ -1932,7 +1942,12 @@ processingTransaction: "Procesando transacción...",
     "PIN enabled successfully": "PIN activado correctamente",
     "Failed to set PIN": "Error al establecer el PIN",
     "PIN disabled": "PIN desactivado",
-    "Unlock Access Network": "Desbloquear Access Network"
+    "Unlock Access Network": "Desbloquear Access Network",
+    "Google Sign-In not available": "Inicio de sesión con Google no disponible",
+    "Login error. Please try again.": "Error de inicio de sesión. Inténtalo de nuevo.",
+    "Sign-in cancelled.": "Inicio de sesión cancelado.",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "Error de configuración (Error 10). Verifica la huella SHA-1.",
+    "Sign-in failed.": "Error de inicio de sesión."
 
   },
 
@@ -2636,7 +2651,12 @@ processingTransaction: "Elaborazione della transazione in corso...",
     "PIN enabled successfully": "PIN attivato con successo",
     "Failed to set PIN": "Impossibile impostare il PIN",
     "PIN disabled": "PIN disattivato",
-    "Unlock Access Network": "Sblocca Access Network"
+    "Unlock Access Network": "Sblocca Access Network",
+    "Google Sign-In not available": "Accesso Google non disponibile",
+    "Login error. Please try again.": "Errore di accesso. Riprova.",
+    "Sign-in cancelled.": "Accesso annullato.",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "Errore di configurazione (Errore 10). Controlla l'impronta SHA-1.",
+    "Sign-in failed.": "Accesso non riuscito."
 
   },
 
@@ -3339,7 +3359,12 @@ processingTransaction: "İşlem işleniyor...",
     "PIN enabled successfully": "PIN başarıyla etkinleştirildi",
     "Failed to set PIN": "PIN ayarlanamadı",
     "PIN disabled": "PIN devre dışı bırakıldı",
-    "Unlock Access Network": "Access Network kilidini aç"
+    "Unlock Access Network": "Access Network kilidini aç",
+    "Google Sign-In not available": "Google ile giriş kullanılamıyor",
+    "Login error. Please try again.": "Giriş hatası. Lütfen tekrar deneyin.",
+    "Sign-in cancelled.": "Giriş iptal edildi.",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "Yapılandırma hatası (Hata 10). SHA-1 parmak izini kontrol edin.",
+    "Sign-in failed.": "Giriş başarısız."
 
   },
 
@@ -4054,7 +4079,12 @@ processingTransaction: "İşlem işleniyor...",
     "PIN enabled successfully": "PIN सफलतापूर्वक सक्षम किया गया",
     "Failed to set PIN": "PIN सेट करने में विफल",
     "PIN disabled": "PIN अक्षम किया गया",
-    "Unlock Access Network": "Access Network अनलॉक करें"
+    "Unlock Access Network": "Access Network अनलॉक करें",
+    "Google Sign-In not available": "Google साइन-इन उपलब्ध नहीं",
+    "Login error. Please try again.": "लॉगिन त्रुटि। कृपया पुनः प्रयास करें।",
+    "Sign-in cancelled.": "साइन-इन रद्द किया गया।",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "कॉन्फ़िगरेशन त्रुटि (त्रुटि 10)। SHA-1 फ़िंगरप्रिंट जाँचें।",
+    "Sign-in failed.": "साइन-इन विफल।"
 
   },
 
@@ -4759,7 +4789,12 @@ processingTransaction: "İşlem işleniyor...",
     "PIN enabled successfully": "PIN码设置成功",
     "Failed to set PIN": "PIN码设置失败",
     "PIN disabled": "PIN码已停用",
-    "Unlock Access Network": "解锁 Access Network"
+    "Unlock Access Network": "解锁 Access Network",
+    "Google Sign-In not available": "Google登录不可用",
+    "Login error. Please try again.": "登录错误。请重试。",
+    "Sign-in cancelled.": "登录已取消。",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "配置错误（错误 10）。请检查 SHA-1 指纹。",
+    "Sign-in failed.": "登录失败。"
 
   },
 
@@ -5479,7 +5514,12 @@ processingTransaction: "İşlem işleniyor...",
     "PIN enabled successfully": "PINが正常に設定されました",
     "Failed to set PIN": "PINの設定に失敗しました",
     "PIN disabled": "PINが無効になりました",
-    "Unlock Access Network": "Access Networkのロックを解除"
+    "Unlock Access Network": "Access Networkのロックを解除",
+    "Google Sign-In not available": "Googleサインインを利用できません",
+    "Login error. Please try again.": "ログインエラー。もう一度お試しください。",
+    "Sign-in cancelled.": "サインインがキャンセルされました。",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "設定エラー（エラー 10）。SHA-1フィンガープリントを確認してください。",
+    "Sign-in failed.": "サインインに失敗しました。"
 
   },
 
@@ -6198,7 +6238,12 @@ processingTransaction: "İşlem işleniyor...",
     "PIN enabled successfully": "PIN이 성공적으로 활성화되었습니다",
     "Failed to set PIN": "PIN 설정 실패",
     "PIN disabled": "PIN이 비활성화되었습니다",
-    "Unlock Access Network": "Access Network 잠금 해제"
+    "Unlock Access Network": "Access Network 잠금 해제",
+    "Google Sign-In not available": "Google 로그인을 사용할 수 없습니다",
+    "Login error. Please try again.": "로그인 오류. 다시 시도해 주세요.",
+    "Sign-in cancelled.": "로그인이 취소되었습니다.",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "구성 오류 (오류 10). SHA-1 지문을 확인하세요.",
+    "Sign-in failed.": "로그인 실패."
 
   },
 
@@ -6906,7 +6951,12 @@ processingTransaction: "İşlem işleniyor...",
     "PIN enabled successfully": "PIN ativado com sucesso",
     "Failed to set PIN": "Falha ao definir o PIN",
     "PIN disabled": "PIN desativado",
-    "Unlock Access Network": "Desbloquear Access Network"
+    "Unlock Access Network": "Desbloquear Access Network",
+    "Google Sign-In not available": "Login com Google indisponível",
+    "Login error. Please try again.": "Erro de login. Tente novamente.",
+    "Sign-in cancelled.": "Login cancelado.",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "Erro de configuração (Erro 10). Verifique a impressão digital SHA-1.",
+    "Sign-in failed.": "Falha no login."
 
   },
 
@@ -7625,7 +7675,12 @@ insufficientBalance: "Недостаточно средств для этой т
     "PIN enabled successfully": "PIN успешно установлен",
     "Failed to set PIN": "Не удалось установить PIN",
     "PIN disabled": "PIN отключён",
-    "Unlock Access Network": "Разблокировать Access Network"
+    "Unlock Access Network": "Разблокировать Access Network",
+    "Google Sign-In not available": "Вход через Google недоступен",
+    "Login error. Please try again.": "Ошибка входа. Попробуйте снова.",
+    "Sign-in cancelled.": "Вход отменён.",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "Ошибка конфигурации (Ошибка 10). Проверьте отпечаток SHA-1.",
+    "Sign-in failed.": "Ошибка входа."
 
   },
 
@@ -8349,7 +8404,12 @@ insufficientBalance: "Недостаточно средств для этой т
     "PIN enabled successfully": "PIN erfolgreich aktiviert",
     "Failed to set PIN": "PIN konnte nicht festgelegt werden",
     "PIN disabled": "PIN deaktiviert",
-    "Unlock Access Network": "Access Network entsperren"
+    "Unlock Access Network": "Access Network entsperren",
+    "Google Sign-In not available": "Google-Anmeldung nicht verfügbar",
+    "Login error. Please try again.": "Anmeldefehler. Bitte versuchen Sie es erneut.",
+    "Sign-in cancelled.": "Anmeldung abgebrochen.",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "Konfigurationsfehler (Fehler 10). Überprüfen Sie den SHA-1-Fingerabdruck.",
+    "Sign-in failed.": "Anmeldung fehlgeschlagen."
 
   },
 
@@ -9120,7 +9180,12 @@ insufficientBalance: "Недостаточно средств для этой т
     "PIN enabled successfully": "تم تفعيل رمز PIN بنجاح",
     "Failed to set PIN": "فشل تعيين رمز PIN",
     "PIN disabled": "تم تعطيل رمز PIN",
-    "Unlock Access Network": "فتح قفل Access Network"
+    "Unlock Access Network": "فتح قفل Access Network",
+    "Google Sign-In not available": "تسجيل الدخول بـ Google غير متاح",
+    "Login error. Please try again.": "خطأ في تسجيل الدخول. يرجى المحاولة مرة أخرى.",
+    "Sign-in cancelled.": "تم إلغاء تسجيل الدخول.",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "خطأ في التكوين (خطأ 10). تحقق من بصمة SHA-1.",
+    "Sign-in failed.": "فشل تسجيل الدخول."
 
   },
 
@@ -9853,7 +9918,12 @@ insufficientBalance: "Недостаточно средств для этой т
     "PIN enabled successfully": "PIN berhasil diaktifkan",
     "Failed to set PIN": "Gagal mengatur PIN",
     "PIN disabled": "PIN dinonaktifkan",
-    "Unlock Access Network": "Buka kunci Access Network"
+    "Unlock Access Network": "Buka kunci Access Network",
+    "Google Sign-In not available": "Login Google tidak tersedia",
+    "Login error. Please try again.": "Kesalahan login. Silakan coba lagi.",
+    "Sign-in cancelled.": "Login dibatalkan.",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "Kesalahan konfigurasi (Error 10). Periksa sidik jari SHA-1.",
+    "Sign-in failed.": "Login gagal."
 
   },
 
@@ -10571,7 +10641,12 @@ insufficientBalance: "Недостаточно средств для этой т
     "PIN enabled successfully": "PIN został pomyślnie aktywowany",
     "Failed to set PIN": "Nie udało się ustawić PIN-u",
     "PIN disabled": "PIN został wyłączony",
-    "Unlock Access Network": "Odblokuj Access Network"
+    "Unlock Access Network": "Odblokuj Access Network",
+    "Google Sign-In not available": "Logowanie przez Google niedostępne",
+    "Login error. Please try again.": "Błąd logowania. Spróbuj ponownie.",
+    "Sign-in cancelled.": "Logowanie anulowane.",
+    "Configuration error (Error 10). Check SHA-1 fingerprint.": "Błąd konfiguracji (Błąd 10). Sprawdź odcisk palca SHA-1.",
+    "Sign-in failed.": "Logowanie nieudane."
 
   }
 };
