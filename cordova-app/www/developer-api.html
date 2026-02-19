@@ -3514,6 +3514,54 @@ if data['success']:
             return window.location.hostname;
         }
 
+        // Smart number formatting for ACCESS amounts
+        function formatAccessAmount(value) {
+            const num = parseFloat(value) || 0;
+            if (num === 0) return '0 ACCESS';
+            const abs = Math.abs(num);
+            if (abs >= 1) {
+                const str = num.toFixed(8);
+                const parts = str.split('.');
+                let intPart = parseInt(parts[0]).toLocaleString('en-US');
+                let decPart = parts[1].replace(/0+$/, '');
+                if (decPart.length === 1) decPart += '0';
+                if (decPart.length === 0) return (num < 0 ? '-' : '') + intPart + ' ACCESS';
+                return (num < 0 ? '-' : '') + intPart + '.' + decPart + ' ACCESS';
+            } else {
+                const str = num.toFixed(8);
+                const trimmed = str.replace(/0+$/, '');
+                const parts = trimmed.split('.');
+                let decPart = parts[1] || '';
+                if (decPart.length < 2) decPart = decPart.padEnd(2, '0');
+                return parts[0] + '.' + decPart + ' ACCESS';
+            }
+        }
+
+        // Format balance/value fields in API response for display
+        function formatResponseData(data) {
+            if (!data || typeof data !== 'object') return data;
+            const clone = JSON.parse(JSON.stringify(data));
+            const balanceKeys = ['balance', 'balanceRaw', 'value', 'fee', 'totalFee', 'reward'];
+            function walk(obj) {
+                if (Array.isArray(obj)) {
+                    obj.forEach(item => walk(item));
+                } else if (obj && typeof obj === 'object') {
+                    for (const key of Object.keys(obj)) {
+                        if (balanceKeys.includes(key) && (typeof obj[key] === 'string' || typeof obj[key] === 'number')) {
+                            const num = parseFloat(obj[key]);
+                            if (!isNaN(num) && num !== 0) {
+                                obj[key] = formatAccessAmount(num);
+                            }
+                        } else if (typeof obj[key] === 'object') {
+                            walk(obj[key]);
+                        }
+                    }
+                }
+            }
+            walk(clone);
+            return clone;
+        }
+
         function showResult(resultId, statusId, responseBodyId, responseData, isSuccess) {
             const resultDiv = document.getElementById(resultId);
             const statusSpan = document.getElementById(statusId);
@@ -3522,7 +3570,7 @@ if data['success']:
             resultDiv.style.display = 'block';
             statusSpan.textContent = isSuccess ? 'Success ✓' : 'Error ✗';
             statusSpan.className = `result-status ${isSuccess ? 'success' : 'error'}`;
-            responseBody.textContent = JSON.stringify(responseData, null, 2);
+            responseBody.textContent = JSON.stringify(formatResponseData(responseData), null, 2);
         }
 
         async function testBlockNumber() {
@@ -3550,7 +3598,7 @@ if data['success']:
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
                 statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
-                responseBody.textContent = JSON.stringify(data, null, 2);
+                responseBody.textContent = JSON.stringify(formatResponseData(data), null, 2);
             } catch (error) {
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = 'Error ✗';
@@ -3588,7 +3636,7 @@ if data['success']:
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
                 statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
-                responseBody.textContent = JSON.stringify(data, null, 2);
+                responseBody.textContent = JSON.stringify(formatResponseData(data), null, 2);
             } catch (error) {
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = 'Error ✗';
@@ -3624,7 +3672,7 @@ if data['success']:
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
                 statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
-                responseBody.textContent = JSON.stringify(data, null, 2);
+                responseBody.textContent = JSON.stringify(formatResponseData(data), null, 2);
             } catch (error) {
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = 'Error ✗';
@@ -3662,7 +3710,7 @@ if data['success']:
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
                 statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
-                responseBody.textContent = JSON.stringify(data, null, 2);
+                responseBody.textContent = JSON.stringify(formatResponseData(data), null, 2);
             } catch (error) {
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = 'Error ✗';
@@ -3700,7 +3748,7 @@ if data['success']:
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
                 statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
-                responseBody.textContent = JSON.stringify(data, null, 2);
+                responseBody.textContent = JSON.stringify(formatResponseData(data), null, 2);
             } catch (error) {
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = 'Error ✗';
@@ -3734,7 +3782,7 @@ if data['success']:
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
                 statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
-                responseBody.textContent = JSON.stringify(data, null, 2);
+                responseBody.textContent = JSON.stringify(formatResponseData(data), null, 2);
             } catch (error) {
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = 'Error ✗';
@@ -3770,7 +3818,7 @@ if data['success']:
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
                 statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
-                responseBody.textContent = JSON.stringify(data, null, 2);
+                responseBody.textContent = JSON.stringify(formatResponseData(data), null, 2);
             } catch (error) {
                 resultDiv.style.display = 'block';
                 statusSpan.textContent = 'Error ✗';
