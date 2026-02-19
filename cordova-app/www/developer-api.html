@@ -2716,6 +2716,43 @@ if data['success']:
         }
 
         function triggerGoogleSignIn() {
+
+            // 📱 Cordova: Use native Google Sign-In (independent from mining)
+            if (window.IS_CORDOVA_APP && window.plugins && window.plugins.googleplus) {
+                console.log('📱 Developer API: Using native Google Sign-In');
+                const termsCheckbox = document.getElementById('termsCheckbox');
+                if (!termsCheckbox || !termsCheckbox.checked) {
+                    showAuthMessage('Please agree to the Terms of Service', 'error');
+                    return;
+                }
+                window.plugins.googleplus.login(
+                    {
+                        scopes: 'profile email',
+                        webClientId: window.GOOGLE_CLIENT_ID_WEB || GOOGLE_CLIENT_ID,
+                        offline: false
+                    },
+                    function(userData) {
+                        console.log('✅ Developer API native sign-in success:', userData.email);
+                        const explorerUser = {
+                            email: userData.email,
+                            name: userData.displayName,
+                            picture: userData.imageUrl || userData.photoUrl || '',
+                            sub: userData.userId
+                        };
+                        const b64 = str => btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                        const header = b64(JSON.stringify({alg: 'none', typ: 'JWT'}));
+                        const body = b64(JSON.stringify(explorerUser));
+                        const fakeCredential = header + '.' + body + '.explorer';
+                        handleGoogleSignIn({ credential: fakeCredential });
+                    },
+                    function(error) {
+                        console.error('❌ Developer API native sign-in error:', error);
+                        showAuthMessage('Sign in failed. Please try again.', 'error');
+                    }
+                );
+                return;
+            }
+
             if (!GOOGLE_CLIENT_ID) {
                 showAuthMessage('Google authentication not configured. Please try again.', 'error');
                 return;
