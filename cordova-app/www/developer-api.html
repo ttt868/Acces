@@ -207,7 +207,7 @@
         .menu-toggle span {
             width: 20px;
             height: 2px;
-            background: #333;
+            background: var(--text-primary);
             margin: 2px 0;
             transition: 0.3s;
         }
@@ -721,8 +721,22 @@
             align-items: center;
             gap: 8px;
             font-size: 14px;
-            color: var(--text-secondary);
+            color: var(--text-primary);
             cursor: pointer;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .success-message {
+            color: #28a745;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
         }
 
         .form-group {
@@ -1145,6 +1159,21 @@
             word-wrap: break-word;
             white-space: pre-wrap;
         }
+
+        /* Syntax highlighting */
+        .code-box .kw { color: #cf222e; }
+        .code-box .fn { color: #8250df; }
+        .code-box .str { color: #0a3069; }
+        .code-box .num { color: #0550ae; }
+        .code-box .cmt { color: #6e7781; font-style: italic; }
+        .code-box .prop { color: #953800; }
+
+        [data-theme="dark"] .code-box .kw { color: #ff7b72; }
+        [data-theme="dark"] .code-box .fn { color: #d2a8ff; }
+        [data-theme="dark"] .code-box .str { color: #a5d6ff; }
+        [data-theme="dark"] .code-box .num { color: #79c0ff; }
+        [data-theme="dark"] .code-box .cmt { color: #8b949e; font-style: italic; }
+        [data-theme="dark"] .code-box .prop { color: #ffa657; }
 
         .copy-btn {
             position: absolute;
@@ -1724,39 +1753,39 @@
             <div class="tab-content" data-tab="javascript">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">// Using fetch API
-const apiUrl = 'https://<span class="api-domain"></span>/api/explorer/stats';
-const params = new URLSearchParams({
-    module: 'proxy',
-    action: 'access_blockNumber',
-    apikey: 'YourApiKeyToken'
+                    <div class="code-box"><span class="cmt">// Using fetch API</span>
+<span class="kw">const</span> apiUrl = <span class="str">'https://<span class="api-domain"></span>/api/explorer/stats'</span>;
+<span class="kw">const</span> params = <span class="kw">new</span> <span class="fn">URLSearchParams</span>({
+    <span class="prop">module</span>: <span class="str">'proxy'</span>,
+    <span class="prop">action</span>: <span class="str">'access_blockNumber'</span>,
+    <span class="prop">apikey</span>: <span class="str">'YourApiKeyToken'</span>
 });
 
-fetch(`${apiUrl}?${params}`)
-    .then(response => response.json())
-    .then(data => {
-        console.log('Latest Block:', parseInt(data.result, 16));
+<span class="fn">fetch</span>(<span class="str">`${apiUrl}?${params}`</span>)
+    .<span class="fn">then</span>(<span class="kw">response</span> => response.<span class="fn">json</span>())
+    .<span class="fn">then</span>(<span class="kw">data</span> => {
+        console.<span class="fn">log</span>(<span class="str">'Latest Block:'</span>, <span class="fn">parseInt</span>(data.result, <span class="num">16</span>));
     })
-    .catch(error => console.error('Error:', error));</div>
+    .<span class="fn">catch</span>(<span class="kw">error</span> => console.<span class="fn">error</span>(<span class="str">'Error:'</span>, error));</div>
                 </div>
             </div>
 
             <div class="tab-content" data-tab="python">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">import requests
+                    <div class="code-box"><span class="kw">import</span> requests
 
-url = "https://<span class="api-domain"></span>/api/explorer/stats"
+url = <span class="str">"https://<span class="api-domain"></span>/api/explorer/stats"</span>
 params = {
-    "module": "proxy",
-    "action": "access_blockNumber",
-    "apikey": "YourApiKeyToken"
+    <span class="str">"module"</span>: <span class="str">"proxy"</span>,
+    <span class="str">"action"</span>: <span class="str">"access_blockNumber"</span>,
+    <span class="str">"apikey"</span>: <span class="str">"YourApiKeyToken"</span>
 }
 
-response = requests.get(url, params=params)
-data = response.json()
-block_number = int(data['result'], 16)
-print(f"Latest Block: {block_number}")</div>
+response = requests.<span class="fn">get</span>(url, params=params)
+data = response.<span class="fn">json</span>()
+block_number = <span class="fn">int</span>(data[<span class="str">'result'</span>], <span class="num">16</span>)
+<span class="fn">print</span>(<span class="str">f"Latest Block: {block_number}"</span>)</div>
                 </div>
             </div>
 
@@ -1794,7 +1823,7 @@ print(f"Latest Block: {block_number}")</div>
 
             <div class="code-container">
                 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                <div class="code-box">https://<span class="api-domain"></span>/api/explorer/block/{blockNumber}?module=proxy&action=access_getBlockByNumber&tag=0x10d4f&boolean=true&apikey=YourApiKeyToken</div>
+                <div class="code-box">https://<span class="api-domain"></span>/api/explorer/block/{blockNumber}?module=proxy&action=access_getBlockByNumber&tag=1269&boolean=true&apikey=YourApiKeyToken</div>
             </div>
 
             <div class="tabs">
@@ -1827,22 +1856,22 @@ print(f"Latest Block: {block_number}")</div>
             <div class="tab-content" data-tab="javascript2">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">const blockNumber = '0x10d4f';
-const apiUrl = `https://<span class="api-domain"></span>/api/explorer/block/${blockNumber}`;
+                    <div class="code-box"><span class="kw">const</span> blockNumber = <span class="str">'0x10d4f'</span>;
+<span class="kw">const</span> apiUrl = <span class="str">`https://<span class="api-domain"></span>/api/explorer/block/${blockNumber}`</span>;
 
-const params = new URLSearchParams({
-    module: 'proxy',
-    action: 'access_getBlockByNumber',
-    tag: blockNumber,
-    boolean: 'true',
-    apikey: 'YourApiKeyToken'
+<span class="kw">const</span> params = <span class="kw">new</span> <span class="fn">URLSearchParams</span>({
+    <span class="prop">module</span>: <span class="str">'proxy'</span>,
+    <span class="prop">action</span>: <span class="str">'access_getBlockByNumber'</span>,
+    <span class="prop">tag</span>: blockNumber,
+    <span class="prop">boolean</span>: <span class="str">'true'</span>,
+    <span class="prop">apikey</span>: <span class="str">'YourApiKeyToken'</span>
 });
 
-fetch(`${apiUrl}?${params}`)
-    .then(response => response.json())
-    .then(data => {
-        console.log('Block Data:', data.result);
-        console.log('Transactions:', data.result.transactions);
+<span class="fn">fetch</span>(<span class="str">`${apiUrl}?${params}`</span>)
+    .<span class="fn">then</span>(<span class="kw">response</span> => response.<span class="fn">json</span>())
+    .<span class="fn">then</span>(<span class="kw">data</span> => {
+        console.<span class="fn">log</span>(<span class="str">'Block Data:'</span>, data.result);
+        console.<span class="fn">log</span>(<span class="str">'Transactions:'</span>, data.result.transactions);
     });</div>
                 </div>
             </div>
@@ -1850,23 +1879,23 @@ fetch(`${apiUrl}?${params}`)
             <div class="tab-content" data-tab="python2">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">import requests
+                    <div class="code-box"><span class="kw">import</span> requests
 
-block_number = "0x10d4f"
-url = f"https://<span class="api-domain"></span>/api/explorer/block/{block_number}"
+block_number = <span class="str">"0x10d4f"</span>
+url = <span class="str">f"https://<span class="api-domain"></span>/api/explorer/block/{block_number}"</span>
 
 params = {
-    "module": "proxy",
-    "action": "access_getBlockByNumber",
-    "tag": block_number,
-    "boolean": "true",
-    "apikey": "YourApiKeyToken"
+    <span class="str">"module"</span>: <span class="str">"proxy"</span>,
+    <span class="str">"action"</span>: <span class="str">"access_getBlockByNumber"</span>,
+    <span class="str">"tag"</span>: block_number,
+    <span class="str">"boolean"</span>: <span class="str">"true"</span>,
+    <span class="str">"apikey"</span>: <span class="str">"YourApiKeyToken"</span>
 }
 
-response = requests.get(url, params=params)
-block_data = response.json()['result']
-print(f"Block Hash: {block_data['hash']}")
-print(f"Transactions: {len(block_data['transactions'])}")</div>
+response = requests.<span class="fn">get</span>(url, params=params)
+block_data = response.<span class="fn">json</span>()[<span class="str">'result'</span>]
+<span class="fn">print</span>(<span class="str">f"Block Hash: {block_data['hash']}"</span>)
+<span class="fn">print</span>(<span class="str">f"Transactions: {len(block_data['transactions'])}"</span>)</div>
                 </div>
             </div>
 
@@ -1878,8 +1907,8 @@ print(f"Transactions: {len(block_data['transactions'])}")</div>
                 </div>
                 <div class="try-it-form">
                     <div class="form-field">
-                        <label>Block Number (hex):</label>
-                        <input type="text" id="block-tag-2" class="api-input" placeholder="e.g., 0x10d4f" value="0x10d4f" />
+                        <label>Block Number (decimal or hex):</label>
+                        <input type="text" id="block-tag-2" class="api-input" placeholder="e.g., 1269 or 0x4f5" value="1" />
                     </div>
                     <div class="form-field">
                         <label>Show Full Transactions:</label>
@@ -1944,23 +1973,23 @@ print(f"Transactions: {len(block_data['transactions'])}")</div>
             <div class="tab-content" data-tab="javascript3">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">const txHash = '0xbc78ab8a9e9a0bca7d0321a27b2d';
-const apiUrl = `https://<span class="api-domain"></span>/api/explorer/transaction/${txHash}`;
+                    <div class="code-box"><span class="kw">const</span> txHash = <span class="str">'0xbc78ab8a9e9a0bca7d0321a27b2d'</span>;
+<span class="kw">const</span> apiUrl = <span class="str">`https://<span class="api-domain"></span>/api/explorer/transaction/${txHash}`</span>;
 
-const params = new URLSearchParams({
-    module: 'proxy',
-    action: 'access_getTransactionByHash',
-    txhash: txHash,
-    apikey: 'YourApiKeyToken'
+<span class="kw">const</span> params = <span class="kw">new</span> <span class="fn">URLSearchParams</span>({
+    <span class="prop">module</span>: <span class="str">'proxy'</span>,
+    <span class="prop">action</span>: <span class="str">'access_getTransactionByHash'</span>,
+    <span class="prop">txhash</span>: txHash,
+    <span class="prop">apikey</span>: <span class="str">'YourApiKeyToken'</span>
 });
 
-fetch(`${apiUrl}?${params}`)
-    .then(response => response.json())
-    .then(data => {
-        const tx = data.result;
-        console.log('From:', tx.from);
-        console.log('To:', tx.to);
-        console.log('Value:', tx.value);
+<span class="fn">fetch</span>(<span class="str">`${apiUrl}?${params}`</span>)
+    .<span class="fn">then</span>(<span class="kw">response</span> => response.<span class="fn">json</span>())
+    .<span class="fn">then</span>(<span class="kw">data</span> => {
+        <span class="kw">const</span> tx = data.result;
+        console.<span class="fn">log</span>(<span class="str">'From:'</span>, tx.from);
+        console.<span class="fn">log</span>(<span class="str">'To:'</span>, tx.to);
+        console.<span class="fn">log</span>(<span class="str">'Value:'</span>, tx.value);
     });</div>
                 </div>
             </div>
@@ -1968,23 +1997,23 @@ fetch(`${apiUrl}?${params}`)
             <div class="tab-content" data-tab="python3">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">import requests
+                    <div class="code-box"><span class="kw">import</span> requests
 
-tx_hash = "0xbc78ab8a9e9a0bca7d0321a27b2d"
-url = f"https://<span class="api-domain"></span>/api/explorer/transaction/{tx_hash}"
+tx_hash = <span class="str">"0xbc78ab8a9e9a0bca7d0321a27b2d"</span>
+url = <span class="str">f"https://<span class="api-domain"></span>/api/explorer/transaction/{tx_hash}"</span>
 
 params = {
-    "module": "proxy",
-    "action": "access_getTransactionByHash",
-    "txhash": tx_hash,
-    "apikey": "YourApiKeyToken"
+    <span class="str">"module"</span>: <span class="str">"proxy"</span>,
+    <span class="str">"action"</span>: <span class="str">"access_getTransactionByHash"</span>,
+    <span class="str">"txhash"</span>: tx_hash,
+    <span class="str">"apikey"</span>: <span class="str">"YourApiKeyToken"</span>
 }
 
-response = requests.get(url, params=params)
-tx_data = response.json()['result']
-print(f"From: {tx_data['from']}")
-print(f"To: {tx_data['to']}")
-print(f"Value: {tx_data['value']}")</div>
+response = requests.<span class="fn">get</span>(url, params=params)
+tx_data = response.<span class="fn">json</span>()[<span class="str">'result'</span>]
+<span class="fn">print</span>(<span class="str">f"From: {tx_data['from']}"</span>)
+<span class="fn">print</span>(<span class="str">f"To: {tx_data['to']}"</span>)
+<span class="fn">print</span>(<span class="str">f"Value: {tx_data['value']}"</span>)</div>
                 </div>
             </div>
 
@@ -2059,22 +2088,22 @@ print(f"Value: {tx_data['value']}")</div>
             <div class="tab-content" data-tab="javascript4">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">const address = '0x4bd5900cb274ef15b153066b7de';
-const apiUrl = `https://<span class="api-domain"></span>/api/explorer/address/${address}`;
+                    <div class="code-box"><span class="kw">const</span> address = <span class="str">'0x4bd5900cb274ef15b153066b7de'</span>;
+<span class="kw">const</span> apiUrl = <span class="str">`https://<span class="api-domain"></span>/api/explorer/address/${address}`</span>;
 
-const params = new URLSearchParams({
-    module: 'proxy',
-    action: 'access_getTransactionCount',
-    address: address,
-    tag: 'latest',
-    apikey: 'YourApiKeyToken'
+<span class="kw">const</span> params = <span class="kw">new</span> <span class="fn">URLSearchParams</span>({
+    <span class="prop">module</span>: <span class="str">'proxy'</span>,
+    <span class="prop">action</span>: <span class="str">'access_getTransactionCount'</span>,
+    <span class="prop">address</span>: address,
+    <span class="prop">tag</span>: <span class="str">'latest'</span>,
+    <span class="prop">apikey</span>: <span class="str">'YourApiKeyToken'</span>
 });
 
-fetch(`${apiUrl}?${params}`)
-    .then(response => response.json())
-    .then(data => {
-        const txCount = parseInt(data.result, 16);
-        console.log('Transaction Count:', txCount);
+<span class="fn">fetch</span>(<span class="str">`${apiUrl}?${params}`</span>)
+    .<span class="fn">then</span>(<span class="kw">response</span> => response.<span class="fn">json</span>())
+    .<span class="fn">then</span>(<span class="kw">data</span> => {
+        <span class="kw">const</span> txCount = <span class="fn">parseInt</span>(data.result, <span class="num">16</span>);
+        console.<span class="fn">log</span>(<span class="str">'Transaction Count:'</span>, txCount);
     });</div>
                 </div>
             </div>
@@ -2082,22 +2111,22 @@ fetch(`${apiUrl}?${params}`)
             <div class="tab-content" data-tab="python4">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">import requests
+                    <div class="code-box"><span class="kw">import</span> requests
 
-address = "0x4bd5900cb274ef15b153066b7de"
-url = f"https://<span class="api-domain"></span>/api/explorer/address/{address}"
+address = <span class="str">"0x4bd5900cb274ef15b153066b7de"</span>
+url = <span class="str">f"https://<span class="api-domain"></span>/api/explorer/address/{address}"</span>
 
 params = {
-    "module": "proxy",
-    "action": "access_getTransactionCount",
-    "address": address,
-    "tag": "latest",
-    "apikey": "YourApiKeyToken"
+    <span class="str">"module"</span>: <span class="str">"proxy"</span>,
+    <span class="str">"action"</span>: <span class="str">"access_getTransactionCount"</span>,
+    <span class="str">"address"</span>: address,
+    <span class="str">"tag"</span>: <span class="str">"latest"</span>,
+    <span class="str">"apikey"</span>: <span class="str">"YourApiKeyToken"</span>
 }
 
-response = requests.get(url, params=params)
-tx_count = int(response.json()['result'], 16)
-print(f"Transaction Count: {tx_count}")</div>
+response = requests.<span class="fn">get</span>(url, params=params)
+tx_count = <span class="fn">int</span>(response.<span class="fn">json</span>()[<span class="str">'result'</span>], <span class="num">16</span>)
+<span class="fn">print</span>(<span class="str">f"Transaction Count: {tx_count}"</span>)</div>
                 </div>
             </div>
 
@@ -2165,22 +2194,22 @@ print(f"Transaction Count: {tx_count}")</div>
             <div class="tab-content active" data-tab="javascript5">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">const signedTx = '0xf904808000831cfde080';
-const apiUrl = 'https://<span class="api-domain"></span>/api/blockchain/send';
+                    <div class="code-box"><span class="kw">const</span> signedTx = <span class="str">'0xf904808000831cfde080'</span>;
+<span class="kw">const</span> apiUrl = <span class="str">'https://<span class="api-domain"></span>/api/blockchain/send'</span>;
 
-const params = new URLSearchParams({
-    module: 'proxy',
-    action: 'access_sendRawTransaction',
-    hex: signedTx,
-    apikey: 'YourApiKeyToken'
+<span class="kw">const</span> params = <span class="kw">new</span> <span class="fn">URLSearchParams</span>({
+    <span class="prop">module</span>: <span class="str">'proxy'</span>,
+    <span class="prop">action</span>: <span class="str">'access_sendRawTransaction'</span>,
+    <span class="prop">hex</span>: signedTx,
+    <span class="prop">apikey</span>: <span class="str">'YourApiKeyToken'</span>
 });
 
-fetch(`${apiUrl}?${params}`, {
-    method: 'POST'
+<span class="fn">fetch</span>(<span class="str">`${apiUrl}?${params}`</span>, {
+    <span class="prop">method</span>: <span class="str">'POST'</span>
 })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Transaction Hash:', data.result);
+    .<span class="fn">then</span>(<span class="kw">response</span> => response.<span class="fn">json</span>())
+    .<span class="fn">then</span>(<span class="kw">data</span> => {
+        console.<span class="fn">log</span>(<span class="str">'Transaction Hash:'</span>, data.result);
     });</div>
                 </div>
             </div>
@@ -2188,49 +2217,58 @@ fetch(`${apiUrl}?${params}`, {
             <div class="tab-content" data-tab="python5">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">import requests
+                    <div class="code-box"><span class="kw">import</span> requests
 
-signed_tx = "0xf904808000831cfde080"
-url = "https://<span class="api-domain"></span>/api/blockchain/send"
+signed_tx = <span class="str">"0xf904808000831cfde080"</span>
+url = <span class="str">"https://<span class="api-domain"></span>/api/blockchain/send"</span>
 
 data = {
-    "module": "proxy",
-    "action": "access_sendRawTransaction",
-    "hex": signed_tx,
-    "apikey": "YourApiKeyToken"
+    <span class="str">"module"</span>: <span class="str">"proxy"</span>,
+    <span class="str">"action"</span>: <span class="str">"access_sendRawTransaction"</span>,
+    <span class="str">"hex"</span>: signed_tx,
+    <span class="str">"apikey"</span>: <span class="str">"YourApiKeyToken"</span>
 }
 
-response = requests.post(url, data=data)
-result = response.json()
-print(f"Transaction Hash: {result['result']}")</div>
+response = requests.<span class="fn">post</span>(url, data=data)
+result = response.<span class="fn">json</span>()
+<span class="fn">print</span>(<span class="str">f"Transaction Hash: {result['result']}"</span>)</div>
                 </div>
             </div>
 
-            <!-- Try it Section -->
-            <div class="try-it-section">
-                <div class="try-it-header">
-                    <h3>🧪 Try it Now</h3>
-                    <p>Test this API endpoint with your API key</p>
+            <div class="alert-box info" style="margin-top: 15px;">
+                <span class="alert-icon">📝</span>
+                <div>
+                    <strong>How to create a signed transaction:</strong>
                 </div>
-                <div class="try-it-form">
-                    <div class="form-field">
-                        <label>Signed Transaction (hex):</label>
-                        <textarea id="signed-tx-5" class="api-input" rows="3" placeholder="e.g., 0xf904808000831cfde080"></textarea>
-                    </div>
-                    <div class="form-field">
-                        <label>API Key:</label>
-                        <input type="text" id="apikey-5" class="api-input" placeholder="Enter your API key" />
-                    </div>
-                    <button class="try-btn" onclick="testSendRawTransaction()">
-                        <i class="fas fa-play"></i> Test API
-                    </button>
-                </div>
-                <div class="try-it-result" id="result-5" style="display: none;">
-                    <div class="result-header">
-                        <span class="result-title">Response:</span>
-                        <span class="result-status" id="status-5"></span>
-                    </div>
-                    <pre class="result-body" id="response-5"></pre>
+            </div>
+
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <div class="code-box"><span class="kw">const</span> { ethers } = <span class="fn">require</span>(<span class="str">'ethers'</span>);
+
+<span class="cmt">// 1. Connect wallet</span>
+<span class="kw">const</span> wallet = <span class="kw">new</span> ethers.<span class="fn">Wallet</span>(<span class="str">'your_private_key'</span>);
+
+<span class="cmt">// 2. Sign the transaction</span>
+<span class="kw">const</span> signedTx = <span class="kw">await</span> wallet.<span class="fn">signTransaction</span>({
+  <span class="prop">to</span>: <span class="str">'0xRecipientAddress'</span>,
+  <span class="prop">value</span>: ethers.<span class="fn">parseEther</span>(<span class="str">'1.0'</span>),
+  <span class="prop">chainId</span>: <span class="num">22888</span>,
+  <span class="prop">gasLimit</span>: <span class="num">21000</span>,
+  <span class="prop">gasPrice</span>: ethers.<span class="fn">parseUnits</span>(<span class="str">'0.00002'</span>, <span class="str">'ether'</span>)
+});
+
+<span class="cmt">// 3. Send via API</span>
+<span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://<span class="api-domain"></span>/api/blockchain/send?module=proxy&action=access_sendRawTransaction&hex='</span> + signedTx + <span class="str">'&apikey=YourApiKeyToken'</span>, {
+  <span class="prop">method</span>: <span class="str">'POST'</span>
+});
+console.<span class="fn">log</span>(<span class="kw">await</span> res.<span class="fn">json</span>());</div>
+            </div>
+
+            <div class="alert-box warning" style="margin-top: 10px;">
+                <span class="alert-icon">ℹ️</span>
+                <div>
+                    This endpoint requires a pre-signed transaction hex. Use <code>ethers.js</code> or <code>web3.js</code> to sign, then send the hex using the code examples above.
                 </div>
             </div>
         </div>
@@ -2263,20 +2301,20 @@ print(f"Transaction Hash: {result['result']}")</div>
             <div class="tab-content active" data-tab="javascript6">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">const apiUrl = 'https://<span class="api-domain"></span>/api/explorer/stats';
+                    <div class="code-box"><span class="kw">const</span> apiUrl = <span class="str">'https://<span class="api-domain"></span>/api/explorer/stats'</span>;
 
-const params = new URLSearchParams({
-    module: 'proxy',
-    action: 'access_gasPrice',
-    apikey: 'YourApiKeyToken'
+<span class="kw">const</span> params = <span class="kw">new</span> <span class="fn">URLSearchParams</span>({
+    <span class="prop">module</span>: <span class="str">'proxy'</span>,
+    <span class="prop">action</span>: <span class="str">'access_gasPrice'</span>,
+    <span class="prop">apikey</span>: <span class="str">'YourApiKeyToken'</span>
 });
 
-fetch(`${apiUrl}?${params}`)
-    .then(response => response.json())
-    .then(data => {
-        const gasPrice = parseInt(data.result, 16);
-        console.log('Gas Price (wei):', gasPrice);
-        console.log('Gas Price (ACCESS):', gasPrice / 1e18);
+<span class="fn">fetch</span>(<span class="str">`${apiUrl}?${params}`</span>)
+    .<span class="fn">then</span>(<span class="kw">response</span> => response.<span class="fn">json</span>())
+    .<span class="fn">then</span>(<span class="kw">data</span> => {
+        <span class="kw">const</span> gasPrice = <span class="fn">parseInt</span>(data.result, <span class="num">16</span>);
+        console.<span class="fn">log</span>(<span class="str">'Gas Price (wei):'</span>, gasPrice);
+        console.<span class="fn">log</span>(<span class="str">'Gas Price (ACCESS):'</span>, gasPrice / <span class="num">1e18</span>);
     });</div>
                 </div>
             </div>
@@ -2284,19 +2322,19 @@ fetch(`${apiUrl}?${params}`)
             <div class="tab-content" data-tab="python6">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">import requests
+                    <div class="code-box"><span class="kw">import</span> requests
 
-url = "https://<span class="api-domain"></span>/api/explorer/stats"
+url = <span class="str">"https://<span class="api-domain"></span>/api/explorer/stats"</span>
 params = {
-    "module": "proxy",
-    "action": "access_gasPrice",
-    "apikey": "YourApiKeyToken"
+    <span class="str">"module"</span>: <span class="str">"proxy"</span>,
+    <span class="str">"action"</span>: <span class="str">"access_gasPrice"</span>,
+    <span class="str">"apikey"</span>: <span class="str">"YourApiKeyToken"</span>
 }
 
-response = requests.get(url, params=params)
-gas_price_wei = int(response.json()['result'], 16)
-gas_price_access = gas_price_wei / 1e18
-print(f"Gas Price: {gas_price_access} ACCESS")</div>
+response = requests.<span class="fn">get</span>(url, params=params)
+gas_price_wei = <span class="fn">int</span>(response.<span class="fn">json</span>()[<span class="str">'result'</span>], <span class="num">16</span>)
+gas_price_access = gas_price_wei / <span class="num">1e18</span>
+<span class="fn">print</span>(<span class="str">f"Gas Price: {gas_price_access} ACCESS"</span>)</div>
                 </div>
             </div>
 
@@ -2405,60 +2443,60 @@ print(f"Gas Price: {gas_price_access} ACCESS")</div>
             <div class="tab-content" data-tab="javascript7">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">const apiUrl = 'https://<span class="api-domain"></span>/api/explorer/top-accounts';
+                    <div class="code-box"><span class="kw">const</span> apiUrl = <span class="str">'https://<span class="api-domain"></span>/api/explorer/top-accounts'</span>;
 
-const params = new URLSearchParams({
-    limit: 100,
-    page: 1,
-    apikey: 'YourApiKeyToken'
+<span class="kw">const</span> params = <span class="kw">new</span> <span class="fn">URLSearchParams</span>({
+    <span class="prop">limit</span>: <span class="num">100</span>,
+    <span class="prop">page</span>: <span class="num">1</span>,
+    <span class="prop">apikey</span>: <span class="str">'YourApiKeyToken'</span>
 });
 
-fetch(`${apiUrl}?${params}`)
-    .then(response => response.json())
-    .then(data => {
-        console.log('Total Accounts:', data.data.total);
-        console.log('Total Supply:', data.data.totalSupply);
-        console.log('Top Accounts:', data.data.accounts);
+<span class="fn">fetch</span>(<span class="str">`${apiUrl}?${params}`</span>)
+    .<span class="fn">then</span>(<span class="kw">response</span> => response.<span class="fn">json</span>())
+    .<span class="fn">then</span>(<span class="kw">data</span> => {
+        console.<span class="fn">log</span>(<span class="str">'Total Accounts:'</span>, data.data.total);
+        console.<span class="fn">log</span>(<span class="str">'Total Supply:'</span>, data.data.totalSupply);
+        console.<span class="fn">log</span>(<span class="str">'Top Accounts:'</span>, data.data.accounts);
 
-        // Display top 10 accounts
-        data.data.accounts.slice(0, 10).forEach(account => {
-            console.log(`Rank ${account.rank}: ${account.address}`);
-            console.log(`Balance: ${account.balance} ACCESS (${account.percentage}%)`);
-            console.log(`Transactions: ${account.txCount}`);
-            console.log('---');
+        <span class="cmt">// Display top 10 accounts</span>
+        data.data.accounts.<span class="fn">slice</span>(<span class="num">0</span>, <span class="num">10</span>).<span class="fn">forEach</span>(<span class="kw">account</span> => {
+            console.<span class="fn">log</span>(<span class="str">`Rank ${account.rank}: ${account.address}`</span>);
+            console.<span class="fn">log</span>(<span class="str">`Balance: ${account.balance} ACCESS (${account.percentage}%)`</span>);
+            console.<span class="fn">log</span>(<span class="str">`Transactions: ${account.txCount}`</span>);
+            console.<span class="fn">log</span>(<span class="str">'---'</span>);
         });
     })
-    .catch(error => console.error('Error:', error));</div>
+    .<span class="fn">catch</span>(<span class="kw">error</span> => console.<span class="fn">error</span>(<span class="str">'Error:'</span>, error));</div>
                 </div>
             </div>
 
             <div class="tab-content" data-tab="python7">
                 <div class="code-container">
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                    <div class="code-box">import requests
+                    <div class="code-box"><span class="kw">import</span> requests
 
-url = "https://<span class="api-domain"></span>/api/explorer/top-accounts"
+url = <span class="str">"https://<span class="api-domain"></span>/api/explorer/top-accounts"</span>
 
 params = {
-    "limit": 100,
-    "page": 1,
-    "apikey": "YourApiKeyToken"
+    <span class="str">"limit"</span>: <span class="num">100</span>,
+    <span class="str">"page"</span>: <span class="num">1</span>,
+    <span class="str">"apikey"</span>: <span class="str">"YourApiKeyToken"</span>
 }
 
-response = requests.get(url, params=params)
-data = response.json()
+response = requests.<span class="fn">get</span>(url, params=params)
+data = response.<span class="fn">json</span>()
 
-if data['success']:
-    accounts_data = data['data']
-    print(f"Total Accounts: {accounts_data['total']}")
-    print(f"Total Supply: {accounts_data['totalSupply']} ACCESS")
-    print(f"\nTop 10 Accounts:")
+<span class="kw">if</span> data[<span class="str">'success'</span>]:
+    accounts_data = data[<span class="str">'data'</span>]
+    <span class="fn">print</span>(<span class="str">f"Total Accounts: {accounts_data['total']}"</span>)
+    <span class="fn">print</span>(<span class="str">f"Total Supply: {accounts_data['totalSupply']} ACCESS"</span>)
+    <span class="fn">print</span>(<span class="str">f"\nTop 10 Accounts:"</span>)
 
-    for account in accounts_data['accounts'][:10]:
-        print(f"Rank {account['rank']}: {account['address']}")
-        print(f"Balance: {account['balance']} ACCESS ({account['percentage']}%)")
-        print(f"Transactions: {account['txCount']}")
-        print("---")</div>
+    <span class="kw">for</span> account <span class="kw">in</span> accounts_data[<span class="str">'accounts'</span>][:<span class="num">10</span>]:
+        <span class="fn">print</span>(<span class="str">f"Rank {account['rank']}: {account['address']}"</span>)
+        <span class="fn">print</span>(<span class="str">f"Balance: {account['balance']} ACCESS ({account['percentage']}%)"</span>)
+        <span class="fn">print</span>(<span class="str">f"Transactions: {account['txCount']}"</span>)
+        <span class="fn">print</span>(<span class="str">"---"</span>)</div>
                 </div>
             </div>
 
@@ -2504,7 +2542,7 @@ if data['success']:
             <div class="alert-box info">
                 <span class="alert-icon">📊</span>
                 <div>
-                    <strong>Data Sources:</strong> Account data is aggregated from multiple sources: registered users, external wallets, and blockchain network accounts (ethereum-network-data/accounts/).
+                    <strong>Data Sources:</strong> Account data is aggregated from multiple sources: registered users, external wallets, and Access blockchain network accounts.
                 </div>
             </div>
         </div>
@@ -3742,44 +3780,6 @@ if data['success']:
                 });
 
                 const response = await fetch(`${apiUrl}?${params}`);
-                const data = await response.json();
-
-                resultDiv.style.display = 'block';
-                statusSpan.textContent = response.ok ? 'Success ✓' : 'Error ✗';
-                statusSpan.className = `result-status ${response.ok ? 'success' : 'error'}`;
-                responseBody.textContent = JSON.stringify(formatResponseData(data), null, 2);
-            } catch (error) {
-                resultDiv.style.display = 'block';
-                statusSpan.textContent = 'Error ✗';
-                statusSpan.className = 'result-status error';
-                responseBody.textContent = `Error: ${error.message}`;
-            }
-        }
-
-        async function testSendRawTransaction() {
-            const signedTx = document.getElementById('signed-tx-5').value.trim();
-            const apikey = document.getElementById('apikey-5').value.trim();
-            const resultDiv = document.getElementById('result-5');
-            const statusSpan = document.getElementById('status-5');
-            const responseBody = document.getElementById('response-5');
-
-            if (!signedTx || !apikey) {
-                alert('الرجاء إدخال Signed Transaction و API Key');
-                return;
-            }
-
-            try {
-                const apiUrl = `https://${getApiDomain()}/api/blockchain/send`;
-                const params = new URLSearchParams({
-                    module: 'proxy',
-                    action: 'access_sendRawTransaction',
-                    hex: signedTx,
-                    apikey: apikey
-                });
-
-                const response = await fetch(`${apiUrl}?${params}`, {
-                    method: 'POST'
-                });
                 const data = await response.json();
 
                 resultDiv.style.display = 'block';

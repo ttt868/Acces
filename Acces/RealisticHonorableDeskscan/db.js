@@ -810,6 +810,23 @@ async function initializeDatabase() {
       ON api_key_audit_log(user_id, action, created_at DESC);
     `);
 
+    // 🛡️ Create blocked_ips table for IP-based rate limiting and abuse prevention
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS blocked_ips (
+        id SERIAL PRIMARY KEY,
+        ip_address VARCHAR(45) UNIQUE NOT NULL,
+        reason TEXT,
+        is_permanent BOOLEAN DEFAULT false,
+        blocked_until TIMESTAMP WITH TIME ZONE,
+        blocked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        request_count INTEGER DEFAULT 0
+      )
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_blocked_ips_address ON blocked_ips(ip_address);
+    `);
+
     // Alter existing table if column size is too small
     await pool.query(`
       DO $$

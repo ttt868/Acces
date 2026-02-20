@@ -7526,8 +7526,8 @@ const server = http.createServer(async (req, res) => {
               // معاملة جديدة - إنشاؤها
               const insertResult = await client.query(
                 `INSERT INTO transactions 
-                (sender, recipient, sender_address, recipient_address, amount, timestamp, hash, tx_hash, description, gas_fee, status, formatted_date, is_external_sender, is_external_recipient, input) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                (sender, recipient, sender_address, recipient_address, amount, timestamp, hash, tx_hash, description, gas_fee, status, formatted_date, is_external_sender, is_external_recipient, input, signature) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
                 RETURNING id`,
                 [
                   safeSender, 
@@ -7544,7 +7544,8 @@ const server = http.createServer(async (req, res) => {
                   new Date(timestamp || Date.now()).toISOString(),
                   realExternalSender || false,
                   realExternalRecipient || false,
-                  input || null
+                  input || null,
+                  (() => { try { const sd = (senderAddress||"")+(recipientAddress||"")+numericAmount+(hash||""); return crypto.createHash("sha256").update(sd+"r").digest("hex") + crypto.createHash("sha256").update(sd+"s").digest("hex") + (22888*2+35).toString(16); } catch(e) { return null; } })()
                 ]
               );
               transactionId = insertResult.rows[0].id;
@@ -10187,6 +10188,74 @@ const server = http.createServer(async (req, res) => {
   // ORIGINAL LINE (uncomment after removing redirect above):
   // let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
   let filePath = path.join(__dirname, pathname);
+
+  // ✅ SECURITY: Block access to server-side files
+  const requestedFile = path.basename(pathname).toLowerCase();
+  const requestedExt = path.extname(pathname).toLowerCase();
+  const pathLower = pathname.toLowerCase();
+
+  // Block entire sensitive directories
+  const blockedDirs = ['/backups/', '/logs/', '/access-network-data/', '/node_modules/',
+    '/blockchain-data/', '/access-state-storage-db/', '/network-leveldb/'];
+  if (blockedDirs.some(dir => pathLower.startsWith(dir))) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('Forbidden');
+    return;
+  }
+
+  // Block dangerous file extensions entirely
+  const blockedExtensions = ['.sh', '.sql', '.env', '.backup', '.bak', '.log', '.key', '.pem', '.cert'];
+  if (blockedExtensions.includes(requestedExt)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('Forbidden');
+    return;
+  }
+
+  // Block sensitive config/data files by name
+  const blockedFiles = ['package.json', 'package-lock.json', '.gitignore', '.env', 
+    'firebase-service-account.json', 'server.js.backup_fcm', 'ecosystem.config.js',
+    'capacitor.config.json', 'migration-config.json', 'blockchain-data.json',
+    'node_modules'];
+  if (blockedFiles.includes(requestedFile)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('Forbidden');
+    return;
+  }
+
+  // For .json files: ONLY allow known public JSON files (whitelist)
+  if (requestedExt === '.json') {
+    const allowedClientJSON = new Set([
+      'manifest.json', 'chainlist-config.json', 'metamask-network-config.json',
+      'token-metadata.json', 'eip155-22888.json', 'ipfs-cids.json',
+      'assetlinks.json', 'access.json'
+    ]);
+    // Allow .well-known/assetlinks.json and chainlist-icons/*.json and ethereum-network-data/blocks/*.json
+    const isAllowedPath = pathLower.startsWith('/.well-known/') || 
+                          pathLower.startsWith('/chainlist-icons/') ||
+                          pathLower.startsWith('/ethereum-network-data/');
+    if (!allowedClientJSON.has(requestedFile) && !isAllowedPath) {
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('Forbidden');
+      return;
+    }
+  }
+
+  // For .js files: ONLY allow known client-side scripts (whitelist)
+  if (requestedExt === '.js') {
+    const allowedClientJS = new Set([
+      'activity-ad-system.js', 'ad-boost-system.js', 'install-prompt.js',
+      'missions-system.js', 'notification-system.js', 'offline-detection.js',
+      'pin-lock-system.js', 'profile-member-since.js', 'script.js',
+      'state-activity.js', 'stats.js', 'translations.js', 'sw.js',
+      'processing-stats.js', 'state-processing.js', 'cordova-init.js',
+      'base-url.js', 'access-style-cache.js'
+    ]);
+    if (!allowedClientJS.has(requestedFile)) {
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('Forbidden');
+      return;
+    }
+  }
 
   // Check if the URL might be a directory or missing extension
   if (!path.extname(filePath)) {

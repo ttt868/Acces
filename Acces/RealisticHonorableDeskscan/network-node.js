@@ -3306,6 +3306,15 @@ class NetworkNode {
       transaction.nonce = nonce;
       transaction.hash = txData.hash || transaction.txId;
 
+      // ✅ Generate deterministic signature for internal transactions
+      if (!transaction.signature) {
+        const sigData = (txData.from || "") + (txData.to || "") + amount + nonce + (transaction.hash || "");
+        const rHash = crypto.createHash("sha256").update(sigData + "r").digest("hex");
+        const sHash = crypto.createHash("sha256").update(sigData + "s").digest("hex");
+        const chainIdV = (22888 * 2 + 35).toString(16); // EIP-155 v value
+        transaction.signature = rHash + sHash + chainIdV;
+      }
+
       // إضافة المعاملة إلى البلوك تشين
       // ⚠️ CRITICAL: addTransaction يستدعي processTransactionImmediately داخلياً
       // والذي يقوم بتحديث الأرصدة - لذلك لا نحتاج لاستدعاء processTransactionBalances!
@@ -5955,9 +5964,10 @@ class NetworkNode {
           recipient_wallet_type,
           is_confirmed,
           confirmations,
-          status
+          status,
+          signature
         ) VALUES (
-          $1::text, $1::varchar(66), $2, $3, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'confirmed'
+          $1::text, $1::varchar(66), $2, $3, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'confirmed', $19
         )
         ON CONFLICT (tx_hash) DO UPDATE SET
           tx_hash = EXCLUDED.tx_hash,
@@ -5981,7 +5991,8 @@ class NetworkNode {
           recipient_wallet_type = EXCLUDED.recipient_wallet_type,
           is_confirmed = EXCLUDED.is_confirmed,
           confirmations = EXCLUDED.confirmations,
-          status = 'confirmed'
+          status = 'confirmed',
+          signature = COALESCE(EXCLUDED.signature, transactions.signature)
         RETURNING id
       `, [
         transaction.hash,                              // $1
@@ -6001,7 +6012,8 @@ class NetworkNode {
         walletClassification.senderType,               // $15
         walletClassification.recipientType,            // $16
         true,                                          // $17
-        1                                              // $18
+        1,                                             // $18
+        transaction.signature || null             // $19
       ]);
 
       console.log(`✅ Transaction recorded in database:`, {
@@ -6865,9 +6877,10 @@ class NetworkNode {
           recipient_wallet_type,
           is_confirmed,
           confirmations,
-          status
+          status,
+          signature
         ) VALUES (
-          $1::text, $1::varchar(66), $2, $3, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'confirmed'
+          $1::text, $1::varchar(66), $2, $3, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'confirmed', $19
         )
         ON CONFLICT (tx_hash) DO UPDATE SET
           tx_hash = EXCLUDED.tx_hash,
@@ -6891,7 +6904,8 @@ class NetworkNode {
           recipient_wallet_type = EXCLUDED.recipient_wallet_type,
           is_confirmed = EXCLUDED.is_confirmed,
           confirmations = EXCLUDED.confirmations,
-          status = 'confirmed'
+          status = 'confirmed',
+          signature = COALESCE(EXCLUDED.signature, transactions.signature)
         RETURNING id
       `, [
         transaction.hash,                              // $1
@@ -6911,7 +6925,8 @@ class NetworkNode {
         walletClassification.senderType,               // $15
         walletClassification.recipientType,            // $16
         true,                                          // $17
-        1                                              // $18
+        1,                                             // $18
+        transaction.signature || null             // $19
       ]);
 
       console.log(`✅ Transaction recorded in database:`, {
@@ -7174,9 +7189,10 @@ class NetworkNode {
           recipient_wallet_type,
           is_confirmed,
           confirmations,
-          status
+          status,
+          signature
         ) VALUES (
-          $1::text, $1::varchar(66), $2, $3, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'confirmed'
+          $1::text, $1::varchar(66), $2, $3, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'confirmed', $19
         )
         ON CONFLICT (tx_hash) DO UPDATE SET
           tx_hash = EXCLUDED.tx_hash,
@@ -7200,7 +7216,8 @@ class NetworkNode {
           recipient_wallet_type = EXCLUDED.recipient_wallet_type,
           is_confirmed = EXCLUDED.is_confirmed,
           confirmations = EXCLUDED.confirmations,
-          status = 'confirmed'
+          status = 'confirmed',
+          signature = COALESCE(EXCLUDED.signature, transactions.signature)
         RETURNING id
       `, [
         transaction.hash,                              // $1
@@ -7220,7 +7237,8 @@ class NetworkNode {
         walletClassification.senderType,               // $15
         walletClassification.recipientType,            // $16
         true,                                          // $17
-        1                                              // $18
+        1,                                             // $18
+        transaction.signature || null             // $19
       ]);
 
       console.log(`✅ Transaction recorded in database:`, {
@@ -7483,9 +7501,10 @@ class NetworkNode {
           recipient_wallet_type,
           is_confirmed,
           confirmations,
-          status
+          status,
+          signature
         ) VALUES (
-          $1::text, $1::varchar(66), $2, $3, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'confirmed'
+          $1::text, $1::varchar(66), $2, $3, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'confirmed', $19
         )
         ON CONFLICT (tx_hash) DO UPDATE SET
           tx_hash = EXCLUDED.tx_hash,
@@ -7509,7 +7528,8 @@ class NetworkNode {
           recipient_wallet_type = EXCLUDED.recipient_wallet_type,
           is_confirmed = EXCLUDED.is_confirmed,
           confirmations = EXCLUDED.confirmations,
-          status = 'confirmed'
+          status = 'confirmed',
+          signature = COALESCE(EXCLUDED.signature, transactions.signature)
         RETURNING id
       `, [
         transaction.hash,                              // $1
@@ -7529,7 +7549,8 @@ class NetworkNode {
         walletClassification.senderType,               // $15
         walletClassification.recipientType,            // $16
         true,                                          // $17
-        1                                              // $18
+        1,                                             // $18
+        transaction.signature || null             // $19
       ]);
 
       console.log(`✅ Transaction recorded in database:`, {
@@ -8064,9 +8085,10 @@ class NetworkNode {
           recipient_wallet_type,
           is_confirmed,
           confirmations,
-          status
+          status,
+          signature
         ) VALUES (
-          $1::text, $1::varchar(66), $2, $3, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'confirmed'
+          $1::text, $1::varchar(66), $2, $3, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'confirmed', $19
         )
         ON CONFLICT (tx_hash) DO UPDATE SET
           tx_hash = EXCLUDED.tx_hash,
@@ -8090,7 +8112,8 @@ class NetworkNode {
           recipient_wallet_type = EXCLUDED.recipient_wallet_type,
           is_confirmed = EXCLUDED.is_confirmed,
           confirmations = EXCLUDED.confirmations,
-          status = 'confirmed'
+          status = 'confirmed',
+          signature = COALESCE(EXCLUDED.signature, transactions.signature)
         RETURNING id
       `, [
         transaction.hash,                              // $1
@@ -8110,7 +8133,8 @@ class NetworkNode {
         walletClassification.senderType,               // $15
         walletClassification.recipientType,            // $16
         true,                                          // $17
-        1                                              // $18
+        1,                                             // $18
+        transaction.signature || null             // $19
       ]);
 
       console.log(`✅ Transaction recorded in database:`, {

@@ -291,13 +291,13 @@ export async function validateApiKey(apiKey, ipAddress) {
 
     const keyData = result.rows[0];
 
-    // Check rate limit
-    const now = new Date();
-    if (now > new Date(keyData.requests_reset_at)) {
+    // Check rate limit (timestamps stored as bigint ms)
+    const nowMs = Date.now();
+    if (nowMs > keyData.requests_reset_at) {
       // Reset counter
       await pool.query(
         'UPDATE explorer_api_keys SET requests_used = 0, requests_reset_at = $1 WHERE id = $2',
-        [new Date(Date.now() + 3600000), keyData.id]
+        [nowMs + 3600000, keyData.id]
       );
       keyData.requests_used = 0;
     }
@@ -315,7 +315,7 @@ export async function validateApiKey(apiKey, ipAddress) {
     // Increment usage
     await pool.query(
       'UPDATE explorer_api_keys SET requests_used = requests_used + 1, last_used_at = $1 WHERE id = $2',
-      [now, keyData.id]
+      [nowMs, keyData.id]
     );
 
     // Track IP request

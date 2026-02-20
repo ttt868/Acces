@@ -2038,7 +2038,7 @@ ${translator.translate('Your Referral Code:')} ${referralCode}
 ${translator.translate('This code has been preserved with ULTRA-ENHANCED system from')} ${source.toUpperCase()}
         `;
         
-        alert(manualInstructions);
+        showNotification(manualInstructions, 'info');
       }
     });
 
@@ -2913,7 +2913,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
           console.error('Copy failed:', copyError);
 
           // Show manual copy instructions
-          alert(`${translator.translate('Please copy this link manually:')}\n\n${inviteLink}`);
+          showNotification(`${translator.translate('Please copy this link manually:')} ${inviteLink}`, 'info');
         }
       });
 
@@ -3203,7 +3203,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
           console.error('Copy failed:', copyError);
           
           // Show manual copy instructions
-          alert(`${translator.translate('Please copy this link manually:')}\n\n${inviteLink}`);
+          showNotification(`${translator.translate('Please copy this link manually:')} ${inviteLink}`, 'info');
         }
       });
 
@@ -4244,7 +4244,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
         console.error('Enhanced modal copy failed:', copyError);
 
         // Show manual copy instructions
-        alert(`${translator.translate('Please copy this link manually:')}\n\n${inviteLink}`);
+        showNotification(`${translator.translate('Please copy this link manually:')} ${inviteLink}`, 'info');
       }
     });
 
@@ -13838,22 +13838,14 @@ window.cancelProfileChanges = cancelProfileChanges;
 
          // Check file type
          if (!file.type.startsWith('image/')) {
-           if (typeof showNotification === 'function') {
              showNotification(translator.translate('Please select a valid image file'), 'error');
-           } else {
-             alert('Please select a valid image file');
-           }
            event.target.value = '';
            return;
          }
 
          // Check file size (15MB)
          if (file.size > 15 * 1024 * 1024) {
-           if (typeof showNotification === 'function') {
              showNotification('File size is too large. Maximum 15MB allowed', 'error');
-           } else {
-             alert('File size is too large. Maximum 15MB allowed');
-           }
            event.target.value = '';
            return;
          }
