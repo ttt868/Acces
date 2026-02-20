@@ -2488,9 +2488,14 @@
 
         // Trigger Google Sign-In flow
         function triggerGoogleSignIn() {
+            if (!GOOGLE_CLIENT_ID) {
+                showAuthMessage('Google authentication not configured. Please try again.');
+                return;
+            }
+
             const termsCheckbox = document.getElementById('termsCheckbox');
-            if (termsCheckbox && !termsCheckbox.checked) {
-                showAuthMessage('Please accept the Terms of Service to continue.');
+            if (!termsCheckbox || !termsCheckbox.checked) {
+                showAuthMessage('Please accept the Terms of Service first.');
                 return;
             }
 
