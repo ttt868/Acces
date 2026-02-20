@@ -2477,6 +2477,11 @@ This is Access Network's own API, completely independent from Ethereum/Etherscan
             // 📱 Cordova: Use native Google Sign-In (independent from mining)
             if (window.IS_CORDOVA_APP && window.plugins && window.plugins.googleplus) {
                 console.log('📱 Explorer: Using native Google Sign-In');
+                const termsCheckbox = document.getElementById('termsCheckbox');
+                if (!termsCheckbox || !termsCheckbox.checked) {
+                    showAuthMessage('Please agree to the Terms of Service', 'error');
+                    return;
+                }
                 // Do NOT disconnect - that would affect mining session
                 window.plugins.googleplus.login(
                     {
@@ -2507,8 +2512,13 @@ This is Access Network's own API, completely independent from Ethereum/Etherscan
                 return;
             }
 
+            if (!GOOGLE_CLIENT_ID) {
+                showAuthMessage('Google authentication not configured. Please try again.');
+                return;
+            }
+
             const termsCheckbox = document.getElementById('termsCheckbox');
-            if (!termsCheckbox.checked) {
+            if (!termsCheckbox || !termsCheckbox.checked) {
                 showAuthMessage('Please accept the Terms of Service first.');
                 return;
             }
