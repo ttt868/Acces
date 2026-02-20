@@ -1678,7 +1678,7 @@
                 console.log('📱 FAQ: Using native Google Sign-In');
                 const termsCheckbox = document.getElementById('termsCheckbox');
                 if (!termsCheckbox || !termsCheckbox.checked) {
-                    showAuthMessage('Please agree to the Terms of Service', 'error');
+                    showAuthMessage('Please accept the Terms of Service first.');
                     return;
                 }
                 window.plugins.googleplus.login(
@@ -1711,7 +1711,7 @@
 
             const termsCheckbox = document.getElementById('termsCheckbox');
             if (!termsCheckbox || !termsCheckbox.checked) {
-                showAuthMessage('Please agree to the Terms of Service');
+                showAuthMessage('Please accept the Terms of Service first.');
                 return;
             }
 
