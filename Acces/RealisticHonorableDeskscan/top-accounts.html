@@ -2286,6 +2286,10 @@
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize theme icons on page load
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            updateThemeUI(currentTheme);
+
             // First, try to restore session
             const sessionRestored = loadExplorerSession();
 
