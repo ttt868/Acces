@@ -3253,12 +3253,18 @@
         }
 
         function updateThemeUI(theme) {
+            const desktopIcon = document.getElementById('desktop-theme-icon');
+            const desktopText = document.getElementById('desktop-theme-text');
             const mobileIcon = document.getElementById('mobile-theme-icon');
             const mobileText = document.getElementById('mobile-theme-text');
             if (theme === 'dark') {
+                if (desktopIcon) desktopIcon.innerHTML = '<i class="fas fa-moon" style="color: #a78bfa;"></i>';
+                if (desktopText) desktopText.textContent = 'Dark Mode';
                 if (mobileIcon) mobileIcon.innerHTML = '<i class="fas fa-moon" style="color: #a78bfa;"></i>';
                 if (mobileText) mobileText.textContent = 'Dark Mode';
             } else {
+                if (desktopIcon) desktopIcon.innerHTML = '<i class="fas fa-sun" style="color: #f59e0b;"></i>';
+                if (desktopText) desktopText.textContent = 'Light Mode';
                 if (mobileIcon) mobileIcon.innerHTML = '<i class="fas fa-sun" style="color: #f59e0b;"></i>';
                 if (mobileText) mobileText.textContent = 'Light Mode';
             }

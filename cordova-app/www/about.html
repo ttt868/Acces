@@ -1999,14 +1999,18 @@
         function updateThemeUI(theme) {
             const mobileIcon = document.getElementById('mobile-theme-icon');
             const mobileText = document.getElementById('mobile-theme-text');
-            if (mobileIcon && mobileText) {
-                if (theme === 'dark') {
-                    mobileIcon.innerHTML = '<i class="fas fa-moon" style="color: #a78bfa;"></i>';
-                    mobileText.textContent = 'Dark Mode';
-                } else {
-                    mobileIcon.innerHTML = '<i class="fas fa-sun" style="color: #f59e0b;"></i>';
-                    mobileText.textContent = 'Light Mode';
-                }
+            const desktopIcon = document.getElementById('desktop-theme-icon');
+            const desktopText = document.getElementById('desktop-theme-text');
+            if (theme === 'dark') {
+                if (mobileIcon) mobileIcon.innerHTML = '<i class="fas fa-moon" style="color: #a78bfa;"></i>';
+                if (mobileText) mobileText.textContent = 'Dark Mode';
+                if (desktopIcon) desktopIcon.innerHTML = '<i class="fas fa-moon" style="color: #a78bfa;"></i>';
+                if (desktopText) desktopText.textContent = 'Dark Mode';
+            } else {
+                if (mobileIcon) mobileIcon.innerHTML = '<i class="fas fa-sun" style="color: #f59e0b;"></i>';
+                if (mobileText) mobileText.textContent = 'Light Mode';
+                if (desktopIcon) desktopIcon.innerHTML = '<i class="fas fa-sun" style="color: #f59e0b;"></i>';
+                if (desktopText) desktopText.textContent = 'Light Mode';
             }
         }
 
