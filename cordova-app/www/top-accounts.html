@@ -1890,8 +1890,9 @@
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Verify Contract 🚫</a>
                     </div>
-                    <a href="#" onclick="toggleTheme(); event.stopPropagation();" class="dropdown-item" id="desktop-theme-toggle">
-                        <span id="desktop-theme-icon"><i class="fas fa-sun" style="color: #f59e0b;"></i></span> Light Mode
+                    <a href="#" class="dropdown-item" onclick="event.preventDefault(); toggleTheme();" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="desktop-theme-text">Light Mode</span>
+                        <span id="desktop-theme-icon"><i class="fas fa-sun" style="color: #f59e0b;"></i></span>
                     </a>
                 </div>
             </div>
