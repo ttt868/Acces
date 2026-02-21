@@ -9,10 +9,6 @@
     </author>
     <content src="index.html" />
     
-    <!-- Hooks -->
-    <hook type="before_prepare" src="hooks/before_prepare/ensure_v26_dirs.js" />
-    <hook type="after_prepare" src="hooks/after_prepare/create_round_icons.js" />
-    
     <!-- Allow access to server API -->
     <access origin="https://accesschain.org" />
     <access origin="https://access-network.io" />
@@ -26,16 +22,11 @@
     
     <!-- Android specific -->
     <platform name="android">
-        <!-- Icons with Adaptive Icon support (Android 8+) -->
-        <icon src="www/access-store-48.png" density="ldpi" background="@color/ic_launcher_background" foreground="res/adaptive-icons/ic_foreground_ldpi.png" />
-        <icon src="www/access-store-48.png" density="mdpi" background="@color/ic_launcher_background" foreground="res/adaptive-icons/ic_foreground_mdpi.png" />
-        <icon src="www/access-store-72.png" density="hdpi" background="@color/ic_launcher_background" foreground="res/adaptive-icons/ic_foreground_hdpi.png" />
-        <icon src="www/access-store-96.png" density="xhdpi" background="@color/ic_launcher_background" foreground="res/adaptive-icons/ic_foreground_xhdpi.png" />
-        <icon src="www/access-store-144.png" density="xxhdpi" background="@color/ic_launcher_background" foreground="res/adaptive-icons/ic_foreground_xxhdpi.png" />
-        <icon src="www/access-store-192.png" density="xxxhdpi" background="@color/ic_launcher_background" foreground="res/adaptive-icons/ic_foreground_xxxhdpi.png" />
-        
-        <!-- Color resource for adaptive icon background -->
-        <resource-file src="res/values/ic_launcher_colors.xml" target="app/src/main/res/values/ic_launcher_colors.xml" />
+        <icon src="www/access-store-192.png" density="xxxhdpi" />
+        <icon src="www/access-store-144.png" density="xxhdpi" />
+        <icon src="www/access-store-96.png" density="xhdpi" />
+        <icon src="www/access-store-72.png" density="hdpi" />
+        <icon src="www/access-store-48.png" density="mdpi" />
         
         <!-- Splash Screen - use our logo -->
         <splash src="www/access-store-512nobg.png" density="land-hdpi" />

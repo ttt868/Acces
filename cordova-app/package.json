@@ -30,8 +30,7 @@
     "cordova-plugin-statusbar": "^4.0.0",
     "cordova-plugin-x-socialsharing": "^6.0.4",
     "cordova-support-android-plugin": "~1.0.0",
-    "es6-promise-plugin": "^4.2.2",
-    "cordova-plugin-fingerprint-aio": "^5.0.1"
+    "es6-promise-plugin": "^4.2.2"
   },
   "cordova": {
     "platforms": [
@@ -67,9 +66,7 @@
         "ANDROID_FIREBASE_MESSAGING_VERSION": "22.0.+",
         "ANDROIDX_CORE_VERSION": "1.6.+"
       },
-      "cordova-plugin-ads": {},
-      "cordova-plugin-fingerprint-aio": {}
+      "cordova-plugin-ads": {}
     }
-  },
-  "dependencies": {}
+  }
 }
