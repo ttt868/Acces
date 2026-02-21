@@ -1891,7 +1891,7 @@
                         <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Verify Contract 🚫</a>
                     </div>
                     <a href="#" onclick="toggleTheme(); event.stopPropagation();" class="dropdown-item" id="desktop-theme-toggle">
-                        <span id="desktop-theme-icon">☀️</span> Light Mode
+                        <span id="desktop-theme-icon"><i class="fas fa-sun" style="color: #f59e0b;"></i></span> Light Mode
                     </a>
                 </div>
             </div>
@@ -2028,7 +2028,7 @@
             <!-- Dark Mode Toggle Button -->
             <div style="padding: 20px; margin-top: auto; border-top: 1px solid var(--border-color);">
                 <button onclick="toggleTheme()" style="width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-primary); font-weight: 500; transition: all 0.2s ease;">
-                    <span id="mobile-theme-icon">☀️</span>
+                    <span id="mobile-theme-icon"><i class="fas fa-sun" style="color: #f59e0b;"></i></span>
                     <span id="mobile-theme-text">Light Mode</span>
                 </button>
             </div>
@@ -2368,14 +2368,14 @@
             const mobileText = document.getElementById('mobile-theme-text');
 
             if (theme === 'dark') {
-                if (desktopIcon) desktopIcon.textContent = '🌙';
+                if (desktopIcon) desktopIcon.innerHTML = '<i class="fas fa-moon" style="color: #a78bfa;"></i>';
                 if (desktopText) desktopText.textContent = 'Dark Mode';
-                if (mobileIcon) mobileIcon.textContent = '🌙';
+                if (mobileIcon) mobileIcon.innerHTML = '<i class="fas fa-moon" style="color: #a78bfa;"></i>';
                 if (mobileText) mobileText.textContent = 'Dark Mode';
             } else {
-                if (desktopIcon) desktopIcon.textContent = '☀️';
+                if (desktopIcon) desktopIcon.innerHTML = '<i class="fas fa-sun" style="color: #f59e0b;"></i>';
                 if (desktopText) desktopText.textContent = 'Light Mode';
-                if (mobileIcon) mobileIcon.textContent = '☀️';
+                if (mobileIcon) mobileIcon.innerHTML = '<i class="fas fa-sun" style="color: #f59e0b;"></i>';
                 if (mobileText) mobileText.textContent = 'Light Mode';
             }
         }
