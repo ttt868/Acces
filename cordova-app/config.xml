@@ -30,7 +30,7 @@
         
         <!-- Splash Screen Icon (Android 12+ API) -->
         <preference name="AndroidWindowSplashScreenAnimatedIcon" value="www/access-logo-1.png" />
-        <preference name="AndroidWindowSplashScreenBackground" value="#1a1a2e" />
+        <preference name="AndroidWindowSplashScreenBackground" value="#ffffff" />
         
         <preference name="android-minSdkVersion" value="24" />
         <preference name="android-targetSdkVersion" value="34" />
