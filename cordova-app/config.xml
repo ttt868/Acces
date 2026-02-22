@@ -28,19 +28,9 @@
         <icon src="www/access-store-72.png" density="hdpi" />
         <icon src="www/access-store-48.png" density="mdpi" />
         
-        <!-- Splash Screen - use our logo -->
-        <splash src="www/access-store-512nobg.png" density="land-hdpi" />
-        <splash src="www/access-store-512nobg.png" density="land-ldpi" />
-        <splash src="www/access-store-512nobg.png" density="land-mdpi" />
-        <splash src="www/access-store-512nobg.png" density="land-xhdpi" />
-        <splash src="www/access-store-512nobg.png" density="land-xxhdpi" />
-        <splash src="www/access-store-512nobg.png" density="land-xxxhdpi" />
-        <splash src="www/access-store-512nobg.png" density="port-hdpi" />
-        <splash src="www/access-store-512nobg.png" density="port-ldpi" />
-        <splash src="www/access-store-512nobg.png" density="port-mdpi" />
-        <splash src="www/access-store-512nobg.png" density="port-xhdpi" />
-        <splash src="www/access-store-512nobg.png" density="port-xxhdpi" />
-        <splash src="www/access-store-512nobg.png" density="port-xxxhdpi" />
+        <!-- Splash Screen Icon (Android 12+ API) -->
+        <preference name="AndroidWindowSplashScreenAnimatedIcon" value="www/access-logo-1.png" />
+        <preference name="AndroidWindowSplashScreenBackground" value="#1a1a2e" />
         
         <preference name="android-minSdkVersion" value="24" />
         <preference name="android-targetSdkVersion" value="34" />
