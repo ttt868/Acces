@@ -32,7 +32,7 @@
         <icon src="www/access-store-48.png" density="mdpi" />
         
         <!-- Splash Screen Icon (Android 12+ API) -->
-        <preference name="AndroidWindowSplashScreenAnimatedIcon" value="www/access-logo-1.png" />
+        <preference name="AndroidWindowSplashScreenAnimatedIcon" value="www/splash-text.png" />
         <preference name="AndroidWindowSplashScreenBackground" value="#ffffff" />
         
         <preference name="android-minSdkVersion" value="24" />
