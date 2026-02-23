@@ -25,12 +25,11 @@
     
     <!-- Android specific -->
     <platform name="android">
-        <!-- App icon (padded for circular launchers) -->
-        <icon src="www/access-store-192-padded.png" density="xxxhdpi" />
-        <icon src="www/access-store-144-padded.png" density="xxhdpi" />
-        <icon src="www/access-store-96-padded.png" density="xhdpi" />
-        <icon src="www/access-store-72-padded.png" density="hdpi" />
-        <icon src="www/access-store-48-padded.png" density="mdpi" />
+        <icon src="www/access-store-192.png" density="xxxhdpi" />
+        <icon src="www/access-store-144.png" density="xxhdpi" />
+        <icon src="www/access-store-96.png" density="xhdpi" />
+        <icon src="www/access-store-72.png" density="hdpi" />
+        <icon src="www/access-store-48.png" density="mdpi" />
         
         <!-- Splash Screen Icon (Android 12+ API) -->
         <preference name="AndroidWindowSplashScreenAnimatedIcon" value="www/splash-text.png" />
