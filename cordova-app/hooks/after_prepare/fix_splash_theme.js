@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * After Prepare Hook: Fix splash screen theme
+ * After Prepare Hook: Fix splash screen theme + notification icons
  * 
  * 1. Removes IconBackground so icon appears without circle/frame
  * 2. Adds dark mode splash (values-night + drawable-night)
+ * 3. Copies notification icon (white silhouette) to drawable folders
  */
 
 const fs = require('fs');
@@ -55,5 +56,33 @@ module.exports = function (context) {
     if (fs.existsSync(darkSplash)) {
         fs.copyFileSync(darkSplash, path.join(nightDrawableDir, 'ic_cdv_splashscreen.png'));
         console.log('Splash: added dark mode (white text on dark background)');
+    }
+
+    // 4. Copy notification icons (white silhouette on transparent bg)
+    const notifDensities = {
+        'drawable-xxxhdpi': 96,
+        'drawable-xxhdpi': 72,
+        'drawable-xhdpi': 48,
+        'drawable-hdpi': 36,
+        'drawable-mdpi': 24
+    };
+
+    let notifCopied = 0;
+    for (const [folder, size] of Object.entries(notifDensities)) {
+        const srcFile = path.join(context.opts.projectRoot, 'www', `notification-icon-${size}.png`);
+        const destDir = path.join(resDir, folder);
+        
+        if (!fs.existsSync(destDir)) {
+            fs.mkdirSync(destDir, { recursive: true });
+        }
+        
+        if (fs.existsSync(srcFile)) {
+            fs.copyFileSync(srcFile, path.join(destDir, 'ic_notification.png'));
+            notifCopied++;
+        }
+    }
+    
+    if (notifCopied > 0) {
+        console.log(`Notification: copied ${notifCopied} icon densities`);
     }
 };

@@ -25,11 +25,12 @@
     
     <!-- Android specific -->
     <platform name="android">
-        <icon src="www/access-store-192.png" density="xxxhdpi" />
-        <icon src="www/access-store-144.png" density="xxhdpi" />
-        <icon src="www/access-store-96.png" density="xhdpi" />
-        <icon src="www/access-store-72.png" density="hdpi" />
-        <icon src="www/access-store-48.png" density="mdpi" />
+        <!-- App icon (padded for circular launchers) -->
+        <icon src="www/access-store-192-padded.png" density="xxxhdpi" />
+        <icon src="www/access-store-144-padded.png" density="xxhdpi" />
+        <icon src="www/access-store-96-padded.png" density="xhdpi" />
+        <icon src="www/access-store-72-padded.png" density="hdpi" />
+        <icon src="www/access-store-48-padded.png" density="mdpi" />
         
         <!-- Splash Screen Icon (Android 12+ API) -->
         <preference name="AndroidWindowSplashScreenAnimatedIcon" value="www/splash-text.png" />
@@ -44,6 +45,12 @@
         <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
             <application android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml/network_security_config" />
         </edit-config>
+        
+        <!-- ✅ Notification icon (white silhouette, no background) -->
+        <config-file parent="/manifest/application" target="AndroidManifest.xml">
+            <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
+            <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/cdv_splashscreen_background" />
+        </config-file>
         <resource-file src="res/xml/network_security_config.xml" target="app/src/main/res/xml/network_security_config.xml" />
         
         <!-- ✅ Android Permissions for Camera and other features -->
