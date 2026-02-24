@@ -56,12 +56,14 @@ export async function sendFCMNotification(userId, title, body, data = {}) {
     const message = {
       notification: {
         title: title,
-        body: body
+        body: body,
+        image: 'https://accesschain.org/access-logo-1ipfs.png'
       },
       data: {
         ...data,
         click_action: 'OPEN_APP',
-        userId: String(userId)
+        userId: String(userId),
+        image: 'https://accesschain.org/access-logo-1ipfs.png'
       },
       android: {
         priority: 'high',
@@ -152,8 +154,8 @@ export async function sendFCMToAll(title, body, data = {}) {
 
     for (const chunk of chunks) {
       const message = {
-        notification: { title, body },
-        data: { ...data, click_action: 'OPEN_APP' },
+        notification: { title, body, image: 'https://accesschain.org/access-logo-1ipfs.png' },
+        data: { ...data, click_action: 'OPEN_APP', image: 'https://accesschain.org/access-logo-1ipfs.png' },
         android: {
           priority: 'high',
           notification: {
