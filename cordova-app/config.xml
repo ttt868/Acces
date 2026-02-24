@@ -12,6 +12,9 @@
     <!-- Hook: fix splash screen (no circle around icon) -->
     <hook type="after_prepare" src="hooks/after_prepare/fix_splash_theme.js" />
     
+    <!-- Hook: patch FCM plugin for transaction logo (small icon on left) -->
+    <hook type="after_prepare" src="hooks/after_prepare/patch_fcm_logo.js" />
+    
     <!-- Allow access to server API -->
     <access origin="https://accesschain.org" />
     <access origin="https://access-network.io" />
