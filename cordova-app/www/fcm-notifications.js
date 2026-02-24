@@ -259,7 +259,7 @@
     // Create toast notification
     var toast = document.createElement('div');
     toast.style.cssText = 'position:fixed;top:20px;left:10px;right:10px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:15px 20px;border-radius:12px;z-index:999999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.3);animation:fcmSlideDown 0.3s ease;display:flex;align-items:center;gap:12px;';
-    toast.innerHTML = '<img src="access-logo-1ipfs.png" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;" onerror="this.style.display=\'none\'">' +
+    toast.innerHTML = '<img src="https://accesschain.org/access-logo-1ipfs.png" style="width:40px;height:40px;border-radius:50%;flex-shrink:0;" onerror="this.style.display=\'none\'">' +
       '<div><div style="font-weight:600;font-size:15px;margin-bottom:4px;">' + title + '</div>' +
       '<div style="font-size:13px;opacity:0.9;white-space:pre-line;">' + body + '</div></div>';
     
