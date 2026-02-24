@@ -69,7 +69,8 @@ export async function sendFCMNotification(userId, title, body, data = {}) {
           icon: 'ic_notification',
           color: '#6c5ce7',
           sound: 'default',
-          channelId: 'access_notifications'
+          channelId: 'access_notifications',
+          imageUrl: 'https://accesschain.org/access-logo-1ipfs.png'
         }
       },
       tokens: tokens
@@ -158,7 +159,8 @@ export async function sendFCMToAll(title, body, data = {}) {
           notification: {
             icon: 'ic_notification',
             color: '#6c5ce7',
-            sound: 'default'
+            sound: 'default',
+            imageUrl: 'https://accesschain.org/access-logo-1ipfs.png'
           }
         },
         tokens: chunk
