@@ -359,39 +359,32 @@ function requestNotificationPermission() {
 
 // ✅ Global function to show native notification (can be called from anywhere)
 window.showNativeNotification = function(title, body, data = {}) {
-    // Try native plugin first
-    if (window.cordova && window.cordova.plugins && window.cordova.plugins.notification && window.cordova.plugins.notification.local) {
-        window.cordova.plugins.notification.local.schedule({
-            id: Date.now(),
-            title: title,
-            text: body,
-            icon: 'res://icon',
-            smallIcon: 'res://ic_stat_notification',
-            foreground: true,
-            sound: true,
-            vibrate: true,
-            priority: 2,
-            data: data
-        });
-        console.log('✅ Native notification shown:', title);
-        return true;
+    // Show in-app toast with logo image (like web notifications)
+    var toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:20px;left:10px;right:10px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:15px 20px;border-radius:12px;z-index:999999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.3);animation:nativeNotifSlide 0.3s ease;display:flex;align-items:center;gap:12px;';
+    toast.innerHTML = '<img src="access-logo-1ipfs.png" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,0.3);" onerror="this.style.display=\'none\'">' +
+      '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:15px;margin-bottom:4px;">' + title + '</div>' +
+      '<div style="font-size:13px;opacity:0.9;white-space:pre-line;">' + body + '</div></div>';
+    
+    // Add animation
+    if (!document.getElementById('native-notif-style')) {
+        var style = document.createElement('style');
+        style.id = 'native-notif-style';
+        style.textContent = '@keyframes nativeNotifSlide { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }';
+        document.head.appendChild(style);
     }
     
-    // Use toast notification
-    if (window.showToastNotification) {
-        window.showToastNotification(title, body);
-        console.log('✅ Toast notification shown:', title);
-        return true;
-    }
+    document.body.appendChild(toast);
     
-    // Fallback to web notification
-    if (window.NativeNotification && window.NativeNotification.permission === 'granted') {
-        new window.NativeNotification(title, { body: body, data: data });
-        return true;
-    }
+    // Auto dismiss after 5 seconds
+    setTimeout(function() {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s';
+        setTimeout(function() { toast.remove(); }, 500);
+    }, 5000);
     
-    console.warn('⚠️ Cannot show notification - no method available');
-    return false;
+    console.log('✅ Native notification shown with logo:', title);
+    return true;
 };
 
 // ✅ QR Code Scanner Function (using BarcodeScanner plugin)
