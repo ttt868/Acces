@@ -320,6 +320,21 @@ jobs:
         }
         GRADLE_CONFIG
         echo '✅ Library conflicts fixed (error_prone_annotations excluded)'
+
+    - name: Patch FCM plugin for transaction notification logo
+      working-directory: cordova-app
+      run: |
+        echo '🖼️ Patching FirebaseMessagingPluginService.java for transaction logo...'
+        PATCH_SRC="hooks/patches/FirebaseMessagingPluginService.java"
+        PATCH_DEST="platforms/android/app/src/main/java/by/chemerisuk/cordova/firebase/FirebaseMessagingPluginService.java"
+        if [ -f "$PATCH_SRC" ] && [ -f "$PATCH_DEST" ]; then
+          cp "$PATCH_SRC" "$PATCH_DEST"
+          echo '✅ FCM plugin patched with setLargeIcon for transaction logos'
+        else
+          echo "⚠️ Patch source or dest not found"
+          ls -la "$PATCH_SRC" 2>/dev/null || echo "Missing: $PATCH_SRC"
+          ls -la "$PATCH_DEST" 2>/dev/null || echo "Missing: $PATCH_DEST"
+        fi
     
     - name: Build Debug APK
       working-directory: cordova-app
