@@ -85,7 +85,6 @@ export async function sendFCMNotification(userId, title, body, data = {}) {
       const permanentErrorCodes = [
         'messaging/registration-token-not-registered',
         'messaging/invalid-registration-token',
-        'messaging/invalid-argument'
       ];
       
       response.responses.forEach((resp, idx) => {
@@ -222,28 +221,48 @@ export async function sendFCMDataNotification(userId, data = {}) {
       notifBody = pct >= 75 ? bmsgs.end : bmsgs.mid;
     }
 
-    // Message with BOTH notification (for background) AND data (for foreground)
-    const message = {
-      notification: {
-        title: notifTitle,
-        body: notifBody
-      },
-      data: {
-        ...data,
-        click_action: 'OPEN_APP',
-        userId: String(userId)
-      },
-      android: {
-        priority: 'high',
+    // Transaction: data-only so onMessageReceived ALWAYS fires in Java
+    // Java shows notification with setLargeIcon (logo on left)
+    // Other types: notification+data (system handles background)
+    let message;
+    if (data.type === 'transaction_received') {
+      message = {
+        data: {
+          ...data,
+          notifTitle: notifTitle,
+          notifBody: notifBody,
+          click_action: 'OPEN_APP',
+          userId: String(userId)
+        },
+        android: {
+          priority: 'high',
+        },
+        tokens: tokens
+      };
+    } else {
+      message = {
         notification: {
-          icon: 'ic_notification',
-          color: '#6c5ce7',
-          sound: 'default',
-          channelId: 'access_notifications'
-        }
-      },
-      tokens: tokens
-    };
+          title: notifTitle,
+          body: notifBody
+        },
+        data: {
+          ...data,
+          click_action: 'OPEN_APP',
+          userId: String(userId)
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            icon: 'ic_notification',
+            color: '#6c5ce7',
+            sound: 'default',
+            channelId: 'access_notifications',
+          }
+        },
+        tokens: tokens
+      };
+    }
+
 
     const response = await admin.messaging().sendEachForMulticast(message);
     
@@ -255,7 +274,6 @@ export async function sendFCMDataNotification(userId, data = {}) {
       const permanentErrorCodes = [
         'messaging/registration-token-not-registered',
         'messaging/invalid-registration-token',
-        'messaging/invalid-argument'
       ];
       
       response.responses.forEach((resp, idx) => {
