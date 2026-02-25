@@ -1477,7 +1477,7 @@ class NetworkNode {
             blockExplorerUrls: [baseUrl + '/access-explorer.html#'],
             // بيانات إضافية لـ MetaMask
             ensAddress: null,
-            features: ['EIP155', 'EIP1559', 'AEP20'],
+            features: ['EIP155', 'AEP20'],
             tokenStandard: 'AEP-20',
             forkId: null,
             status: 'active',
@@ -2811,39 +2811,15 @@ class NetworkNode {
           break;
 
         case 'eth_feeHistory': {
-          // ✅ EIP-1559: Realistic gasUsedRatio for MetaMask compatibility
-          const fhBlockCount = parseInt(params[0], 16) || 4;
-          const fhNewestBlock = params[1] === 'latest' ? this.blockchain.chain.length - 1 : parseInt(params[1], 16);
-          const fhRewardPercentiles = params[2] || [];
-          const fhBaseFees = [];
-          const fhGasRatios = [];
-          const fhRewards = [];
-          
-          // Generate realistic gas usage (20-50% of block capacity)
-          for (let i = 0; i < fhBlockCount; i++) {
-            fhBaseFees.push('0x3b9aca00'); // 1 Gwei
-            // Simulate realistic block usage like Polygon: 0.2 - 0.5
-            const gasUsage = 0.2 + (Math.random() * 0.3); // Random 0.2-0.5
-            fhGasRatios.push(gasUsage);
-            // Only add rewards if percentiles requested (like Polygon/Ethereum)
-            if (fhRewardPercentiles.length > 0) {
-              fhRewards.push(fhRewardPercentiles.map(() => '0x0'));
-            }
-          }
-          fhBaseFees.push('0x3b9aca00'); // next block baseFee
-          
-          result = {
-            oldestBlock: '0x' + Math.max(0, fhNewestBlock - fhBlockCount + 1).toString(16),
-            baseFeePerGas: fhBaseFees,
-            gasUsedRatio: fhGasRatios,
-            ...(fhRewards.length > 0 && { reward: fhRewards }) // Only include if requested
-          };
-          break;
+          // ✅ LEGACY CHAIN: eth_feeHistory not supported (like BSC)
+          // MetaMask will fallback to eth_gasPrice for gas estimation
+          throw new Error('eth_feeHistory is not supported on this legacy chain. Use eth_gasPrice instead.');
         }
 
         case 'eth_maxPriorityFeePerGas':
-          // ✅ EIP-1559: لا priority fee (tip = 0)
-          result = '0x0';
+          // ✅ LEGACY CHAIN: eth_maxPriorityFeePerGas not supported (like BSC)
+          // MetaMask will fallback to eth_gasPrice for gas estimation
+          throw new Error('eth_maxPriorityFeePerGas is not supported on this legacy chain. Use eth_gasPrice instead.');
           break;
 
         case 'web3_sha3':
@@ -2973,7 +2949,7 @@ class NetworkNode {
               logs: transferLogs, // ✅ ALWAYS an array (never undefined/null) - CRITICAL for Trust Wallet
               logsBloom: '0x' + '0'.repeat(512), // ✅ 256 bytes = 512 hex chars
               status: '0x1', // ✅ Success
-              type: '0x2', // ✅ EIP-1559 transaction type
+              type: '0x0', // ✅ Legacy transaction type
               root: undefined // ✅ Not used in post-Byzantium
             };
           } else {
@@ -4574,9 +4550,8 @@ class NetworkNode {
       value: '0x' + Math.floor(tx.amount * 1e18).toString(16),
       gas: '0x' + GAS_LIMIT.toString(16),
       gasPrice: '0x' + GAS_PRICE_WEI.toString(16), // ✅ 1 Gwei
-      maxFeePerGas: '0x' + GAS_PRICE_WEI.toString(16), // ✅ EIP-1559: 1 Gwei
-      maxPriorityFeePerGas: '0x0', // ✅ EIP-1559: no tip
-      type: '0x2', // ✅ EIP-1559 transaction type
+      gasPrice: '0x' + GAS_PRICE_WEI.toString(16), // ✅ Legacy: 1 Gwei
+      type: '0x0', // ✅ Legacy transaction type
       blockNumber: blockInfo ? '0x' + blockInfo.index.toString(16) : null,
       blockHash: tx.blockHash,
       transactionIndex: blockInfo ? '0x0' : null, // قد تحتاج إلى حساب هذا بشكل صحيح
@@ -4584,7 +4559,6 @@ class NetworkNode {
       timestamp: tx.timestamp,
       input: tx.data || '0x', // إضافة حقل الإدخال إذا كان موجوداً
       nonce: tx.nonce || '0x0', // إضافة حقل nonce إذا كان موجوداً
-      accessList: [], // ✅ EIP-1559 required field
       chainId: '0x5968' // ✅ Chain ID 22888
     };
   }
@@ -4625,7 +4599,6 @@ class NetworkNode {
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
         gasUsed: '0x0',
-        baseFeePerGas: '0x3b9aca00',
         extraData: '0x',
         logsBloom: '0x' + '0'.repeat(512),
         receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4634,12 +4607,7 @@ class NetworkNode {
         stateRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
         transactionsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
         uncles: [],
-        mixHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        withdrawals: [],
-        withdrawalsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
-        blobGasUsed: '0x0',
-        excessBlobGas: '0x0',
-        parentBeaconBlockRoot: '0x0000000000000000000000000000000000000000000000000000000000000000'
+        mixHash: '0x0000000000000000000000000000000000000000000000000000000000000000'
       };
     }
 
@@ -4670,7 +4638,6 @@ class NetworkNode {
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
         gasUsed: '0x0',
-        baseFeePerGas: '0x3b9aca00',
         extraData: '0x',
         logsBloom: '0x' + '0'.repeat(512),
         receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4679,12 +4646,7 @@ class NetworkNode {
         stateRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
         transactionsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
         uncles: [],
-        mixHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        withdrawals: [],
-        withdrawalsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
-        blobGasUsed: '0x0',
-        excessBlobGas: '0x0',
-        parentBeaconBlockRoot: '0x0000000000000000000000000000000000000000000000000000000000000000'
+        mixHash: '0x0000000000000000000000000000000000000000000000000000000000000000'
       };
     }
 
@@ -4718,7 +4680,6 @@ class NetworkNode {
       miner: '0x0000000000000000000000000000000000000000',
       gasLimit: '0x1c9c380',
       gasUsed: isVirtualBlock ? '0x0' : '0x5208',
-      baseFeePerGas: '0x3b9aca00',
       extraData: '0x',
       logsBloom: '0x' + '0'.repeat(512),
       receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4728,12 +4689,7 @@ class NetworkNode {
       transactionsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
       uncles: [],
       // ✅ حقول إضافية لـ MetaMask Mobile
-      mixHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
-      withdrawals: [],
-      withdrawalsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
-      blobGasUsed: '0x0',
-      excessBlobGas: '0x0',
-      parentBeaconBlockRoot: '0x0000000000000000000000000000000000000000000000000000000000000000'
+      mixHash: '0x0000000000000000000000000000000000000000000000000000000000000000'
     };
   }
 
