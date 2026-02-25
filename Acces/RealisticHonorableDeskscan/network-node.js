@@ -10,6 +10,7 @@ import { AntiAttackMonitor } from './anti-attack-monitor.js';
 import { EnterpriseNetworkCore } from './enterprise-network-core.js';
 import { InstantWalletSync } from './instant-wallet-sync.js';
 import { SmartContractEngine } from './contract-engine.js';
+import { EVMEngine } from './evm-engine.js';
 import accessCache from './access-style-cache.js';
 import rlp from 'rlp';
 import sha3Pkg from 'js-sha3';
@@ -119,6 +120,7 @@ class NetworkNode {
     // Initialize Smart Contract Engine for NFTs and Tokens (stored on blockchain, not database)
     // ✅ مثل Ethereum/BSC - العقود الذكية تُخزن في البلوكتشين وليس قاعدة البيانات
     this.contractEngine = null; // Will be initialized after stateStorage
+    this.evmEngine = null; // Real EVM for Solidity smart contracts (tokens, NFTs)
 
     // Pure blockchain system - NO CACHE like Ethereum/BSC
     // البلوك تشين هو المصدر الوحيد للحقيقة مثل الإيثريوم تماماً
@@ -212,6 +214,14 @@ class NetworkNode {
     } catch (error) {
       console.warn('⚠️ تحذير: فشل في تحميل البيانات من نظام التخزين المتقدم:', error.message);
       console.log('📋 سيتم استخدام نظام التخزين التقليدي');
+    }
+
+    // ✅ Initialize EVM Engine for Solidity smart contracts (ERC-20, ERC-721, NFTs)
+    try {
+      this.evmEngine = new EVMEngine(this.blockchain);
+      await this.evmEngine.init();
+    } catch (evmError) {
+      console.warn('⚠️ EVM Engine init failed:', evmError.message);
     }
   }
 
@@ -1945,6 +1955,48 @@ class NetworkNode {
             // FIRST: Add to blockchain (سيتم خصم الرصيد هنا تلقائياً)
             const txHash = await Promise.resolve(this.blockchain.addTransaction(transaction));
 
+            // ✅ EVM: Execute contract deployment or contract call (Solidity contracts)
+            let evmContractAddress = null;
+            let evmLogs = [];
+            let evmSuccess = true;
+            if (this.evmEngine) {
+              const blockNumber = this.blockchain.chain.length;
+              if (txData.isContractDeployment && txData.data && txData.data !== '0x' && txData.data.length > 10) {
+                try {
+                  const evmResult = await this.evmEngine.deploy(
+                    txData.from, txData.data, txData.value || 0,
+                    transaction.hash || txHash, blockNumber
+                  );
+                  if (evmResult.success && evmResult.contractAddress) {
+                    evmContractAddress = evmResult.contractAddress;
+                    evmLogs = evmResult.logs || [];
+                    transaction.contractAddress = evmContractAddress;
+                    transaction.toAddress = evmContractAddress;
+                  } else {
+                    evmSuccess = false;
+                    console.error('❌ EVM deploy failed:', evmResult.error);
+                  }
+                } catch (evmErr) {
+                  evmSuccess = false;
+                  console.error('❌ EVM deploy error:', evmErr.message);
+                }
+              } else if (!txData.isContractDeployment && txData.to && txData.data && txData.data !== '0x' && txData.data.length > 10) {
+                try {
+                  const isEvmContract = await this.evmEngine.isContract(txData.to);
+                  if (isEvmContract) {
+                    const evmResult = await this.evmEngine.execute(
+                      txData.from, txData.to, txData.data,
+                      txData.value || 0, transaction.hash || txHash, blockNumber
+                    );
+                    evmLogs = evmResult.logs || [];
+                    evmSuccess = evmResult.success;
+                  }
+                } catch (evmErr) {
+                  console.error('❌ EVM call error:', evmErr.message);
+                }
+              }
+            }
+
             // ✅ NONCE: الزيادة تمت مسبقاً في الـ lock section (قبل addTransaction)
             // incrementNonce في blockchain للمزامنة مع الأنظمة الأخرى
             if (this.blockchain.incrementNonce) {
@@ -1965,9 +2017,9 @@ class NetworkNode {
               hash: txHash,
               txId: txHash,
               fromAddress: txData.from,
-              toAddress: txData.to,
+              toAddress: txData.isContractDeployment ? (evmContractAddress || '') : txData.to,
               from: txData.from,
-              to: txData.to,
+              to: txData.isContractDeployment ? (evmContractAddress || '') : txData.to,
               amount: typeof txData.value === 'number' ? txData.value : parseFloat(txData.value) || 0,
               value: typeof txData.value === 'number' ? txData.value : parseFloat(txData.value) || 0,
               gasFee: txGasFee,
@@ -1976,7 +2028,12 @@ class NetworkNode {
               timestamp: Date.now(),
               blockIndex: this.blockchain.chain.length,
               blockHash: '0x' + crypto.createHash('sha256').update(txHash + Date.now().toString()).digest('hex'),
-              status: 'confirmed'
+              status: 'confirmed',
+              contractAddress: evmContractAddress || null,
+              evmLogs: evmLogs || [],
+              evmSuccess: evmSuccess,
+              isContractDeployment: txData.isContractDeployment || false,
+              data: txData.data || '0x'
             });
             // Silent - reduce console spam
 
@@ -2208,18 +2265,23 @@ class NetworkNode {
           break;
 
         case 'eth_estimateGas':
-          // ✅ تقدير الغاز - بسيط ومتوافق مع جميع المحافظ
+          // ✅ تقدير الغاز مع دعم EVM للعقود الذكية
           const txParams = params[0] || {};
-          let gasEstimate = 21000; // الغاز الأساسي للتحويل
+          let gasEstimate = 21000;
 
-          // حساب إضافي للمعاملات المعقدة (عقود ذكية)
-          if (txParams.data && txParams.data !== '0x' && txParams.data.length > 10) {
-            const dataLength = Math.ceil((txParams.data.length - 2) / 2);
-            gasEstimate += dataLength * 68;
-            gasEstimate = Math.min(gasEstimate, 200000);
+          if (this.evmEngine && txParams.data && txParams.data !== '0x' && txParams.data.length > 10) {
+            try {
+              gasEstimate = await this.evmEngine.estimateGas(
+                txParams.from || null, txParams.to || null,
+                txParams.data, parseFloat(txParams.value) || 0
+              );
+            } catch {
+              // Fallback: basic calculation
+              const dataLength = Math.ceil((txParams.data.length - 2) / 2);
+              gasEstimate = Math.min(21000 + dataLength * 68, 3000000);
+            }
           }
 
-          // ✅ إرجاع hex فقط - مثل Ethereum/BSC/Polygon تماماً
           result = '0x' + gasEstimate.toString(16);
           break;
 
@@ -2771,24 +2833,31 @@ class NetworkNode {
           break;
 
         case 'eth_getCode':
-          // Get contract code - for native ACCESS tokens, return empty
+          // ✅ Get contract code - check EVM for deployed Solidity contracts
           const codeAddress = params[0];
-
-          // التحقق من صحة العنوان مع معالجة أفضل للأخطاء
-          if (!codeAddress) {
-            result = '0x'; // إرجاع كود فارغ للعناوين الفارغة
-          } else if (this.isValidEthereumAddress(codeAddress)) {
-            result = '0x'; // إرجاع كود فارغ للعناوين الصحيحة (native tokens)
+          if (this.evmEngine && codeAddress) {
+            try {
+              const evmCode = await this.evmEngine.getCode(codeAddress);
+              result = evmCode || '0x';
+            } catch {
+              result = '0x';
+            }
           } else {
-            // بدلاً من رمي خطأ، أرجع كود فارغ
-            console.warn(`⚠️ Invalid address for code lookup: ${codeAddress}, returning empty code`);
             result = '0x';
           }
           break;
 
         case 'eth_getStorageAt':
-          // Get storage at position - simplified for native tokens
-          result = '0x0000000000000000000000000000000000000000000000000000000000000000';
+          // ✅ Get storage at position - check EVM for contract storage
+          if (this.evmEngine && params[0]) {
+            try {
+              result = await this.evmEngine.getStorageAt(params[0], params[1] || '0x0');
+            } catch {
+              result = '0x' + '0'.repeat(64);
+            }
+          } else {
+            result = '0x' + '0'.repeat(64);
+          }
           break;
 
         case 'eth_getTransactionStatus':
@@ -2909,28 +2978,38 @@ class NetworkNode {
             const blockNum = transaction.blockIndex ? '0x' + transaction.blockIndex.toString(16) : '0x' + this.blockchain.chain.length.toString(16);
             const blockHashValue = transaction.blockHash || '0x' + crypto.createHash('sha256').update(receiptTxHash).digest('hex');
             
-            // ✅ TRUST WALLET FIX: ALWAYS create logs array (prevents "Index out of bounds")
-            const transferLogs = [];
+            // ✅ EVM: Get real logs from EVM engine if available
+            let receiptLogs = [];
+            const evmReceiptLogs = (transaction.evmLogs) || (this.evmEngine ? this.evmEngine.getLogs(receiptTxHash) : []);
             
-            // فقط إضافة Transfer log إذا كانت هناك قيمة فعلية
-            if ((transaction.value || transaction.amount) && (transaction.value > 0 || transaction.amount > 0)) {
+            if (evmReceiptLogs && evmReceiptLogs.length > 0) {
+              // Use real EVM logs (from contract execution)
+              receiptLogs = evmReceiptLogs.map((log, idx) => ({
+                ...log,
+                blockNumber: blockNum,
+                blockHash: blockHashValue,
+                transactionHash: receiptTxHash,
+                transactionIndex: '0x0',
+                logIndex: '0x' + idx.toString(16),
+                removed: false,
+              }));
+            } else if ((transaction.value || transaction.amount) && (transaction.value > 0 || transaction.amount > 0)) {
+              // Fallback: generate Transfer log for native transfers
               const fromAddress = (transaction.fromAddress || transaction.from || '0x0000000000000000000000000000000000000000').toLowerCase();
               const toAddress = (transaction.toAddress || transaction.to || '0x0000000000000000000000000000000000000000').toLowerCase();
               const amount = transaction.value || transaction.amount || 0;
               const amountInWei = Math.floor(Math.abs(amount) * 1e18);
-              
-              // التأكد من أن العناوين بصيغة صحيحة (40 حرف hex)
               const fromPadded = fromAddress.replace('0x', '').padStart(40, '0');
               const toPadded = toAddress.replace('0x', '').padStart(40, '0');
               
-              transferLogs.push({
-                address: toAddress, // The token contract (or recipient for native transfers)
+              receiptLogs.push({
+                address: toAddress,
                 topics: [
-                  '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef', // Transfer(address,address,uint256)
-                  '0x000000000000000000000000' + fromPadded, // from address (padded to 32 bytes)
-                  '0x000000000000000000000000' + toPadded // to address (padded to 32 bytes)
+                  '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
+                  '0x000000000000000000000000' + fromPadded,
+                  '0x000000000000000000000000' + toPadded
                 ],
-                data: '0x' + amountInWei.toString(16).padStart(64, '0'), // amount in hex (padded to 32 bytes)
+                data: '0x' + amountInWei.toString(16).padStart(64, '0'),
                 blockNumber: blockNum,
                 transactionHash: receiptTxHash,
                 transactionIndex: '0x0',
@@ -2939,6 +3018,20 @@ class NetworkNode {
                 removed: false
               });
             }
+            
+            // ✅ EVM: Detect contract address (from deployment)
+            const receiptContractAddress = transaction.contractAddress || null;
+            const receiptTo = transaction.isContractDeployment 
+              ? null  // null for contract creation (Ethereum standard)
+              : (transaction.toAddress || transaction.to || null);
+            
+            // ✅ EVM: Determine if a contract call failed
+            const receiptStatus = (transaction.evmSuccess === false) ? '0x0' : '0x1';
+
+            // ✅ Gas used - use EVM gas if available, otherwise default 21000
+            const receiptGasUsed = transaction.evmGasUsed 
+              ? '0x' + Math.max(21000, transaction.evmGasUsed).toString(16)
+              : '0x5208';
             
             // 🔐 gasPrice ≈ 0.952 Gwei, gasLimit = 21000 → fee ≈ 0.00002 ACCESS
             const GAS_PRICE_WEI_RECEIPT = 952380952; // ≈ 0.952 Gwei
@@ -2951,14 +3044,14 @@ class NetworkNode {
               blockHash: blockHashValue,
               blockNumber: blockNum,
               from: transaction.fromAddress || transaction.from || '0x0000000000000000000000000000000000000000',
-              to: transaction.toAddress || transaction.to || null, // ✅ null if contract creation
-              cumulativeGasUsed: '0x5208', // 21000 in hex
-              gasUsed: '0x5208', // 21000 in hex
+              to: receiptTo, // ✅ null for contract creation (Ethereum standard)
+              cumulativeGasUsed: receiptGasUsed,
+              gasUsed: receiptGasUsed,
               effectiveGasPrice: '0x' + GAS_PRICE_WEI_RECEIPT.toString(16), // ✅ ≈ 0.952 Gwei
-              contractAddress: null, // ✅ null for regular transfers
-              logs: transferLogs, // ✅ ALWAYS an array (never undefined/null) - CRITICAL for Trust Wallet
+              contractAddress: receiptContractAddress, // ✅ EVM contract address for deployments
+              logs: receiptLogs, // ✅ Real EVM logs or native transfer logs
               logsBloom: '0x' + '0'.repeat(512), // ✅ 256 bytes = 512 hex chars
-              status: '0x1', // ✅ Success
+              status: receiptStatus, // ✅ 0x1 success, 0x0 revert
               type: '0x2', // ✅ EIP-1559 transaction type
               root: undefined // ✅ Not used in post-Byzantium
             };
@@ -3062,20 +3155,45 @@ class NetworkNode {
           break;
 
         case 'eth_call':
-          // معالجة استدعاءات العقود الذكية
+          // ✅ EVM: Route to real EVM for deployed contracts, fallback to native handler
           try {
-            result = await this.handleContractCall(params[0], params[1] || 'latest');
+            const ethCallTarget = params[0]?.to;
+            let evmHandled = false;
+
+            if (this.evmEngine && ethCallTarget) {
+              try {
+                const targetIsContract = await this.evmEngine.isContract(ethCallTarget);
+                if (targetIsContract) {
+                  const evmCallResult = await this.evmEngine.staticCall(
+                    params[0].from || null,
+                    ethCallTarget,
+                    params[0].data || '0x',
+                    parseFloat(params[0].value) || 0
+                  );
+                  if (evmCallResult.success) {
+                    result = evmCallResult.returnValue;
+                  } else {
+                    return {
+                      jsonrpc: '2.0', id: id,
+                      error: { code: 3, message: 'execution reverted', data: evmCallResult.returnValue || '0x' }
+                    };
+                  }
+                  evmHandled = true;
+                }
+              } catch (evmCallErr) {
+                // EVM call failed — fallback to native handler
+              }
+            }
+
+            // Fallback: native token handler (balanceOf, symbol, etc.)
+            if (!evmHandled) {
+              result = await this.handleContractCall(params[0], params[1] || 'latest');
+            }
           } catch (callError) {
-            // ✅ إذا كان الخطأ "execution reverted"، نرجعه كـ error response
             if (callError.code === 3) {
               return {
-                jsonrpc: '2.0',
-                id: id,
-                error: {
-                  code: 3,
-                  message: 'execution reverted',
-                  data: '0x'
-                }
+                jsonrpc: '2.0', id: id,
+                error: { code: 3, message: 'execution reverted', data: callError.data || '0x' }
               };
             }
             throw callError;
@@ -3083,7 +3201,20 @@ class NetworkNode {
           break;
 
         case 'eth_getLogs':
-          // جلب سجلات الأحداث
+          // ✅ EVM: Return real event logs from contract execution
+          if (this.evmEngine) {
+            try {
+              const logFilter = params[0] || {};
+              const evmFilteredLogs = this.evmEngine.filterLogs({
+                address: logFilter.address,
+                topics: logFilter.topics
+              });
+              if (evmFilteredLogs.length > 0) {
+                result = evmFilteredLogs;
+                break;
+              }
+            } catch { /* fallback */ }
+          }
           result = await this.getEventLogs(params[0]);
           break;
 
