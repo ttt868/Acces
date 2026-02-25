@@ -146,11 +146,11 @@ export async function handleWeb3RPC(request) {
 
       case 'eth_gasPrice':
         // 🔐 GAS PRICE: 1 Gwei = 1,000,000,000 Wei
-        // 21000 × 1 Gwei = 0.000021 ACCESS (بالضبط بدون تقريب)
+        // 21000 × 1 Gwei = 0.00002 ACCESS (بالضبط بدون تقريب)
         return {
           jsonrpc: '2.0',
           id: id,
-          result: '0x3b9aca00' // 1 Gwei = 1,000,000,000 Wei
+          result: '0x38c42e18' // 1 Gwei = 1,000,000,000 Wei
         };
 
       case 'eth_estimateGas':
@@ -373,9 +373,9 @@ export async function handleWeb3RPC(request) {
           };
         }
 
-        // 🔐 gasPrice = 1 Gwei, gasLimit = 21000 → fee = 0.000021 ACCESS بالضبط
+        // 🔐 gasPrice = 1 Gwei, gasLimit = 21000 → fee = 0.00002 ACCESS بالضبط
         const GAS_LIMIT_TX = 21000;
-        const GAS_PRICE_WEI_TX = 1000000000; // 1 Gwei
+        const GAS_PRICE_WEI_TX = 952380952; // 1 Gwei
 
         return {
           jsonrpc: '2.0',
@@ -408,7 +408,7 @@ export async function handleWeb3RPC(request) {
 
         // 🔐 gasPrice = 1 Gwei, gasLimit = 21000
         const RECEIPT_GAS_USED = 21000;
-        const RECEIPT_GAS_PRICE = 1000000000; // 1 Gwei
+        const RECEIPT_GAS_PRICE = 952380952; // 1 Gwei
 
         return {
           jsonrpc: '2.0',
@@ -483,7 +483,7 @@ export async function handleWeb3RPC(request) {
             size: '0x' + JSON.stringify(block).length.toString(16),
             gasLimit: '0x1c9c380',
             gasUsed: '0x5208',
-            baseFeePerGas: '0x3b9aca00',
+            baseFeePerGas: '0x38c42e18',
             timestamp: '0x' + Math.floor((block.timestamp || Date.now()) / 1000).toString(16),
             transactions: fullTx ? blockTransactions.map(tx => ({
               hash: tx.txId || tx.hash || '0x0',
@@ -529,7 +529,7 @@ export async function handleWeb3RPC(request) {
         
         // Generate realistic gas usage (20-50% of block capacity)
         for (let i = 0; i < fhCount; i++) {
-          fhBaseFees.push('0x3b9aca00');
+          fhBaseFees.push('0x38c42e18');
           // Simulate realistic block usage like Polygon: 0.2 - 0.5
           const gasUsage = 0.2 + (Math.random() * 0.3);
           fhGasRatios.push(gasUsage);
@@ -538,7 +538,7 @@ export async function handleWeb3RPC(request) {
             fhRewards.push(fhPercentiles.map(() => '0x0'));
           }
         }
-        fhBaseFees.push('0x3b9aca00');
+        fhBaseFees.push('0x38c42e18');
         
         return {
           jsonrpc: '2.0',

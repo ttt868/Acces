@@ -1116,7 +1116,7 @@ class NetworkNode {
       // Create RLP-encoded transaction data
       const fields = [
         txData.nonce || 0,
-        txData.gasPrice || 1000000000, // ✅ 1 Gwei
+        txData.gasPrice || 952380952, // ✅ 1 Gwei
         txData.gasLimit || 21000,
         txData.to || '0x',
         txData.value || 0,
@@ -1770,10 +1770,8 @@ class NetworkNode {
 
             // STRICT BALANCE CHECK - MANDATORY FOR ALL TRANSACTIONS
             const senderBalance = this.blockchain.getBalance(txData.from);
-            // 🔐 رسوم الغاز = gasPrice × gasLimit = 1 Gwei × 21000 = 0.000021 ACCESS (بالضبط)
-            const GAS_PRICE_WEI = 1000000000; // 1 Gwei
-            const GAS_LIMIT = 21000;
-            const gasFeeInAccess = (GAS_PRICE_WEI * GAS_LIMIT) / 1e18; // 0.000021 exactly
+            // 🔐 رسوم الغاز = 0.00002 ACCESS ثابتة (gasPrice ~0.952 Gwei × 21000 gas)
+            const gasFeeInAccess = 0.00002; // Fixed flat gas fee for ACCESS network
             const totalRequired = txData.value + gasFeeInAccess;
 
             // Silent - reduce console spam
@@ -1796,21 +1794,47 @@ class NetworkNode {
 
             // إعادة حساب المتطلبات مع الرصيد المحدث
             const balanceDifference = totalRequired - actualBalance;
-            const precisionTolerance = 0.00000010; // More generous tolerance for external wallets
+            const precisionTolerance = 0.00000010; // Tolerance for floating point
 
             // Silent - reduce console spam
 
-            if (balanceDifference > precisionTolerance) {
-              const errorMsg = `❌ TRANSACTION REJECTED: Insufficient balance. Required: ${totalRequired.toFixed(8)} ACCESS, Available: ${actualBalance.toFixed(8)} ACCESS, Shortage: ${balanceDifference.toFixed(8)} ACCESS`;
+            // ✅ INTEGER MATH: All calculations in 8-decimal integer to avoid floating point errors
+            // Convert to integer units (1e8 precision = 8 decimal places)
+            const balanceInt = Math.round(actualBalance * 1e8);
+            const valueInt = Math.round(txData.value * 1e8);
+            const gasFeeInt = Math.round(gasFeeInAccess * 1e8); // = 2000 (0.00002 * 1e8)
+            const totalRequiredInt = valueInt + gasFeeInt;
+            const diffInt = totalRequiredInt - balanceInt;
+
+            // ✅ MAX SEND DETECTION: If shortage ≈ gas fee, user sent value = full balance
+            const isMaxSendAttempt = diffInt > 0 && diffInt <= (gasFeeInt + 10) && valueInt <= balanceInt;
+
+            if (isMaxSendAttempt) {
+              // ✅ PRECISE: Integer subtraction — no floating point error possible
+              const adjustedInt = Math.max(0, balanceInt - gasFeeInt);
+              const adjustedValue = adjustedInt / 1e8;
+              console.log(`💰 MAX SEND DETECTED: balance=${actualBalance.toFixed(8)}, value=${txData.value.toFixed(8)} → adjusted=${adjustedValue.toFixed(8)} ACCESS (gas: ${gasFeeInAccess})`);
+              txData.value = adjustedValue;
+            } else if (diffInt > 10) {
+              // Insufficient balance (tolerance of 10 units = 0.0000001)
+              const errorMsg = `❌ TRANSACTION REJECTED: Insufficient balance. Required: ${(totalRequiredInt/1e8).toFixed(8)} ACCESS, Available: ${actualBalance.toFixed(8)} ACCESS, Shortage: ${(diffInt/1e8).toFixed(8)} ACCESS`;
               console.error(errorMsg);
               throw new Error(errorMsg);
+            } else if (diffInt > 0 && diffInt <= 10) {
+              // Tiny floating point gap — adjust precisely
+              txData.value = Math.max(0, (valueInt - diffInt)) / 1e8;
             }
 
-            // تعديل ذكي للمعاملات ضمن هامش التسامح
-            if (balanceDifference > 0 && balanceDifference <= precisionTolerance) {
-              // Silent - reduce console spam
-              txData.value = Math.max(0, txData.value - balanceDifference);
-              // Silent - reduce console spam
+            // ✅ DUST SWEEP: If remainder < gasFee after deduction, add it to transfer (zero sender)
+            // Handles Trust Wallet 1.5x gas buffer → remainder ~0.00001
+            // Uses INTEGER math for precision
+            const finalValueInt = Math.round(txData.value * 1e8);
+            const remainingInt = balanceInt - finalValueInt - gasFeeInt;
+            if (remainingInt > 0 && remainingInt < gasFeeInt) {
+              // Add dust to value — sender will be zeroed
+              const newValueInt = finalValueInt + remainingInt;
+              txData.value = newValueInt / 1e8;
+              console.log(`🧹 DUST SWEEP: remainder=${(remainingInt/1e8).toFixed(8)} → value=${txData.value.toFixed(8)} (sender zeroed)`);
             }
 
             // تصنيف المحافظ قبل المعالجة
@@ -1866,6 +1890,7 @@ class NetworkNode {
             transaction.gasLimit = txData.gasLimit;
             transaction.validated = true;
             transaction.external = true;
+            transaction.rpcValidated = true; // ✅ CRITICAL: Skip re-validation in addTransaction (already validated here)
 
             // إضافة البيانات المطلوبة لحفظ قاعدة البيانات
             transaction.from = txData.from;
@@ -1940,8 +1965,8 @@ class NetworkNode {
               this.recentTransactionCache = new Map();
             }
             
-            // 🔐 gasPrice = 1 Gwei, gasLimit = 21000 → fee = 0.000021 ACCESS
-            const GAS_FEE_TX = 0.000021;
+            // 🔐 gasPrice = 1 Gwei, gasLimit = 21000 → fee = 0.00002 ACCESS
+            const GAS_FEE_TX = 0.00002;
             const txGasFee = GAS_FEE_TX;
             const txGasPrice = GAS_FEE_TX;
             
@@ -2185,10 +2210,10 @@ class NetworkNode {
         }
 
         case 'eth_gasPrice':
-          // 🔐 GAS PRICE: 1 Gwei (1,000,000,000 Wei)
-          // ✅ يضرب بالضبط: 21000 × 1 Gwei = 21,000,000,000,000 Wei = 0.000021 ACCESS
+          // 🔐 GAS PRICE: ~0.952 Gwei (952,380,952 Wei)
+          // ✅ 21000 × 952380952 Wei ≈ 0.00002 ACCESS
           // لا تقريب أو كسور - يعمل مع MetaMask و Trust Wallet بدون مشاكل
-          result = '0x3b9aca00'; // 1 Gwei = 1,000,000,000 Wei
+          result = '0x38c42e18'; // 952,380,952 Wei ≈ 0.952 Gwei
           break;
 
         case 'eth_estimateGas':
@@ -2238,11 +2263,11 @@ class NetworkNode {
               console.warn('USE MAX: DB sync warning:', dbError.message);
             }
 
-            // gasPrice = 1 Gwei × 21000 = 0.000021 ACCESS بالضبط
-            const GAS_FEE_ACCESS = 0.000021;
+            // gasPrice = 1 Gwei × 21000 = 0.00002 ACCESS بالضبط
+            const GAS_FEE_ACCESS = 0.00002;
             const exactGasFeeAccess = GAS_FEE_ACCESS;
             const gasLimit = 21000;
-            const gasPriceWei = 1000000000; // 1 Gwei
+            const gasPriceWei = 952380952; // 1 Gwei
 
             console.log(`💰 USE MAX CALCULATION:`, {
               totalBalance: currentBal.toFixed(8) + ' ACCESS',
@@ -2622,7 +2647,7 @@ class NetworkNode {
                 blockTime: 3,
                 tps: 0,
                 difficulty: 1,
-                gasPrice: 0.000021,
+                gasPrice: 0.00002,
                 pendingTransactions: 0,
                 chainId: '0x5968',
                 networkId: '22888',
@@ -2641,7 +2666,7 @@ class NetworkNode {
 
             // حساب رسوم الغاز بدقة أكبر
             const standardGasLimit = 21000; // الغاز الأساسي للتحويل البسيط
-            // ✅ صحيح: 0.00002 ACCESS / 21000 = 952380952 Wei ≈ 0.952 Gwei
+            // ✅ صحيح: 0.00002 ACCESS / 21000 = 952380952 Wei ≈ 1 Gwei
             const FIXED_GAS_FEE = 0.00002; // ACCESS
             const gasPriceInWei = Math.floor(FIXED_GAS_FEE * 1e18 / standardGasLimit); // 952380952 Wei
             const totalGasCostInWei = standardGasLimit * gasPriceInWei;
@@ -2665,7 +2690,7 @@ class NetworkNode {
               maxSendable: finalMaxSendable.toFixed(8) + ' ACCESS',
               maxSendableWei: '0x' + Math.floor(finalMaxSendable * 1e18).toString(16),
               estimatedGasFee: totalGasCostInAccess.toFixed(8) + ' ACCESS',
-              gasPrice: (gasPriceInWei / 1e9).toFixed(3) + ' Gwei', // ✅ 0.952 Gwei
+              gasPrice: (gasPriceInWei / 1e9).toFixed(3) + ' Gwei', // ✅ 1 Gwei
               gasLimit: standardGasLimit,
               safetyMargin: safetyMargin.toFixed(8) + ' ACCESS',
               chainId: '0x5968',
@@ -2822,13 +2847,13 @@ class NetworkNode {
           // ✅ FIXED gasUsedRatio = 0.5 (equilibrium) → baseFee stays STABLE
           // This prevents MetaMask from recalculating different maxFeePerGas each time
           for (let i = 0; i < fhBlockCount; i++) {
-            fhBaseFees.push('0x3b9aca00'); // 1 Gwei - always the same
+            fhBaseFees.push('0x38c42e18'); // ~0.952 Gwei - always the same
             fhGasRatios.push(0.5); // ✅ FIXED 0.5 = equilibrium = baseFee never changes
             if (fhRewardPercentiles.length > 0) {
               fhRewards.push(fhRewardPercentiles.map(() => '0x0'));
             }
           }
-          fhBaseFees.push('0x3b9aca00'); // next block baseFee = same 1 Gwei
+          fhBaseFees.push('0x38c42e18'); // next block baseFee = same ~0.952 Gwei
           
           result = {
             oldestBlock: '0x' + Math.max(0, fhNewestBlock - fhBlockCount + 1).toString(16),
@@ -2952,8 +2977,8 @@ class NetworkNode {
               });
             }
             
-            // 🔐 gasPrice = 1 Gwei, gasLimit = 21000 → fee = 0.000021 ACCESS بالضبط
-            const GAS_PRICE_WEI_RECEIPT = 1000000000; // 1 Gwei
+            // 🔐 gasPrice ≈ 0.952 Gwei, gasLimit = 21000 → fee ≈ 0.00002 ACCESS
+            const GAS_PRICE_WEI_RECEIPT = 952380952; // ≈ 0.952 Gwei
             const GAS_LIMIT_RECEIPT = 21000;
             
             // ✅ ALWAYS return array, even if empty - prevents Trust Wallet errors
@@ -2966,7 +2991,7 @@ class NetworkNode {
               to: transaction.toAddress || transaction.to || null, // ✅ null if contract creation
               cumulativeGasUsed: '0x5208', // 21000 in hex
               gasUsed: '0x5208', // 21000 in hex
-              effectiveGasPrice: '0x' + GAS_PRICE_WEI_RECEIPT.toString(16), // ✅ 1 Gwei
+              effectiveGasPrice: '0x' + GAS_PRICE_WEI_RECEIPT.toString(16), // ✅ ≈ 0.952 Gwei
               contractAddress: null, // ✅ null for regular transfers
               logs: transferLogs, // ✅ ALWAYS an array (never undefined/null) - CRITICAL for Trust Wallet
               logsBloom: '0x' + '0'.repeat(512), // ✅ 256 bytes = 512 hex chars
@@ -4561,8 +4586,8 @@ class NetworkNode {
       blockInfo = this.blockchain.getBlockByHash(tx.blockHash);
     }
 
-    // 🔐 gasPrice = 1 Gwei, gasLimit = 21000 → fee = 0.000021 ACCESS بالضبط
-    const GAS_PRICE_WEI = 1000000000; // 1 Gwei
+    // 🔐 gasPrice ≈ 0.952 Gwei, gasLimit = 21000 → fee = 0.00002 ACCESS بالضبط
+    const GAS_PRICE_WEI = 952380952; // ≈ 0.952 Gwei (0.00002 / 21000)
     const GAS_LIMIT = 21000;
 
     return {
@@ -4623,7 +4648,7 @@ class NetworkNode {
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
         gasUsed: '0x0',
-        baseFeePerGas: '0x3b9aca00',
+        baseFeePerGas: '0x38c42e18',
         extraData: '0x',
         logsBloom: '0x' + '0'.repeat(512),
         receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4663,7 +4688,7 @@ class NetworkNode {
         miner: '0x0000000000000000000000000000000000000000',
         gasLimit: '0x1c9c380',
         gasUsed: '0x0',
-        baseFeePerGas: '0x3b9aca00',
+        baseFeePerGas: '0x38c42e18',
         extraData: '0x',
         logsBloom: '0x' + '0'.repeat(512),
         receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -4706,7 +4731,7 @@ class NetworkNode {
       miner: '0x0000000000000000000000000000000000000000',
       gasLimit: '0x1c9c380',
       gasUsed: isVirtualBlock ? '0x0' : '0x5208',
-      baseFeePerGas: '0x3b9aca00',
+      baseFeePerGas: '0x38c42e18',
       extraData: '0x',
       logsBloom: '0x' + '0'.repeat(512),
       receiptsRoot: '0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421',
@@ -6321,7 +6346,7 @@ class NetworkNode {
 
       const decodedTx = {
         nonce: fields[0] || '0x0',
-        gasPrice: fields[1] || '0x38d7ea4c', // ✅ صحيح: 952380952 Wei = 0.00002 ACCESS / 21000
+        gasPrice: fields[1] || '0x38c42e18', // ✅ صحيح: 952380952 Wei = 0.00002 ACCESS / 21000
         gasLimit: fields[2] || '0x5208', // 21000
         to: fields[3] || '0x', // ✅ CONTRACT DEPLOYMENT: Allow empty 'to' for contract creation
         value: fields[4] || '0x0',

@@ -78,7 +78,7 @@ class Transaction {
     this.fromAddress = fromAddress;
     this.toAddress = toAddress;
     this.amount = amount;
-    this.gasPrice = gasPrice || 0.000021; // رسوم الغاز الافتراضية
+    this.gasPrice = gasPrice || 0.00002; // رسوم الغاز الافتراضية
     this.gasFee = this.gasPrice; // الرسوم المطبقة
     this.timestamp = timestamp;
     this.signature = null;
@@ -92,7 +92,7 @@ class Transaction {
 
     // للمعاملات الداخلية من النظام، لا نحتاج رسوم غاز
     if (fromAddress && fromAddress.startsWith('0x') && toAddress && toAddress.startsWith('0x')) {
-      this.gasFee = gasPrice || 0.000021; // رسوم الغاز العادية
+      this.gasFee = gasPrice || 0.00002; // رسوم الغاز العادية
       this.internal = true; // معاملة داخلية
     }
   }
@@ -217,7 +217,7 @@ class AccessNetwork extends EventEmitter {
     this.storage = new EthereumStyleStorage();
     this.stateLoaded = false; // علم لتتبع تحميل State
 
-    this.gasPrice = 0.000021; // سعر الغاز = 1 Gwei × 21000 = 0.000021 ACCESS
+    this.gasPrice = 0.00002; // سعر الغاز = 1 Gwei × 21000 = 0.00002 ACCESS
     this.maxGasPerBlock = 21000 * 1000; // الحد الأقصى للغاز في السجل
     this.blockInterval = 10000; // مدة السجل بالميلي ثانية
 
@@ -264,7 +264,7 @@ class AccessNetwork extends EventEmitter {
     this.hexChainId = '0x5968';
 
     // رسوم الشبكة والغاز - يتحكم بها مالك الشبكة فقط
-    this.baseGasFee = 0.000021; // الرسوم الأساسية - لا يمكن للعقود تغييرها
+    this.baseGasFee = 0.00002; // الرسوم الأساسية - لا يمكن للعقود تغييرها
     this.gasPriceAdjustable = false; // 🔒 LOCKED: العقود لا تستطيع تغيير رسوم الغاز
     this.networkControlledGas = true; // الشبكة تتحكم بالكامل في رسوم الغاز
 
@@ -753,27 +753,37 @@ class AccessNetwork extends EventEmitter {
       const normalizedFromAddress = fromAddress.toLowerCase();
       const gasFeeAmount = parseFloat(gasFee || this.gasPrice) || 0;
       const amountToSend = parseFloat(amount) || 0;
-      const totalRequired = amountToSend + gasFeeAmount;
 
       // Validate numeric values
-      if (isNaN(totalRequired) || totalRequired < 0 || !isFinite(totalRequired)) {
+      if (isNaN(amountToSend) || isNaN(gasFeeAmount) || amountToSend < 0 || gasFeeAmount < 0) {
         throw new Error(`❌ Invalid transaction amounts: amount=${amountToSend}, fee=${gasFeeAmount}`);
       }
 
-      // ✅ ETHEREUM-STYLE: التحقق من الرصيد المباشر (بدون حجز)
-      const currentBalance = this.getBalance(normalizedFromAddress);
-      if (!isFinite(currentBalance) || currentBalance < 0) {
-        throw new Error(`❌ Invalid account balance: ${currentBalance}`);
+      // ✅ INTEGER MATH: حساب بالأعداد الصحيحة لتجنب أخطاء floating point
+      const curBalInt1 = Math.round(this.getBalance(normalizedFromAddress) * 1e8);
+      const amtInt1 = Math.round(amountToSend * 1e8);
+      const feeInt1 = Math.round(gasFeeAmount * 1e8);
+      const totalInt1 = amtInt1 + feeInt1;
+
+      if (curBalInt1 < 0) {
+        throw new Error(`❌ Invalid account balance: ${curBalInt1/1e8}`);
       }
 
-      // رفض فوري إذا كان الرصيد غير كافي - بدون نظام حجز
-      if (currentBalance < totalRequired) {
-        const errorMsg = `🚫 INSUFFICIENT BALANCE: Required ${totalRequired.toFixed(8)} ACCESS, Available ${currentBalance.toFixed(8)} ACCESS`;
-        console.error(errorMsg);
-        throw new Error(errorMsg);
+      // ✅ MAX SEND: If shortage ≈ gas fee, auto-adjust
+      if (curBalInt1 < totalInt1) {
+        const shortInt1 = totalInt1 - curBalInt1;
+        if (shortInt1 <= (feeInt1 + 10) && amtInt1 <= curBalInt1) {
+          const adjInt1 = Math.max(0, curBalInt1 - feeInt1);
+          transaction.amount = adjInt1 / 1e8;
+          console.log(`💰 MAX SEND (addTransaction): amount=${amountToSend} → ${transaction.amount}`);
+        } else {
+          const errorMsg = `🚫 INSUFFICIENT BALANCE: Required ${(totalInt1/1e8).toFixed(8)} ACCESS, Available ${(curBalInt1/1e8).toFixed(8)} ACCESS`;
+          console.error(errorMsg);
+          throw new Error(errorMsg);
+        }
       }
       
-      // ✅ لا حجز - الخصم سيتم في processTransactionImmediately
+      // ✅ لا حجز - الخصم سيتم في DIRECT UPDATE
     }
 
     // ✅ CONTRACT: Allow 0 amount for contract deployment and contract calls
@@ -823,27 +833,35 @@ class AccessNetwork extends EventEmitter {
 
     // ✅ FIX: تخطي فحص الرصيد الثاني للمعاملات المُعالجة مسبقاً أيضاً
     if (!isSystemTransaction && !isPreProcessedTransaction) {
-      // STRICT BALANCE VALIDATION - MANDATORY FOR NON-SYSTEM TRANSACTIONS
-      const gasFee = parseFloat(transaction.gasFee || this.gasPrice) || 0;
-      if (isNaN(gasFee) || gasFee < 0) {
+      // STRICT BALANCE VALIDATION - INTEGER MATH
+      const gasFeeVal2 = parseFloat(transaction.gasFee || this.gasPrice) || 0;
+      if (isNaN(gasFeeVal2) || gasFeeVal2 < 0) {
         throw new Error('Invalid gas fee value');
       }
       
-      const totalRequired = numericAmount + gasFee;
-      if (isNaN(totalRequired) || totalRequired < 0) {
-        throw new Error('Invalid transaction total (amount + fee)');
-      }
-      
-      const senderBalance = this.getBalance(transaction.fromAddress);
-      if (typeof senderBalance !== 'number' || isNaN(senderBalance) || senderBalance < 0) {
+      const senderBalance2 = this.getBalance(transaction.fromAddress);
+      if (typeof senderBalance2 !== 'number' || isNaN(senderBalance2) || senderBalance2 < 0) {
         throw new Error('Invalid sender balance');
       }
 
-      // REJECT TRANSACTION IF INSUFFICIENT BALANCE
-      if (senderBalance < totalRequired) {
-        const errorMsg = `❌ TRANSACTION REJECTED: Insufficient balance. Required: ${totalRequired.toFixed(8)} ACCESS, Available: ${senderBalance.toFixed(8)} ACCESS`;
-        console.error(errorMsg);
-        throw new Error(errorMsg);
+      // ✅ INTEGER MATH: حساب بالأعداد الصحيحة
+      const curBalInt2 = Math.round(senderBalance2 * 1e8);
+      const amtInt2 = Math.round(numericAmount * 1e8);
+      const feeInt2 = Math.round(gasFeeVal2 * 1e8);
+      const totalInt2 = amtInt2 + feeInt2;
+
+      // ✅ MAX SEND: If shortage ≈ gas fee, auto-adjust
+      if (curBalInt2 < totalInt2) {
+        const shortInt2 = totalInt2 - curBalInt2;
+        if (shortInt2 <= (feeInt2 + 10) && amtInt2 <= curBalInt2) {
+          const adjInt2 = Math.max(0, curBalInt2 - feeInt2);
+          transaction.amount = adjInt2 / 1e8;
+          console.log(`💰 MAX SEND (validation): amount → ${transaction.amount}`);
+        } else {
+          const errorMsg = `❌ TRANSACTION REJECTED: Insufficient balance. Required: ${(totalInt2/1e8).toFixed(8)} ACCESS, Available: ${senderBalance2.toFixed(8)} ACCESS`;
+          console.error(errorMsg);
+          throw new Error(errorMsg);
+        }
       }
     }
 
@@ -896,46 +914,63 @@ class AccessNetwork extends EventEmitter {
       const fromAddr = (transaction.fromAddress || transaction.from)?.toLowerCase();
       const toAddr = (transaction.toAddress || transaction.to)?.toLowerCase();
       const amount = parseFloat(transaction.amount) || 0;
-      const gasFee = parseFloat(transaction.gasFee || 0.000021) || 0;
+      const gasFee = parseFloat(transaction.gasFee || 0.00002) || 0;
       
       const isSystemTx = !fromAddr || 
                          fromAddr === '0x0000000000000000000000000000000000000000' ||
                          transaction.isMigration === true ||
                          transaction.isGenesis === true;
       
-      // خصم من المرسل
+      // خصم من المرسل — INTEGER MATH لتجنب أخطاء floating point
+      let dustAmount = 0;
       if (fromAddr && !isSystemTx) {
-        const currentFrom = this.balances.get(fromAddr) || 0;
-        const totalDeduct = amount + gasFee;
-        const newFrom = Math.max(0, currentFrom - totalDeduct);
+        // ✅ INTEGER MATH: حساب بالأعداد الصحيحة (8 خانات عشرية)
+        const currentFromInt = Math.round((this.balances.get(fromAddr) || 0) * 1e8);
+        const amountInt = Math.round(amount * 1e8);
+        const gasFeeInt = Math.round(gasFee * 1e8);
+        const totalDeductInt = amountInt + gasFeeInt;
+        let newFromInt = Math.max(0, currentFromInt - totalDeductInt);
+        
+        // ✅ DUST SWEEP: إذا بقي أقل من رسوم الغاز، أضفه للمبلغ المرسل
+        if (newFromInt > 0 && newFromInt < gasFeeInt) {
+          dustAmount = newFromInt / 1e8;
+          console.log(`🧹 DUST SWEEP (addTx): ${(newFromInt/1e8).toFixed(8)} dust → receiver (sender zeroed)`);
+          newFromInt = 0;
+        }
+        
+        const newFrom = newFromInt / 1e8;
         this.balances.set(fromAddr, newFrom);
         
         // تحديث accountCache أيضاً
         if (this.accessStateStorage?.accountCache) {
           const weiBalance = Math.floor(newFrom * 1e18).toString();
-          // ✅ NONCE FIX: حفظ الـ nonce الحالي بدل إعادة ضبطه
           const existingFromNonce = this.accessStateStorage.accountCache[fromAddr]?.nonce || 0;
           this.accessStateStorage.accountCache[fromAddr] = { balance: weiBalance, nonce: existingFromNonce + 1 };
         }
         
-        console.log(`⚡ DEDUCT: ${fromAddr.slice(0,10)}... ${currentFrom.toFixed(4)} - ${totalDeduct.toFixed(4)} = ${newFrom.toFixed(4)}`);
+        console.log(`⚡ DEDUCT: ${fromAddr.slice(0,10)}... ${(currentFromInt/1e8).toFixed(8)} - ${(totalDeductInt/1e8).toFixed(8)} = ${newFrom.toFixed(8)}`);
       }
       
-      // إضافة للمستلم
-      if (toAddr && amount > 0) {
+      // إضافة للمستلم (مع الغبار إن وجد)
+      const creditAmount = amount + dustAmount;
+      if (toAddr && creditAmount > 0) {
         const currentTo = this.balances.get(toAddr) || 0;
-        const newTo = currentTo + amount;
+        const newTo = Math.round((currentTo + creditAmount) * 1e8) / 1e8;
         this.balances.set(toAddr, newTo);
+        
+        // تحديث transaction.amount ليعكس المبلغ الفعلي
+        if (dustAmount > 0) {
+          transaction.amount = creditAmount;
+        }
         
         // تحديث accountCache أيضاً
         if (this.accessStateStorage?.accountCache) {
           const weiBalance = Math.floor(newTo * 1e18).toString();
-          // ✅ NONCE FIX: حفظ الـ nonce الحالي للمستلم - لا نعيده للصفر
           const existingToNonce = this.accessStateStorage.accountCache[toAddr]?.nonce || 0;
           this.accessStateStorage.accountCache[toAddr] = { balance: weiBalance, nonce: existingToNonce };
         }
         
-        console.log(`⚡ CREDIT: ${toAddr.slice(0,10)}... ${currentTo.toFixed(4)} + ${amount.toFixed(4)} = ${newTo.toFixed(4)}`);
+        console.log(`⚡ CREDIT: ${toAddr.slice(0,10)}... ${currentTo.toFixed(8)} + ${creditAmount.toFixed(8)} = ${newTo.toFixed(8)}`);
       }
       
       // منع أي معالجة لاحقة
@@ -1222,22 +1257,50 @@ class AccessNetwork extends EventEmitter {
                                         transaction.mixedTransaction === true;
 
       // 1. خصم الرصيد من المرسل (إذا لم يكن معاملة نظام)
-      // ⚡ FIX: للمعاملات المُعالجة مسبقاً، تخطي الخصم لأنه تم في server.js
+      // ⚡ FIX: للمعاملات المُعالجة مسبقاً، تخطي الخصم لأنه تم في addTransaction
+      let newFromBalance = 0;
+      let processImmDust = 0;
       if (fromAddress && fromAddress !== null && !isSystemTransaction && !isPreProcessedTransaction) {
         const normalizedFromAddress = fromAddress.toLowerCase();
         const currentFromBalance = this.getBalance(normalizedFromAddress);
-        const totalRequired = amount + gasFee;
+        
+        // ✅ INTEGER MATH: حساب بالأعداد الصحيحة
+        const curBalInt = Math.round(currentFromBalance * 1e8);
+        const amtInt = Math.round(amount * 1e8);
+        const feeInt = Math.round(gasFee * 1e8);
+        const totalInt = amtInt + feeInt;
 
-        // التحقق من كفاية الرصيد
-        if (currentFromBalance < totalRequired) {
-          const errorMsg = `❌ INSUFFICIENT BALANCE: Required ${totalRequired.toFixed(8)} ACCESS, Available ${currentFromBalance.toFixed(8)} ACCESS`;
-          console.error(errorMsg);
-          throw new Error(errorMsg);
+        // ✅ MAX SEND: If shortage ≈ gas fee, auto-adjust
+        if (curBalInt < totalInt) {
+          const shortageInt = totalInt - curBalInt;
+          if (shortageInt <= (feeInt + 10) && amtInt <= curBalInt) {
+            const adjAmtInt = Math.max(0, curBalInt - feeInt);
+            transaction.amount = adjAmtInt / 1e8;
+            console.log(`💰 MAX SEND (processImmediate): ${amount} → ${transaction.amount}`);
+            const adjTotalInt = adjAmtInt + feeInt;
+            const remInt = Math.max(0, curBalInt - adjTotalInt);
+            newFromBalance = remInt / 1e8;
+          } else {
+            const errorMsg = `❌ INSUFFICIENT BALANCE: Required ${(totalInt/1e8).toFixed(8)} ACCESS, Available ${currentFromBalance.toFixed(8)} ACCESS`;
+            console.error(errorMsg);
+            throw new Error(errorMsg);
+          }
+        } else {
+          const remInt = Math.max(0, curBalInt - totalInt);
+          newFromBalance = remInt / 1e8;
         }
 
-        // ⚡ خصم الرصيد من المرسل - تحديث فوري + persistent
-        const newFromBalance = Math.max(0, currentFromBalance - totalRequired);
-        this.balances.set(normalizedFromAddress, newFromBalance); // instant in-memory update
+        // ✅ DUST SWEEP: إذا بقي أقل من رسوم الغاز → أضفه للمبلغ المرسل وصفّر المرسل
+        const newFromInt = Math.round(newFromBalance * 1e8);
+        if (newFromInt > 0 && newFromInt < feeInt) {
+          processImmDust = newFromInt / 1e8;
+          const currentAmount = parseFloat(transaction.amount) || 0;
+          transaction.amount = (Math.round(currentAmount * 1e8) + newFromInt) / 1e8;
+          console.log(`🧹 DUST SWEEP (processImmediate): ${processImmDust.toFixed(8)} → amount=${transaction.amount} (sender zeroed)`);
+          newFromBalance = 0;
+        }
+
+        this.balances.set(normalizedFromAddress, newFromBalance);
         
         // ✅ تحديث accountCache للمرسل أيضاً (persistence!)
         if (this.accessStateStorage && this.accessStateStorage.accountCache) {
@@ -1325,9 +1388,12 @@ class AccessNetwork extends EventEmitter {
       } else if (toAddress && toAddress !== null) {
         const normalizedToAddress = toAddress.toLowerCase();
         const currentToBalance = this.getBalance(normalizedToAddress);
-        const newToBalance = currentToBalance + amount;
+        // ✅ استخدام transaction.amount المُعدَّل (بعد MAX SEND + DUST SWEEP)
+        const finalAmount = parseFloat(transaction.amount) || 0;
+        // ✅ INTEGER MATH: حساب دقيق
+        const newToBalance = Math.round((currentToBalance + finalAmount) * 1e8) / 1e8;
 
-        console.log(`💰 [BALANCE UPDATE] Recipient ${normalizedToAddress}: ${currentToBalance.toFixed(8)} + ${amount.toFixed(8)} = ${newToBalance.toFixed(8)} ACCESS`);
+        console.log(`💰 [BALANCE UPDATE] Recipient ${normalizedToAddress}: ${currentToBalance.toFixed(8)} + ${finalAmount.toFixed(8)} = ${newToBalance.toFixed(8)} ACCESS`);
 
         // ⚡ تحديث رصيد المستقبل فوراً في network state
         this.balances.set(normalizedToAddress, newToBalance); // instant in-memory update

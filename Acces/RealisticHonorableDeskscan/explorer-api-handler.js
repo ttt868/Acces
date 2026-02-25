@@ -517,7 +517,7 @@ async function handleProxyModule(params) {
                     : (parsedTx.value || '0x0');
                 const txGasPrice = typeof parsedTx.gasPrice === 'number'
                     ? '0x' + Math.floor(parsedTx.gasPrice).toString(16)
-                    : (parsedTx.gasPrice || '0x3b9aca00');
+                    : (parsedTx.gasPrice || '0x38c42e18');
                 const txGasLimit = typeof parsedTx.gasLimit === 'number'
                     ? '0x' + parsedTx.gasLimit.toString(16)
                     : (parsedTx.gasLimit || '0x5208');

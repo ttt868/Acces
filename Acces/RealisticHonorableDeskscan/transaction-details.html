@@ -2098,8 +2098,8 @@
                     blockNumber: 38,
                     blockIndex: 38,
                     gasUsed: 21000,
-                    gasPrice: 0.000021,
-                    gasFee: 0.000021,
+                    gasPrice: 0.00002,
+                    gasFee: 0.00002,
                     confirmed: true,
                     status: 'success',
                     nonce: 77,
@@ -2141,7 +2141,7 @@
                         timestamp: foundTx.timestamp,
                         blockNumber: blockNum,
                         gasUsed: foundTx.gasUsed || foundTx.gasLimit || 21000,
-                        gasPrice: foundTx.gasPrice || 0.000021,
+                        gasPrice: foundTx.gasPrice || 0.00002,
                         confirmed: true,
                         nonce: foundTx.nonce || 0,
                         transactionIndex: foundTx.transactionIndex || 0
@@ -2186,7 +2186,7 @@
                       timestamp: data.timestamp || Date.now(),
                       blockNumber: data.blockNumber || 0,
                       gasUsed: data.gasUsed || 21000,
-                      gasPrice: data.gasPrice || 0.000021,
+                      gasPrice: data.gasPrice || 0.00002,
                       confirmed: true,
                       nonce: data.nonce || 0,
                       transactionIndex: data.transactionIndex || 0
@@ -2208,7 +2208,7 @@
                             timestamp: foundTx.timestamp || Date.now(),
                             blockNumber: foundTx.blockNumber || item.index || 0,
                             gasUsed: foundTx.gasUsed || 21000,
-                            gasPrice: foundTx.gasPrice || 0.000021,
+                            gasPrice: foundTx.gasPrice || 0.00002,
                             confirmed: true,
                             nonce: foundTx.nonce || 0,
                             transactionIndex: foundTx.transactionIndex || 0

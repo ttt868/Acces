@@ -2100,9 +2100,9 @@
                     timestamp: 1757350803565,
                     blockNumber: 38,
                     blockIndex: 38,
-                    gasUsed: 21000,
-                    gasPrice: 0.000021,
-                    gasFee: 0.000021,
+                    gasUsed: 20000,
+                    gasPrice: 0.00002,
+                    gasFee: 0.00002,
                     confirmed: true,
                     status: 'success',
                     nonce: 77,
@@ -2143,8 +2143,8 @@
                         amount: foundTx.amount || foundTx.value,
                         timestamp: foundTx.timestamp,
                         blockNumber: blockNum,
-                        gasUsed: foundTx.gasUsed || foundTx.gasLimit || 21000,
-                        gasPrice: foundTx.gasPrice || 0.000021,
+                        gasUsed: foundTx.gasUsed || foundTx.gasLimit || 20000,
+                        gasPrice: foundTx.gasPrice || 0.00002,
                         confirmed: true,
                         nonce: foundTx.nonce || 0,
                         transactionIndex: foundTx.transactionIndex || 0
@@ -2188,8 +2188,8 @@
                       amount: data.amount || data.value || 0,
                       timestamp: data.timestamp || Date.now(),
                       blockNumber: data.blockNumber || 0,
-                      gasUsed: data.gasUsed || 21000,
-                      gasPrice: data.gasPrice || 0.000021,
+                      gasUsed: data.gasUsed || 20000,
+                      gasPrice: data.gasPrice || 0.00002,
                       confirmed: true,
                       nonce: data.nonce || 0,
                       transactionIndex: data.transactionIndex || 0
@@ -2210,8 +2210,8 @@
                             amount: foundTx.amount || foundTx.value || 0,
                             timestamp: foundTx.timestamp || Date.now(),
                             blockNumber: foundTx.blockNumber || item.index || 0,
-                            gasUsed: foundTx.gasUsed || 21000,
-                            gasPrice: foundTx.gasPrice || 0.000021,
+                            gasUsed: foundTx.gasUsed || 20000,
+                            gasPrice: foundTx.gasPrice || 0.00002,
                             confirmed: true,
                             nonce: foundTx.nonce || 0,
                             transactionIndex: foundTx.transactionIndex || 0
@@ -2300,7 +2300,7 @@
             console.log('📊 Displaying RPC transaction data:', tx);
 
             const value = tx.value ? parseInt(tx.value, 16) / 1e18 : 0;
-            const gasUsed = tx.gas ? parseInt(tx.gas, 16) : 21000;
+            const gasUsed = tx.gas ? parseInt(tx.gas, 16) : 20000;
             const gasPrice = tx.gasPrice ? parseInt(tx.gasPrice, 16) : 952380952; // ✅ صحيح: 0.952 Gwei
             const blockNumber = tx.blockNumber ? parseInt(tx.blockNumber, 16) : 0;
 
@@ -2584,8 +2584,8 @@
                 console.log(`📊 INDEX KEEP: Keeping current value ${currentIndexDisplay}`);
             }
 
-            const realGasUsed = parseInt(tx.gasUsed) || 21000;
-            const gasLimit = tx.gasLimit || 21000;
+            const realGasUsed = parseInt(tx.gasUsed) || 20000;
+            const gasLimit = tx.gasLimit || 20000;
             const gasPercentage = ((realGasUsed / gasLimit) * 100).toFixed(1);
 
             document.getElementById('gasLimit').textContent = gasLimit.toLocaleString();

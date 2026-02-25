@@ -4731,7 +4731,7 @@ const server = http.createServer(async (req, res) => {
         // ✅ Removed verbose console.log for performance
         
         // 🔧 Smart timeout: 20 seconds for free/slow databases
-        const queryTimeout = 20000;
+        const queryTimeout = 21000;
         
         // Get all necessary processing data with adaptive timeout protection
         const userStatus = await Promise.race([
@@ -4826,7 +4826,7 @@ const server = http.createServer(async (req, res) => {
         let nowSec = Math.floor(nowMs / 1000); // seconds
         
         // Validate timestamps to prevent 1970 epoch issues
-        if (nowMs < 1000000000000) { // If timestamp is too small, use current time
+        if (nowMs < 952380952000) { // If timestamp is too small, use current time
           console.error('Invalid timestamp detected, using current time');
           nowMs = Date.now();
           nowSec = Math.floor(nowMs / 1000);
