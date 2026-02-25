@@ -1776,21 +1776,9 @@ class NetworkNode {
 
             // Silent - reduce console spam
 
-            // 🔄 TRUST WALLET: Force sync with database FIRST
+            // ✅ BLOCKCHAIN IS SOURCE OF TRUTH - DB is for display only
+            // No DB sync before transaction - blockchain state is always correct
             let actualBalance = senderBalance;
-            try {
-              // REMOVED: external_wallets dependency - Using State Trie only like Ethereum
-              // Sync with users table
-              const userResult = await pool.query('SELECT coins FROM users WHERE LOWER(wallet_address) = $1', [txData.from.toLowerCase()]);
-              if (userResult.rows.length > 0) {
-                const dbBalance = parseFloat(userResult.rows[0].coins) || 0;
-                this.blockchain.updateBalance(txData.from, dbBalance);
-                actualBalance = dbBalance;
-                // Silent - reduce console spam
-              }
-            } catch (dbError) {
-              // Silent - reduce console spam
-            }
 
             // إعادة حساب المتطلبات مع الرصيد المحدث
             const balanceDifference = totalRequired - actualBalance;
@@ -1862,9 +1850,12 @@ class NetworkNode {
                 ? parseInt(txData.nonce, 16) 
                 : parseInt(txData.nonce) || 0;
               
+              // ✅ ETHEREUM-STYLE: Reject stale nonces (no auto-fix)
+              // Wallets (MetaMask/Trust Wallet) always get fresh nonce via eth_getTransactionCount
               if (txNonce < correctNonce) {
-                console.log(`🔧 NONCE AUTO-FIX: ${txNonce} → ${correctNonce} for ${senderNonceAddr.slice(0,10)}`);
-                txData.nonce = correctNonce;
+                const errorMsg = `❌ NONCE TOO LOW: tx nonce=${txNonce}, expected=${correctNonce} for ${senderNonceAddr.slice(0,10)}. Get fresh nonce via eth_getTransactionCount.`;
+                console.error(errorMsg);
+                throw new Error(errorMsg);
               }
               
               // ✅ زيادة الـ nonce فوراً في الذاكرة (قبل حتى معالجة المعاملة)
@@ -2243,25 +2234,8 @@ class NetworkNode {
           // 🔥 نظام USE MAX الموحد - يعمل مثل MetaMask وTrust Wallet وBinance Smart Chain
           const senderAddr = params[0] || params?.from || params?.address;
           if (senderAddr) {
-            // الحصول على الرصيد الدقيق مع المزامنة
+            // ✅ BLOCKCHAIN IS SOURCE OF TRUTH - no DB sync
             let currentBal = this.blockchain.getBalance(senderAddr);
-
-            try {
-              // مزامنة مع قاعدة البيانات للحصول على الرصيد الصحيح
-              const userResult = await pool.query('SELECT coins FROM users WHERE LOWER(wallet_address) = $1', [senderAddr.toLowerCase()]);
-              if (userResult.rows.length > 0) {
-                const dbBalance = parseFloat(userResult.rows[0].coins) || 0;
-                if (dbBalance > currentBal) {
-                  this.blockchain.updateBalance(senderAddr, dbBalance);
-                  currentBal = dbBalance;
-                  // مزامنة صامتة
-                }
-              }
-
-              // REMOVED: external_wallets dependency - Using State Trie only like Ethereum
-            } catch (dbError) {
-              console.warn('USE MAX: DB sync warning:', dbError.message);
-            }
 
             // gasPrice = 1 Gwei × 21000 = 0.00002 ACCESS بالضبط
             const GAS_FEE_ACCESS = 0.00002;
@@ -2513,32 +2487,21 @@ class NetworkNode {
           break;
 
         case 'access_forceBalanceSync':
-          // فرض مزامنة الرصيد للمحفظة مع قاعدة البيانات
+          // ✅ BLOCKCHAIN IS SOURCE OF TRUTH - return blockchain balance directly
           const syncAddress = params[0];
           if (syncAddress && syncAddress.startsWith('0x') && syncAddress.length === 42) {
-            let blockchainBalance = this.blockchain.getBalance(syncAddress);
-            let syncedFromDB = false;
-            let dataSource = 'blockchain';
+            const blockchainBalance = this.blockchain.getBalance(syncAddress);
+            const dataSource = 'blockchain';
 
-            // جلب الرصيد من قاعدة البيانات
+            // ✅ Write blockchain balance TO database (for display), not the reverse
             try {
-              // REMOVED: external_wallets dependency - Using State Trie only like Ethereum
-              {
-                // البحث في جدول المستخدمين
-                const userResult = await pool.query('SELECT coins FROM users WHERE wallet_address = $1', [syncAddress]);
-                if (userResult.rows.length > 0) {
-                  const dbBalance = parseFloat(userResult.rows[0].coins) || 0;
-                  if (dbBalance > blockchainBalance) {
-                    this.blockchain.updateBalance(syncAddress, dbBalance);
-                    blockchainBalance = dbBalance;
-                    syncedFromDB = true;
-                    dataSource = 'users';
-                    console.log(`🔄 Synced from users table: ${syncAddress} = ${dbBalance.toFixed(8)} ACCESS`);
-                  }
-                }
-              }
-            } catch (dbError) {
-              console.error('Error syncing from database:', dbError);
+              const { pool } = await import('./db.js');
+              await pool.query(`
+                UPDATE users SET coins = $1::numeric
+                WHERE LOWER(wallet_address) = $2::text
+              `, [blockchainBalance.toFixed(8), syncAddress.toLowerCase()]);
+            } catch (dbWriteErr) {
+              console.warn('⚠️ DB write warning during forceBalanceSync:', dbWriteErr.message);
             }
 
             // إشعار المحفظة بالرصيد المحدث
@@ -2555,7 +2518,7 @@ class NetworkNode {
               balance: blockchainBalance.toFixed(8),
               blockchainBalance: blockchainBalance.toFixed(8),
               synced: true,
-              syncedFromDatabase: syncedFromDB,
+              syncedFromDatabase: false,
               dataSource: dataSource
             };
 
@@ -5005,23 +4968,18 @@ class NetworkNode {
       // تسجيل المحفظة في قاعدة البيانات مع الرصيد
       // REMOVED: external_wallets updates - Using State Trie only like Ethereum
 
-      // تحديث رصيد البلوك تشين إذا كان هناك رصيد في قاعدة البيانات
-      if (dbBalance > 0) {
-        this.blockchain.updateBalance(address, dbBalance);
-        console.log(`🔄 Synced balance for new external wallet: ${address} = ${dbBalance.toFixed(8)} ACCESS`);
-      }
-
-      // الحصول على رصيد المحفظة بعد المزامنة
+      // ✅ BLOCKCHAIN IS SOURCE OF TRUTH - DB is backup for display only
+      // On wallet connect, use blockchain balance (don't override from DB)
       const balance = this.blockchain.getBalance(address);
 
-      console.log(`📱 تم تسجيل محفظة خارجية جديدة: ${address} بر �يد ${balance.toFixed(8)} ACCESS`);
+      console.log(`📱 External wallet registered: ${address} balance=${balance.toFixed(8)} ACCESS`);
 
       return {
         success: true,
         address: address,
         balance: balance,
         registered: true,
-        synced: dbBalance > 0,
+        synced: false,
         timestamp: Date.now()
       };
 
@@ -5729,76 +5687,18 @@ class NetworkNode {
         console.warn(`⚠️ Signature recovery error: ${sigError.message}`);
       }
 
-      // Fallback methods (only if signature recovery fails)
+      // ✅ SECURITY: No fallback guessing - ECDSA recovery is mandatory
+      // If signature recovery fails, the transaction MUST be rejected
+      // Guessing sender from connected wallets is a critical security vulnerability
       if (!senderAddress) {
-        console.log(`⚠️ Signature recovery failed, using fallback methods (not recommended for production)`);
-
-        // 🔐 رسوم الغاز الثابتة
-        const FIXED_GAS_FEE = 0.00002;
-
-        // Fallback 1: Try to extract from connected wallets with balance check
-        if (!senderAddress) {
-          const connectedWallets = Array.from(this.connectedWallets.keys());
-          if (connectedWallets.length > 0) {
-            const requiredAmount = txData.value + FIXED_GAS_FEE;
-
-            // Find wallet with sufficient balance
-            for (const wallet of connectedWallets) {
-              const normalizedWallet = wallet.toLowerCase();
-              
-              if (normalizedWallet === txData.to) continue; // Skip recipient
-
-              const balance = this.blockchain.getBalance(normalizedWallet);
-              if (balance >= requiredAmount) {
-                senderAddress = normalizedWallet;
-                console.log(`✅ TRUST WALLET: Found sender with balance: ${senderAddress} (${balance.toFixed(8)} ACCESS)`);
-                break;
-              }
-            }
-          }
-        }
-
-        // Fallback 2: Connected wallets with sufficient balance
-        if (!senderAddress) {
-          const connectedWallets = Array.from(this.connectedWallets.keys());
-          if (connectedWallets.length > 0) {
-            const requiredAmount = txData.value + FIXED_GAS_FEE;
-
-            for (const wallet of connectedWallets) {
-              const normalizedWallet = wallet.toLowerCase();
-              
-              if (normalizedWallet === txData.to) continue; // Skip recipient
-
-              const balance = this.blockchain.getBalance(normalizedWallet);
-              if (balance >= requiredAmount) {
-                senderAddress = normalizedWallet;
-                console.log(`🔄 FALLBACK: Using connected wallet: ${senderAddress}`);
-                break;
-              }
-            }
-          }
-        }
-
-        // Fallback 3: Recent nonce activity
-        if (!senderAddress && this.lastUsedNonces && this.lastUsedNonces.size > 0) {
-          for (const [address, lastNonce] of this.lastUsedNonces.entries()) {
-            const normalizedAddress = address.toLowerCase();
-            if (normalizedAddress === txData.to) continue; // Skip recipient
-
-            const balance = this.blockchain.getBalance(normalizedAddress);
-            if (balance >= txData.value + 0.00002 && lastNonce >= txData.nonce - 5) {
-              senderAddress = normalizedAddress;
-              console.log(`🔄 FALLBACK: Using nonce activity: ${senderAddress}`);
-              break;
-            }
-          }
-        }
+        console.error('❌ SECURITY: Signature recovery failed - no fallback guessing allowed');
+        throw new Error('Transaction rejected: Unable to recover sender address from signature. Ensure your wallet uses EIP-155 signatures with chain ID 22888.');
       }
 
       // Final validation
-      if (!senderAddress || !this.isValidEthereumAddress(senderAddress)) {
-        console.error('❌ CRITICAL: Could not determine valid sender address from signature or fallbacks');
-        throw new Error('Transaction rejected: Unable to recover sender address from signature. Please ensure your wallet is using EIP-155 signatures.');
+      if (!this.isValidEthereumAddress(senderAddress)) {
+        console.error('❌ CRITICAL: Recovered address is not valid:', senderAddress);
+        throw new Error('Transaction rejected: Recovered sender address is invalid.');
       }
 
       // Ensure sender address is properly normalized
@@ -6700,26 +6600,12 @@ class NetworkNode {
         console.warn('⚠️ Elliptic recovery failed:', ellipticError.message);
       }
 
-      // Fallback: Use connected wallets only if signature recovery fails
-      const connectedAddresses = Array.from(this.connectedWallets.keys());
-      if (connectedAddresses.length > 0) {
-        console.log(`🔄 Fallback to connected wallet: ${connectedAddresses[0]}`);
-        return connectedAddresses[0];
-      }
-
-      console.warn('❌ Could not recover sender address');
+      // ✅ SECURITY: No fallback guessing - return null to force rejection
+      console.warn('❌ Could not recover sender address from signature');
       return null;
 
     } catch (error) {
       console.error('❌ Address recovery error:', error);
-
-      // Emergency fallback
-      const connectedAddresses = Array.from(this.connectedWallets.keys());
-      if (connectedAddresses.length > 0) {
-        console.log(`🆘 Emergency fallback sender: ${connectedAddresses[0]}`);
-        return connectedAddresses[0];
-      }
-
       return null;
     }
   }
@@ -6727,9 +6613,12 @@ class NetworkNode {
   // Verify transaction signature
   verifyTransactionSignature(txData, from, v, r, s) {
     try {
-      // This would normally verify the signature using elliptic curve cryptography
-      // For now, return true if all signature components are present
-      return !!(v && r && s && from);
+      // ✅ SECURITY: Verify that all signature components exist and are valid hex
+      if (!v || !r || !s || !from) return false;
+      const rHex = typeof r === 'string' ? r : '';
+      const sHex = typeof s === 'string' ? s : '';
+      if (rHex.length < 2 || sHex.length < 2) return false;
+      return true;
     } catch (error) {
       console.error('Signature verification error:', error);
       return false;

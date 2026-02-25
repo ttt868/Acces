@@ -75,28 +75,30 @@ process.on('uncaughtException', (error) => {
   serverCrashCount++;
   errorCountThisMinute++;
   
-  // Log only if not too many errors
-  if (errorCountThisMinute <= 10) {
-    console.error(`❌ [CAUGHT] Uncaught Exception #${serverCrashCount}:`, error.message);
-  }
+  // ✅ Always log errors - never silent
+  console.error(`❌ [UNCAUGHT EXCEPTION #${serverCrashCount}]:`, error.message);
+  console.error('Stack:', error.stack?.split('\n').slice(0, 3).join('\n'));
   
-  // إذا كانت الأخطاء كثيرة جداً، شيء خاطئ بشكل كبير
+  // ✅ CRITICAL: If too many errors, something is fundamentally wrong
+  // PM2 will auto-restart, which is safer than running with corrupted state
   if (errorCountThisMinute > MAX_ERRORS_PER_MINUTE) {
-    console.error('⚠️ Too many errors! But server continues...');
+    console.error('🔴 CRITICAL: Too many errors - exiting for PM2 restart (safer than corrupted state)');
+    process.exit(1);
   }
   
-  // 🛡️ لا نستدعي process.exit() - السيرفر يستمر!
+  // Non-critical errors: continue but log for monitoring
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   errorCountThisMinute++;
   
-  // Log only if not too many errors
-  if (errorCountThisMinute <= 10) {
-    console.error('❌ [CAUGHT] Unhandled Rejection:', reason);
-  }
+  // ✅ Always log
+  console.error('❌ [UNHANDLED REJECTION]:', reason?.message || reason);
   
-  // 🛡️ لا نستدعي process.exit() - السيرفر يستمر!
+  if (errorCountThisMinute > MAX_ERRORS_PER_MINUTE) {
+    console.error('🔴 CRITICAL: Too many rejections - exiting for PM2 restart');
+    process.exit(1);
+  }
 });
 
 // 🧹 Memory cleanup كل 5 دقائق

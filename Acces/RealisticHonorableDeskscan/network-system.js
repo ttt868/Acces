@@ -137,35 +137,36 @@ class Transaction {
   }
 
   isValid() {
-    if (this.fromAddress === null) return true; // Genesis transaction
+    // Genesis transactions (no sender) are always valid
+    if (this.fromAddress === null) return true;
 
-    // السماح بالمعاملات الداخلية بدون توقيع (من النظام الداخلي)
-    if (this.fromAddress && this.fromAddress.startsWith('0x') && (!this.signature || this.signature.length === 0)) {
-      // معاملة داخلية من النظام - لا تحتاج توقيع
+    // System/internal transactions validated by the node itself
+    if (this.internal === true || this.validated === true) {
       return true;
     }
 
+    // RPC-validated transactions (signature already verified in network-node.js via ECDSA recovery)
+    if (this.rpcValidated === true || this.external === true) {
+      return true;
+    }
+
+    // For unsigned transactions, require explicit marking
     if (!this.signature || this.signature.length === 0) {
-      throw new Error('No signature in this transaction');
-    }
-
-    try {
-      // للمعاملات الداخلية، نعتبرها صالحة دائماً
-      if (this.internal) {
+      // Only allow if explicitly marked as system/validated
+      if (this.isSystemTransaction === true || this.isMigration === true || this.isGenesis === true) {
         return true;
       }
-
-      // للمعاملات الخارجية، نتحقق من التوقيع إذا كان متوفراً
-      if (this.signature && this.signature.length > 0) {
-        // محاكاة التحقق من التوقيع - في التطبيق الحقيقي يجب استخدام elliptic
-        return true;
-      }
-
-      return true; // نسمح بالمعاملات بدون توقيع للشبكة الداخلية
-    } catch (error) {
-      console.error('Error validating transaction:', error);
-      return true; // نعتبر المعاملة صالحة في حالة الخطأ
+      console.error(`❌ REJECTED: Transaction from ${this.fromAddress?.slice(0,10)} has no signature and is not system-validated`);
+      return false;
     }
+
+    // Signed transactions: signature presence verified (actual ECDSA verification done in network-node.js recoverSenderAddress)
+    if (this.signature && this.signature.length > 0) {
+      return true;
+    }
+
+    console.error(`❌ REJECTED: Transaction validation failed for ${this.fromAddress?.slice(0,10)}`);
+    return false;
   }
 }
 
@@ -2466,25 +2467,37 @@ class AccessNetwork extends EventEmitter {
     return this.getBalance(address);
   }
 
-  // دعم ERC-20 - allowance function (مبسط)
+  // ✅ ERC-20 allowance with proper mapping (owner → spender → amount)
   allowance(owner, spender) {
-    // للشبكة البسيطة، نعيد رصيد المالك كحد أقصى للسماح
-    const ownerBalance = this.getBalance(owner);
-    console.log(`📋 Allowance check: ${owner.substring(0,8)}... allows ${spender.substring(0,8)}... for ${ownerBalance} ACCESS`);
-    return ownerBalance;
+    if (!this._allowances) this._allowances = new Map();
+    const normalizedOwner = (owner || '').toLowerCase();
+    const normalizedSpender = (spender || '').toLowerCase();
+    const key = `${normalizedOwner}:${normalizedSpender}`;
+    const allowed = this._allowances.get(key) || 0;
+    return allowed;
   }
 
-  // دعم ERC-20 - approve function (مبسط)
+  // ✅ ERC-20 approve with proper mapping
   approve(owner, spender, amount) {
     try {
-      // في شبكة Access البسيطة، الموافقة تتم تلقائياً
-      console.log(`✅ Approval granted: ${owner.substring(0,8)}... approved ${spender.substring(0,8)}... for ${amount} ACCESS`);
+      if (!owner || !spender) throw new Error('Invalid owner or spender address');
+      if (!this._allowances) this._allowances = new Map();
+      
+      const normalizedOwner = owner.toLowerCase();
+      const normalizedSpender = spender.toLowerCase();
+      const numAmount = parseFloat(amount) || 0;
+      
+      if (numAmount < 0) throw new Error('Allowance amount cannot be negative');
+      
+      const key = `${normalizedOwner}:${normalizedSpender}`;
+      this._allowances.set(key, numAmount);
+      
+      console.log(`✅ Approval: ${normalizedOwner.slice(0,10)}... approved ${normalizedSpender.slice(0,10)}... for ${numAmount} ACCESS`);
 
-      // إصدار حدث الموافقة
       this.emit('approval', {
-        owner: owner,
-        spender: spender,
-        amount: amount,
+        owner: normalizedOwner,
+        spender: normalizedSpender,
+        amount: numAmount,
         timestamp: Date.now()
       });
 
@@ -2495,18 +2508,24 @@ class AccessNetwork extends EventEmitter {
     }
   }
 
-  // دعم ERC-20 - transferFrom function
+  // ✅ ERC-20 transferFrom with proper allowance check and deduction
   transferFrom(spender, from, to, amount) {
     try {
-      // التحقق من السماح
+      const numAmount = parseFloat(amount) || 0;
       const allowedAmount = this.allowance(from, spender);
-      if (allowedAmount < amount) {
-        throw new Error(`Transfer amount exceeds allowance. Allowed: ${allowedAmount}, Requested: ${amount}`);
+      
+      if (allowedAmount < numAmount) {
+        throw new Error(`Transfer amount exceeds allowance. Allowed: ${allowedAmount}, Requested: ${numAmount}`);
       }
 
-      // تنفيذ التحويل
-      return this.transfer(from, to, amount);
+      // ✅ Deduct from allowance after transfer
+      const normalizedFrom = from.toLowerCase();
+      const normalizedSpender = spender.toLowerCase();
+      const key = `${normalizedFrom}:${normalizedSpender}`;
+      if (!this._allowances) this._allowances = new Map();
+      this._allowances.set(key, Math.max(0, allowedAmount - numAmount));
 
+      return this.transfer(from, to, numAmount);
     } catch (error) {
       console.error('TransferFrom failed:', error);
       throw error;
