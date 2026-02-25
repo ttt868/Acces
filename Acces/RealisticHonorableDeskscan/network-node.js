@@ -1997,6 +1997,97 @@ class NetworkNode {
               }
             }
 
+            // 🔥 EVM TOKEN INSTANT SYNC: Broadcast WebSocket updates for token transfers
+            // Parse Transfer events from EVM logs and notify wallets instantly
+            if (evmLogs && evmLogs.length > 0) {
+              const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+              const TRANSFER_SINGLE_TOPIC = '0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62'; // ERC-1155
+              
+              for (const log of evmLogs) {
+                if (!log.topics || log.topics.length < 3) continue;
+                
+                const isERC20Transfer = log.topics[0] === TRANSFER_TOPIC;
+                const isERC1155Transfer = log.topics[0] === TRANSFER_SINGLE_TOPIC;
+                
+                if (isERC20Transfer || isERC1155Transfer) {
+                  const tokenContract = log.address?.toLowerCase();
+                  const tokenFrom = '0x' + (log.topics[1] || '').slice(-40);
+                  const tokenTo = '0x' + (log.topics[2] || '').slice(-40);
+                  
+                  console.log(`🪙 TOKEN TRANSFER: ${tokenFrom.slice(0,10)}→${tokenTo.slice(0,10)} on ${tokenContract?.slice(0,10)}`);
+                  
+                  // ⚡ Force block increment to trigger wallet polling
+                  if (!this.virtualBlockOffset) this.virtualBlockOffset = 0;
+                  this.virtualBlockOffset += 500;
+                  this.lastBalanceChange = Date.now();
+                  
+                  // Add token addresses to pending updates
+                  if (tokenFrom && tokenFrom.length === 42) this.pendingBalanceAddresses.add(tokenFrom.toLowerCase());
+                  if (tokenTo && tokenTo.length === 42) this.pendingBalanceAddresses.add(tokenTo.toLowerCase());
+                  
+                  // 🔥 Broadcast newHeads to force MetaMask/Trust Wallet to re-query token balances
+                  this.broadcastImmediateNewHeads(tokenFrom, tokenTo, 
+                    this.blockchain.getBalance(tokenFrom), 
+                    this.blockchain.getBalance(tokenTo)
+                  );
+                  
+                  // 🔥 WebSocket: Push token balance update to connected wallets
+                  if (this.connectedWallets) {
+                    const tokenNotification = {
+                      type: 'token_transfer',
+                      contractAddress: tokenContract,
+                      from: tokenFrom,
+                      to: tokenTo,
+                      data: log.data,
+                      transactionHash: transaction.hash || txHash,
+                      blockNumber: this.blockchain.chain.length,
+                      timestamp: Date.now()
+                    };
+                    
+                    this.connectedWallets.forEach((walletWs, walletAddress) => {
+                      if (walletWs.readyState === 1) {
+                        const addr = walletAddress.toLowerCase();
+                        if (addr === tokenFrom.toLowerCase() || addr === tokenTo.toLowerCase()) {
+                          walletWs.send(JSON.stringify(tokenNotification));
+                        }
+                      }
+                    });
+                  }
+                  
+                  // 🔥 Emit eth_subscription newPendingTransactions for token watchers
+                  if (this.activeSubscriptions) {
+                    this.activeSubscriptions.forEach((sub, subId) => {
+                      if (sub.type === 'logs') {
+                        try { sub.callback(log); } catch {}
+                      }
+                    });
+                  }
+                  
+                  // 🚀 Trust Wallet delayed sync (same pattern as native transfers)
+                  setTimeout(async () => {
+                    try {
+                      if (tokenTo && tokenTo.length === 42) {
+                        await this.sendTrustWalletNotification(tokenTo, {
+                          type: 'token_balance_update',
+                          contractAddress: tokenContract,
+                          transactionHash: transaction.hash || txHash,
+                          direction: 'received'
+                        });
+                      }
+                      if (tokenFrom && tokenFrom.length === 42) {
+                        await this.sendTrustWalletNotification(tokenFrom, {
+                          type: 'token_balance_update',
+                          contractAddress: tokenContract,
+                          transactionHash: transaction.hash || txHash,
+                          direction: 'sent'
+                        });
+                      }
+                    } catch {}
+                  }, 300);
+                }
+              }
+            }
+
             // ✅ NONCE: الزيادة تمت مسبقاً في الـ lock section (قبل addTransaction)
             // incrementNonce في blockchain للمزامنة مع الأنظمة الأخرى
             if (this.blockchain.incrementNonce) {
