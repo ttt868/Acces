@@ -3196,12 +3196,10 @@ class NetworkNode {
         throw new Error('Invalid transaction data: missing recipient or value for regular transaction');
       }
 
-      // 🚫 CRITICAL SECURITY CHECK: منع معاملات الإرسال للنفس في sendTransaction
-      // Only check for self-transactions if not contract deployment
+      // ✅ Self-transactions allowed (like Ethereum/BSC)
+      // Users can send to themselves (e.g., to cancel/replace stuck transactions)
       if (!isContractDeployment && txData.from.toLowerCase() === txData.to.toLowerCase()) {
-        const errorMsg = `🚫 SEND TRANSACTION BLOCKED: Self-transactions prohibited. ${txData.from} → ${txData.to}`;
-        console.error(errorMsg);
-        throw new Error(errorMsg);
+        console.log(`📝 Self-transaction detected: ${txData.from} → ${txData.to} (allowed)`);
       }
 
       // تحويل القيم من hex إلى أرقام عادية
@@ -3285,10 +3283,10 @@ class NetworkNode {
         }
       }
 
-      // التأكد من أن المبلغ صحيح وليس صفر
-      if (amount <= 0) {
-        console.warn('Warning: Zero amount transaction detected, using minimum amount');
-        amount = 0.00001; // مبلغ افتراضي صغير
+      // ✅ Zero amount allowed (like Ethereum/BSC)
+      // Users can send 0 amount (gas fee still applies)
+      if (amount < 0) {
+        amount = 0; // لا يُسمح بمبلغ سالب
       }
 
       // Silent - reduce console spam
@@ -5815,11 +5813,9 @@ class NetworkNode {
         txData.isContractDeployment = true;
       }
 
-      // 🚫 CRITICAL SECURITY CHECK: منع معاملات الإرسال للنفس في RPC
+      // ✅ Self-transactions allowed via RPC (like Ethereum/BSC)
       if (txData.from && txData.to && txData.from === txData.to) {
-        const errorMsg = `🚫 RPC SECURITY VIOLATION: Self-transactions are prohibited. Cannot send from ${txData.from} to ${txData.to}`;
-        console.error(errorMsg);
-        throw new Error(errorMsg);
+        console.log(`📝 RPC self-transaction: ${txData.from} (allowed)`);
       }
 
       // إنشاء hash للمعاملة محدود بـ 64 حرف

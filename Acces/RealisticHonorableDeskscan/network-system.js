@@ -781,9 +781,9 @@ class AccessNetwork extends EventEmitter {
     const hasContractData = transaction.inputData || transaction.data || transaction.input;
     const isContractCall = toAddress && hasContractData && hasContractData.length > 2;
 
-    // التحقق من صحة البيانات - لكن نسمح بالعقود
-    if (!isContractDeployment && !isContractCall && (!toAddress || amount <= 0)) {
-      throw new Error('Invalid transaction data');
+    // التحقق من صحة البيانات - نسمح بمبلغ صفر (مثل Ethereum/BSC)
+    if (!isContractDeployment && !isContractCall && !toAddress) {
+      throw new Error('Invalid transaction data: missing recipient');
     }
 
     // التحقق الإضافي للمعاملات العادية فقط (ليس للعقود)
@@ -803,15 +803,15 @@ class AccessNetwork extends EventEmitter {
       transaction.toAddress = ''; // Ensure it's empty for contract deployment
     }
 
-    // ✅ CONTRACT: Allow 0 amount for contract deployment AND contract calls
-    // التحقق من صحة المبلغ - لكن نسمح بصفر للعقود
-    if (!isContractDeployment && !isContractCall && (!transaction.amount || transaction.amount <= 0)) {
-      throw new Error('Transaction amount must be higher than 0');
+    // ✅ Zero amount allowed for all transaction types (like Ethereum/BSC)
+    // Gas fee still applies - useful for canceling/replacing stuck transactions
+    if (transaction.amount < 0) {
+      throw new Error('Transaction amount cannot be negative');
     }
 
     // التأكد من أن المبلغ رقم صحيح
-    const numericAmount = parseFloat(transaction.amount) || 0; // ✅ CONTRACT: can be 0
-    if (!isContractDeployment && !isContractCall && (isNaN(numericAmount) || numericAmount <= 0)) {
+    const numericAmount = parseFloat(transaction.amount) || 0;
+    if (isNaN(numericAmount) || numericAmount < 0) {
       throw new Error('Invalid transaction amount');
     }
 
@@ -1193,12 +1193,10 @@ class AccessNetwork extends EventEmitter {
       const isContractCall = toAddress && contractBytecode && contractBytecode.length > 2;
 
       // ✅ التحقق من صحة البيانات (مع دعم contract deployment and calls)
-      // For contract deployment: to can be empty, amount can be 0
-      // For contract calls: to = contract address, amount can be 0
-      // For normal transfer: to must exist, amount must be > 0
-      if (!isContractDeployment && !isContractCall && (!toAddress || amount <= 0)) {
+      // Zero amount allowed for all types (like Ethereum/BSC)
+      if (!isContractDeployment && !isContractCall && !toAddress) {
         await transactionRecovery.cancelTransaction(txId, this);
-        throw new Error('Invalid transaction data');
+        throw new Error('Invalid transaction data: missing recipient');
       }
 
       // ✅ التحقق من تنسيق العناوين (مع دعم contract deployment)
@@ -2367,8 +2365,8 @@ class AccessNetwork extends EventEmitter {
   // دعم ERC-20 - transfer function
   transfer(from, to, amount) {
     try {
-      // التحقق من صحة المعاملات
-      if (!from || !to || amount <= 0) {
+      // التحقق من صحة المعاملات - zero amount allowed (like Ethereum/BSC)
+      if (!from || !to || amount < 0) {
         throw new Error('Invalid transfer parameters');
       }
 
