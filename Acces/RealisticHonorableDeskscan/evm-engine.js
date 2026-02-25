@@ -39,11 +39,13 @@ export class EVMEngine {
     this.deployedContracts = new Set(); // all contract addresses
     this.contractAccounts = new Map();  // address → {nonce}
 
-    // Transaction logs cache
+    // Transaction logs cache (capped to prevent memory leak)
     this.txLogs = new Map();          // txHash → [log]
+    this.TX_LOGS_MAX = 5000;          // max cached tx logs
 
     // Save debounce
     this._saveTimer = null;
+    this._saving = false;              // write lock
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -65,6 +67,12 @@ export class EVMEngine {
     this.evm = await createEVM({ stateManager: this.sm });
 
     this.ready = true;
+
+    // Ensure state file exists on first run
+    if (!fs.existsSync(STATE_FILE)) {
+      this._saveState();
+    }
+
     console.log(`✅ EVM Engine initialized (${this.deployedContracts.size} contracts loaded)`);
   }
 
@@ -168,6 +176,19 @@ export class EVMEngine {
     }));
   }
 
+  /** Evict oldest tx logs when exceeding limit */
+  _evictOldLogs() {
+    if (this.txLogs.size > this.TX_LOGS_MAX) {
+      const excess = this.txLogs.size - this.TX_LOGS_MAX;
+      let removed = 0;
+      for (const key of this.txLogs.keys()) {
+        if (removed >= excess) break;
+        this.txLogs.delete(key);
+        removed++;
+      }
+    }
+  }
+
   /** Debounced save */
   _deferSave() {
     if (this._saveTimer) clearTimeout(this._saveTimer);
@@ -197,7 +218,10 @@ export class EVMEngine {
     const err = result.execResult.exceptionError;
     const logs = this._extractLogs(result, txHash, blockNumber);
 
-    if (txHash) this.txLogs.set(txHash.toLowerCase(), logs);
+    if (txHash) {
+      this.txLogs.set(txHash.toLowerCase(), logs);
+      this._evictOldLogs();
+    }
 
     if (contractAddress && !err) {
       this.deployedContracts.add(contractAddress);
@@ -235,7 +259,10 @@ export class EVMEngine {
     const err = result.execResult.exceptionError;
     const logs = this._extractLogs(result, txHash, blockNumber);
 
-    if (txHash) this.txLogs.set(txHash.toLowerCase(), logs);
+    if (txHash) {
+      this.txLogs.set(txHash.toLowerCase(), logs);
+      this._evictOldLogs();
+    }
 
     if (!err) {
       this._deferSave();
@@ -415,6 +442,8 @@ export class EVMEngine {
   // ═══════════════════════════════════════════════════════════
 
   _saveState() {
+    if (this._saving) return; // prevent overlapping writes
+    this._saving = true;
     try {
       const state = {
         version: 1,
@@ -433,10 +462,15 @@ export class EVMEngine {
         state.accounts[addr] = acct;
       }
 
-      fs.writeFileSync(STATE_FILE, JSON.stringify(state));
+      // Write to temp file first, then rename (atomic write)
+      const tmpFile = STATE_FILE + '.tmp';
+      fs.writeFileSync(tmpFile, JSON.stringify(state, null, 0));
+      fs.renameSync(tmpFile, STATE_FILE);
       console.log(`💾 EVM state saved (${this.deployedContracts.size} contracts)`);
     } catch (e) {
       console.warn('⚠️ EVM state save failed:', e.message);
+    } finally {
+      this._saving = false;
     }
   }
 

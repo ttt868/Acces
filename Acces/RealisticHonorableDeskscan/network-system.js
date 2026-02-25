@@ -380,6 +380,7 @@ class AccessNetwork extends EventEmitter {
       const stateData = {
         balances: Object.fromEntries(this.balances),
         reservedBalances: Object.fromEntries(this.reservedBalances),
+        allowances: this._allowances ? Object.fromEntries(this._allowances) : {},
         metadata: {
           totalAccounts: this.balances.size,
           lastSaved: Date.now(),
@@ -1736,6 +1737,16 @@ class AccessNetwork extends EventEmitter {
             this.balances.set(normalizedAddr, balance);
           }
         }
+
+        // ✅ Restore allowances from saved state
+        if (savedState.allowances && typeof savedState.allowances === 'object') {
+          if (!this._allowances) this._allowances = new Map();
+          for (const [key, value] of Object.entries(savedState.allowances)) {
+            if (typeof value === 'number' && value > 0) {
+              this._allowances.set(key, value);
+            }
+          }
+        }
       }
       
       this.stateLoaded = true;
@@ -2630,12 +2641,12 @@ class AccessNetwork extends EventEmitter {
         cleanedNonces += 1000;
       }
 
-      // Keep only recent transaction hashes (last 1000)
-      if (this.processedTxHashes && this.processedTxHashes.size > 1000) {
+      // Keep only recent transaction hashes (last 10000 → keep 5000)
+      if (this.processedTxHashes && this.processedTxHashes.size > 10000) {
         const hashArray = Array.from(this.processedTxHashes);
         this.processedTxHashes.clear();
-        // Keep only the most recent 500
-        hashArray.slice(-500).forEach(hash => this.processedTxHashes.add(hash));
+        // Keep the most recent 5000 to prevent replay attacks
+        hashArray.slice(-5000).forEach(hash => this.processedTxHashes.add(hash));
       }
 
       if (cleanedNonces > 0 || cleanedTxTimes > 0 || cleanedSessionNonces > 0) {

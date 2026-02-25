@@ -658,20 +658,15 @@ purePermanentStorage.initializePermanentTables().then(() => {
 // عرض إحصائيات التخزين الدائم مع فحص حالة السحابة
 setInterval(async () => {
   try {
-    const stats = await permanentStorage.getStorageStats();
-    const health = await permanentStorage.getStorageHealth();
+    if (typeof purePermanentStorage?.getStorageStats !== 'function') return;
+    const stats = await purePermanentStorage.getStorageStats();
+    const health = await purePermanentStorage.getStorageHealth();
     
-    if (stats) {
-      // تم إزالة رسائل الكونسول المتكررة لتوفير الموارد
-      
-      if (!health.cloudAvailable) {
-        console.warn('☁️ تحذير: التخزين السحابي غير متاح - يتم استخدام التخزين المؤقت');
-      }
+    if (stats && health && !health.cloudAvailable) {
+      console.warn('☁️ تحذير: التخزين السحابي غير متاح - يتم استخدام التخزين المؤقت');
     }
-
-    // إحصائيات التخزين المتقدم (صامتة لتوفير الموارد)
   } catch (statsError) {
-    console.warn('⚠️ تعذر جلب إحصائيات التخزين:', statsError.message);
+    // صامت — لا نملأ error log بأخطاء غير حرجة
   }
 }, 30 * 60 * 1000); // كل 30 دقيقة
 
