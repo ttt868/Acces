@@ -1527,7 +1527,7 @@
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Block Reward:</span>
-                        <span class="detail-value" id="blockReward">0.25 ACCESS</span>
+                        <span class="detail-value" id="blockReward">Loading...</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Difficulty:</span>
@@ -1884,7 +1884,7 @@
             document.getElementById('blockTimestamp').textContent = dateTime;
             document.getElementById('transactionCount').textContent = txCount.toLocaleString();
             document.getElementById('blockMiner').textContent = validator;
-            document.getElementById('blockReward').textContent = formatAccessAmount(block.reward || 0.25);
+            document.getElementById('blockReward').textContent = formatAccessAmount(block.reward || window.currentBlockReward || 0.25);
             document.getElementById('blockDifficulty').textContent = (block.difficulty || 1).toLocaleString();
             document.getElementById('totalDifficulty').textContent = (block.totalDifficulty || (number + 1)).toLocaleString();
             document.getElementById('blockSize').textContent = (block.size || 1024).toLocaleString() + ' bytes';

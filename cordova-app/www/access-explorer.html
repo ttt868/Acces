@@ -2848,7 +2848,7 @@
                                                  (blockData.block.transactions || 0),
                                     miner: 'AccessValidator',
                                     validator: 'AccessValidator',
-                                    reward: 0.25,
+                                    reward: (window.currentBlockReward || 0.25),
                                     gasUsed: blockData.block.gasUsed || ((Array.isArray(blockData.block.transactions) ? blockData.block.transactions.length : (blockData.block.transactions || 0)) * 21000),
                                     gasLimit: 30000000,
                                     size: JSON.stringify(blockData.block).length || 1024,
@@ -2892,7 +2892,7 @@
                              (latestBlock.transactions || 0),
                 miner: 'AccessValidator',
                 validator: 'AccessValidator',
-                reward: 0.25,
+                reward: (window.currentBlockReward || 0.25),
                 gasUsed: latestBlock.gasUsed || ((Array.isArray(latestBlock.transactions) ? latestBlock.transactions.length : (latestBlock.transactions || 0)) * 21000),
                 gasLimit: 30000000,
                 size: JSON.stringify(latestBlock).length || 1024,
@@ -2921,7 +2921,7 @@
                                              (blockData.block.transactions || 0),
                                 miner: 'AccessValidator',
                                 validator: 'AccessValidator',
-                                reward: 0.25,
+                                reward: (window.currentBlockReward || 0.25),
                                 gasUsed: blockData.block.gasUsed || ((Array.isArray(blockData.block.transactions) ? blockData.block.transactions.length : (blockData.block.transactions || 0)) * 21000),
                                 gasLimit: 30000000,
                                 size: JSON.stringify(blockData.block).length || 1024,
@@ -2939,7 +2939,7 @@
                         transactions: Math.floor(Math.random() * 5) + 1,
                         miner: 'AccessValidator',
                         validator: 'AccessValidator',
-                        reward: 0.25,
+                        reward: (window.currentBlockReward || 0.25),
                         gasUsed: 21000,
                         gasLimit: 30000000,
                         size: 1024,
@@ -2969,7 +2969,7 @@
                     timestamp: estimatedTimestamp,
                     transactions: Math.floor(Math.random() * 8) + 1, // Real transaction count varies
                     validator: 'AccessValidator',
-                    reward: 0.25
+                    reward: (window.currentBlockReward || 0.25)
                 });
 
                 if (blockIndex === 0) break; // Don't go below genesis block
@@ -2995,7 +2995,7 @@
                     timestamp: estimatedTimestamp,
                     transactions: Math.floor(Math.random() * 8) + 1, // Real transaction count varies
                     validator: 'AccessValidator',
-                    reward: 0.25
+                    reward: (window.currentBlockReward || 0.25)
                 });
 
                 if (blockIndex === 0) break; // Don't go below genesis block
@@ -3068,7 +3068,7 @@
 
                 // ⭐ UNIQUE BLOCK NUMBER - Each block has a unique number
                 const blockNumber = block.number || block.index || index;
-                const blockReward = 0.25; // Standard ACCESS processing reward
+                const blockReward = block.reward || window.currentBlockReward || 0.25; // HALVING dynamic
                 const validator = block.validator || block.miner || 'AccessValidator';
 
                 // Calculate actual block time from actual transactions
@@ -3180,7 +3180,7 @@
                     timestamp: estimatedTimestamp,
                     transactions: Math.floor(Math.random() * 8) + 1, // Real transaction count varies
                     validator: 'AccessValidator',
-                    reward: 0.25
+                    reward: (window.currentBlockReward || 0.25)
                 });
 
                 if (blockIndex === 0) break; // Don't go below genesis block
@@ -3701,7 +3701,7 @@
                     transactionCount: Math.floor(Math.random() * 8) + 1,
                     miner: 'AccessValidator',
                     validator: 'AccessValidator',
-                    reward: 0.25,
+                    reward: (window.currentBlockReward || 0.25),
                     gasUsed: (Math.floor(Math.random() * 8) + 1) * 21000,
                     gasLimit: 30000000,
                     size: 1024 + Math.floor(Math.random() * 512),
