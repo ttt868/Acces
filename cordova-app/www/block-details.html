@@ -1661,6 +1661,21 @@
     </footer>
 
     <script>
+        // 🔄 HALVING: Fetch dynamic block reward from API
+        window.currentBlockReward = null;
+        (async function() {
+            try {
+                const resp = await fetch("/api/explorer/getblockreward");
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.result) {
+                        window.currentBlockReward = data.result.reward || (parseFloat(data.result.blockReward) / 1e18);
+                        console.log("Block reward loaded:", window.currentBlockReward);
+                    }
+                }
+            } catch(e) { console.log("Using default block reward"); }
+        })();
+
         // Smart number formatting for ACCESS amounts
         function formatAccessAmount(value) {
             const num = parseFloat(value) || 0;
