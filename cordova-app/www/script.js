@@ -1193,7 +1193,7 @@ AccessRewards is a revolutionary fitness platform designed for the future of wel
 - Reserve Fund: 5%
 
 4. Activity System
-Users can process once every 24 hours to collect 0.25 Points.
+Users can process once every 24 hours to collect Points (reward halves based on circulation).
 
 5. Security
 Enterprise-grade security with encrypted user accounts and secure benefit processing.
@@ -4813,6 +4813,11 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
             }
 
             if (resp.ok && data.success) {
+              // 🔄 HALVING: تحديث المكافأة الديناميكية من السيرفر
+              if (data.base_reward !== undefined && data.base_reward > 0) {
+                window.serverBaseReward = parseFloat(data.base_reward);
+                console.log('🔄 Updated serverBaseReward from start:', window.serverBaseReward);
+              }
               // يتحقق من كلا الاسمين: reward_transferred (server.js) و previous_reward_transferred (simplifier)
               const transferredReward = data.reward_transferred || data.previous_reward_transferred || 0;
               
@@ -5602,6 +5607,11 @@ function startGradualAccumulation() {
   const initialReferrals = parseInt(currentUser.session_active_referrals) || 0;
   const initialMultiplier = initialReferrals > 0 ? (1.0 + initialReferrals * 0.04) : 1.0;
   
+  // 🔄 HALVING: المكافأة الأساسية الديناميكية من السيرفر
+  if (window.serverBaseReward === undefined) {
+    window.serverBaseReward = null; // سيتم تحديثها من أي استجابة API تحتوي على base_reward
+  }
+
   window.localBoostData = {
     startTimeSec: Math.floor(currentUser.processing_start_time_seconds || Date.now() / 1000),
     multiplier: initialMultiplier, // Use referrals-based multiplier from start
@@ -5631,6 +5641,10 @@ function startGradualAccumulation() {
 
       const data = await response.json();
       if (data.success) {
+        // 🔄 HALVING: تحديث المكافأة الديناميكية من fetchBoostData
+        if (data.base_reward !== undefined && data.base_reward > 0) {
+          window.serverBaseReward = parseFloat(data.base_reward);
+        }
         localBoostData.activeReferrals = data.activeReferrals || 0;
         localBoostData.adBoostActive = data.adBoostActive || false;
         
@@ -5677,13 +5691,13 @@ function startGradualAccumulation() {
     const safeElapsedSec = Math.max(elapsedSec, lastElapsedSec);
     lastElapsedSec = safeElapsedSec;
     
-    // حساب المكافأة الأساسية مع الـ boost
-    const baseReward = 0.25;
+    // حساب المكافأة الأساسية مع الـ boost - 🔄 HALVING: ديناميكية من السيرفر
+    const baseReward = window.serverBaseReward || 0.25;
     const boostedReward = baseReward * localBoostData.multiplier;
     
     // ✅ حساب دقيق: المكافأة لكل ثانية
-    // 0.25 ACCESS ÷ 86400 ثانية = 0.0000028935... ACCESS/ثانية
-    // مع الـ boost: (0.25 × multiplier) ÷ 86400
+    // baseReward ACCESS ÷ 86400 ثانية
+    // مع الـ boost: (baseReward × multiplier) ÷ 86400
     const rewardPerSecond = boostedReward / processingDuration;
     
     let calculatedAccumulated;
@@ -5831,6 +5845,11 @@ function startGradualAccumulation() {
       if (response.ok) {
         const serverData = await response.json();
         if (serverData.success) {
+          // 🔄 HALVING: تحديث المكافأة الديناميكية من استجابة accumulated
+          if (serverData.base_reward !== undefined && serverData.base_reward > 0) {
+            window.serverBaseReward = parseFloat(serverData.base_reward);
+            console.log('🔄 Updated serverBaseReward from accumulated:', window.serverBaseReward);
+          }
           console.log('Successfully retrieved server accumulated amount');
           const serverAmount = parseFloat(serverData.accumulatedReward || 0);
           console.log(`Server accumulated amount: ${serverAmount.toFixed(8)}`);
@@ -6100,7 +6119,7 @@ function startGradualAccumulation() {
 
         // Get final reward from server
         const serverData = await getServerAccumulatedAmount();
-        const finalReward = (serverData && serverData.success) ? serverData.serverAmount : 0.25;
+        const finalReward = (serverData && serverData.success) ? serverData.serverAmount : (window.serverBaseReward || 0.25);
 
         console.log(`✅ Processing completed - storing reward: ${finalReward.toFixed(8)}`);
         
@@ -6269,10 +6288,10 @@ function startGradualAccumulation() {
           clearInterval(window.gradualRewardInterval);
           window.gradualRewardInterval = null;
 
-          // Ensure we end up with exactly +50 coins
-          updateUserCoins(initialDisplay + 0.25);
+          // Ensure we end up with exactly the base reward
+          updateUserCoins(initialDisplay + (window.serverBaseReward || 0.25));
 
-          console.log('Gradual reward completed, added exactly 0.25 coins');        }
+          console.log('Gradual reward completed, added exactly ' + (window.serverBaseReward || 0.25) + ' coins');        }
       }, 1000);
     }
 
@@ -6410,8 +6429,8 @@ function startGradualAccumulation() {
             window.boostCheckInterval = null;
           }
 
-          // ✅ CRITICAL: حساب القيمة النهائية الكاملة
-          const baseReward = 0.25;
+          // ✅ CRITICAL: حساب القيمة النهائية الكاملة - 🔄 HALVING: ديناميكية
+          const baseReward = window.serverBaseReward || 0.25;
           const finalReward = baseReward * (window.localBoostData?.multiplier || 1.0);
           
           // ✅ CRITICAL: عرض القيمة النهائية الكاملة قبل التنظيف
@@ -7168,7 +7187,7 @@ function updateProcessingStatus(message, type) {
 
       const progressBar = document.getElementById('processing-progress');
       const accumulatedCoinsElement = document.getElementById('accumulated-coins');
-      const totalReward = 0.25;
+      const totalReward = window.serverBaseReward || 0.25; // 🔄 HALVING: ديناميكية
 
       // Initialize with server-loaded value if available
       let accumulated = currentUser.processing_accumulated || 0;
