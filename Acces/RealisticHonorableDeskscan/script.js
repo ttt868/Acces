@@ -4545,6 +4545,12 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
         currentUser.processing_completed = wasCompleted;
         currentUser.processing_remaining_seconds = data.remaining_seconds;
         currentUser.processing_start_time = data.processing_start_time;
+
+        // 🔄 HALVING: تحديث المكافأة الأساسية من السيرفر
+        if (data.base_reward) {
+          window.serverBaseReward = parseFloat(data.base_reward);
+          console.log(`🔄 HALVING: Base reward updated from server: ${window.serverBaseReward}`);
+        }
         
         saveUserSession(currentUser);
         
@@ -4566,6 +4572,10 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
   // ⚡ PRELOAD: تحميل بيانات صفحة Activity مسبقاً عند تسجيل الدخول
   // هذا يجعل الصفحة جاهزة فوراً عند دخولها
   window.activityPreloadData = null;
+
+  // 🔄 HALVING SYSTEM: المكافأة الأساسية من السيرفر (تتغير حسب العرض المتداول)
+  // القيمة الافتراضية 0.25 — يتم تحديثها تلقائياً من استجابة السيرفر
+  window.serverBaseReward = 0.25;
   
   async function preloadActivityData(userId) {
     if (!userId) return;
@@ -4600,6 +4610,12 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       if (accumulatedData && accumulatedData.success) {
         currentUser.processing_accumulated = accumulatedData.accumulatedReward || 0;
         currentUser.accumulatedReward = accumulatedData.accumulatedReward || 0;
+      }
+
+      // 🔄 HALVING: تحديث المكافأة الأساسية من السيرفر
+      if (statusData && statusData.base_reward) {
+        window.serverBaseReward = parseFloat(statusData.base_reward);
+        console.log(`🔄 HALVING: Base reward updated from server: ${window.serverBaseReward}`);
       }
       
       console.log('⚡ PRELOAD: تم تحميل بيانات Activity بنجاح:', {
@@ -5523,13 +5539,13 @@ function startGradualAccumulation() {
     const safeElapsedSec = Math.max(elapsedSec, lastElapsedSec);
     lastElapsedSec = safeElapsedSec;
     
-    // حساب المكافأة الأساسية مع الـ boost
-    const baseReward = 0.25;
+    // حساب المكافأة الأساسية مع الـ boost — القيمة من السيرفر (نظام Halving)
+    const baseReward = window.serverBaseReward || 0.25;
     const boostedReward = baseReward * localBoostData.multiplier;
     
     // ✅ حساب دقيق: المكافأة لكل ثانية
-    // 0.25 ACCESS ÷ 86400 ثانية = 0.0000028935... ACCESS/ثانية
-    // مع الـ boost: (0.25 × multiplier) ÷ 86400
+    // baseReward ACCESS ÷ 86400 ثانية
+    // مع الـ boost: (baseReward × multiplier) ÷ 86400
     const rewardPerSecond = boostedReward / processingDuration;
     
     let calculatedAccumulated;
@@ -6313,8 +6329,8 @@ function startGradualAccumulation() {
             window.boostCheckInterval = null;
           }
 
-          // ✅ CRITICAL: حساب القيمة النهائية الكاملة
-          const baseReward = 0.25;
+          // ✅ CRITICAL: حساب القيمة النهائية الكاملة — القيمة من السيرفر (نظام Halving)
+          const baseReward = window.serverBaseReward || 0.25;
           const finalReward = baseReward * (window.localBoostData?.multiplier || 1.0);
           
           // ✅ CRITICAL: عرض القيمة النهائية الكاملة قبل التنظيف
@@ -6861,7 +6877,7 @@ function startGradualAccumulation() {
             
             const amountDiv = document.createElement('div');
             amountDiv.className = 'history-amount';
-            amountDiv.textContent = '+' + parseFloat(entry.amount).toFixed(2) + ' acs';
+            amountDiv.textContent = '+' + (function(n){ n=parseFloat(n); let s=n.toFixed(8).replace(/\.?0+$/, ''); if(!s.includes('.')) s+='.00'; else { let d=s.split('.')[1].length; if(d<2) s+='0'; } return s; })(entry.amount) + ' acs';
             
             historyItem.appendChild(dateDiv);
             historyItem.appendChild(amountDiv);
@@ -7068,7 +7084,7 @@ function updateProcessingStatus(message, type) {
 
       const progressBar = document.getElementById('processing-progress');
       const accumulatedCoinsElement = document.getElementById('accumulated-coins');
-      const totalReward = 0.25;
+      const totalReward = window.serverBaseReward || 0.25; // 🔄 HALVING: القيمة من السيرفر
 
       // Initialize with server-loaded value if available
       let accumulated = currentUser.processing_accumulated || 0;

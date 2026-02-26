@@ -6979,7 +6979,7 @@ function startGradualAccumulation() {
             
             const amountDiv = document.createElement('div');
             amountDiv.className = 'history-amount';
-            amountDiv.textContent = '+' + parseFloat(entry.amount).toFixed(2) + ' acs';
+            amountDiv.textContent = '+' + (function(n){ n=parseFloat(n); let s=n.toFixed(8).replace(/\.?0+$/, ''); if(!s.includes('.')) s+='.00'; else { let d=s.split('.')[1].length; if(d<2) s+='0'; } return s; })(entry.amount) + ' acs';
             
             historyItem.appendChild(dateDiv);
             historyItem.appendChild(amountDiv);
