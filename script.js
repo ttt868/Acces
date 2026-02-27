@@ -335,19 +335,15 @@ document.addEventListener('DOMContentLoaded', function() {
       decimals = 14;
     }
     
-    let formatted = number.toFixed(decimals);
+    let formatted = parseFloat(number.toFixed(decimals)).toString();
     
-    // إزالة الأصفار الزائدة من النهاية مع الحفاظ على 8 أماكن كحد أدنى
     const parts = formatted.split('.');
-    if (parts[1]) {
-      while (parts[1].length > 8 && parts[1].endsWith('0')) {
-        parts[1] = parts[1].slice(0, -1);
-      }
-      while (parts[1].length < 8) {
-        parts[1] = parts[1] + '0';
-      }
-    } else {
-      parts[1] = '00000000';
+    
+    // CRITICAL: Ensure at least 2 decimal places for ALL numbers
+    if (!parts[1]) {
+      parts[1] = '00';
+    } else if (parts[1].length === 1) {
+      parts[1] = parts[1] + '0';
     }
     
     // Add thousand separators to integer part
