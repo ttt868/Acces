@@ -55,6 +55,30 @@ window.updateBalanceDisplay = function(selector, value) {
   }
 };
 
+// ✅ Global function to update processingInfo2 with dynamic reward
+function updateRewardText() {
+  var el = document.querySelector('.processing-info p:last-child');
+  if (!el) el = document.querySelector('[data-translate="processingInfo2"]');
+  var currentReward = window.serverBaseReward || 0.25;
+  var rewardStr = formatNumberSmart(currentReward);
+  if (el) {
+    if (window.translator) {
+      var text = window.translator.translate('processingInfo2');
+      text = text.replace('{reward}', rewardStr);
+      el.textContent = text;
+    } else {
+      var currentText = el.textContent;
+      if (currentText.indexOf('{reward}') !== -1) {
+        el.textContent = currentText.replace('{reward}', rewardStr);
+      }
+    }
+  }
+  var rateEl = document.getElementById('tokenomics-processing-rate');
+  if (rateEl) {
+    rateEl.textContent = '+' + rewardStr;
+  }
+}
+
 // 🔔 Push Notifications Registration Function
 async function registerPushNotifications(userId) {
   console.log('🔔 registerPushNotifications called with userId:', userId);
@@ -237,6 +261,10 @@ function urlBase64ToUint8Array(base64String) {
 
 // AccessRewards main script
 document.addEventListener('DOMContentLoaded', function() {
+  // ✅ Update reward text on page load
+  setTimeout(updateRewardText, 500);
+  setTimeout(updateRewardText, 2000);
+
   // Initialize variables first
   let currentUser = null;
   let referralCode = '';
@@ -4550,6 +4578,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
         if (data.base_reward) {
           window.serverBaseReward = parseFloat(data.base_reward);
           console.log(`🔄 HALVING: Base reward updated from server: ${window.serverBaseReward}`);
+          updateRewardText();
         }
         
         saveUserSession(currentUser);
@@ -4616,6 +4645,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       if (statusData && statusData.base_reward) {
         window.serverBaseReward = parseFloat(statusData.base_reward);
         console.log(`🔄 HALVING: Base reward updated from server: ${window.serverBaseReward}`);
+        updateRewardText();
       }
       
       console.log('⚡ PRELOAD: تم تحميل بيانات Activity بنجاح:', {
@@ -4682,7 +4712,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
                   currentUser.processing_start_time_seconds = Math.floor(Date.now() / 1000);
                   currentUser.processing_accumulated = 0;
                   currentUser.accumulatedReward = 0;
-                  if (retryData.base_reward) window.serverBaseReward = parseFloat(retryData.base_reward);
+                  if (retryData.base_reward) { window.serverBaseReward = parseFloat(retryData.base_reward); updateRewardText(); }
                   saveUserSession(currentUser);
                   startCountdown(retryData.remaining_seconds * 1000);
                   startGradualAccumulation();
@@ -5245,7 +5275,7 @@ processingButton.addEventListener('click', async function(e) {
           currentUser.processing_start_time_seconds = Math.floor(Date.now() / 1000);
           currentUser.processing_accumulated = 0;
           currentUser.accumulatedReward = 0;
-          if (retryData.base_reward) window.serverBaseReward = parseFloat(retryData.base_reward);
+          if (retryData.base_reward) { window.serverBaseReward = parseFloat(retryData.base_reward); updateRewardText(); }
           saveUserSession(currentUser);
           processingAnimation.style.display = 'block';
           startCountdown(retryData.remaining_seconds * 1000, currentUser.processing_start_time, currentUser.processing_end_time);
