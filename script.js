@@ -329,16 +329,25 @@ document.addEventListener('DOMContentLoaded', function() {
       number = parseFloat(number) || 0;
     }
 
-    // ✅ دائماً اعرض رقمين عشريين على الأقل (حتى لو كان 0)
-    let formatted = parseFloat(number.toFixed(8)).toString();
+    // ✅ ذكي: يختار عدد الأماكن العشرية حسب حجم الرقم
+    var decimals = 8;
+    if (number > 0 && number < 0.00000001) {
+      decimals = 14;
+    }
     
+    let formatted = number.toFixed(decimals);
+    
+    // إزالة الأصفار الزائدة من النهاية مع الحفاظ على 8 أماكن كحد أدنى
     const parts = formatted.split('.');
-    
-    // CRITICAL: Ensure at least 2 decimal places for ALL numbers
-    if (!parts[1]) {
-      parts[1] = '00';
-    } else if (parts[1].length === 1) {
-      parts[1] = parts[1] + '0';  // 2.1 → 2.10
+    if (parts[1]) {
+      while (parts[1].length > 8 && parts[1].endsWith('0')) {
+        parts[1] = parts[1].slice(0, -1);
+      }
+      while (parts[1].length < 8) {
+        parts[1] = parts[1] + '0';
+      }
+    } else {
+      parts[1] = '00000000';
     }
     
     // Add thousand separators to integer part
@@ -5626,7 +5635,14 @@ function startGradualAccumulation() {
   
   function calculateAndDisplayLocally() {
     const nowSec = Math.floor(Date.now() / 1000);
-    const processingDuration = 24 * 60 * 60; // 86400 ثانية
+    // ✅ حساب المدة الفعلية من end_time - start_time (يدعم جلسات الاختبار القصيرة)
+    var processingDuration = 24 * 60 * 60; // 86400 ثانية افتراضي
+    if (currentUser && currentUser.processing_end_time && currentUser.processing_start_time) {
+      var actualDuration = Math.floor((parseInt(currentUser.processing_end_time) - parseInt(currentUser.processing_start_time)) / 1000);
+      if (actualDuration > 0 && actualDuration <= 86400) {
+        processingDuration = actualDuration;
+      }
+    }
     const elapsedSec = nowSec - localBoostData.startTimeSec;
     
     if (elapsedSec <= 0) return;
@@ -5655,7 +5671,7 @@ function startGradualAccumulation() {
     else {
       calculatedAccumulated = rewardPerSecond * safeElapsedSec;
       // تقريب لـ 8 أماكن عشرية
-      calculatedAccumulated = Math.round(calculatedAccumulated * 100000000) / 100000000;
+      calculatedAccumulated = Math.round(calculatedAccumulated * 100000000000000) / 100000000000000;
     }
     
     // 🔒 CRITICAL: منع التراجع في القيمة نهائياً
