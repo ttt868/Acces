@@ -2656,12 +2656,13 @@ body.arabic .mobile-nav-item span {
 
 /* Tokenomics Page Styles */
 .tokenomics-page-container {
-  max-width: 1200px;
+  max-width: 100% !important;
   margin: 0 auto;
-  padding: 20px;
+  padding: 8px 20px 20px;
   display: flex;
   flex-direction: column;
   gap: 40px;
+  
 }
 
 
@@ -2911,7 +2912,7 @@ body.arabic .mobile-nav-item span {
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   align-items: center;
-  max-width: 800px;
+  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -3217,7 +3218,7 @@ body.arabic .mobile-nav-item span {
   gap: 16px;
   margin-bottom: 20px;
   justify-items: center;
-  max-width: 900px;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
 }
@@ -3362,7 +3363,7 @@ body.arabic .mobile-nav-item span {
 @media (min-width: 769px) {
   .tokenomics-processing-grid {
     grid-template-columns: repeat(2, 1fr);
-    max-width: 900px;
+    max-width: 100%;
     margin-left: auto;
     margin-right: auto;
   }
@@ -4494,14 +4495,14 @@ body.arabic .mobile-nav-item span {
 /* Enhanced Mobile Responsive Design */
 @media (max-width: 768px) {
   .tokenomics-page-container {
-    padding: 12px;
-    gap: 24px;
+    padding: 4px 10px 12px;
+    gap: 20px;
   }
 
   .tokenomics-page-hero {
     padding: 40px 20px;
     border-radius: 20px;
-    margin: 0 8px;
+    margin: 0;
   }
 
   .tokenomics-hero-title {
@@ -4551,7 +4552,7 @@ body.arabic .mobile-nav-item span {
   .tokenomics-whitepaper-card {
     padding: 28px 16px;
     border-radius: 20px;
-    margin: 0 8px;
+    margin: 0;
   }
 
   .tokenomics-section-title {
@@ -4646,7 +4647,7 @@ body.arabic .mobile-nav-item span {
 @media (max-width: 480px) {
   .tokenomics-page-hero {
     padding: 35px 14px;
-    margin: 0 4px;
+    margin: 0;
   }
 
   .tokenomics-hero-title {
@@ -4691,7 +4692,7 @@ body.arabic .mobile-nav-item span {
   .tokenomics-team-section,
   .tokenomics-whitepaper-card {
     padding: 24px 12px;
-    margin: 0 4px;
+    margin: 0;
   }
 
   .tokenomics-distribution-chart {
@@ -5139,8 +5140,15 @@ body, input, select, button, .card, .sidebar, .stat-card {
   
   /* Leaderboard ONLY - No padding on mobile */
   .main-content #leaderboard-page.page-content {
-    margin-left: -15px;
-    margin-right: -15px;
+    margin-left: -8px;
+    margin-right: -8px;
+
+  }
+
+  /* Tokenomics/Points page - full width on mobile */
+  .main-content #pointsystem-page.page-content {
+    margin-left: -5px;
+    margin-right: -5px;
   }
 
   .page-content {
