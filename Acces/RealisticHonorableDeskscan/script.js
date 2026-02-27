@@ -4740,7 +4740,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
               startCountdown(data.remaining_seconds * 1000);
               startGradualAccumulation();
             } else if (resp.status === 409) {
-              showNotification(translator.translate('You already have an active processing session'), 'info');
+              console.log('ℹ️ Session already active - resuming silently');
               if (data.remaining_seconds > 0) startCountdown(data.remaining_seconds * 1000);
             } else {
               showNotification(translator.translate(data.error || 'Error'), 'error');
@@ -5207,8 +5207,8 @@ processingButton.addEventListener('click', async function(e) {
     // 🔒 SECURITY: Handle 409 Conflict - session already active
     if (response.status === 409) {
       const conflictData = await response.json();
-      console.log(`🔒 BLOCKED BY SERVER: Session already active (${conflictData.remaining_seconds}s remaining)`);
-      showNotification(translator.translate('You already have an active processing session'), 'warning');
+      console.log(`ℹ️ Session already active - resuming countdown (${conflictData.remaining_seconds}s remaining)`);
+      // ✅ لا نعرض رسالة - نستأنف العد التنازلي بصمت
       
       // Update local state to match server
       if (conflictData.remaining_seconds > 0) {
