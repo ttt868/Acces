@@ -15291,7 +15291,14 @@ window.cancelProfileChanges = cancelProfileChanges;
     updateElementText('processingStatus', document.querySelector('#activity-status'));
     updateElementText('nextProcessing', document.querySelector('.timer-label'));
     updateElementText('processingInfo1', document.querySelector('.processing-info p:first-child'));
-    updateElementText('processingInfo2', document.querySelector('.processing-info p:last-child'));
+    // ✅ processingInfo2 - ديناميكي مع المكافأة الحالية من tokenomics
+    const processingInfo2El = document.querySelector('.processing-info p:last-child');
+    if (processingInfo2El) {
+      let info2Text = translator.translate('processingInfo2');
+      const currentReward = window.serverBaseReward || 0.25;
+      info2Text = info2Text.replace('{reward}', formatNumberSmart(currentReward));
+      processingInfo2El.textContent = info2Text;
+    }
     updateElementText('processingHistory', document.querySelector('.activity-history h3'));
 
     // Referrals page
