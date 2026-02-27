@@ -1,9 +1,34 @@
 import { pool } from './db.js';
+import { getCurrentBaseReward, roundReward, MAX_SUPPLY } from './tokenomics.js';
 
-/**
- * Server-Side Processing Synchronization Service
- * Updates all active processing sessions continuously, regardless of user presence
- */
+// 💰 Cache للمعروض المتداول
+let _syncCachedSupply = 0;
+let _syncLastCheck = 0;
+async function syncCurrentBaseReward() {
+  const now = Date.now();
+  if (_syncCachedSupply > 0 && (now - _syncLastCheck) < 300000) return getCurrentBaseReward(_syncCachedSupply);
+  try {
+    // 1) DB coins
+    const r = await pool.query('SELECT COALESCE(SUM(coins), 0) as total FROM users WHERE coins > 0');
+    const dbTotal = parseFloat(r.rows[0].total) || 0;
+
+    // 2) Web3 State Trie
+    let trieTotal = 0;
+    try {
+      const { getGlobalAccessStateStorage } = await import('./access-state-storage.js');
+      const stateStorage = getGlobalAccessStateStorage();
+      const accountCache = stateStorage?.accountCache || {};
+      for (const addr in accountCache) {
+        const acc = accountCache[addr];
+        if (acc && acc.balance) trieTotal += parseInt(acc.balance) / 1e18;
+      }
+    } catch (_) { /* fallback to DB only */ }
+
+    _syncCachedSupply = Math.max(dbTotal, trieTotal);
+    _syncLastCheck = now;
+  } catch (e) { /* use cached */ }
+  return getCurrentBaseReward(_syncCachedSupply);
+}
 
 // 🛡️ Throttling لمنع UPDATE المتكررة لنفس المستخدم
 const userUpdateThrottle = new Map(); // userId -> lastUpdateTime
@@ -31,17 +56,7 @@ setInterval(() => {
   }
 }, 600000);
 
-/**
- * دالة تقريب المكافأة لتجنب الأرقام العشرية الطويلة (مثل 0.248883)
- * تقرب إلى 8 أماكن عشرية بشكل دقيق
- */
-function roundReward(amount) {
-  if (typeof amount !== 'number' || isNaN(amount)) {
-    return 0;
-  }
-  // تقريب إلى 8 أماكن عشرية
-  return Math.round(amount * 100000000) / 100000000;
-}
+// roundReward imported from tokenomics.js
 
 /**
  * 🔧 دالة تقريب لأقرب 0.01 (Math.round لتجنب floating point errors)
@@ -175,14 +190,14 @@ class ServerSideProcessingSync {
 
           // ✅ حساب المكافأة الكاملة دائماً (الجلسة انتهت = 100%)
           // لا نعتمد على accumulatedReward لأنه قد يكون ناقص
-          const baseReward = 0.25;
+          const baseReward = await syncCurrentBaseReward();
           const fullReward = roundReward(baseReward * sessionLockedBoost);
           
           // ✅ تقريب لأقرب سنت (0.01) لضمان أرقام نظيفة
           const finalReward = roundUpToTwoDecimals(fullReward);
 
           console.log(`[RECOVERY] User ${userId} (${userName}): المكافأة الكاملة ${finalReward.toFixed(2)} ACCESS (boost: ${sessionLockedBoost.toFixed(2)}x, referrals: ${activeReferralCount}, ad_boost: ${adBoostActive})`);
-          console.log(`[RECOVERY] 📊 تفاصيل: base=0.25 × ${sessionLockedBoost.toFixed(2)} = ${fullReward.toFixed(4)} → rounded to ${finalReward.toFixed(2)}`);
+          console.log(`[RECOVERY] 📊 تفاصيل: base=${baseReward} × ${sessionLockedBoost.toFixed(2)} = ${fullReward.toFixed(4)} → rounded to ${finalReward.toFixed(2)}`);
 
           // حفظ المكافأة في accumulatedReward فقط
           await pool.query(
@@ -293,7 +308,7 @@ class ServerSideProcessingSync {
 
           // ✅ حساب المكافأة الكاملة دائماً (الجلسة انتهت = 100%)
           // لا نعتمد على accumulatedReward لأنه قد يكون ناقص
-          const baseReward = 0.25;
+          const baseReward = await syncCurrentBaseReward();
           const fullReward = roundReward(baseReward * sessionLockedBoost);
           
           // ✅ تقريب لأقرب سنت (0.01) لضمان أرقام نظيفة
@@ -389,9 +404,9 @@ class ServerSideProcessingSync {
             continue;
           }
 
-          // حساب المكافأة مع التعزيز المثبت
+          // حساب المكافأة مع التعزيز المثبت (Halving)
           const boostMultiplier = parseFloat(session.locked_boost || 1.0);
-          const baseReward = 0.25;
+          const baseReward = await syncCurrentBaseReward();
           const boostedReward = baseReward * boostMultiplier;
           
           // ✅ CRITICAL: إذا بقي أقل من دقيقة، نقرب للقيمة النهائية
@@ -577,7 +592,7 @@ class ServerSideProcessingSync {
     const boostMultiplier = parseFloat(processor.locked_boost || 1.0);
 
     // حساب المكافأة المتراكمة باستخدام المضاعف المثبت
-    const baseReward = 0.25;
+    const baseReward = await syncCurrentBaseReward();
     const boostedReward = baseReward * boostMultiplier;
     // استخدام دالة التقريب لتجنب الأرقام العشرية الطويلة
     const calculatedAccumulated = roundReward(boostedReward * progressPercentage);
@@ -637,7 +652,7 @@ class ServerSideProcessingSync {
 
           // حساب المكافأة مع التعزيز المثبت
           const boostMultiplier = parseFloat(session.locked_boost || 1.0);
-          const baseReward = 0.25;
+          const baseReward = await syncCurrentBaseReward();
           const boostedReward = baseReward * boostMultiplier;
           // استخدام دالة التقريب لدقة الحساب
           const calculatedAccumulated = roundReward(boostedReward * progressPercentage);
@@ -838,7 +853,7 @@ class ServerSideProcessingSync {
 
         // ✅ CRITICAL FIX: حساب المكافأة الكاملة دائماً من session_locked_boost
         // لا نعتمد على accumulatedReward لأنه قد يكون ناقص
-        const baseReward = 0.25;
+        const baseReward = await syncCurrentBaseReward();
         const fullReward = roundReward(baseReward * sessionLockedBoost);
         
         // ✅ تقريب لأقرب سنت (0.01) لضمان أرقام نظيفة
@@ -857,7 +872,7 @@ class ServerSideProcessingSync {
         console.log(`📋   ⚡ Boost Multiplier: ${sessionLockedBoost.toFixed(2)}x`);
         console.log(`📋   👥 Active Referrals: ${activeReferrals} (+${referralBoost.toFixed(1)} MH/s)`);
         console.log(`📋   🎬 Ad Boost: ${adBoostActive ? '✅ Active (+1.2 MH/s)' : '❌ Not Used'}`);
-        console.log(`📋   📊 Calculation: 0.25 × ${sessionLockedBoost.toFixed(2)} = ${fullReward.toFixed(4)} → ${finalReward.toFixed(2)}`);
+        console.log(`📋   📊 Calculation: ${baseReward} × ${sessionLockedBoost.toFixed(2)} = ${fullReward.toFixed(4)} → ${finalReward.toFixed(2)}`);
         console.log(`📋 ═══════════════════════════════════════════════════════════\n`);
 
         // Use the simplified countdown completion system (no history logging)

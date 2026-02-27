@@ -8,6 +8,7 @@ import { ParallelProcessingEngine } from './parallel-processing-engine.js';
 import { AdvancedSecuritySystem } from './advanced-security-system.js';
 import { getGlobalAccessStateStorage } from './access-state-storage.js';
 import { transactionRecovery } from './transaction-recovery-system.js';
+import { getCurrentBaseReward, splitReward, validateSupplyLimit, roundReward, FOUNDER_ADDRESS, DEV_FEE_PERCENT, MAX_SUPPLY } from './tokenomics.js';
 
 // فئة الكتلة (Block)
 class Block {
@@ -209,7 +210,7 @@ class AccessNetwork extends EventEmitter {
         merkleRoot: ""
       }];
     }
-    this.processingReward = 0.25;
+    this.processingReward = 0.25; // ℹ️ Initial value — actual reward comes from tokenomics.js getCurrentBaseReward()
 
     // 🌳 ETHEREUM-STYLE STATE STORAGE - Merkle Patricia Trie + LevelDB (Singleton)
     this.accessStateStorage = getGlobalAccessStateStorage();
@@ -1550,13 +1551,39 @@ class AccessNetwork extends EventEmitter {
 
       // ✅ إضافة معاملة المكافأة فقط إذا كان هناك معاملات حقيقية
       if (validTransactions.length > 0) {
-        const rewardTransaction = new Transaction(
-          null,
-          processingRewardAddress,
-          this.processingReward,
-          Date.now()
-        );
-        validTransactions.push(rewardTransaction);
+        // 💰 Halving: حساب المكافأة الديناميكية بناءً على المعروض المتداول
+        const circulatingSupply = await this.calculateCirculatingSupply();
+        const dynamicReward = getCurrentBaseReward(circulatingSupply);
+        this.processingReward = dynamicReward; // تحديث القيمة المرجعية
+        
+        // 🛡️ Max Supply Protection
+        const supplyCheck = validateSupplyLimit(circulatingSupply, dynamicReward);
+        const actualReward = supplyCheck.adjustedAmount;
+        
+        if (actualReward > 0) {
+          // 💰 Dev Fee: تقسيم المكافأة بين المعدّن والمؤسس
+          const { minerReward, founderReward } = splitReward(actualReward, 1.0);
+          
+          // مكافأة المعدّن (90%)
+          const rewardTransaction = new Transaction(
+            null,
+            processingRewardAddress,
+            minerReward,
+            Date.now()
+          );
+          validTransactions.push(rewardTransaction);
+          
+          // حصة المؤسس (10%)
+          if (founderReward > 0) {
+            const founderTransaction = new Transaction(
+              null,
+              FOUNDER_ADDRESS.toLowerCase(),
+              founderReward,
+              Date.now()
+            );
+            validTransactions.push(founderTransaction);
+          }
+        }
       }
 
       // إنشاء السجل الجديد مع المعاملات الصحيحة فقط
@@ -2179,36 +2206,43 @@ class AccessNetwork extends EventEmitter {
   }
 
   async calculateCirculatingSupply() {
-    // ✅ Circulating Supply = ALL tokens from State Trie ONLY
-    // State Trie is the ONLY source of truth for ALL wallet balances
+    // ✅ UNIFIED SUPPLY: نأخذ الأعلى من المصدرين (DB + State Trie) لحماية Halving
+    // DB = أرصدة المستخدمين المسجلين، State Trie = كل المحافظ بما فيها الخارجية
     try {
-      // Get all balances from State Trie accountCache
-      const accountCache = this.accessStateStorage.accountCache || {};
-      let totalCirculating = 0;
-
+      // 1) State Trie (Web3 wallets)
+      const accountCache = this.accessStateStorage?.accountCache || {};
+      let trieTotal = 0;
       for (const address in accountCache) {
         const account = accountCache[address];
         if (account && account.balance) {
-          // Convert from Wei to ACCESS (18 decimals)
-          const balanceInAccess = parseInt(account.balance) / 1e18;
-          totalCirculating += balanceInAccess;
+          trieTotal += parseInt(account.balance) / 1e18;
         }
       }
 
-      return parseFloat(totalCirculating.toFixed(8));
+      // 2) Database (registered users coins)
+      let dbTotal = 0;
+      try {
+        const { pool } = await import('./db.js');
+        const r = await pool.query('SELECT COALESCE(SUM(coins), 0) as total FROM users WHERE coins > 0');
+        dbTotal = parseFloat(r.rows[0].total) || 0;
+      } catch (dbErr) {
+        // fallback to trie only
+      }
+
+      // ✅ استخدام الأعلى = المعروض الحقيقي الكامل (يشمل المحافظ الخارجية)
+      const unified = Math.max(trieTotal, dbTotal);
+      return parseFloat(unified.toFixed(8));
     } catch (error) {
-      console.error('خطأ في حساب المعروض من State Trie:', error);
+      console.error('خطأ في حساب المعروض المتداول:', error);
       return 0;
     }
   }
 
   async shouldStopMining() {
-    // ✅ Stop mining when circulating supply reaches 45% of max supply (11.25 million)
+    // ✅ Halving: التعدين لا يتوقف أبداً — المكافأة تتنصف فقط
+    // الحماية الوحيدة: لا يتجاوز MAX_SUPPLY
     const circulatingSupply = await this.calculateCirculatingSupply();
-    const maxSupply = 25000000;
-    const stopThreshold = maxSupply * 0.45; // 11,250,000 ACCESS
-
-    return circulatingSupply >= stopThreshold;
+    return circulatingSupply >= MAX_SUPPLY;
   }
 
   // واجهة برمجة التطبيقات للشبكة المتطورة
@@ -2260,8 +2294,8 @@ class AccessNetwork extends EventEmitter {
       // الاقتصاد
       totalSupply: totalSupply,
       circulatingSupply: circulatingSupply,
-      maxSupply: 25000000,
-      processingReward: this.processingReward,
+      maxSupply: MAX_SUPPLY,
+      processingReward: getCurrentBaseReward(circulatingSupply),
       gasPrice: this.gasPrice,
       baseGasFee: this.baseGasFee,
       

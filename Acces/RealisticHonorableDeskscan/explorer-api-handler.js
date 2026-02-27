@@ -1,6 +1,7 @@
 // معالج API لمستكشف البلوك تشين Access
 import { pool } from './db.js';
 import { getNetworkNode } from './network-api.js';
+import { getCurrentBaseReward, MAX_SUPPLY, getTokenomicsInfo } from './tokenomics.js';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -288,7 +289,7 @@ async function handleBlockModule(params) {
 
     switch (action) {
         case 'getblockreward':
-            const reward = networkNode ? networkNode.network.processingReward : 0.25;
+            const reward = networkNode ? networkNode.network.processingReward : getCurrentBaseReward(0);
             return {
                 blockNumber: blockno,
                 timeStamp: Math.floor(Date.now() / 1000).toString(),

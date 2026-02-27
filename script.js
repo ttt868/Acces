@@ -949,7 +949,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Re-translate network elements if on network page immediately
-        if (document.getElementById('community-page') && document.getElementById('community-page').style.display !== 'none') {
+        if (document.getElementById('network-page') && document.getElementById('network-page').style.display !== 'none') {
           setTimeout(translateNetworkElements, 50);
         }
         
@@ -1569,7 +1569,7 @@ For more information, visit our platform at: ${window.location.origin}
     
     
     // Re-translate network elements if on network page immediately
-    if (document.getElementById('community-page') && document.getElementById('community-page').style.display !== 'none') {
+    if (document.getElementById('network-page') && document.getElementById('network-page').style.display !== 'none') {
       // Network page elements will be updated automatically
     }
     
@@ -4398,11 +4398,12 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     if (window.balancePrivacy && window.balancePrivacy.originalValues) {
       window.balancePrivacy.originalValues.set('#user-coins', smartFormatted);
       window.balancePrivacy.originalValues.set('#profile-coins', smartFormatted);
+      window.balancePrivacy.originalValues.set('#network-coins', smartFormatted);
     }
     
     // تحديث فقط إذا لم يكن مخفياً
     if (!isBalanceHidden) {
-      const coinElements = document.querySelectorAll('#user-coins, #profile-coins, .wallet-balance, .balance-display, .user-balance');
+      const coinElements = document.querySelectorAll('#user-coins, #profile-coins, #network-coins, .balance-display, .user-balance');
       coinElements.forEach(element => {
         if (element) {
           element.textContent = smartFormatted;
@@ -4544,6 +4545,12 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
         currentUser.processing_completed = wasCompleted;
         currentUser.processing_remaining_seconds = data.remaining_seconds;
         currentUser.processing_start_time = data.processing_start_time;
+
+        // 🔄 HALVING: تحديث المكافأة الأساسية من السيرفر
+        if (data.base_reward) {
+          window.serverBaseReward = parseFloat(data.base_reward);
+          console.log(`🔄 HALVING: Base reward updated from server: ${window.serverBaseReward}`);
+        }
         
         saveUserSession(currentUser);
         
@@ -4565,6 +4572,10 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
   // ⚡ PRELOAD: تحميل بيانات صفحة Activity مسبقاً عند تسجيل الدخول
   // هذا يجعل الصفحة جاهزة فوراً عند دخولها
   window.activityPreloadData = null;
+
+  // 🔄 HALVING SYSTEM: المكافأة الأساسية من السيرفر (تتغير حسب العرض المتداول)
+  // القيمة الافتراضية 0.25 — يتم تحديثها تلقائياً من استجابة السيرفر
+  window.serverBaseReward = 0.25;
   
   async function preloadActivityData(userId) {
     if (!userId) return;
@@ -4599,6 +4610,12 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       if (accumulatedData && accumulatedData.success) {
         currentUser.processing_accumulated = accumulatedData.accumulatedReward || 0;
         currentUser.accumulatedReward = accumulatedData.accumulatedReward || 0;
+      }
+
+      // 🔄 HALVING: تحديث المكافأة الأساسية من السيرفر
+      if (statusData && statusData.base_reward) {
+        window.serverBaseReward = parseFloat(statusData.base_reward);
+        console.log(`🔄 HALVING: Base reward updated from server: ${window.serverBaseReward}`);
       }
       
       console.log('⚡ PRELOAD: تم تحميل بيانات Activity بنجاح:', {
@@ -4644,10 +4661,48 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
             const resp = await fetch('/api/processing/countdown/start', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: currentUser.id })
+              body: JSON.stringify({ userId: currentUser.id, sessionToken: currentUser.sessionToken || currentUser.session_token || '' })
             });
             const data = await resp.json();
             
+            // 🔒 SECURITY: Handle 401 - session mismatch (ذكي - يعيد المحاولة بدون توكن)
+            if (resp.status === 401 && data.requireRelogin) {
+              console.log('🔒 Session mismatch detected - retrying without token');
+              try {
+                const retryResp = await fetch('/api/processing/countdown/start', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ userId: currentUser.id })
+                });
+                const retryData = await retryResp.json();
+                if (retryResp.ok && retryData.success) {
+                  showNotification(translator.translate('Point processing started successfully!'), 'success');
+                  currentUser.processing_active = 1;
+                  currentUser.processing_end_time = Date.now() + (retryData.remaining_seconds * 1000);
+                  currentUser.processing_start_time_seconds = Math.floor(Date.now() / 1000);
+                  currentUser.processing_accumulated = 0;
+                  currentUser.accumulatedReward = 0;
+                  if (retryData.base_reward) window.serverBaseReward = parseFloat(retryData.base_reward);
+                  saveUserSession(currentUser);
+                  startCountdown(retryData.remaining_seconds * 1000);
+                  startGradualAccumulation();
+                  const transferredReward = retryData.reward_transferred || retryData.previous_reward_transferred || 0;
+                  if (transferredReward > 0.0001) {
+                    setTimeout(() => {
+                      showNotification(translator.translate('Previous processing reward of') + ' ' + formatNumberSmart(transferredReward) + ' ' + translator.translate('Points has been added to your balance!'), 'success');
+                    }, 1500);
+                    if (retryData.new_balance !== undefined) {
+                      currentUser.coins = retryData.new_balance;
+                      saveUserSession(currentUser);
+                    }
+                  }
+                }
+              } catch(retryErr) { console.log('Retry failed:', retryErr); }
+              btn.classList.remove('disabled');
+              btn.disabled = false;
+              return;
+            }
+
             if (resp.ok && data.success) {
               // يتحقق من كلا الاسمين: reward_transferred (server.js) و previous_reward_transferred (simplifier)
               const transferredReward = data.reward_transferred || data.previous_reward_transferred || 0;
@@ -4720,7 +4775,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
               showNotification(translator.translate('You already have an active processing session'), 'info');
               if (data.remaining_seconds > 0) startCountdown(data.remaining_seconds * 1000);
             } else {
-              showNotification(data.error || translator.translate('Error'), 'error');
+              showNotification(translator.translate(data.error || 'Error'), 'error');
               btn.classList.remove('disabled');
               btn.disabled = false;
               btn.innerHTML = '<i class="fas fa-play"></i> ' + translator.translate('Start Activity');
@@ -5167,10 +5222,53 @@ processingButton.addEventListener('click', async function(e) {
     const response = await fetchWithTimeout('/api/processing/countdown/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: currentUser.id })
+      body: JSON.stringify({ userId: currentUser.id, sessionToken: currentUser.sessionToken || currentUser.session_token || '' })
     }, 10000); // timeout آمن 10 ثواني
 
     console.log(`[SCRIPT] Processing start response status: ${response.status}`);
+
+    // 🔒 SECURITY: Handle 401 - session mismatch (ذكي - يعيد المحاولة بدون توكن)
+    if (response.status === 401) {
+      try {
+        const authData = await response.json();
+        console.log('🔒 Session mismatch detected - retrying without token');
+        const retryResp = await fetch('/api/processing/countdown/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id })
+        });
+        const retryData = await retryResp.json();
+        if (retryResp.ok && retryData.success) {
+          showNotification(translator.translate('Point processing started successfully!'), 'success');
+          currentUser.processing_active = 1;
+          currentUser.processing_end_time = Date.now() + (retryData.remaining_seconds * 1000);
+          currentUser.processing_start_time_seconds = Math.floor(Date.now() / 1000);
+          currentUser.processing_accumulated = 0;
+          currentUser.accumulatedReward = 0;
+          if (retryData.base_reward) window.serverBaseReward = parseFloat(retryData.base_reward);
+          saveUserSession(currentUser);
+          processingAnimation.style.display = 'block';
+          startCountdown(retryData.remaining_seconds * 1000, currentUser.processing_start_time, currentUser.processing_end_time);
+          startGradualAccumulation();
+          const transferredReward = retryData.reward_transferred || retryData.previous_reward_transferred || 0;
+          if (transferredReward > 0.0001) {
+            setTimeout(() => {
+              showNotification(translator.translate('Previous processing reward of') + ' ' + formatNumberSmart(transferredReward) + ' ' + translator.translate('Points has been added to your balance!'), 'success');
+            }, 1500);
+            if (retryData.new_balance !== undefined) {
+              currentUser.coins = retryData.new_balance;
+              saveUserSession(currentUser);
+            }
+          }
+          processingButton.classList.add('disabled');
+          processingButton.disabled = true;
+          return;
+        }
+      } catch(e) { console.log('Retry failed:', e); }
+      processingButton.classList.add('disabled');
+      processingButton.disabled = true;
+      return;
+    }
 
     // 🔒 SECURITY: Handle 409 Conflict - session already active
     if (response.status === 409) {
@@ -5266,7 +5364,7 @@ processingButton.addEventListener('click', async function(e) {
           const dashboardBalance = document.getElementById('dashboard-balance');
           if (dashboardBalance) dashboardBalance.textContent = formattedBalance;
           
-          const walletBalance = document.getElementById('wallet-balance');
+          const walletBalance = document.getElementById('network-coins');
           if (walletBalance) walletBalance.textContent = formattedBalance;
           
           // تحديث أي عناصر أخرى بالـ class
@@ -5360,7 +5458,7 @@ processingButton.addEventListener('click', async function(e) {
     } else {
       // Server returned success=false
       console.log(`[SCRIPT] Server rejected start: ${data.error}`);
-      showNotification(data.error || 'Failed to start processing', 'error');
+      showNotification(translator.translate(data.error || 'Failed to start processing'), 'error');
       processingStatus.textContent = translator.translate('Processing available');
       updateButtonSafely('fas fa-play', translator.translate('Start Activity'));
       // ✅ السيرفر رفض لكن أكد أنه لا توجد جلسة - يمكن فتح الزر
@@ -5507,13 +5605,13 @@ function startGradualAccumulation() {
     const safeElapsedSec = Math.max(elapsedSec, lastElapsedSec);
     lastElapsedSec = safeElapsedSec;
     
-    // حساب المكافأة الأساسية مع الـ boost
-    const baseReward = 0.25;
+    // حساب المكافأة الأساسية مع الـ boost — القيمة من السيرفر (نظام Halving)
+    const baseReward = window.serverBaseReward || 0.25;
     const boostedReward = baseReward * localBoostData.multiplier;
     
     // ✅ حساب دقيق: المكافأة لكل ثانية
-    // 0.25 ACCESS ÷ 86400 ثانية = 0.0000028935... ACCESS/ثانية
-    // مع الـ boost: (0.25 × multiplier) ÷ 86400
+    // baseReward ACCESS ÷ 86400 ثانية
+    // مع الـ boost: (baseReward × multiplier) ÷ 86400
     const rewardPerSecond = boostedReward / processingDuration;
     
     let calculatedAccumulated;
@@ -5755,7 +5853,7 @@ function startGradualAccumulation() {
       '#user-coins', '#user-balance', '#profile-coins',
       '.wallet-balance', '.account-balance', '.user-balance', '.balance-display', '.coin-balance',
       '[data-balance]', '#dashboard-balance', '#main-balance', '.current-balance',
-      '#activity-page .balance-display', '#community-page .balance-amount',
+      '#activity-page .balance-display', '#network-page #network-coins',
       '.sidebar-balance', '.header-balance', '.nav-balance', '.account-balance'
     ];
 
@@ -5795,7 +5893,7 @@ function startGradualAccumulation() {
     const pageContexts = [
       { selector: '#dashboard-page #user-coins', page: 'Dashboard' },
       { selector: '#profile-page #profile-coins', page: 'Profile' },
-      { selector: '#community-page .wallet-balance', page: 'Network' },
+      { selector: '#network-page #network-coins', page: 'Network' },
       { selector: '#activity-page .balance-display', page: 'Processing' }
     ];
 
@@ -5846,6 +5944,66 @@ function startGradualAccumulation() {
 
     console.log(`Balance sync complete: ${updatedCount} elements updated across all pages`);
   }
+
+  // ⚡ نظام تحديث الرصيد الذكي - يتحقق من السيرفر فقط عند الحاجة
+  // WebSocket يعمل ~50% من الوقت بسبب PM2 cluster (2 workers)
+  // الـ polling يضمن تحديث الرصيد حتى لو WebSocket لم يصل
+  let _lastKnownBalance = null;
+  let _balancePollingInterval = null;
+  let _lastWsUpdate = 0; // آخر مرة حدّث WebSocket الرصيد
+  
+  // تُستدعى من WebSocket عند وصول تحديث
+  window._markWsBalanceUpdate = function() {
+    _lastWsUpdate = Date.now();
+  };
+  
+  function startBalancePolling() {
+    if (_balancePollingInterval) return;
+    
+    _balancePollingInterval = setInterval(async () => {
+      if (!currentUser || !currentUser.email) return;
+      
+      // إذا WebSocket حدّث الرصيد خلال آخر 8 ثوانٍ، لا حاجة للـ polling
+      if (Date.now() - _lastWsUpdate < 8000) return;
+      
+      try {
+        const response = await fetch(`/api/user/${encodeURIComponent(currentUser.email)}`);
+        if (!response.ok) return;
+        const userData = await response.json();
+        if (!userData.user || userData.user.coins === undefined) return;
+        
+        const serverBalance = parseFloat(userData.user.coins);
+        const localBalance = parseFloat(currentUser.coins || 0);
+        
+        if (Math.abs(serverBalance - localBalance) > 0.000001) {
+          console.log(`⚡ Polling: balance changed ${localBalance} → ${serverBalance}`);
+          currentUser.coins = serverBalance;
+          if (currentUser.wallet) currentUser.wallet.balance = serverBalance;
+          saveUserSession(currentUser);
+          updateUserCoins(serverBalance);
+          syncBalanceAcrossPages(serverBalance);
+          
+          // إشعار المستخدم
+          if (serverBalance > localBalance) {
+            const diff = serverBalance - localBalance;
+            if (typeof showNotification === 'function' && diff > 0.000001) {
+              showNotification(`${translator.translate('Received')} ${formatNumberSmart(diff)} Points`, 'success');
+            }
+          }
+        }
+        
+        _lastKnownBalance = serverBalance;
+      } catch (e) {
+        // Silent
+      }
+    }, 8000); // كل 8 ثوانٍ
+  }
+  
+  // بدء عند تسجيل الدخول
+  document.addEventListener('userLoggedIn', () => startBalancePolling());
+  setTimeout(() => {
+    if (currentUser && currentUser.email) startBalancePolling();
+  }, 5000);
   // Helper function to refresh user data
   async function refreshUserData() {
     try {
@@ -5853,6 +6011,11 @@ function startGradualAccumulation() {
       if (userData && userData.coins !== undefined) {
         updateUserCoins(userData.coins);
         currentUser.coins = userData.coins;
+        // ✅ FIX: Sync session token if server returned a new one
+        if (userData.session_token) {
+          currentUser.sessionToken = userData.session_token;
+          currentUser.session_token = userData.session_token;
+        }
         saveUserSession(currentUser);
         console.log(`Refreshed user data with balance: ${formatNumberSmart(userData.coins)}`);
         return true;
@@ -5935,7 +6098,8 @@ function startGradualAccumulation() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               userId: currentUser.id,
-              completedReward: finalReward
+              completedReward: finalReward,
+              sessionToken: currentUser.sessionToken || currentUser.session_token || ''
             })
           });
 
@@ -6231,8 +6395,8 @@ function startGradualAccumulation() {
             window.boostCheckInterval = null;
           }
 
-          // ✅ CRITICAL: حساب القيمة النهائية الكاملة
-          const baseReward = 0.25;
+          // ✅ CRITICAL: حساب القيمة النهائية الكاملة — القيمة من السيرفر (نظام Halving)
+          const baseReward = window.serverBaseReward || 0.25;
           const finalReward = baseReward * (window.localBoostData?.multiplier || 1.0);
           
           // ✅ CRITICAL: عرض القيمة النهائية الكاملة قبل التنظيف
@@ -6253,7 +6417,8 @@ function startGradualAccumulation() {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ 
                     userId: currentUser.id,
-                    completedReward: finalReward
+                    completedReward: finalReward,
+                    sessionToken: currentUser.sessionToken || currentUser.session_token || ''
                   })
                 });
                 
@@ -6985,7 +7150,7 @@ function updateProcessingStatus(message, type) {
 
       const progressBar = document.getElementById('processing-progress');
       const accumulatedCoinsElement = document.getElementById('accumulated-coins');
-      const totalReward = 0.25;
+      const totalReward = window.serverBaseReward || 0.25; // 🔄 HALVING: القيمة من السيرفر
 
       // Initialize with server-loaded value if available
       let accumulated = currentUser.processing_accumulated || 0;
@@ -7119,7 +7284,7 @@ function updateProcessingStatus(message, type) {
 
 // Create a dedicated observer for the network page to catch dynamic content
 document.addEventListener('DOMContentLoaded', () => {
-  const networkPage = document.getElementById('community-page');
+  const networkPage = document.getElementById('network-page');
   if (networkPage) {
     const networkObserver = new MutationObserver(() => {
       // Translate whenever network page changes
@@ -7403,8 +7568,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // If network page is currently visible, apply multiple translation passes
         // with increasing delays to ensure complete coverage
-        if (document.getElementById('community-page') && 
-            document.getElementById('community-page').style.display !== 'none') {
+        if (document.getElementById('network-page') && 
+            document.getElementById('network-page').style.display !== 'none') {
           
           // Series of delayed translations to catch all elements as they update
           [100, 300, 600, 1000, 1500].forEach(delay => {
@@ -7422,7 +7587,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'visible') {
       // Check if network page is visible
-      const networkPage = document.getElementById('community-page');
+      const networkPage = document.getElementById('network-page');
       if (networkPage && window.getComputedStyle(networkPage).display !== 'none') {
         // Apply translations with multiple passes when returning to the page
         // Network page translation handled automatically
@@ -7434,8 +7599,8 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Check if network page is already visible on load and apply translations
-  if (document.getElementById('community-page') && 
-      window.getComputedStyle(document.getElementById('community-page')).display !== 'none') {
+  if (document.getElementById('network-page') && 
+      window.getComputedStyle(document.getElementById('network-page')).display !== 'none') {
     // Network page translation handled automatically
     // Network page observer handled automatically
   }
@@ -7716,6 +7881,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
                 currentUser.coins = serverBalance;
                 saveUserSession(currentUser);
                 updateUserCoins(serverBalance);
+                if (window._markWsBalanceUpdate) window._markWsBalanceUpdate();
                 console.log(`Balance updated instantly: ${serverBalance}`);
               } else {
                 // Fetch fresh balance from server
@@ -7743,8 +7909,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
               }
 
               // Refresh transaction list if on network page
-              if (document.getElementById('community-page') && 
-                  window.getComputedStyle(document.getElementById('community-page')).display !== 'none') {
+              if (document.getElementById('network-page') && 
+                  window.getComputedStyle(document.getElementById('network-page')).display !== 'none') {
                 setTimeout(() => {
                   if (typeof updateTransactionList === 'function') {
                     updateTransactionList();
@@ -7960,7 +8126,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
       const minimalUserData = {
         id: user.id,
         email: user.email,
-        token: user.token
+        token: user.token,
+        sessionToken: user.session_token || user.sessionToken || ''
         // Don't store name or avatar in localStorage to ensure fresh data on login
       };
       localStorage.setItem('accessoireUser', JSON.stringify(minimalUserData));
@@ -8207,8 +8374,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     if (profileName) profileName.textContent = user.name || 'User';
     if (profileEmail) profileEmail.textContent = user.email || '';
 
-    // Default avatar SVG (gray placeholder)
-    const defaultAvatarSvg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+    // No default avatar SVG - use empty string so Google picture or server avatar is used
+    const defaultAvatarSvg = '';
 
     if (profileAvatar) {
       // Use real avatar or default SVG
@@ -8310,9 +8477,15 @@ window.addEventListener('load', applyArabicCssIfNeeded);
 
           // Update current user data
           currentUser = {...currentUser, ...userData};
+          // ✅ FIX: Sync session_token field name (server uses snake_case, client uses camelCase)
+          if (userData.session_token) {
+            currentUser.sessionToken = userData.session_token;
+          }
           delete currentUser._forceUpdate;
           delete currentUser._requiresRefresh;
 
+          // ✅ FIX: Persist updated user data to localStorage
+          saveUserSession(currentUser);
           console.log('User data refreshed from server with latest values');
         }
       }).catch(error => {
@@ -8471,11 +8644,8 @@ function initializeGoogleSignIn() {
       }).join(''));
       const payload = JSON.parse(jsonPayload);
       
-      // Default avatar SVG - used if no picture provided
-      const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iIzY2NjZmZiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTQiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNOCAzMmMwLTYgNS0xMCAxMi0xMHMxMiA0IDEyIDEwdjJjMCAxLTEgMi0yIDJoLTIwYy0xIDAtMi0xLTItMnYtMnoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
-      
-      // Extract user information - use picture or default avatar
-      const avatarUrl = payload.picture || DEFAULT_AVATAR;
+      // Extract user information - use Google picture directly (no SVG fallback)
+      const avatarUrl = payload.picture || '';
       
       currentUser = {
         email: payload.email,
@@ -8665,7 +8835,7 @@ function initializeGoogleSignIn() {
 
     // Check if user already has a wallet
     const walletAddress = document.getElementById('user-account-address');
-    const walletBalance = document.getElementById('wallet-balance');
+    const walletBalance = document.getElementById('network-coins');
 
     // ⚡ INSTANT DISPLAY - عرض فوري بدون "Generating..."
     if (walletAddress && currentUser.wallet_address) {
@@ -8997,7 +9167,7 @@ function initializeGoogleSignIn() {
     document.documentElement.setAttribute('data-language', currentLang);
 
     // Ensure all network page texts are translated
-    if (document.getElementById('community-page') && document.getElementById('community-page').style.display !== 'none') {
+    if (document.getElementById('network-page') && document.getElementById('network-page').style.display !== 'none') {
 
     }
 
@@ -9632,8 +9802,8 @@ function initQRScanner() {
         }
       },
       {
-        highlightScanRegion: true,
-        highlightCodeOutline: true
+        highlightScanRegion: false,
+        highlightCodeOutline: false
       }
     );
 
@@ -9652,6 +9822,9 @@ window.openQRScanner = function() {
 
   // Show scanner modal
   scannerModal.style.display = 'flex';
+  
+  // Add click outside to close
+  scannerModal.addEventListener('click', handleScannerOutsideClick);
 
   // Initialize scanner if needed
   if (!qrScanner) {
@@ -9681,7 +9854,18 @@ window.closeQRScanner = function() {
   if (qrScanner) {
     qrScanner.stop();
   }
+  
+  // Remove click outside listener
+  scannerModal.removeEventListener('click', handleScannerOutsideClick);
 };
+
+// Handle click outside scanner content to close
+function handleScannerOutsideClick(e) {
+  // Only close if clicked on the background (modal itself), not the content
+  if (e.target.id === 'qr-scanner-modal') {
+    closeQRScanner();
+  }
+}
 
 
  // Paste clipboard content into recipient address field
@@ -10194,7 +10378,7 @@ window.copyAccountAddress = function() {
 
             // Update UI
             const walletAddress = document.getElementById('user-account-address');
-            const walletBalance = document.getElementById('wallet-balance');
+            const walletBalance = document.getElementById('network-coins');
 
             if (walletAddress) {
               walletAddress.textContent = importedWallet.publicAddress;
@@ -10255,7 +10439,7 @@ window.copyAccountAddress = function() {
 
             // Update UI
             const walletAddress = document.getElementById('user-account-address');
-            const walletBalance = document.getElementById('wallet-balance');
+            const walletBalance = document.getElementById('network-coins');
 
             if (walletAddress) {
               walletAddress.textContent = importedWallet.publicAddress;
@@ -10364,8 +10548,8 @@ window.copyAccountAddress = function() {
     });
 
     // If network page is already visible on load, initialize wallet
-    if (document.getElementById('community-page') && 
-        document.getElementById('community-page').style.display !== 'none') {
+    if (document.getElementById('network-page') && 
+        document.getElementById('network-page').style.display !== 'none') {
       // Short delay to ensure user data is loaded
       setTimeout(() => {
         if (currentUser && currentUser.id) {
@@ -10397,7 +10581,7 @@ window.copyAccountAddress = function() {
     document.addEventListener('visibilitychange', function() {
       if (document.visibilityState === 'visible') {
         // Check if network page is visible
-        const networkPage = document.getElementById('community-page');
+        const networkPage = document.getElementById('network-page');
         if (networkPage && networkPage.style.display !== 'none' && currentUser && currentUser.id) {
           // Re-initialize wallet and regenerate QR code when returning to the page
           setTimeout(() => {
@@ -10465,18 +10649,18 @@ window.setMaxAmount = function() {
   const currentBalance = parseFloat(currentUser.coins || 0);
 
   // Calculate max sendable - exact amount minus gas fee only
-  const maxSendable = Math.max(0, currentBalance - gasFee);
+  const maxSendable = parseFloat(Math.max(0, currentBalance - gasFee).toFixed(8));
 
   const amountInput = document.getElementById('transaction-amount');
   if (amountInput) {
     if (maxSendable <= 0) {
       showNotification(translator.translate('Insufficient balance to cover gas fees'), 'error');
-      amountInput.value = '0.00000000';
+      amountInput.value = '0';
     } else {
       // Set the value without toFixed to preserve the exact calculated amount
       amountInput.value = maxSendable.toString();
       showNotification(
-        `${translator.translate('Max amount set')}: ${maxSendable.toFixed(8)} Points`,
+        `${translator.translate('Max amount set')}: ${maxSendable} Points`,
         'success'
       );
     }
@@ -10602,7 +10786,7 @@ if (currentBalance < gasFee) {
 // Check if balance is sufficient for amount + gas fee (with minimal precision tolerance)
 const precision = 0.000000001; // Very small tolerance for floating-point precision only
 if (totalCost > (currentBalance + precision)) {
-  const maxSendable = Math.max(0, currentBalance - gasFee);
+  const maxSendable = parseFloat(Math.max(0, currentBalance - gasFee).toFixed(8));
   showNotification(`${translator.translate('Insufficient balance. Total cost')}: ${formatNumberSmart(totalCost)} Access. ${translator.translate('Maximum sendable amount')}: ${formatNumberSmart(maxSendable)} Access`, 'error');
   return;
 }
@@ -10773,8 +10957,8 @@ if (totalCost > (currentBalance + precision)) {
           console.log('Transaction successfully recorded on server:', response);
 
           // Update balance from server response to prevent double deduction
-          if (response && response.senderBalance !== undefined) {
-            const serverBalance = parseFloat(response.senderBalance);
+          if (response && response.sender_balance_new !== undefined) {
+            const serverBalance = parseFloat(response.sender_balance_new);
             currentUser.coins = serverBalance;
             currentUser.wallet.balance = serverBalance;
 
@@ -10783,7 +10967,7 @@ if (totalCost > (currentBalance + precision)) {
 
             const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
             if (!isBalanceHidden) {
-              const walletBalanceElement = document.getElementById('wallet-balance');
+              const walletBalanceElement = document.getElementById('network-coins');
               if (walletBalanceElement) {
                 walletBalanceElement.textContent = formatNumberSmart(serverBalance);
               }
@@ -11932,7 +12116,7 @@ if (totalCost > (currentBalance + precision)) {
   function syncWalletBalanceWithUserCoins() {
     if (currentUser && typeof currentUser.coins !== 'undefined') {
       // Update UI to display database balance
-      const walletBalance = document.getElementById('wallet-balance');
+      const walletBalance = document.getElementById('network-coins');
       if (walletBalance) {
         walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
       }
@@ -12328,6 +12512,12 @@ if (totalCost > (currentBalance + precision)) {
 
       // Connect to WebSocket for presence tracking
       if (currentUser.id) {
+        // 🌐 Sync detected device language to database for notifications
+        const detectedLang = localStorage.getItem('preferredLanguage');
+        if (detectedLang) {
+          saveLanguageToDatabase(detectedLang);
+        }
+        
         connectPresenceWebSocket(currentUser.id);
         // Load processing history when restoring session
         addProcessingHistoryEntry();
@@ -12511,7 +12701,8 @@ if (totalCost > (currentBalance + precision)) {
         coins: 0,
         processingActive: false,
         referrerCode: referrerCode,
-        privacyAccepted: user.acceptedPrivacyPolicy || false
+        privacyAccepted: user.acceptedPrivacyPolicy || false,
+        language: localStorage.getItem('preferredLanguage') || 'en'
       };
 
       console.log('📦 User data being sent to server:', userData);
@@ -12596,7 +12787,7 @@ if (totalCost > (currentBalance + precision)) {
         const messagePara = document.createElement('p');
         messagePara.textContent = translatedMessage;
         
-        const closeBtnBonus = document.createElement('button');
+        const closeBtnBonus = document.createElement('span');
         closeBtnBonus.className = 'close-btn';
         const closeIconBonus = document.createElement('i');
         closeIconBonus.className = 'fas fa-times';
@@ -12765,10 +12956,10 @@ if (totalCost > (currentBalance + precision)) {
           // Log final decision 
           console.log(`Final status for ${referral.name}: isActive=${isActive}, statusText=${statusText}`);
 
-          const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+          const defaultAvatar = '';
           item.innerHTML = `
             <div class="referral-user">
-              <img src="${referral.avatar || defaultAvatar}" alt="User" class="referral-avatar" onerror="this.onerror=null; this.src='${defaultAvatar}';">
+              <img src="${referral.avatar || defaultAvatar}" alt="User" class="referral-avatar" onerror="this.onerror=null;">
               <div class="referral-user-info">
                 <div class="referral-name">${referral.name}</div>
                 <div class="referral-email">${maskedEmail}</div>
@@ -13187,10 +13378,21 @@ window.cancelProfileChanges = cancelProfileChanges;
 
        if (galleryOption) {
          // ط¥ط²ط§ظ„ط© ط£ظٹ ظ…ط¹ط§ظ„ط¬ط§طھ ط³ط§ط¨ظ‚ط© ظ„ظ…ظ†ط¹ ط§ظ„طھظƒط±ط§ط±
+         galleryOption.onclick = null;
          galleryOption.onclick = function(e) {
            e.stopPropagation();
-           document.getElementById("profile-image-upload").removeAttribute("capture");
-           document.getElementById("profile-image-upload").click();
+           e.preventDefault();
+
+           console.log('Gallery option clicked');
+           const profileImageUpload = document.getElementById('profile-image-upload');
+
+           if (profileImageUpload) {
+             // ط¥ط¹ط¯ط§ط¯ ط§ظ„ظ…ط¹ط±ط¶
+             profileImageUpload.removeAttribute('capture');
+             profileImageUpload.setAttribute('accept', 'image/*');
+             profileImageUpload.click();
+             console.log('Gallery opened');
+           }
            hidePhotoMenu();
          };
        }
@@ -13249,35 +13451,16 @@ window.cancelProfileChanges = cancelProfileChanges;
          if (dashboardAvatar) {
            dashboardAvatar.src = defaultAvatar;
          }
-         const mobileAvatar = document.getElementById('mobile-user-avatar');
-         if (mobileAvatar) {
-           mobileAvatar.src = defaultAvatar;
-         }
 
          // Update user data with default avatar (not null)
          if (currentUser) {
            currentUser.avatar = defaultAvatar;
 
-           // Send delete directly to server
-           fetch(window.location.origin + '/api/profile/delete-photo', {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify({ userId: currentUser.id })
-           }).then(function(r) { return r.json(); }).then(function(data) {
-             if (!data.success) {
-               fetch(window.location.origin + '/api/users/update-profile', {
-                 method: 'PUT',
-                 headers: { 'Content-Type': 'application/json' },
-                 body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
-               }).catch(function() {});
-             }
-           }).catch(function() {
-             fetch(window.location.origin + '/api/users/update-profile', {
-               method: 'PUT',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
-             }).catch(function() {});
-           });
+           // Save the change immediately to server with default avatar - without additional notification
+           if (typeof saveProfileChanges === 'function') {
+             // Pass true as third parameter to prevent showing "updated successfully" notification
+             saveProfileChanges(currentUser.name, defaultAvatar, true);
+           }
 
            // Show single success notification only
            if (typeof showNotification === 'function') {
@@ -13732,22 +13915,32 @@ window.cancelProfileChanges = cancelProfileChanges;
          showNotification(translator.translate('Profile updated successfully'), 'success');
        }
 
-       // Force reload fresh user data immediately to ensure consistency
+       // Force reload fresh user data after a delay to ensure server has saved
+       // Use forceRefresh=true to bypass cache, and preserve locally-set avatar
        if (currentUser.email) {
-         // Force immediate reload instead of waiting
-         checkIfUserExists(currentUser.email).then(userData => {
-           if (userData) {
-             console.log('Verified profile changes with server data');
+         const localAvatar = currentUser.avatar; // Preserve what we just set locally
+         const localLastUpdate = currentUser.lastProfileUpdate;
+         setTimeout(function() {
+           checkIfUserExists(currentUser.email, true).then(userData => {
+             if (userData) {
+               console.log('Verified profile changes with server data after delay');
 
-             // Make sure our UI reflects the latest server data
-             updateUserInfo(userData);
+               // If we just deleted/changed the avatar locally, don't let server overwrite with stale data
+               if (localLastUpdate && currentUser.lastProfileUpdate === localLastUpdate) {
+                 // Preserve local avatar if server returns something different (race condition)
+                 userData.avatar = localAvatar;
+               }
 
-             // Save the verified server data
-             saveUserSession(userData);
-           }
-         }).catch(error => {
-           console.error('Error verifying profile update:', error);
-         });
+               // Make sure our UI reflects the latest server data
+               updateUserInfo(userData);
+
+               // Save the verified server data
+               saveUserSession(userData);
+             }
+           }).catch(error => {
+             console.error('Error verifying profile update:', error);
+           });
+         }, 2500);
        }
      }
 
@@ -13793,53 +13986,29 @@ window.cancelProfileChanges = cancelProfileChanges;
   window.deleteProfilePhoto = function() {
     const profileAvatar = document.getElementById('profile-avatar');
     if (profileAvatar && currentUser) {
-      const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+      const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCI`x`sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIicjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAuOHYxYzAtMS0xLTItMi0yaC0xNmMtMSAwLTIgLTEtMi03di0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+
       if (!currentUser.avatar || currentUser.avatar === defaultAvatar || currentUser.avatar === null) {
         if (typeof showNotification === 'function') {
-          const msg = (typeof translator !== 'undefined' && translator.translate) ? translator.translate('No profile photo to delete') : 'No profile photo to delete';
-          showNotification(msg, 'info');
+          showNotification('No profile photo to delete', 'info');
         }
         return;
       }
 
-      // Update ALL avatar elements immediately
       profileAvatar.src = defaultAvatar;
       const dashboardAvatar = document.getElementById('dashboard-profile-avatar');
-      if (dashboardAvatar) dashboardAvatar.src = defaultAvatar;
-      const mobileAvatar = document.getElementById('mobile-user-avatar');
-      if (mobileAvatar) mobileAvatar.src = defaultAvatar;
+      if (dashboardAvatar) {
+        dashboardAvatar.src = defaultAvatar;
+      }
 
-      // Update currentUser in memory immediately
-      currentUser.avatar = defaultAvatar;
-
-      // Send delete directly to server - no delay
-      fetch(window.location.origin + '/api/profile/delete-photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id })
-      }).then(function(r) { return r.json(); }).then(function(data) {
-        if (data.success) {
-          console.log('Profile photo deleted on server');
-        } else {
-          // Fallback: try update-profile endpoint
-          fetch(window.location.origin + '/api/users/update-profile', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
-          }).catch(function() {});
+      if (currentUser) {
+        currentUser.avatar = defaultAvatar;
+        if (typeof saveProfileChanges === 'function') {
+          saveProfileChanges(currentUser.name, defaultAvatar, true);
         }
-      }).catch(function() {
-        // Fallback: try update-profile endpoint
-        fetch(window.location.origin + '/api/users/update-profile', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
-        }).catch(function() {});
-      });
-
-      if (typeof showNotification === 'function') {
-        const msg = (typeof translator !== 'undefined' && translator.translate) ? translator.translate('Profile photo changed to default') : 'Profile photo changed to default';
-        showNotification(msg, 'success');
+        if (typeof showNotification === 'function') {
+          showNotification('Profile photo changed to default', 'success');
+        }
       }
     }
   };
@@ -13847,8 +14016,6 @@ window.cancelProfileChanges = cancelProfileChanges;
   // Simple Profile Menu System - No conflicts, no complex animations
   function setupSimpleProfileMenu() {
     // Simple setup function that runs once
-    // Skip if initializeProfileEditing already set up handlers
-    if (profileEditingInitialized) return;
     function initializePhotoMenu() {
       const avatarContainer = document.getElementById('avatar-container');
       if (!avatarContainer) return;
@@ -13894,9 +14061,14 @@ window.cancelProfileChanges = cancelProfileChanges;
       if (galleryOption) {
         galleryOption.onclick = function(e) {
           e.stopPropagation();
-          document.getElementById("profile-image-upload").removeAttribute("capture");
-          document.getElementById("profile-image-upload").click();
-          document.querySelector(".photo-options-menu").classList.remove("show");
+          e.preventDefault();
+          const profileImageUpload = document.getElementById('profile-image-upload');
+          if (profileImageUpload) {
+            profileImageUpload.removeAttribute('capture');
+            profileImageUpload.setAttribute('accept', 'image/*');
+            profileImageUpload.click();
+          }
+          document.querySelector('.photo-options-menu').classList.remove('show');
         };
       }
 
@@ -13986,14 +14158,6 @@ window.cancelProfileChanges = cancelProfileChanges;
   // Initialize simple system
   setupSimpleProfileMenu();
 
-  // Pre-initialize profile editing on page load for instant gallery open
-  setTimeout(function() {
-    if (document.getElementById("avatar-container")) {
-      profileEditingInitialized = false;
-      initializeProfileEditing();
-    }
-  }, 500);
-
 
 
 
@@ -14013,7 +14177,7 @@ window.cancelProfileChanges = cancelProfileChanges;
     const messagePara = document.createElement('p');
     messagePara.textContent = message;
     
-    const closeBtnNotif = document.createElement('button');
+    const closeBtnNotif = document.createElement('span');
     closeBtnNotif.className = 'close-btn';
     const closeIconNotif = document.createElement('i');
     closeIconNotif.className = 'fas fa-times';
@@ -15044,8 +15208,15 @@ window.cancelProfileChanges = cancelProfileChanges;
 // Simple translator class
 class Translator {
   constructor() {
-    // Use preloaded language from head script, or check localStorage, fallback to 'en'
-    this.currentLanguage = window.__preloadedLang || localStorage.getItem('preferredLanguage') || 'en';
+    // Use preloaded language from head script, or check localStorage, or auto-detect from device
+    var lang = window.__preloadedLang || localStorage.getItem('preferredLanguage');
+    if (!lang) {
+      var supportedLangs = ['en','fr','es','it','tr','hi','zh','ja','ko','pt','ru','de','ar','id','pl'];
+      var browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase().split('-')[0];
+      lang = supportedLangs.includes(browserLang) ? browserLang : 'en';
+      localStorage.setItem('preferredLanguage', lang);
+    }
+    this.currentLanguage = lang;
     this.translations = window.translations || {};
     this.fallbackLanguage = 'en'; // English as fallback
   }

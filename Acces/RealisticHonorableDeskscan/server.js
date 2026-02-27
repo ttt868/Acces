@@ -23,7 +23,7 @@ import { startBoostReminderScheduler } from './boost-reminder-notifications.js';
 // ============================================================================
 // 📦 إصدار الملفات - غير هذا الرقم فقط لتحديث كل الملفات
 // ============================================================================
-const ASSETS_VERSION = '20.6';
+const ASSETS_VERSION = '20.3';
 
 // ============================================================================
 // 🔒 SESSION TOKEN PROTECTION - حماية من الجلسات المتعددة
@@ -75,30 +75,28 @@ process.on('uncaughtException', (error) => {
   serverCrashCount++;
   errorCountThisMinute++;
   
-  // ✅ Always log errors - never silent
-  console.error(`❌ [UNCAUGHT EXCEPTION #${serverCrashCount}]:`, error.message);
-  console.error('Stack:', error.stack?.split('\n').slice(0, 3).join('\n'));
-  
-  // ✅ CRITICAL: If too many errors, something is fundamentally wrong
-  // PM2 will auto-restart, which is safer than running with corrupted state
-  if (errorCountThisMinute > MAX_ERRORS_PER_MINUTE) {
-    console.error('🔴 CRITICAL: Too many errors - exiting for PM2 restart (safer than corrupted state)');
-    process.exit(1);
+  // Log only if not too many errors
+  if (errorCountThisMinute <= 10) {
+    console.error(`❌ [CAUGHT] Uncaught Exception #${serverCrashCount}:`, error.message);
   }
   
-  // Non-critical errors: continue but log for monitoring
+  // إذا كانت الأخطاء كثيرة جداً، شيء خاطئ بشكل كبير
+  if (errorCountThisMinute > MAX_ERRORS_PER_MINUTE) {
+    console.error('⚠️ Too many errors! But server continues...');
+  }
+  
+  // 🛡️ لا نستدعي process.exit() - السيرفر يستمر!
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   errorCountThisMinute++;
   
-  // ✅ Always log
-  console.error('❌ [UNHANDLED REJECTION]:', reason?.message || reason);
-  
-  if (errorCountThisMinute > MAX_ERRORS_PER_MINUTE) {
-    console.error('🔴 CRITICAL: Too many rejections - exiting for PM2 restart');
-    process.exit(1);
+  // Log only if not too many errors
+  if (errorCountThisMinute <= 10) {
+    console.error('❌ [CAUGHT] Unhandled Rejection:', reason);
   }
+  
+  // 🛡️ لا نستدعي process.exit() - السيرفر يستمر!
 });
 
 // 🧹 Memory cleanup كل 5 دقائق
@@ -658,15 +656,20 @@ purePermanentStorage.initializePermanentTables().then(() => {
 // عرض إحصائيات التخزين الدائم مع فحص حالة السحابة
 setInterval(async () => {
   try {
-    if (typeof purePermanentStorage?.getStorageStats !== 'function') return;
-    const stats = await purePermanentStorage.getStorageStats();
-    const health = await purePermanentStorage.getStorageHealth();
+    const stats = await permanentStorage.getStorageStats();
+    const health = await permanentStorage.getStorageHealth();
     
-    if (stats && health && !health.cloudAvailable) {
-      console.warn('☁️ تحذير: التخزين السحابي غير متاح - يتم استخدام التخزين المؤقت');
+    if (stats) {
+      // تم إزالة رسائل الكونسول المتكررة لتوفير الموارد
+      
+      if (!health.cloudAvailable) {
+        console.warn('☁️ تحذير: التخزين السحابي غير متاح - يتم استخدام التخزين المؤقت');
+      }
     }
+
+    // إحصائيات التخزين المتقدم (صامتة لتوفير الموارد)
   } catch (statsError) {
-    // صامت — لا نملأ error log بأخطاء غير حرجة
+    console.warn('⚠️ تعذر جلب إحصائيات التخزين:', statsError.message);
   }
 }, 30 * 60 * 1000); // كل 30 دقيقة
 
@@ -4728,7 +4731,7 @@ const server = http.createServer(async (req, res) => {
         // ✅ Removed verbose console.log for performance
         
         // 🔧 Smart timeout: 20 seconds for free/slow databases
-        const queryTimeout = 21000;
+        const queryTimeout = 20000;
         
         // Get all necessary processing data with adaptive timeout protection
         const userStatus = await Promise.race([
@@ -4823,7 +4826,7 @@ const server = http.createServer(async (req, res) => {
         let nowSec = Math.floor(nowMs / 1000); // seconds
         
         // Validate timestamps to prevent 1970 epoch issues
-        if (nowMs < 952380952000) { // If timestamp is too small, use current time
+        if (nowMs < 1000000000000) { // If timestamp is too small, use current time
           console.error('Invalid timestamp detected, using current time');
           nowMs = Date.now();
           nowSec = Math.floor(nowMs / 1000);
@@ -7523,8 +7526,8 @@ const server = http.createServer(async (req, res) => {
               // معاملة جديدة - إنشاؤها
               const insertResult = await client.query(
                 `INSERT INTO transactions 
-                (sender, recipient, sender_address, recipient_address, amount, timestamp, hash, tx_hash, description, gas_fee, status, formatted_date, is_external_sender, is_external_recipient, input, signature) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                (sender, recipient, sender_address, recipient_address, amount, timestamp, hash, tx_hash, description, gas_fee, status, formatted_date, is_external_sender, is_external_recipient, input) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                 RETURNING id`,
                 [
                   safeSender, 
@@ -7541,8 +7544,7 @@ const server = http.createServer(async (req, res) => {
                   new Date(timestamp || Date.now()).toISOString(),
                   realExternalSender || false,
                   realExternalRecipient || false,
-                  input || null,
-                  (() => { try { const sd = (senderAddress||"")+(recipientAddress||"")+numericAmount+(hash||""); return crypto.createHash("sha256").update(sd+"r").digest("hex") + crypto.createHash("sha256").update(sd+"s").digest("hex") + (22888*2+35).toString(16); } catch(e) { return null; } })()
+                  input || null
                 ]
               );
               transactionId = insertResult.rows[0].id;
@@ -10185,74 +10187,6 @@ const server = http.createServer(async (req, res) => {
   // ORIGINAL LINE (uncomment after removing redirect above):
   // let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
   let filePath = path.join(__dirname, pathname);
-
-  // ✅ SECURITY: Block access to server-side files
-  const requestedFile = path.basename(pathname).toLowerCase();
-  const requestedExt = path.extname(pathname).toLowerCase();
-  const pathLower = pathname.toLowerCase();
-
-  // Block entire sensitive directories
-  const blockedDirs = ['/backups/', '/logs/', '/access-network-data/', '/node_modules/',
-    '/blockchain-data/', '/access-state-storage-db/', '/network-leveldb/'];
-  if (blockedDirs.some(dir => pathLower.startsWith(dir))) {
-    res.writeHead(403, { 'Content-Type': 'text/plain' });
-    res.end('Forbidden');
-    return;
-  }
-
-  // Block dangerous file extensions entirely
-  const blockedExtensions = ['.sh', '.sql', '.env', '.backup', '.bak', '.log', '.key', '.pem', '.cert'];
-  if (blockedExtensions.includes(requestedExt)) {
-    res.writeHead(403, { 'Content-Type': 'text/plain' });
-    res.end('Forbidden');
-    return;
-  }
-
-  // Block sensitive config/data files by name
-  const blockedFiles = ['package.json', 'package-lock.json', '.gitignore', '.env', 
-    'firebase-service-account.json', 'server.js.backup_fcm', 'ecosystem.config.js',
-    'capacitor.config.json', 'migration-config.json', 'blockchain-data.json',
-    'node_modules'];
-  if (blockedFiles.includes(requestedFile)) {
-    res.writeHead(403, { 'Content-Type': 'text/plain' });
-    res.end('Forbidden');
-    return;
-  }
-
-  // For .json files: ONLY allow known public JSON files (whitelist)
-  if (requestedExt === '.json') {
-    const allowedClientJSON = new Set([
-      'manifest.json', 'chainlist-config.json', 'metamask-network-config.json',
-      'token-metadata.json', 'eip155-22888.json', 'ipfs-cids.json',
-      'assetlinks.json', 'access.json'
-    ]);
-    // Allow .well-known/assetlinks.json and chainlist-icons/*.json and ethereum-network-data/blocks/*.json
-    const isAllowedPath = pathLower.startsWith('/.well-known/') || 
-                          pathLower.startsWith('/chainlist-icons/') ||
-                          pathLower.startsWith('/ethereum-network-data/');
-    if (!allowedClientJSON.has(requestedFile) && !isAllowedPath) {
-      res.writeHead(403, { 'Content-Type': 'text/plain' });
-      res.end('Forbidden');
-      return;
-    }
-  }
-
-  // For .js files: ONLY allow known client-side scripts (whitelist)
-  if (requestedExt === '.js') {
-    const allowedClientJS = new Set([
-      'activity-ad-system.js', 'ad-boost-system.js', 'install-prompt.js',
-      'missions-system.js', 'notification-system.js', 'offline-detection.js',
-      'pin-lock-system.js', 'profile-member-since.js', 'script.js',
-      'state-activity.js', 'stats.js', 'translations.js', 'sw.js',
-      'processing-stats.js', 'state-processing.js', 'cordova-init.js',
-      'base-url.js', 'access-style-cache.js'
-    ]);
-    if (!allowedClientJS.has(requestedFile)) {
-      res.writeHead(403, { 'Content-Type': 'text/plain' });
-      res.end('Forbidden');
-      return;
-    }
-  }
 
   // Check if the URL might be a directory or missing extension
   if (!path.extname(filePath)) {

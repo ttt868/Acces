@@ -1,12 +1,46 @@
 import 'dotenv/config';
 import pg from 'pg';
 import { getDatabaseConfig } from './database-config.js';
+import { getCurrentBaseReward, splitReward, roundReward, FOUNDER_ADDRESS, DEV_FEE_PERCENT, MAX_SUPPLY } from './tokenomics.js';
 const { Pool } = pg;
 
 // 🚀 نظام Throttling ذكي لمنع UPDATE المتكررة
 // هذا يمنع استنفاد قاعدة البيانات مع الحفاظ على الوظائف
 const accumulatedUpdateThrottle = new Map(); // userId -> lastUpdateTime
 const ACCUMULATED_THROTTLE_MS = 10000; // 10 ثواني بين كل UPDATE
+
+// 💰 Cache للمعروض المتداول (يُحدّث كل 5 دقائق)
+let _dbCachedSupply = 0;
+let _dbLastSupplyCheck = 0;
+async function getDbCirculatingSupply() {
+  const now = Date.now();
+  if (_dbCachedSupply > 0 && (now - _dbLastSupplyCheck) < 300000) return _dbCachedSupply;
+  try {
+    // 1) DB coins
+    const r = await pool.query('SELECT COALESCE(SUM(coins), 0) as total FROM users WHERE coins > 0');
+    const dbTotal = parseFloat(r.rows[0].total) || 0;
+
+    // 2) Web3 State Trie
+    let trieTotal = 0;
+    try {
+      const { getGlobalAccessStateStorage } = await import('./access-state-storage.js');
+      const stateStorage = getGlobalAccessStateStorage();
+      const accountCache = stateStorage?.accountCache || {};
+      for (const addr in accountCache) {
+        const acc = accountCache[addr];
+        if (acc && acc.balance) trieTotal += parseInt(acc.balance) / 1e18;
+      }
+    } catch (_) { /* fallback to DB only */ }
+
+    // ✅ الأعلى = المعروض الحقيقي
+    _dbCachedSupply = Math.max(dbTotal, trieTotal);
+    _dbLastSupplyCheck = now;
+  } catch (e) { /* use cached */ }
+  return _dbCachedSupply;
+}
+async function dbCurrentBaseReward() {
+  return getCurrentBaseReward(await getDbCirculatingSupply());
+}
 
 function shouldSkipAccumulatedUpdate(userId) {
   const now = Date.now();
@@ -1228,7 +1262,7 @@ async function getUser(email) {
           const elapsedSec = nowSec - startTimeSec;
           
           if (elapsedSec > 0) {
-            const baseReward = 0.25;
+            const baseReward = await dbCurrentBaseReward();
             const boostedReward = baseReward * sessionLockedBoost;
             
             if (elapsedSec >= processingDuration) {
@@ -1587,8 +1621,8 @@ async function updateAccumulatedReward(userId, amount) {
         const progress = Math.min(1, elapsed / totalDuration);
         const rewardProgress = progress
 
-        // Base reward with boost
-        const baseReward = 0.25;
+        // Base reward with boost (Halving)
+        const baseReward = await dbCurrentBaseReward();
         const boostedReward = baseReward * boostMultiplier;
         amount = boostedReward * progress;
 
@@ -1778,8 +1812,8 @@ async function getAccumulatedReward(userId) {
     const effectiveHashrate = totalHashrate;
     const effectiveMultiplier = boostMultiplier;
 
-    // Base reward is always 0.25
-    const baseReward = 0.25;
+    // Base reward with Halving - dynamic based on circulating supply
+    const baseReward = await dbCurrentBaseReward();
 
     // Calculate boosted max reward - this is what they can earn in total
     const boostedMaxReward = baseReward * effectiveMultiplier;
@@ -1807,7 +1841,7 @@ async function getAccumulatedReward(userId) {
 
     // Only recalculate if there's an active processing session
     if (processingActive && processingStartTime > 0 && processingEndTime > now) {
-      const baseReward = 0.25;
+      const baseReward = await dbCurrentBaseReward();
       const boostedBaseReward = baseReward * effectiveMultiplier;
       const elapsed = now - processingStartTime;
       const totalDuration = processingEndTime - processingStartTime;
@@ -2930,7 +2964,7 @@ async function requestHandler(req, res) {
 
           // Only recalculate if there's an active processing session
           if (processingActive && processingStartTime > 0 && processingEndTime > now) {
-            const baseReward = 0.25;
+            const baseReward = await dbCurrentBaseReward();
             const boostedBaseReward = baseReward * effectiveMultiplier;
             const elapsed = now - processingStartTime;
             const totalDuration = processingEndTime - processingStartTime;

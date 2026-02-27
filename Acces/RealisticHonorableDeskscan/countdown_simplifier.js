@@ -1,5 +1,35 @@
 import { pool, computeHashrateMultiplier } from './db.js';
 import { initializeActivityCountdownTables, startProcessingCountdown, getProcessingCountdownStatus, completeProcessingCountdown } from './activity_countdown_system.js';
+import { getCurrentBaseReward, roundReward, MAX_SUPPLY } from './tokenomics.js';
+
+// 💰 Cache للمعروض المتداول
+let _cdCachedSupply = 0;
+let _cdLastCheck = 0;
+async function cdCurrentBaseReward() {
+  const now = Date.now();
+  if (_cdCachedSupply > 0 && (now - _cdLastCheck) < 300000) return getCurrentBaseReward(_cdCachedSupply);
+  try {
+    // 1) DB coins
+    const r = await pool.query('SELECT COALESCE(SUM(coins), 0) as total FROM users WHERE coins > 0');
+    const dbTotal = parseFloat(r.rows[0].total) || 0;
+
+    // 2) Web3 State Trie
+    let trieTotal = 0;
+    try {
+      const { getGlobalAccessStateStorage } = await import('./access-state-storage.js');
+      const stateStorage = getGlobalAccessStateStorage();
+      const accountCache = stateStorage?.accountCache || {};
+      for (const addr in accountCache) {
+        const acc = accountCache[addr];
+        if (acc && acc.balance) trieTotal += parseInt(acc.balance) / 1e18;
+      }
+    } catch (_) { /* fallback to DB only */ }
+
+    _cdCachedSupply = Math.max(dbTotal, trieTotal);
+    _cdLastCheck = now;
+  } catch (e) { /* use cached */ }
+  return getCurrentBaseReward(_cdCachedSupply);
+}
 
 // 🔒 Session Token Validation for countdown simplifier
 async function validateSessionTokenSimplifier(userId, sessionToken) {
@@ -14,17 +44,7 @@ async function validateSessionTokenSimplifier(userId, sessionToken) {
   }
 }
 
-/**
- * دالة تقريب المكافأة لتجنب الأرقام العشرية الطويلة (مثل 0.248883)
- * تقرب إلى 8 أماكن عشرية بشكل دقيق
- */
-function roundReward(amount) {
-  if (typeof amount !== 'number' || isNaN(amount)) {
-    return 0;
-  }
-  // تقريب إلى 8 أماكن عشرية
-  return Math.round(amount * 100000000) / 100000000;
-}
+// roundReward imported from tokenomics.js
 
 // Initialize the countdown system when module loads
 initializeActivityCountdownTables().catch(err => {
@@ -85,7 +105,7 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
       if (processing_active === 0) {
         // ✅ CRITICAL FIX: الجلسة منتهية - احسب المبلغ الكامل دائماً من session_locked_boost
         // لا نعتمد على accumulatedReward لأنه قد يكون ناقص (خاصة في الخلفية)
-        const baseReward = 0.25;
+        const baseReward = await cdCurrentBaseReward();
         const fullReward = baseReward * lockedBoost;
         
         // ✅ تقريب لأقرب سنت (0.01) لضمان أرقام نظيفة
@@ -181,7 +201,7 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
 
       // ✅ CRITICAL FIX: حساب المكافأة الكاملة دائماً من session_locked_boost
       // لا نعتمد على accumulatedReward لأنه قد يكون ناقص
-      const baseReward = 0.25;
+      const baseReward = await cdCurrentBaseReward();
       const fullReward = roundReward(baseReward * sessionLockedBoost);
       
       // ✅ تقريب لأقرب سنت (0.01) لضمان أرقام نظيفة
@@ -192,7 +212,7 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
       const finalRewardAmount = roundUpToTwoDecimals(fullReward);
 
       console.log(`✅ إكمال التعدين للمستخدم ${userId}: حفظ ${finalRewardAmount.toFixed(2)} ACCESS (boost: ${sessionLockedBoost.toFixed(2)}x)`);
-      console.log(`📊 تفاصيل: base=0.25 × ${sessionLockedBoost.toFixed(2)} = ${fullReward.toFixed(4)} → rounded to ${finalRewardAmount.toFixed(2)}`);
+      console.log(`📊 تفاصيل: base=${baseReward} × ${sessionLockedBoost.toFixed(2)} = ${fullReward.toFixed(4)} → rounded to ${finalRewardAmount.toFixed(2)}`);
 
       // ✅ Save completed reward WITHOUT transferring to balance
       // ✅ لا نحذف المكافأة المتراكمة - تبقى ظاهرة حتى بدء جلسة جديدة

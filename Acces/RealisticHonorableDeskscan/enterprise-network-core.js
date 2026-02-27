@@ -24,7 +24,7 @@ class EnterpriseNetworkCore {
       validators: new Set(),
       stakingAmount: 32, // ACCESS
       slashingConditions: new Set(),
-      rewardPerBlock: 0.25
+      rewardPerBlock: 0.25 // Initial value — actual reward from tokenomics.js halving system
     };
 
     // معالج المعاملات السريع - محسن
