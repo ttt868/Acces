@@ -14,8 +14,11 @@
         }
         document.documentElement.setAttribute('lang', s);
         document.documentElement.setAttribute('dir', rtlLangs.indexOf(s) !== -1 ? 'rtl' : 'ltr');
+        if (s !== 'en') document.documentElement.classList.add('translating');
     })();
     </script>
+    <style>html.translating [data-i18n]{color:transparent!important;}</style>
+    <link rel="preload" as="image" href="access-logo.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Access Network — Decentralized Blockchain Platform</title>
     <link rel="icon" type="image/png" href="access-logo-1.png">
@@ -738,7 +741,7 @@
     <nav class="nav">
         <div class="nav-inner">
             <a href="#" class="nav-logo">
-                <img src="test-icon.jpg" alt="Access Network" width="36" height="36" loading="eager" decoding="sync">
+                <img src="access-logo.png" alt="Access Network" width="36" height="36" loading="eager" decoding="sync">
                 <span>Access Network</span>
             </a>
             <ul class="nav-links">
@@ -1151,7 +1154,7 @@
         <div class="footer-inner">
             <div class="footer-brand">
                 <a href="#" class="nav-logo" style="margin-bottom:8px;">
-                    <img src="test-icon.jpg" alt="Access Network" width="36" height="36" loading="eager" decoding="sync">
+                    <img src="access-logo.png" alt="Access Network" width="36" height="36" loading="eager" decoding="sync">
                     <span>Access Network</span>
                 </a>
                 <p data-i18n="footer_desc">A high-performance blockchain platform for decentralized applications, digital assets, and smart contracts. Building the future of decentralized finance, one block at a time.</p>
@@ -2086,6 +2089,7 @@
     const initLang = validSaved ? savedLang : detectLanguage();
     currentLang = initLang;
     if (initLang !== 'en') applyTranslation(initLang);
+    document.documentElement.classList.remove('translating');
     buildLangMenu();
     </script>
 </body>
