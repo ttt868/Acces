@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="base-url.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Access Network</title>
@@ -504,7 +503,7 @@
                     <span class="info-label">RPC URL</span>
                     <div style="display: flex; align-items: center;">
                         <span class="info-value" id="rpc-url-display"></span>
-                        <button class="copy-btn" onclick="copyToClipboard('https://accesschain.org/rpc', this)">
+                        <button class="copy-btn" onclick="copyToClipboard(window.location.origin + '/rpc', this)">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
@@ -534,7 +533,7 @@
                     <span class="info-label">Explorer</span>
                     <div style="display: flex; align-items: center;">
                         <span class="info-value" id="explorer-url-display"></span>
-                        <button class="copy-btn" onclick="copyToClipboard('https://accesschain.org/access-explorer.html', this)">
+                        <button class="copy-btn" onclick="copyToClipboard(window.location.origin + '/access-explorer.html', this)">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
@@ -586,8 +585,8 @@
     </div>
 
     <script>
-        // Always use the official domain - NOT localhost
-        const currentHost = 'https://accesschain.org';
+        // تحديد الرابط ديناميكياً
+        const currentHost = window.location.origin;
         const accessNetwork = {
             chainId: '0x5968',
             chainName: 'Access Network',
@@ -971,14 +970,14 @@
                 }
             }
             
-            // Set dynamic URLs - Always use official domain
+            // Set dynamic URLs
             const rpcUrlDisplay = document.getElementById('rpc-url-display');
             const explorerUrlDisplay = document.getElementById('explorer-url-display');
             if (rpcUrlDisplay) {
-                rpcUrlDisplay.textContent = 'https://accesschain.org/rpc';
+                rpcUrlDisplay.textContent = window.location.origin + '/rpc';
             }
             if (explorerUrlDisplay) {
-                explorerUrlDisplay.textContent = 'https://accesschain.org/access-explorer.html';
+                explorerUrlDisplay.textContent = window.location.origin + '/access-explorer.html';
             }
             
             showStatus('Choose your preferred method to add the network', 'info');
