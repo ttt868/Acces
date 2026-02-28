@@ -2,9 +2,17 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <style id="i18n-cloak">
-    /* Hide ALL text content until translation is applied - prevents English flash */
-    [data-i18n] { visibility: hidden; }
+    <style>
+    /* Page screen: covers everything with bg color until ready */
+    html::before {
+        content: '';
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        z-index: 99999;
+        background: #0a0e17;
+        pointer-events: none;
+    }
+    html.ready::before { display: none; }
     </style>
     <script>
     // Apply saved language INSTANTLY before any rendering
@@ -18,8 +26,6 @@
         }
         document.documentElement.setAttribute('lang', s);
         document.documentElement.setAttribute('dir', rtlLangs.indexOf(s) !== -1 ? 'rtl' : 'ltr');
-        // If English, remove cloak immediately - no translation needed
-        if (s === 'en') document.getElementById('i18n-cloak').remove();
     })();
     </script>
     <link rel="preload" as="image" href="access-logo-1.png">
@@ -2093,10 +2099,9 @@
     const initLang = validSaved ? savedLang : detectLanguage();
     currentLang = initLang;
     if (initLang !== 'en') applyTranslation(initLang);
-    // Remove cloak - show all translated text
-    var cloak = document.getElementById('i18n-cloak');
-    if (cloak) cloak.remove();
     buildLangMenu();
+    // Reveal page — everything is translated and ready
+    document.documentElement.classList.add('ready');
     </script>
 </body>
 </html>
