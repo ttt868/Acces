@@ -3,7 +3,7 @@
   "name": "Access Network",
   "short_name": "Access Network",
   "description": "Digital engagement rewards platform",
-  "start_url": "/",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#000000",
