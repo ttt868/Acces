@@ -10413,7 +10413,7 @@ const server = http.createServer(async (req, res) => {
   // This makes the domain show the landing page
   // ============================================================
   if (pathname === '/') {
-    res.writeHead(301, { 'Location': '/access-project.html' });
+    res.writeHead(302, { 'Location': '/access-project.html', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
     res.end();
     return;
   }
