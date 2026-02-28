@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
+  <!-- Landing Page - Homepage -->
+  <url>
+    <loc>https://accesschain.org/access-project.html</loc>
+    <lastmod>2026-02-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
   <!-- About Page - Primary Content -->
   <url>
     <loc>https://accesschain.org/about.html</loc>

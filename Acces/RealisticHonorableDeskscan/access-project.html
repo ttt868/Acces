@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Network — Decentralized Blockchain Platform</title>
+    <link rel="icon" type="image/png" href="access-logo-1.png">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Access Network is a high-performance blockchain platform for decentralized applications. Download the app, explore the network, earn ACCESS tokens through proof-of-stake processing.">
+    <meta name="keywords" content="Access Network, blockchain, decentralized, crypto, ACCESS token, dApps, smart contracts, block explorer, proof of stake, cryptocurrency">
+    <meta name="author" content="Access Network Team">
+    <link rel="canonical" href="https://accesschain.org/access-project.html">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://accesschain.org/access-project.html">
+    <meta property="og:title" content="Access Network — Decentralized Blockchain Platform">
+    <meta property="og:description" content="High-performance blockchain for dApps, smart contracts, and digital assets. Fast, secure, and low-cost transactions.">
+    <meta property="og:image" content="https://accesschain.org/test-icon.jpg">
+    <meta property="og:site_name" content="Access Network">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://accesschain.org/access-project.html">
+    <meta name="twitter:title" content="Access Network — Decentralized Blockchain Platform">
+    <meta name="twitter:description" content="High-performance blockchain for dApps, smart contracts, and digital assets.">
+    <meta name="twitter:image" content="https://accesschain.org/test-icon.jpg">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Access Network",
+      "operatingSystem": "Android, Web",
+      "applicationCategory": "FinanceApplication",
+      "description": "Decentralized blockchain platform for digital engagement rewards",
+      "url": "https://accesschain.org",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
+
+    <!-- ✅ ADSENSE_TEMP: Google AdSense verification script -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3543981710825954"
+         crossorigin="anonymous"></script>
+    <!-- /ADSENSE_TEMP -->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0a0e17;
+            --bg2: #111827;
+            --bg3: #1a2235;
+            --card: #1e293b;
+            --card-hover: #243349;
+            --border: #2d3a4e;
+            --text: #e2e8f0;
+            --text2: #94a3b8;
+            --text3: #64748b;
+            --accent: #3b82f6;
+            --accent2: #8b5cf6;
+            --accent3: #06b6d4;
+            --green: #22c55e;
+            --gold: #f59e0b;
+            --gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --gradient2: linear-gradient(135deg, #06b6d4, #3b82f6);
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --radius: 16px;
+        }
+
+        html { scroll-behavior: smooth; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* ===== LANGUAGE BUTTON ===== */
+        .lang-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s;
+            box-shadow: var(--shadow);
+        }
+        .lang-btn:hover { background: var(--card-hover); transform: translateY(-2px); }
+        .lang-btn i { font-size: 16px; }
+
+        /* ===== NAVIGATION ===== */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            background: rgba(10, 14, 23, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            transition: all 0.3s;
+        }
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .nav-logo img { width: 36px; height: 36px; border-radius: 8px; }
+        .nav-links { display: flex; gap: 28px; list-style: none; }
+        .nav-links a {
+            color: var(--text2);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover { color: var(--accent); }
+        .nav-cta {
+            background: var(--gradient);
+            color: #fff;
+            padding: 8px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(59,130,246,0.4); }
+
+        /* ===== HERO ===== */
+        .hero {
+            padding: 140px 24px 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(59,130,246,0.08) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 60%, rgba(139,92,246,0.06) 0%, transparent 50%);
+            animation: heroGlow 15s ease-in-out infinite alternate;
+        }
+        @keyframes heroGlow {
+            0% { transform: rotate(0deg) scale(1); }
+            100% { transform: rotate(3deg) scale(1.05); }
+        }
+        .hero-content { position: relative; z-index: 2; max-width: 800px; margin: 0 auto; }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.2);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 13px;
+            color: var(--accent);
+            margin-bottom: 24px;
+        }
+        .hero-badge .pulse {
+            width: 8px; height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.5); }
+        }
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero h1 span {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-desc {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            color: var(--text2);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.8;
+        }
+        .hero-app-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 28px;
+            box-shadow: 0 8px 40px rgba(59,130,246,0.3);
+            margin-bottom: 32px;
+            border: 3px solid rgba(59,130,246,0.2);
+        }
+
+        /* ===== DOWNLOAD BUTTONS ===== */
+        .download-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+        .dl-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 28px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s;
+            border: 1px solid var(--border);
+        }
+        .dl-btn i { font-size: 22px; }
+        .dl-btn-primary {
+            background: var(--gradient);
+            color: #fff;
+            border-color: transparent;
+        }
+        .dl-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(59,130,246,0.4); }
+        .dl-btn-secondary {
+            background: var(--card);
+            color: var(--text);
+        }
+        .dl-btn-secondary:hover { background: var(--card-hover); transform: translateY(-3px); }
+        .dl-btn-disabled {
+            background: var(--bg3);
+            color: var(--text3);
+            border-color: var(--border);
+            cursor: default;
+            opacity: 0.7;
+        }
+        .dl-btn-label { display: flex; flex-direction: column; align-items: flex-start; }
+        .dl-btn-small { font-size: 11px; font-weight: 400; opacity: 0.7; }
+
+        /* ===== STATS BAR ===== */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            flex-wrap: wrap;
+            padding: 32px 0;
+        }
+        .stat-item { text-align: center; }
+        .stat-num {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+        /* ===== SECTIONS ===== */
+        .section {
+            padding: 80px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        .section-tag {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+        .section-desc {
+            font-size: 1.05rem;
+            color: var(--text2);
+            max-width: 650px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        /* ===== FEATURES GRID ===== */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+        .feature-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            transition: all 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+            box-shadow: 0 8px 32px rgba(59,130,246,0.12);
+        }
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+        .fi-blue { background: rgba(59,130,246,0.12); color: var(--accent); }
+        .fi-purple { background: rgba(139,92,246,0.12); color: var(--accent2); }
+        .fi-cyan { background: rgba(6,182,212,0.12); color: var(--accent3); }
+        .fi-green { background: rgba(34,197,94,0.12); color: var(--green); }
+        .fi-gold { background: rgba(245,158,11,0.12); color: var(--gold); }
+        .feature-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+        .feature-card p {
+            font-size: 0.92rem;
+            color: var(--text2);
+            line-height: 1.7;
+        }
+
+        /* ===== NETWORK INFO ===== */
+        .network-info {
+            background: var(--bg2);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .network-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1px;
+            background: var(--border);
+        }
+        .network-item {
+            background: var(--bg2);
+            padding: 28px 24px;
+            text-align: center;
+        }
+        .network-item-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text3);
+            margin-bottom: 8px;
+        }
+        .network-item-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* ===== HOW IT WORKS ===== */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 32px;
+            counter-reset: step;
+        }
+        .step {
+            position: relative;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            text-align: center;
+            counter-increment: step;
+        }
+        .step::before {
+            content: counter(step);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: var(--gradient);
+            color: #fff;
+            border-radius: 50%;
+            font-weight: 800;
+            font-size: 16px;
+            margin: 0 auto 20px;
+        }
+        .step h3 { font-size: 1.05rem; margin-bottom: 10px; }
+        .step p { font-size: 0.9rem; color: var(--text2); }
+
+        /* ===== EXPLORER SECTION ===== */
+        .explorer-preview {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px;
+            text-align: center;
+        }
+        .explorer-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+        .explorer-feat {
+            padding: 20px;
+            border-radius: 12px;
+            background: var(--bg3);
+        }
+        .explorer-feat i {
+            font-size: 28px;
+            margin-bottom: 12px;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .explorer-feat h4 { font-size: 0.95rem; margin-bottom: 6px; }
+        .explorer-feat p { font-size: 0.82rem; color: var(--text3); }
+
+        /* ===== TOKENOMICS ===== */
+        .tokenomics-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        .token-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+        }
+        .token-card h3 {
+            font-size: 1rem;
+            color: var(--accent);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .token-card p {
+            font-size: 0.9rem;
+            color: var(--text2);
+            line-height: 1.7;
+        }
+        .token-highlight {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text);
+            margin: 8px 0;
+        }
+
+        /* ===== SECURITY ===== */
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .security-item {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+        }
+        .security-item i {
+            font-size: 20px;
+            color: var(--green);
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+        .security-item h4 { font-size: 0.95rem; margin-bottom: 4px; }
+        .security-item p { font-size: 0.85rem; color: var(--text2); }
+
+        /* ===== ARTICLES ===== */
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 28px;
+        }
+        .article-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .article-card:hover { transform: translateY(-4px); border-color: var(--accent); }
+        .article-header {
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        .ah-blue { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.1)); }
+        .ah-purple { background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(6,182,212,0.1)); }
+        .ah-cyan { background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(59,130,246,0.1)); }
+        .article-body { padding: 24px; }
+        .article-tag {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+        .article-body h3 { font-size: 1.1rem; margin-bottom: 10px; }
+        .article-body p { font-size: 0.88rem; color: var(--text2); line-height: 1.7; }
+
+        /* ===== FAQ ===== */
+        .faq-list { max-width: 800px; margin: 0 auto; }
+        .faq-item {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            background: var(--card);
+        }
+        .faq-q {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.3s;
+        }
+        .faq-q:hover { background: var(--card-hover); }
+        .faq-q i { transition: transform 0.3s; color: var(--text3); }
+        .faq-item.open .faq-q i { transform: rotate(180deg); }
+        .faq-a {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        .faq-item.open .faq-a { max-height: 500px; }
+        .faq-a-inner {
+            padding: 0 24px 20px;
+            font-size: 0.9rem;
+            color: var(--text2);
+            line-height: 1.8;
+        }
+
+        /* ===== CTA ===== */
+        .cta-section {
+            text-align: center;
+            padding: 80px 24px;
+            position: relative;
+        }
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center, rgba(59,130,246,0.08) 0%, transparent 70%);
+        }
+        .cta-content { position: relative; z-index: 2; }
+        .cta-content h2 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+        .cta-content p {
+            font-size: 1.1rem;
+            color: var(--text2);
+            margin-bottom: 32px;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 48px 24px;
+            background: var(--bg2);
+        }
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 40px;
+        }
+        .footer-brand p { font-size: 0.88rem; color: var(--text2); margin-top: 12px; line-height: 1.7; }
+        .footer h4 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 16px; }
+        .footer-links { list-style: none; }
+        .footer-links li { margin-bottom: 10px; }
+        .footer-links a { color: var(--text2); text-decoration: none; font-size: 0.9rem; transition: color 0.3s; }
+        .footer-links a:hover { color: var(--accent); }
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 32px auto 0;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+            color: var(--text3);
+        }
+        .social-links { display: flex; gap: 16px; }
+        .social-links a { color: var(--text3); font-size: 18px; transition: color 0.3s; }
+        .social-links a:hover { color: var(--accent); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .nav-cta { display: none; }
+            .hero { padding: 120px 16px 60px; }
+            .hero-app-img { width: 90px; height: 90px; border-radius: 22px; }
+            .stats-bar { gap: 24px; }
+            .stat-num { font-size: 1.5rem; }
+            .section { padding: 60px 16px; }
+            .download-section { flex-direction: column; align-items: center; }
+            .dl-btn { width: 100%; max-width: 320px; justify-content: center; }
+            .footer-inner { grid-template-columns: 1fr; gap: 28px; }
+            .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
+            .articles-grid { grid-template-columns: 1fr; }
+            .lang-btn { top: 14px; right: 14px; padding: 8px 14px; font-size: 13px; }
+            .explorer-preview { padding: 28px 16px; }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 2rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr; }
+            .network-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* ===== ANIMATIONS ===== */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Language Button -->
+    <button class="lang-btn" id="langBtn" onclick="toggleLanguage()">
+        <i class="fas fa-globe"></i>
+        <span id="langLabel">EN</span>
+    </button>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo">
+                <img src="test-icon.jpg" alt="Access Network">
+                <span>Access Network</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features" data-i18n="nav_features">Features</a></li>
+                <li><a href="#how-it-works" data-i18n="nav_how">How It Works</a></li>
+                <li><a href="#explorer" data-i18n="nav_explorer">Explorer</a></li>
+                <li><a href="#tokenomics" data-i18n="nav_tokenomics">Tokenomics</a></li>
+                <li><a href="#articles" data-i18n="nav_learn">Learn</a></li>
+                <li><a href="#faq" data-i18n="nav_faq">FAQ</a></li>
+            </ul>
+            <a href="index.html" class="nav-cta" data-i18n="nav_launch">Launch App</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-content">
+            <img src="test-icon.jpg" alt="Access Network" class="hero-app-img">
+            <div class="hero-badge">
+                <div class="pulse"></div>
+                <span data-i18n="hero_badge">Network Active — Mainnet Live</span>
+            </div>
+            <h1 data-i18n="hero_title">The Future of <span>Decentralized</span> Blockchain</h1>
+            <p class="hero-desc" data-i18n="hero_desc">Access Network is a high-performance blockchain platform designed for speed, security, and scalability. Build dApps, earn ACCESS tokens, and explore a new era of decentralized finance.</p>
+            
+            <!-- Download Links -->
+            <div class="download-section">
+                <a href="index.html" class="dl-btn dl-btn-primary">
+                    <i class="fas fa-globe"></i>
+                    <div class="dl-btn-label">
+                        <span class="dl-btn-small" data-i18n="dl_open">Open in Browser</span>
+                        <span data-i18n="dl_webapp">Web App</span>
+                    </div>
+                </a>
+                <a href="#" class="dl-btn dl-btn-secondary" id="playStoreBtn">
+                    <i class="fab fa-google-play"></i>
+                    <div class="dl-btn-label">
+                        <span class="dl-btn-small" data-i18n="dl_geton">Get it on</span>
+                        <span>Google Play</span>
+                    </div>
+                </a>
+                <a href="#" class="dl-btn dl-btn-disabled">
+                    <i class="fab fa-apple"></i>
+                    <div class="dl-btn-label">
+                        <span class="dl-btn-small" data-i18n="dl_soon">Coming Soon</span>
+                        <span>App Store</span>
+                    </div>
+                </a>
+                <a href="apk-download/app-release.apk" class="dl-btn dl-btn-secondary" download>
+                    <i class="fas fa-download"></i>
+                    <div class="dl-btn-label">
+                        <span class="dl-btn-small" data-i18n="dl_direct">Direct Download</span>
+                        <span>APK</span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-num">~3s</div>
+                    <div class="stat-label" data-i18n="stat_block">Block Time</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num">25M</div>
+                    <div class="stat-label" data-i18n="stat_supply">Max Supply</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num">PoS</div>
+                    <div class="stat-label" data-i18n="stat_consensus">Consensus</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-num">EVM</div>
+                    <div class="stat-label" data-i18n="stat_compat">Compatible</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="section" id="features">
+        <div class="section-header fade-in">
+            <div class="section-tag" data-i18n="feat_tag">PLATFORM FEATURES</div>
+            <h2 class="section-title" data-i18n="feat_title">Built for the Next Generation</h2>
+            <p class="section-desc" data-i18n="feat_desc">Access Network combines cutting-edge blockchain technology with an intuitive user experience, making decentralized finance accessible to everyone.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card fade-in">
+                <div class="feature-icon fi-blue"><i class="fas fa-bolt"></i></div>
+                <h3 data-i18n="feat1_title">Lightning Fast Transactions</h3>
+                <p data-i18n="feat1_desc">Near-instant confirmations with approximately 3-second block times. Send and receive ACCESS tokens in seconds, not minutes. Our optimized protocol ensures minimal latency for all network operations.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon fi-purple"><i class="fas fa-shield-halved"></i></div>
+                <h3 data-i18n="feat2_title">Enterprise-Grade Security</h3>
+                <p data-i18n="feat2_desc">Protected by 5 layers of advanced security including encrypted wallets, PIN lock with biometric authentication, anti-attack monitoring, and real-time threat detection systems.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon fi-cyan"><i class="fas fa-code"></i></div>
+                <h3 data-i18n="feat3_title">EVM Compatible</h3>
+                <p data-i18n="feat3_desc">Full compatibility with Ethereum tools, smart contracts, and decentralized applications. Developers can deploy existing Solidity contracts directly on Access Network without modifications.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon fi-green"><i class="fas fa-coins"></i></div>
+                <h3 data-i18n="feat4_title">Proof of Stake Mining</h3>
+                <p data-i18n="feat4_desc">Earn ACCESS tokens through our innovative proof-of-stake processing system. No expensive hardware required — participate in network validation and earn rewards directly from your device.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon fi-gold"><i class="fas fa-dollar-sign"></i></div>
+                <h3 data-i18n="feat5_title">Minimal Transaction Fees</h3>
+                <p data-i18n="feat5_desc">Extremely low gas fees for all transactions on the network. Whether you're sending tokens, deploying smart contracts, or interacting with dApps, costs remain negligible.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon fi-blue"><i class="fas fa-mobile-screen"></i></div>
+                <h3 data-i18n="feat6_title">Mobile-First Design</h3>
+                <p data-i18n="feat6_desc">Designed with mobile users in mind. Access your wallet, monitor activity, and manage your portfolio from anywhere. Available as a progressive web app and native Android application.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- NETWORK INFO -->
+    <section class="section">
+        <div class="section-header fade-in">
+            <div class="section-tag" data-i18n="net_tag">NETWORK SPECIFICATIONS</div>
+            <h2 class="section-title" data-i18n="net_title">Technical Overview</h2>
+        </div>
+        <div class="network-info fade-in">
+            <div class="network-grid">
+                <div class="network-item">
+                    <div class="network-item-label" data-i18n="net_name">Network Name</div>
+                    <div class="network-item-value">Access Network</div>
+                </div>
+                <div class="network-item">
+                    <div class="network-item-label">Chain ID</div>
+                    <div class="network-item-value">22888</div>
+                </div>
+                <div class="network-item">
+                    <div class="network-item-label" data-i18n="net_symbol">Currency Symbol</div>
+                    <div class="network-item-value">ACCESS</div>
+                </div>
+                <div class="network-item">
+                    <div class="network-item-label" data-i18n="net_block">Block Time</div>
+                    <div class="network-item-value">~3 sec</div>
+                </div>
+                <div class="network-item">
+                    <div class="network-item-label" data-i18n="net_consensus">Consensus</div>
+                    <div class="network-item-value">Proof of Stake</div>
+                </div>
+                <div class="network-item">
+                    <div class="network-item-label" data-i18n="net_supply">Max Supply</div>
+                    <div class="network-item-value">25,000,000</div>
+                </div>
+                <div class="network-item">
+                    <div class="network-item-label" data-i18n="net_type">Network Type</div>
+                    <div class="network-item-value">EVM Mainnet</div>
+                </div>
+                <div class="network-item">
+                    <div class="network-item-label">RPC</div>
+                    <div class="network-item-value" style="font-size:0.85rem;">accesschain.org</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section" id="how-it-works">
+        <div class="section-header fade-in">
+            <div class="section-tag" data-i18n="how_tag">GETTING STARTED</div>
+            <h2 class="section-title" data-i18n="how_title">How It Works</h2>
+            <p class="section-desc" data-i18n="how_desc">Start using Access Network in just a few simple steps. No technical knowledge required.</p>
+        </div>
+        <div class="steps">
+            <div class="step fade-in">
+                <h3 data-i18n="step1_title">Create Account</h3>
+                <p data-i18n="step1_desc">Sign up with your email or social login. Your secure blockchain wallet is automatically generated with industry-standard encryption.</p>
+            </div>
+            <div class="step fade-in">
+                <h3 data-i18n="step2_title">Start Activity Session</h3>
+                <p data-i18n="step2_desc">Activate your processing session to begin validating network transactions and earning ACCESS token rewards through proof-of-stake participation.</p>
+            </div>
+            <div class="step fade-in">
+                <h3 data-i18n="step3_title">Earn ACCESS Tokens</h3>
+                <p data-i18n="step3_desc">Collect rewards automatically as your session progresses. Tokens are distributed based on network participation with a dynamic halving reward system.</p>
+            </div>
+            <div class="step fade-in">
+                <h3 data-i18n="step4_title">Explore & Transact</h3>
+                <p data-i18n="step4_desc">Use AccessScan block explorer to monitor transactions, check balances, and interact with the blockchain. Send tokens, view blocks, and track network activity.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- EXPLORER -->
+    <section class="section" id="explorer">
+        <div class="section-header fade-in">
+            <div class="section-tag" data-i18n="exp_tag">BLOCK EXPLORER</div>
+            <h2 class="section-title" data-i18n="exp_title">AccessScan Explorer</h2>
+            <p class="section-desc" data-i18n="exp_desc">A powerful and intuitive block explorer for the Access Network. Search transactions, view blocks, monitor addresses, and explore smart contracts in real-time.</p>
+        </div>
+        <div class="explorer-preview fade-in">
+            <h3 style="font-size:1.3rem; margin-bottom:8px;" data-i18n="exp_sub">Complete Blockchain Transparency</h3>
+            <p style="color:var(--text2); margin-bottom:28px;" data-i18n="exp_subdesc">Every transaction, every block, fully traceable and verifiable.</p>
+            <div class="explorer-features">
+                <div class="explorer-feat">
+                    <i class="fas fa-exchange-alt"></i>
+                    <h4 data-i18n="expf1_title">Transaction Search</h4>
+                    <p data-i18n="expf1_desc">Look up any transaction by hash, address, or block number with detailed information including gas, timestamps, and status.</p>
+                </div>
+                <div class="explorer-feat">
+                    <i class="fas fa-cube"></i>
+                    <h4 data-i18n="expf2_title">Block Details</h4>
+                    <p data-i18n="expf2_desc">View complete block information including transactions list, miner details, gas usage, and confirmation status.</p>
+                </div>
+                <div class="explorer-feat">
+                    <i class="fas fa-wallet"></i>
+                    <h4 data-i18n="expf3_title">Address Tracking</h4>
+                    <p data-i18n="expf3_desc">Monitor any wallet address balance, transaction history, and token holdings with real-time updates.</p>
+                </div>
+                <div class="explorer-feat">
+                    <i class="fas fa-trophy"></i>
+                    <h4 data-i18n="expf4_title">Top Accounts</h4>
+                    <p data-i18n="expf4_desc">View the richest accounts on the network, analyze token distribution, and track whale movements.</p>
+                </div>
+            </div>
+            <a href="access-explorer.html" style="display:inline-block;margin-top:28px;padding:12px 32px;background:var(--gradient);color:#fff;border-radius:50px;text-decoration:none;font-weight:600;font-size:14px;" data-i18n="exp_btn">Open Explorer</a>
+        </div>
+    </section>
+
+    <!-- TOKENOMICS -->
+    <section class="section" id="tokenomics">
+        <div class="section-header fade-in">
+            <div class="section-tag" data-i18n="tok_tag">TOKENOMICS</div>
+            <h2 class="section-title" data-i18n="tok_title">ACCESS Token Economics</h2>
+            <p class="section-desc" data-i18n="tok_desc">A carefully designed economic model with built-in scarcity through halving events, ensuring long-term value and sustainability for the Access Network ecosystem.</p>
+        </div>
+        <div class="tokenomics-cards">
+            <div class="token-card fade-in">
+                <h3><i class="fas fa-coins"></i> <span data-i18n="tok1_title">Total Supply</span></h3>
+                <div class="token-highlight">25,000,000 ACCESS</div>
+                <p data-i18n="tok1_desc">A fixed maximum supply of 25 million ACCESS tokens. No additional tokens can ever be created, ensuring scarcity and protecting token value over time.</p>
+            </div>
+            <div class="token-card fade-in">
+                <h3><i class="fas fa-chart-line"></i> <span data-i18n="tok2_title">Halving System</span></h3>
+                <div class="token-highlight" data-i18n="tok2_val">Dynamic Rewards</div>
+                <p data-i18n="tok2_desc">Mining rewards are automatically halved at predetermined supply thresholds. Starting at 0.25 ACCESS per session, rewards decrease as circulating supply grows, creating natural scarcity.</p>
+            </div>
+            <div class="token-card fade-in">
+                <h3><i class="fas fa-users"></i> <span data-i18n="tok3_title">Distribution</span></h3>
+                <div class="token-highlight" data-i18n="tok3_val">Fair Launch</div>
+                <p data-i18n="tok3_desc">ACCESS tokens are distributed through network participation. There is no pre-mine, no ICO, and no venture capital allocation. 100% of tokens are earned through proof-of-stake processing.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECURITY -->
+    <section class="section">
+        <div class="section-header fade-in">
+            <div class="section-tag" data-i18n="sec_tag">SECURITY</div>
+            <h2 class="section-title" data-i18n="sec_title">Multi-Layer Protection</h2>
+            <p class="section-desc" data-i18n="sec_desc">Your assets and data are protected by multiple layers of enterprise-grade security.</p>
+        </div>
+        <div class="security-grid">
+            <div class="security-item fade-in">
+                <i class="fas fa-lock"></i>
+                <div>
+                    <h4 data-i18n="sec1_title">Encrypted Wallets</h4>
+                    <p data-i18n="sec1_desc">Private keys are encrypted with AES-256 and never leave your device. Your wallet is protected with industry-standard cryptographic algorithms.</p>
+                </div>
+            </div>
+            <div class="security-item fade-in">
+                <i class="fas fa-fingerprint"></i>
+                <div>
+                    <h4 data-i18n="sec2_title">Biometric Authentication</h4>
+                    <p data-i18n="sec2_desc">Secure your app with fingerprint or face recognition. Combined with PIN lock for double-layer access protection on mobile devices.</p>
+                </div>
+            </div>
+            <div class="security-item fade-in">
+                <i class="fas fa-shield-alt"></i>
+                <div>
+                    <h4 data-i18n="sec3_title">Anti-Attack Monitoring</h4>
+                    <p data-i18n="sec3_desc">Real-time threat detection system monitors for suspicious activities, DDoS attacks, and unauthorized access attempts around the clock.</p>
+                </div>
+            </div>
+            <div class="security-item fade-in">
+                <i class="fas fa-key"></i>
+                <div>
+                    <h4 data-i18n="sec4_title">Secure API Layer</h4>
+                    <p data-i18n="sec4_desc">All API communications are encrypted with TLS 1.3 and protected by rate limiting, CORS policies, and API key authentication.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ARTICLES -->
+    <section class="section" id="articles">
+        <div class="section-header fade-in">
+            <div class="section-tag" data-i18n="art_tag">LEARN MORE</div>
+            <h2 class="section-title" data-i18n="art_title">Understanding Access Network</h2>
+            <p class="section-desc" data-i18n="art_desc">Dive deeper into the technology, vision, and ecosystem behind Access Network.</p>
+        </div>
+        <div class="articles-grid">
+            <div class="article-card fade-in">
+                <div class="article-header ah-blue"><i class="fas fa-network-wired"></i></div>
+                <div class="article-body">
+                    <div class="article-tag" data-i18n="art1_tag">BLOCKCHAIN</div>
+                    <h3 data-i18n="art1_title">What Makes Access Network Different?</h3>
+                    <p data-i18n="art1_desc">Access Network is built on a modified Ethereum Virtual Machine (EVM) architecture optimized for high throughput and low latency. Unlike traditional blockchains that suffer from congestion and high fees, Access Network uses an innovative proof-of-stake consensus mechanism that allows validators to participate without expensive mining hardware. The network processes transactions in approximately 3 seconds, making it one of the fastest EVM-compatible chains available. With a fixed supply of 25 million tokens and a dynamic halving system, the tokenomics are designed to reward early participants while maintaining long-term sustainability. The platform supports full Solidity smart contract deployment, meaning developers can easily port their existing Ethereum dApps to Access Network with zero code changes.</p>
+                </div>
+            </div>
+            <div class="article-card fade-in">
+                <div class="article-header ah-purple"><i class="fas fa-gem"></i></div>
+                <div class="article-body">
+                    <div class="article-tag" data-i18n="art2_tag">TOKENOMICS</div>
+                    <h3 data-i18n="art2_title">The ACCESS Token Halving Model</h3>
+                    <p data-i18n="art2_desc">Inspired by Bitcoin's halving mechanism, Access Network implements a dynamic reward reduction system that ensures controlled token distribution over time. The initial base reward of 0.25 ACCESS per processing session is halved each time the circulating supply reaches predefined thresholds. The first halving occurs at 5 million tokens, followed by subsequent halvings at intervals that progressively reduce rewards. This creates an economic model where early adopters are rewarded more generously while ensuring the total supply never exceeds 25 million ACCESS tokens. The minimum possible reward is 0.00000001 ACCESS, providing an extremely long tail of distribution that could span decades of network operation. This deflationary model encourages long-term holding and network participation.</p>
+                </div>
+            </div>
+            <div class="article-card fade-in">
+                <div class="article-header ah-cyan"><i class="fas fa-shield-halved"></i></div>
+                <div class="article-body">
+                    <div class="article-tag" data-i18n="art3_tag">SECURITY</div>
+                    <h3 data-i18n="art3_title">How Access Network Protects Your Assets</h3>
+                    <p data-i18n="art3_desc">Security is the cornerstone of Access Network's architecture. The platform employs a multi-layered defense strategy that includes encrypted wallet storage using AES-256 bit encryption, biometric authentication (fingerprint and face recognition), and a 6-digit PIN lock system. On the network level, an advanced anti-attack monitoring system continuously scans for anomalous behavior, potential DDoS attacks, and unauthorized access attempts. All data transmitted between clients and servers is encrypted with TLS 1.3, and the API layer is protected by rate limiting, CORS policies, and rotating API keys. The block explorer, AccessScan, provides full transaction transparency so users can independently verify every operation on the network. Regular security audits and automated backup systems ensure the integrity and availability of all network data.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+        <div class="section-header fade-in">
+            <div class="section-tag" data-i18n="faq_tag">FAQ</div>
+            <h2 class="section-title" data-i18n="faq_title">Frequently Asked Questions</h2>
+        </div>
+        <div class="faq-list">
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    <span data-i18n="faq1_q">What is Access Network?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-a"><div class="faq-a-inner" data-i18n="faq1_a">Access Network is a high-performance blockchain platform built on EVM (Ethereum Virtual Machine) technology. It enables fast, secure, and low-cost transactions with support for smart contracts and decentralized applications. The network uses proof-of-stake consensus and rewards participants with ACCESS tokens for validating transactions.</div></div>
+            </div>
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    <span data-i18n="faq2_q">How do I earn ACCESS tokens?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-a"><div class="faq-a-inner" data-i18n="faq2_a">You earn ACCESS tokens by starting an activity session in the app. During the session, your device participates in network validation through proof-of-stake processing. Rewards are calculated based on time spent and distributed automatically. The current base reward is 0.25 ACCESS per session, which halves as the total supply grows.</div></div>
+            </div>
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    <span data-i18n="faq3_q">Is Access Network free to use?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-a"><div class="faq-a-inner" data-i18n="faq3_a">Yes! Creating an account and participating in the network is completely free. There are no hidden fees or subscription costs. The only fees are minimal gas costs when sending blockchain transactions, which are significantly lower compared to Ethereum mainnet. The app is available for free on web and Android platforms.</div></div>
+            </div>
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    <span data-i18n="faq4_q">What is the maximum supply of ACCESS tokens?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-a"><div class="faq-a-inner" data-i18n="faq4_a">The maximum supply is fixed at 25,000,000 (25 million) ACCESS tokens. This cap is enforced at the protocol level and cannot be changed. The supply is distributed through mining rewards that follow a halving schedule, similar to Bitcoin. This ensures a deflationary model that protects token value over time.</div></div>
+            </div>
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    <span data-i18n="faq5_q">How secure is my wallet?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-a"><div class="faq-a-inner" data-i18n="faq5_a">Your wallet is protected by multiple security layers: AES-256 encryption for private keys, optional PIN lock with biometric authentication (fingerprint), anti-attack monitoring, and TLS 1.3 encrypted communications. Private keys never leave your device, and the app supports secure backup and recovery options.</div></div>
+            </div>
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    <span data-i18n="faq6_q">Can I use Access Network with MetaMask?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-a"><div class="faq-a-inner" data-i18n="faq6_a">Yes! Access Network is fully EVM compatible. You can add the network to MetaMask using the following details: Network Name: Access Network, Chain ID: 22888, Currency Symbol: ACCESS, RPC URL: https://accesschain.org. Once added, you can send, receive, and interact with smart contracts using MetaMask.</div></div>
+            </div>
+            <div class="faq-item fade-in">
+                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                    <span data-i18n="faq7_q">Where can I download the app?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-a"><div class="faq-a-inner" data-i18n="faq7_a">Access Network is available on multiple platforms: as a Web App at accesschain.org (works on all browsers), as an Android app on Google Play Store, and as a direct APK download. An iOS version for Apple App Store is currently in development and will be available soon. In the meantime, iOS users can access the full platform through the web app.</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="cta-content fade-in">
+            <h2 data-i18n="cta_title">Ready to Join the Network?</h2>
+            <p data-i18n="cta_desc">Start earning ACCESS tokens today. No special hardware needed — just your device and an internet connection.</p>
+            <div class="download-section">
+                <a href="index.html" class="dl-btn dl-btn-primary">
+                    <i class="fas fa-rocket"></i>
+                    <span data-i18n="cta_btn">Get Started Now</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a href="#" class="nav-logo" style="margin-bottom:8px;">
+                    <img src="test-icon.jpg" alt="Access Network">
+                    <span>Access Network</span>
+                </a>
+                <p data-i18n="footer_desc">A high-performance blockchain platform for decentralized applications, digital assets, and smart contracts. Building the future of decentralized finance, one block at a time.</p>
+            </div>
+            <div>
+                <h4 data-i18n="footer_product">Product</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html" data-i18n="footer_app">Web App</a></li>
+                    <li><a href="access-explorer.html" data-i18n="footer_explorer">Explorer</a></li>
+                    <li><a href="whitepaper.html" data-i18n="footer_whitepaper">Whitepaper</a></li>
+                    <li><a href="apk-download/app-release.apk" data-i18n="footer_apk">Download APK</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 data-i18n="footer_resources">Resources</h4>
+                <ul class="footer-links">
+                    <li><a href="about.html" data-i18n="footer_about">About</a></li>
+                    <li><a href="faq.html" data-i18n="footer_faq">FAQ</a></li>
+                    <li><a href="contact.html" data-i18n="footer_contact">Contact</a></li>
+                    <li><a href="top-accounts.html" data-i18n="footer_top">Top Accounts</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 data-i18n="footer_legal">Legal</h4>
+                <ul class="footer-links">
+                    <li><a href="privacy-policy.html" data-i18n="footer_privacy">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" data-i18n="footer_terms">Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>&copy; 2025-2026 Access Network. All rights reserved.</span>
+            <div class="social-links">
+                <a href="#" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
+                <a href="#" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
+                <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                <a href="#" aria-label="Discord"><i class="fab fa-discord"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    // ===== SCROLL ANIMATIONS =====
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // ===== TRANSLATIONS =====
+    const translations = {
+        ar: {
+            nav_features: "المميزات", nav_how: "كيف يعمل", nav_explorer: "المستكشف",
+            nav_tokenomics: "اقتصاد التوكن", nav_learn: "تعلم", nav_faq: "الأسئلة الشائعة",
+            nav_launch: "فتح التطبيق",
+            hero_badge: "الشبكة نشطة — الشبكة الرئيسية مباشرة",
+            hero_title: "مستقبل البلوكتشين اللامركزي",
+            hero_desc: "Access Network هي منصة بلوكتشين عالية الأداء مصممة للسرعة والأمان وقابلية التوسع. أنشئ تطبيقات لامركزية، واكسب توكنات ACCESS، واستكشف عصراً جديداً من التمويل اللامركزي.",
+            dl_open: "فتح في المتصفح", dl_webapp: "تطبيق الويب", dl_geton: "حمّل من", dl_soon: "قريباً",
+            dl_direct: "تحميل مباشر",
+            stat_block: "وقت الكتلة", stat_supply: "الحد الأقصى", stat_consensus: "الإجماع", stat_compat: "متوافق",
+            feat_tag: "مميزات المنصة", feat_title: "مبنية للجيل القادم",
+            feat_desc: "تجمع Access Network بين أحدث تقنيات البلوكتشين وتجربة مستخدم بديهية، مما يجعل التمويل اللامركزي متاحاً للجميع.",
+            feat1_title: "معاملات بسرعة البرق", feat1_desc: "تأكيدات فورية تقريباً مع أوقات كتل تبلغ حوالي 3 ثوانٍ. أرسل واستقبل توكنات ACCESS في ثوانٍ وليس دقائق.",
+            feat2_title: "أمان بمستوى المؤسسات", feat2_desc: "محمية بـ 5 طبقات أمان متقدمة تشمل محافظ مشفرة وقفل PIN مع مصادقة بيومترية ونظام مراقبة ضد الهجمات.",
+            feat3_title: "متوافق مع EVM", feat3_desc: "توافق كامل مع أدوات إيثريوم والعقود الذكية. يمكن للمطورين نشر عقود Solidity مباشرة.",
+            feat4_title: "تعدين إثبات الحصة", feat4_desc: "اكسب توكنات ACCESS من خلال نظام المعالجة. لا حاجة لأجهزة باهظة الثمن.",
+            feat5_title: "رسوم معاملات ضئيلة", feat5_desc: "رسوم Gas منخفضة للغاية لجميع المعاملات على الشبكة.",
+            feat6_title: "تصميم للجوال أولاً", feat6_desc: "مصمم لمستخدمي الجوال. متاح كتطبيق ويب تقدمي وتطبيق أندرويد أصلي.",
+            net_tag: "مواصفات الشبكة", net_title: "نظرة تقنية عامة",
+            net_name: "اسم الشبكة", net_symbol: "رمز العملة", net_block: "وقت الكتلة",
+            net_consensus: "الإجماع", net_supply: "الحد الأقصى", net_type: "نوع الشبكة",
+            how_tag: "البداية", how_title: "كيف يعمل",
+            how_desc: "ابدأ استخدام Access Network في خطوات بسيطة. لا تحتاج معرفة تقنية.",
+            step1_title: "أنشئ حسابك", step1_desc: "سجّل بالبريد الإلكتروني. يتم إنشاء محفظتك الآمنة تلقائياً بتشفير عالي المستوى.",
+            step2_title: "ابدأ جلسة النشاط", step2_desc: "فعّل جلسة المعالجة لبدء التحقق من المعاملات وكسب مكافآت ACCESS.",
+            step3_title: "اكسب توكنات ACCESS", step3_desc: "اجمع المكافآت تلقائياً مع تقدم جلستك بنظام مكافآت ديناميكي.",
+            step4_title: "استكشف وتداول", step4_desc: "استخدم مستكشف AccessScan لمراقبة المعاملات وإرسال التوكنات.",
+            exp_tag: "مستكشف الكتل", exp_title: "مستكشف AccessScan",
+            exp_desc: "مستكشف بلوكتشين قوي وبديهي لشبكة Access. ابحث في المعاملات والكتل والعناوين في الوقت الفعلي.",
+            exp_sub: "شفافية بلوكتشين كاملة", exp_subdesc: "كل معاملة، كل كتلة، قابلة للتتبع والتحقق.",
+            expf1_title: "بحث المعاملات", expf1_desc: "ابحث عن أي معاملة بالهاش أو العنوان أو رقم الكتلة.",
+            expf2_title: "تفاصيل الكتل", expf2_desc: "عرض معلومات الكتلة الكاملة مع قائمة المعاملات.",
+            expf3_title: "تتبع العناوين", expf3_desc: "راقب رصيد أي عنوان وسجل المعاملات.",
+            expf4_title: "أكبر الحسابات", expf4_desc: "عرض أغنى الحسابات وتحليل توزيع التوكنات.",
+            exp_btn: "فتح المستكشف",
+            tok_tag: "اقتصاد التوكن", tok_title: "اقتصاديات توكن ACCESS",
+            tok_desc: "نموذج اقتصادي مدروس مع ندرة مدمجة عبر أحداث التنصيف.",
+            tok1_title: "إجمالي العرض", tok1_desc: "عرض أقصى ثابت من 25 مليون توكن ACCESS. لا يمكن إنشاء توكنات إضافية أبداً.",
+            tok2_title: "نظام التنصيف", tok2_val: "مكافآت ديناميكية", tok2_desc: "تنخفض المكافآت تلقائياً عند عتبات محددة. تبدأ من 0.25 ACCESS لكل جلسة.",
+            tok3_title: "التوزيع", tok3_val: "إطلاق عادل", tok3_desc: "لا يوجد تعدين مسبق ولا ICO. 100% من التوكنات تُكسب عبر المشاركة.",
+            sec_tag: "الأمان", sec_title: "حماية متعددة الطبقات",
+            sec_desc: "أصولك وبياناتك محمية بطبقات متعددة من الأمان.",
+            sec1_title: "محافظ مشفرة", sec1_desc: "المفاتيح الخاصة مشفرة بـ AES-256 ولا تغادر جهازك أبداً.",
+            sec2_title: "مصادقة بيومترية", sec2_desc: "أمّن تطبيقك بالبصمة. مع قفل PIN لحماية مزدوجة.",
+            sec3_title: "مراقبة ضد الهجمات", sec3_desc: "نظام كشف التهديدات في الوقت الفعلي على مدار الساعة.",
+            sec4_title: "طبقة API آمنة", sec4_desc: "جميع الاتصالات مشفرة بـ TLS 1.3 مع تحديد المعدل.",
+            art_tag: "تعلم المزيد", art_title: "فهم شبكة Access",
+            art_desc: "تعمّق في التقنية والرؤية والنظام البيئي.",
+            art1_tag: "بلوكتشين", art1_title: "ما الذي يميز Access Network؟",
+            art1_desc: "مبنية على EVM محسّن للإنتاجية العالية والكمون المنخفض. معاملات في 3 ثوانٍ، دعم كامل لعقود Solidity، ونظام مكافآت تنصيف ديناميكي.",
+            art2_tag: "اقتصاد التوكن", art2_title: "نموذج تنصيف توكن ACCESS",
+            art2_desc: "مستوحى من آلية تنصيف البيتكوين. يبدأ بـ 0.25 ACCESS ويتناقص تدريجياً مما يخلق نموذجاً انكماشياً يشجع الاحتفاظ طويل الأمد.",
+            art3_tag: "الأمان", art3_title: "كيف تحمي Access Network أصولك",
+            art3_desc: "استراتيجية دفاع متعددة الطبقات: تشفير AES-256، مصادقة بيومترية، مراقبة ضد الهجمات، TLS 1.3، وعمليات تدقيق أمنية منتظمة.",
+            faq_tag: "الأسئلة الشائعة", faq_title: "الأسئلة المتكررة",
+            faq1_q: "ما هي Access Network؟", faq1_a: "منصة بلوكتشين عالية الأداء مبنية على تقنية EVM. تتيح معاملات سريعة وآمنة ومنخفضة التكلفة مع دعم العقود الذكية.",
+            faq2_q: "كيف أكسب توكنات ACCESS؟", faq2_a: "ابدأ جلسة نشاط في التطبيق. يشارك جهازك في التحقق من المعاملات وتُوزع المكافآت تلقائياً.",
+            faq3_q: "هل Access Network مجانية؟", faq3_a: "نعم! إنشاء الحساب والمشاركة مجاني تماماً. الرسوم الوحيدة هي تكاليف Gas الضئيلة عند إرسال المعاملات.",
+            faq4_q: "ما هو الحد الأقصى لتوكنات ACCESS؟", faq4_a: "25,000,000 توكن ACCESS. هذا الحد ثابت على مستوى البروتوكول ولا يمكن تغييره.",
+            faq5_q: "ما مدى أمان محفظتي؟", faq5_a: "محمية بطبقات أمان متعددة: تشفير AES-256، قفل PIN، مصادقة بيومترية، ونظام مراقبة ضد الهجمات.",
+            faq6_q: "هل يمكن استخدام MetaMask؟", faq6_a: "نعم! أضف الشبكة: الاسم: Access Network، Chain ID: 22888، الرمز: ACCESS.",
+            faq7_q: "أين يمكن تحميل التطبيق؟", faq7_a: "متاح على الويب في accesschain.org، وعلى Google Play، وكتحميل APK مباشر. نسخة iOS قريباً.",
+            cta_title: "مستعد للانضمام؟", cta_desc: "ابدأ كسب توكنات ACCESS اليوم. لا تحتاج أجهزة خاصة.",
+            cta_btn: "ابدأ الآن",
+            footer_desc: "منصة بلوكتشين عالية الأداء للتطبيقات اللامركزية والأصول الرقمية والعقود الذكية.",
+            footer_product: "المنتج", footer_app: "تطبيق الويب", footer_explorer: "المستكشف",
+            footer_whitepaper: "الورقة البيضاء", footer_apk: "تحميل APK",
+            footer_resources: "الموارد", footer_about: "حول", footer_faq: "الأسئلة الشائعة",
+            footer_contact: "تواصل", footer_top: "أكبر الحسابات",
+            footer_legal: "قانوني", footer_privacy: "سياسة الخصوصية", footer_terms: "شروط الخدمة"
+        },
+        fr: {
+            nav_features: "Fonctionnalités", nav_how: "Comment ça marche", nav_explorer: "Explorateur",
+            nav_tokenomics: "Tokenomics", nav_learn: "Apprendre", nav_faq: "FAQ",
+            nav_launch: "Ouvrir l'App",
+            hero_badge: "Réseau actif — Mainnet en ligne",
+            hero_title: "L'Avenir de la Blockchain Décentralisée",
+            hero_desc: "Access Network est une plateforme blockchain haute performance conçue pour la vitesse, la sécurité et l'évolutivité.",
+            dl_open: "Ouvrir dans le navigateur", dl_webapp: "App Web", dl_geton: "Télécharger sur", dl_soon: "Bientôt",
+            dl_direct: "Téléchargement direct",
+            stat_block: "Temps de bloc", stat_supply: "Supply max", stat_consensus: "Consensus", stat_compat: "Compatible",
+            feat_tag: "FONCTIONNALITÉS", feat_title: "Construit pour la prochaine génération",
+            feat_desc: "Access Network combine la technologie blockchain de pointe avec une expérience utilisateur intuitive.",
+            cta_title: "Prêt à rejoindre le réseau ?", cta_desc: "Commencez à gagner des tokens ACCESS aujourd'hui.",
+            cta_btn: "Commencer maintenant",
+            faq_tag: "FAQ", faq_title: "Questions Fréquentes",
+            footer_product: "Produit", footer_resources: "Ressources", footer_legal: "Légal"
+        },
+        es: {
+            nav_features: "Características", nav_how: "Cómo funciona", nav_launch: "Abrir App",
+            hero_badge: "Red activa — Mainnet en vivo",
+            hero_title: "El Futuro del Blockchain Descentralizado",
+            hero_desc: "Access Network es una plataforma blockchain de alto rendimiento diseñada para velocidad, seguridad y escalabilidad.",
+            cta_title: "¿Listo para unirte?", cta_btn: "Comenzar ahora",
+            faq_tag: "FAQ", faq_title: "Preguntas Frecuentes"
+        },
+        tr: {
+            nav_features: "Özellikler", nav_how: "Nasıl Çalışır", nav_launch: "Uygulamayı Aç",
+            hero_badge: "Ağ aktif — Ana ağ canlı",
+            hero_title: "Merkeziyetsiz Blockchain'in Geleceği",
+            hero_desc: "Access Network, hız, güvenlik ve ölçeklenebilirlik için tasarlanmış yüksek performanslı bir blockchain platformudur.",
+            cta_title: "Ağa katılmaya hazır mısın?", cta_btn: "Şimdi başla"
+        },
+        de: {
+            nav_features: "Funktionen", nav_how: "Wie es funktioniert", nav_launch: "App öffnen",
+            hero_badge: "Netzwerk aktiv — Mainnet live",
+            hero_title: "Die Zukunft der dezentralen Blockchain",
+            cta_title: "Bereit dem Netzwerk beizutreten?", cta_btn: "Jetzt starten"
+        }
+    };
+
+    let currentLang = 'en';
+    const defaultTexts = {};
+
+    // Save original English texts
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        defaultTexts[el.getAttribute('data-i18n')] = el.innerHTML;
+    });
+
+    function detectLanguage() {
+        const lang = (navigator.language || navigator.userLanguage || 'en').substring(0, 2);
+        return translations[lang] ? lang : 'en';
+    }
+
+    function applyTranslation(lang) {
+        currentLang = lang;
+        const t = translations[lang] || {};
+        const isRTL = lang === 'ar';
+        
+        document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
+        document.documentElement.setAttribute('lang', lang);
+        
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (t[key]) {
+                el.innerHTML = t[key];
+            } else if (defaultTexts[key]) {
+                el.innerHTML = defaultTexts[key];
+            }
+        });
+        
+        document.getElementById('langLabel').textContent = lang.toUpperCase();
+    }
+
+    function toggleLanguage() {
+        const langs = ['en', 'ar', 'fr', 'es', 'tr', 'de'];
+        const idx = langs.indexOf(currentLang);
+        const next = langs[(idx + 1) % langs.length];
+        applyTranslation(next);
+    }
+
+    // Auto-detect language on load
+    const detectedLang = detectLanguage();
+    if (detectedLang !== 'en') {
+        applyTranslation(detectedLang);
+    }
+    </script>
+</body>
+</html>

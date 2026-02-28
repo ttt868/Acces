@@ -11,6 +11,7 @@ Sitemap: https://accesschain.org/sitemap.xml
 
 # Google Adsense crawlers - IMPORTANT for ads approval
 User-agent: Mediapartners-Google
+Allow: /access-project.html
 Allow: /about.html
 Allow: /access-explorer.html
 Allow: /blocks.html
@@ -24,6 +25,7 @@ Allow: /terms-of-service.html
 Disallow: /index.html
 
 User-agent: AdsBot-Google
+Allow: /access-project.html
 Allow: /about.html
 Allow: /access-explorer.html
 Allow: /blocks.html

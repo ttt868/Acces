@@ -10170,15 +10170,10 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ============================================================
-  // *** ADSENSE REDIRECT - REMOVE AFTER ADSENSE APPROVAL ***
-  // File: server.js (on server /var/www/Acces/RealisticHonorableDeskscan/server.js)
-  // Line: ~9826
-  // What: Redirects / to /about.html so AdSense crawler sees content page
-  // To remove: Delete this block and uncomment the original line below
-  // After removing, restart PM2: pm2 restart access-network
-  // ============================================================
+  // *** ADSENSE REDIRECT ***
+  // Redirects / to /access-project.html (landing page)
   if (pathname === '/') {
-    res.writeHead(301, { 'Location': '/about.html' });
+    res.writeHead(301, { 'Location': '/access-project.html' });
     res.end();
     return;
   }
