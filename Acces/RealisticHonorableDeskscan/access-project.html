@@ -83,12 +83,14 @@
             overflow-x: hidden;
         }
 
-        /* ===== LANGUAGE BUTTON ===== */
-        .lang-btn {
+        /* ===== LANGUAGE DROPDOWN ===== */
+        .lang-dropdown {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 1000;
+        }
+        .lang-toggle {
             background: var(--card);
             border: 1px solid var(--border);
             color: var(--text);
@@ -103,8 +105,51 @@
             transition: all 0.3s;
             box-shadow: var(--shadow);
         }
-        .lang-btn:hover { background: var(--card-hover); transform: translateY(-2px); }
-        .lang-btn i { font-size: 16px; }
+        .lang-toggle:hover { background: var(--card-hover); }
+        .lang-toggle i { font-size: 16px; }
+        .lang-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 8px 0;
+            min-width: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+            backdrop-filter: blur(20px);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.25s;
+        }
+        .lang-dropdown.open .lang-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .lang-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 18px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text2);
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+        .lang-option:hover { background: var(--bg3); color: var(--text); }
+        .lang-option.active { color: var(--accent); font-weight: 600; }
+        .lang-option .lang-flag { font-size: 18px; }
+        .lang-menu::-webkit-scrollbar { width: 4px; }
+        .lang-menu::-webkit-scrollbar-track { background: transparent; }
+        .lang-menu::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
         /* ===== NAVIGATION ===== */
         .nav {
@@ -666,7 +711,9 @@
             .footer-inner { grid-template-columns: 1fr; gap: 28px; }
             .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
             .articles-grid { grid-template-columns: 1fr; }
-            .lang-btn { top: 14px; right: 14px; padding: 8px 14px; font-size: 13px; }
+            .lang-dropdown { top: 14px; right: 14px; }
+            .lang-toggle { padding: 8px 14px; font-size: 13px; }
+            .lang-menu { min-width: 180px; max-height: 320px; }
             .explorer-preview { padding: 28px 16px; }
         }
 
@@ -690,11 +737,15 @@
     </style>
 </head>
 <body>
-    <!-- Language Button -->
-    <button class="lang-btn" id="langBtn" onclick="toggleLanguage()">
-        <i class="fas fa-globe"></i>
-        <span id="langLabel">EN</span>
-    </button>
+    <!-- Language Dropdown -->
+    <div class="lang-dropdown" id="langDropdown">
+        <button class="lang-toggle" id="langToggle">
+            <i class="fas fa-globe"></i>
+            <span id="langLabel">English</span>
+            <i class="fas fa-chevron-down" style="font-size:11px;opacity:0.6;"></i>
+        </button>
+        <div class="lang-menu" id="langMenu"></div>
+    </div>
 
     <!-- Navigation -->
     <nav class="nav">
@@ -1133,17 +1184,17 @@
                 <h4 data-i18n="footer_legal">Legal</h4>
                 <ul class="footer-links">
                     <li><a href="privacy-policy.html" data-i18n="footer_privacy">Privacy Policy</a></li>
+                    <li><a href="privacy-policy-explorer.html" data-i18n="footer_privacy_exp">Explorer Privacy Policy</a></li>
                     <li><a href="terms-of-service.html" data-i18n="footer_terms">Terms of Service</a></li>
+                    <li><a href="terms-of-service-app.html" data-i18n="footer_terms_app">App Terms of Service</a></li>
                 </ul>
             </div>
         </div>
         <div class="footer-bottom">
             <span>&copy; 2025-2026 Access Network. All rights reserved.</span>
             <div class="social-links">
-                <a href="#" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
-                <a href="#" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
-                <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
-                <a href="#" aria-label="Discord"><i class="fab fa-discord"></i></a>
+                <a href="https://x.com/Access_Chain" target="_blank" rel="noopener" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
+                <a href="https://t.me/accesschain" target="_blank" rel="noopener" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
             </div>
         </div>
     </footer>
@@ -1155,116 +1206,379 @@
     }, { threshold: 0.1 });
     document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-    // ===== TRANSLATIONS =====
-    const translations = {
+    // ===== 15 LANGUAGES =====
+    const LANGS = [
+        { code: 'en', flag: '🇬🇧', name: 'English' },
+        { code: 'ar', flag: '🇸🇦', name: 'العربية', rtl: true },
+        { code: 'fr', flag: '🇫🇷', name: 'Français' },
+        { code: 'es', flag: '🇪🇸', name: 'Español' },
+        { code: 'tr', flag: '🇹🇷', name: 'Türkçe' },
+        { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
+        { code: 'pt', flag: '🇧🇷', name: 'Português' },
+        { code: 'ru', flag: '🇷🇺', name: 'Русский' },
+        { code: 'zh', flag: '🇨🇳', name: '中文' },
+        { code: 'ja', flag: '🇯🇵', name: '日本語' },
+        { code: 'ko', flag: '🇰🇷', name: '한국어' },
+        { code: 'hi', flag: '🇮🇳', name: 'हिन्दी' },
+        { code: 'it', flag: '🇮🇹', name: 'Italiano' },
+        { code: 'id', flag: '🇮🇩', name: 'Bahasa Indonesia' },
+        { code: 'nl', flag: '🇳🇱', name: 'Nederlands' }
+    ];
+
+    const T = {
         ar: {
-            nav_features: "المميزات", nav_how: "كيف يعمل", nav_explorer: "المستكشف",
-            nav_tokenomics: "اقتصاد التوكن", nav_learn: "تعلم", nav_faq: "الأسئلة الشائعة",
-            nav_launch: "فتح التطبيق",
-            hero_badge: "الشبكة نشطة — الشبكة الرئيسية مباشرة",
-            hero_title: "مستقبل البلوكتشين اللامركزي",
-            hero_desc: "Access Network هي منصة بلوكتشين عالية الأداء مصممة للسرعة والأمان وقابلية التوسع. أنشئ تطبيقات لامركزية، واكسب توكنات ACCESS، واستكشف عصراً جديداً من التمويل اللامركزي.",
-            dl_open: "فتح في المتصفح", dl_webapp: "تطبيق الويب", dl_geton: "حمّل من", dl_soon: "قريباً",
-            dl_direct: "تحميل مباشر",
-            stat_block: "وقت الكتلة", stat_supply: "الحد الأقصى", stat_consensus: "الإجماع", stat_compat: "متوافق",
-            feat_tag: "مميزات المنصة", feat_title: "مبنية للجيل القادم",
-            feat_desc: "تجمع Access Network بين أحدث تقنيات البلوكتشين وتجربة مستخدم بديهية، مما يجعل التمويل اللامركزي متاحاً للجميع.",
-            feat1_title: "معاملات بسرعة البرق", feat1_desc: "تأكيدات فورية تقريباً مع أوقات كتل تبلغ حوالي 3 ثوانٍ. أرسل واستقبل توكنات ACCESS في ثوانٍ وليس دقائق.",
-            feat2_title: "أمان بمستوى المؤسسات", feat2_desc: "محمية بـ 5 طبقات أمان متقدمة تشمل محافظ مشفرة وقفل PIN مع مصادقة بيومترية ونظام مراقبة ضد الهجمات.",
-            feat3_title: "متوافق مع EVM", feat3_desc: "توافق كامل مع أدوات إيثريوم والعقود الذكية. يمكن للمطورين نشر عقود Solidity مباشرة.",
-            feat4_title: "تعدين إثبات الحصة", feat4_desc: "اكسب توكنات ACCESS من خلال نظام المعالجة. لا حاجة لأجهزة باهظة الثمن.",
-            feat5_title: "رسوم معاملات ضئيلة", feat5_desc: "رسوم Gas منخفضة للغاية لجميع المعاملات على الشبكة.",
-            feat6_title: "تصميم للجوال أولاً", feat6_desc: "مصمم لمستخدمي الجوال. متاح كتطبيق ويب تقدمي وتطبيق أندرويد أصلي.",
-            net_tag: "مواصفات الشبكة", net_title: "نظرة تقنية عامة",
-            net_name: "اسم الشبكة", net_symbol: "رمز العملة", net_block: "وقت الكتلة",
-            net_consensus: "الإجماع", net_supply: "الحد الأقصى", net_type: "نوع الشبكة",
-            how_tag: "البداية", how_title: "كيف يعمل",
-            how_desc: "ابدأ استخدام Access Network في خطوات بسيطة. لا تحتاج معرفة تقنية.",
-            step1_title: "أنشئ حسابك", step1_desc: "سجّل بالبريد الإلكتروني. يتم إنشاء محفظتك الآمنة تلقائياً بتشفير عالي المستوى.",
-            step2_title: "ابدأ جلسة النشاط", step2_desc: "فعّل جلسة المعالجة لبدء التحقق من المعاملات وكسب مكافآت ACCESS.",
-            step3_title: "اكسب توكنات ACCESS", step3_desc: "اجمع المكافآت تلقائياً مع تقدم جلستك بنظام مكافآت ديناميكي.",
-            step4_title: "استكشف وتداول", step4_desc: "استخدم مستكشف AccessScan لمراقبة المعاملات وإرسال التوكنات.",
-            exp_tag: "مستكشف الكتل", exp_title: "مستكشف AccessScan",
-            exp_desc: "مستكشف بلوكتشين قوي وبديهي لشبكة Access. ابحث في المعاملات والكتل والعناوين في الوقت الفعلي.",
-            exp_sub: "شفافية بلوكتشين كاملة", exp_subdesc: "كل معاملة، كل كتلة، قابلة للتتبع والتحقق.",
-            expf1_title: "بحث المعاملات", expf1_desc: "ابحث عن أي معاملة بالهاش أو العنوان أو رقم الكتلة.",
-            expf2_title: "تفاصيل الكتل", expf2_desc: "عرض معلومات الكتلة الكاملة مع قائمة المعاملات.",
-            expf3_title: "تتبع العناوين", expf3_desc: "راقب رصيد أي عنوان وسجل المعاملات.",
-            expf4_title: "أكبر الحسابات", expf4_desc: "عرض أغنى الحسابات وتحليل توزيع التوكنات.",
-            exp_btn: "فتح المستكشف",
-            tok_tag: "اقتصاد التوكن", tok_title: "اقتصاديات توكن ACCESS",
-            tok_desc: "نموذج اقتصادي مدروس مع ندرة مدمجة عبر أحداث التنصيف.",
-            tok1_title: "إجمالي العرض", tok1_desc: "عرض أقصى ثابت من 25 مليون توكن ACCESS. لا يمكن إنشاء توكنات إضافية أبداً.",
-            tok2_title: "نظام التنصيف", tok2_val: "مكافآت ديناميكية", tok2_desc: "تنخفض المكافآت تلقائياً عند عتبات محددة. تبدأ من 0.25 ACCESS لكل جلسة.",
-            tok3_title: "التوزيع", tok3_val: "إطلاق عادل", tok3_desc: "لا يوجد تعدين مسبق ولا ICO. 100% من التوكنات تُكسب عبر المشاركة.",
-            sec_tag: "الأمان", sec_title: "حماية متعددة الطبقات",
-            sec_desc: "أصولك وبياناتك محمية بطبقات متعددة من الأمان.",
-            sec1_title: "محافظ مشفرة", sec1_desc: "المفاتيح الخاصة مشفرة بـ AES-256 ولا تغادر جهازك أبداً.",
-            sec2_title: "مصادقة بيومترية", sec2_desc: "أمّن تطبيقك بالبصمة. مع قفل PIN لحماية مزدوجة.",
-            sec3_title: "مراقبة ضد الهجمات", sec3_desc: "نظام كشف التهديدات في الوقت الفعلي على مدار الساعة.",
-            sec4_title: "طبقة API آمنة", sec4_desc: "جميع الاتصالات مشفرة بـ TLS 1.3 مع تحديد المعدل.",
-            art_tag: "تعلم المزيد", art_title: "فهم شبكة Access",
-            art_desc: "تعمّق في التقنية والرؤية والنظام البيئي.",
-            art1_tag: "بلوكتشين", art1_title: "ما الذي يميز Access Network؟",
-            art1_desc: "مبنية على EVM محسّن للإنتاجية العالية والكمون المنخفض. معاملات في 3 ثوانٍ، دعم كامل لعقود Solidity، ونظام مكافآت تنصيف ديناميكي.",
-            art2_tag: "اقتصاد التوكن", art2_title: "نموذج تنصيف توكن ACCESS",
-            art2_desc: "مستوحى من آلية تنصيف البيتكوين. يبدأ بـ 0.25 ACCESS ويتناقص تدريجياً مما يخلق نموذجاً انكماشياً يشجع الاحتفاظ طويل الأمد.",
-            art3_tag: "الأمان", art3_title: "كيف تحمي Access Network أصولك",
-            art3_desc: "استراتيجية دفاع متعددة الطبقات: تشفير AES-256، مصادقة بيومترية، مراقبة ضد الهجمات، TLS 1.3، وعمليات تدقيق أمنية منتظمة.",
-            faq_tag: "الأسئلة الشائعة", faq_title: "الأسئلة المتكررة",
-            faq1_q: "ما هي Access Network؟", faq1_a: "منصة بلوكتشين عالية الأداء مبنية على تقنية EVM. تتيح معاملات سريعة وآمنة ومنخفضة التكلفة مع دعم العقود الذكية.",
-            faq2_q: "كيف أكسب توكنات ACCESS؟", faq2_a: "ابدأ جلسة نشاط في التطبيق. يشارك جهازك في التحقق من المعاملات وتُوزع المكافآت تلقائياً.",
-            faq3_q: "هل Access Network مجانية؟", faq3_a: "نعم! إنشاء الحساب والمشاركة مجاني تماماً. الرسوم الوحيدة هي تكاليف Gas الضئيلة عند إرسال المعاملات.",
-            faq4_q: "ما هو الحد الأقصى لتوكنات ACCESS؟", faq4_a: "25,000,000 توكن ACCESS. هذا الحد ثابت على مستوى البروتوكول ولا يمكن تغييره.",
-            faq5_q: "ما مدى أمان محفظتي؟", faq5_a: "محمية بطبقات أمان متعددة: تشفير AES-256، قفل PIN، مصادقة بيومترية، ونظام مراقبة ضد الهجمات.",
-            faq6_q: "هل يمكن استخدام MetaMask؟", faq6_a: "نعم! أضف الشبكة: الاسم: Access Network، Chain ID: 22888، الرمز: ACCESS.",
-            faq7_q: "أين يمكن تحميل التطبيق؟", faq7_a: "متاح على الويب في accesschain.org، وعلى Google Play، وكتحميل APK مباشر. نسخة iOS قريباً.",
-            cta_title: "مستعد للانضمام؟", cta_desc: "ابدأ كسب توكنات ACCESS اليوم. لا تحتاج أجهزة خاصة.",
-            cta_btn: "ابدأ الآن",
-            footer_desc: "منصة بلوكتشين عالية الأداء للتطبيقات اللامركزية والأصول الرقمية والعقود الذكية.",
-            footer_product: "المنتج", footer_app: "تطبيق الويب", footer_explorer: "المستكشف",
-            footer_whitepaper: "الورقة البيضاء", footer_apk: "تحميل APK",
-            footer_resources: "الموارد", footer_about: "حول", footer_faq: "الأسئلة الشائعة",
-            footer_contact: "تواصل", footer_top: "أكبر الحسابات",
-            footer_legal: "قانوني", footer_privacy: "سياسة الخصوصية", footer_terms: "شروط الخدمة"
+            nav_features:"المميزات",nav_how:"كيف يعمل",nav_explorer:"المستكشف",nav_tokenomics:"اقتصاد التوكن",nav_learn:"تعلم",nav_faq:"الأسئلة الشائعة",nav_launch:"فتح التطبيق",
+            hero_badge:"الشبكة نشطة — الشبكة الرئيسية مباشرة",hero_title:"مستقبل البلوكتشين اللامركزي",
+            hero_desc:"Access Network هي منصة بلوكتشين عالية الأداء مصممة للسرعة والأمان وقابلية التوسع. أنشئ تطبيقات لامركزية، واكسب توكنات ACCESS، واستكشف عصراً جديداً من التمويل اللامركزي.",
+            dl_open:"فتح في المتصفح",dl_webapp:"تطبيق الويب",dl_geton:"حمّل من",dl_soon:"قريباً",dl_direct:"تحميل مباشر",
+            stat_block:"وقت الكتلة",stat_supply:"الحد الأقصى",stat_consensus:"الإجماع",stat_compat:"متوافق",
+            feat_tag:"مميزات المنصة",feat_title:"مبنية للجيل القادم",feat_desc:"تجمع Access Network بين أحدث تقنيات البلوكتشين وتجربة مستخدم بديهية، مما يجعل التمويل اللامركزي متاحاً للجميع.",
+            feat1_title:"معاملات بسرعة البرق",feat1_desc:"تأكيدات فورية تقريباً مع أوقات كتل تبلغ حوالي 3 ثوانٍ. أرسل واستقبل توكنات ACCESS في ثوانٍ وليس دقائق.",
+            feat2_title:"أمان بمستوى المؤسسات",feat2_desc:"محمية بـ 5 طبقات أمان متقدمة تشمل محافظ مشفرة وقفل PIN مع مصادقة بيومترية ونظام مراقبة ضد الهجمات.",
+            feat3_title:"متوافق مع EVM",feat3_desc:"توافق كامل مع أدوات إيثريوم والعقود الذكية. يمكن للمطورين نشر عقود Solidity مباشرة.",
+            feat4_title:"تعدين إثبات الحصة",feat4_desc:"اكسب توكنات ACCESS من خلال نظام المعالجة. لا حاجة لأجهزة باهظة الثمن.",
+            feat5_title:"رسوم معاملات ضئيلة",feat5_desc:"رسوم Gas منخفضة للغاية لجميع المعاملات على الشبكة.",
+            feat6_title:"تصميم للجوال أولاً",feat6_desc:"مصمم لمستخدمي الجوال. متاح كتطبيق ويب تقدمي وتطبيق أندرويد أصلي.",
+            net_tag:"مواصفات الشبكة",net_title:"نظرة تقنية عامة",net_name:"اسم الشبكة",net_symbol:"رمز العملة",net_block:"وقت الكتلة",net_consensus:"الإجماع",net_supply:"الحد الأقصى",net_type:"نوع الشبكة",
+            how_tag:"البداية",how_title:"كيف يعمل",how_desc:"ابدأ استخدام Access Network في خطوات بسيطة. لا تحتاج معرفة تقنية.",
+            step1_title:"أنشئ حسابك",step1_desc:"سجّل بالبريد الإلكتروني. يتم إنشاء محفظتك الآمنة تلقائياً بتشفير عالي المستوى.",
+            step2_title:"ابدأ جلسة النشاط",step2_desc:"فعّل جلسة المعالجة لبدء التحقق من المعاملات وكسب مكافآت ACCESS.",
+            step3_title:"اكسب توكنات ACCESS",step3_desc:"اجمع المكافآت تلقائياً مع تقدم جلستك بنظام مكافآت ديناميكي.",
+            step4_title:"استكشف وتداول",step4_desc:"استخدم مستكشف AccessScan لمراقبة المعاملات وإرسال التوكنات.",
+            exp_tag:"مستكشف الكتل",exp_title:"مستكشف AccessScan",exp_desc:"مستكشف بلوكتشين قوي وبديهي لشبكة Access. ابحث في المعاملات والكتل والعناوين في الوقت الفعلي.",
+            exp_sub:"شفافية بلوكتشين كاملة",exp_subdesc:"كل معاملة، كل كتلة، قابلة للتتبع والتحقق.",
+            expf1_title:"بحث المعاملات",expf1_desc:"ابحث عن أي معاملة بالهاش أو العنوان أو رقم الكتلة.",
+            expf2_title:"تفاصيل الكتل",expf2_desc:"عرض معلومات الكتلة الكاملة مع قائمة المعاملات.",
+            expf3_title:"تتبع العناوين",expf3_desc:"راقب رصيد أي عنوان وسجل المعاملات.",
+            expf4_title:"أكبر الحسابات",expf4_desc:"عرض أغنى الحسابات وتحليل توزيع التوكنات.",
+            exp_btn:"فتح المستكشف",
+            tok_tag:"اقتصاد التوكن",tok_title:"اقتصاديات توكن ACCESS",tok_desc:"نموذج اقتصادي مدروس مع ندرة مدمجة عبر أحداث التنصيف.",
+            tok1_title:"إجمالي العرض",tok1_desc:"عرض أقصى ثابت من 25 مليون توكن ACCESS. لا يمكن إنشاء توكنات إضافية أبداً.",
+            tok2_title:"نظام التنصيف",tok2_val:"مكافآت ديناميكية",tok2_desc:"تنخفض المكافآت تلقائياً عند عتبات محددة. تبدأ من 0.25 ACCESS لكل جلسة.",
+            tok3_title:"التوزيع",tok3_val:"إطلاق عادل",tok3_desc:"لا يوجد تعدين مسبق ولا ICO. 100% من التوكنات تُكسب عبر المشاركة.",
+            sec_tag:"الأمان",sec_title:"حماية متعددة الطبقات",sec_desc:"أصولك وبياناتك محمية بطبقات متعددة من الأمان.",
+            sec1_title:"محافظ مشفرة",sec1_desc:"المفاتيح الخاصة مشفرة بـ AES-256 ولا تغادر جهازك أبداً.",
+            sec2_title:"مصادقة بيومترية",sec2_desc:"أمّن تطبيقك بالبصمة. مع قفل PIN لحماية مزدوجة.",
+            sec3_title:"مراقبة ضد الهجمات",sec3_desc:"نظام كشف التهديدات في الوقت الفعلي على مدار الساعة.",
+            sec4_title:"طبقة API آمنة",sec4_desc:"جميع الاتصالات مشفرة بـ TLS 1.3 مع تحديد المعدل.",
+            art_tag:"تعلم المزيد",art_title:"فهم شبكة Access",art_desc:"تعمّق في التقنية والرؤية والنظام البيئي.",
+            art1_tag:"بلوكتشين",art1_title:"ما الذي يميز Access Network؟",art1_desc:"مبنية على EVM محسّن للإنتاجية العالية والكمون المنخفض. معاملات في 3 ثوانٍ، دعم كامل لعقود Solidity، ونظام مكافآت تنصيف ديناميكي.",
+            art2_tag:"اقتصاد التوكن",art2_title:"نموذج تنصيف توكن ACCESS",art2_desc:"مستوحى من آلية تنصيف البيتكوين. يبدأ بـ 0.25 ACCESS ويتناقص تدريجياً مما يخلق نموذجاً انكماشياً يشجع الاحتفاظ طويل الأمد.",
+            art3_tag:"الأمان",art3_title:"كيف تحمي Access Network أصولك",art3_desc:"استراتيجية دفاع متعددة الطبقات: تشفير AES-256، مصادقة بيومترية، مراقبة ضد الهجمات، TLS 1.3، وعمليات تدقيق أمنية منتظمة.",
+            faq_tag:"الأسئلة الشائعة",faq_title:"الأسئلة المتكررة",
+            faq1_q:"ما هي Access Network؟",faq1_a:"منصة بلوكتشين عالية الأداء مبنية على تقنية EVM. تتيح معاملات سريعة وآمنة ومنخفضة التكلفة مع دعم العقود الذكية.",
+            faq2_q:"كيف أكسب توكنات ACCESS؟",faq2_a:"ابدأ جلسة نشاط في التطبيق. يشارك جهازك في التحقق من المعاملات وتُوزع المكافآت تلقائياً.",
+            faq3_q:"هل Access Network مجانية؟",faq3_a:"نعم! إنشاء الحساب والمشاركة مجاني تماماً. الرسوم الوحيدة هي تكاليف Gas الضئيلة عند إرسال المعاملات.",
+            faq4_q:"ما هو الحد الأقصى لتوكنات ACCESS؟",faq4_a:"25,000,000 توكن ACCESS. هذا الحد ثابت على مستوى البروتوكول ولا يمكن تغييره.",
+            faq5_q:"ما مدى أمان محفظتي؟",faq5_a:"محمية بطبقات أمان متعددة: تشفير AES-256، قفل PIN، مصادقة بيومترية، ونظام مراقبة ضد الهجمات.",
+            faq6_q:"هل يمكن استخدام MetaMask؟",faq6_a:"نعم! أضف الشبكة: الاسم: Access Network، Chain ID: 22888، الرمز: ACCESS.",
+            faq7_q:"أين يمكن تحميل التطبيق؟",faq7_a:"متاح على الويب في accesschain.org، وعلى Google Play، وكتحميل APK مباشر. نسخة iOS قريباً.",
+            cta_title:"مستعد للانضمام؟",cta_desc:"ابدأ كسب توكنات ACCESS اليوم. لا تحتاج أجهزة خاصة.",cta_btn:"ابدأ الآن",
+            footer_desc:"منصة بلوكتشين عالية الأداء للتطبيقات اللامركزية والأصول الرقمية والعقود الذكية.",
+            footer_product:"المنتج",footer_app:"تطبيق الويب",footer_explorer:"المستكشف",footer_whitepaper:"الورقة البيضاء",footer_apk:"تحميل APK",
+            footer_resources:"الموارد",footer_about:"حول",footer_faq:"الأسئلة الشائعة",footer_contact:"تواصل",footer_top:"أكبر الحسابات",
+            footer_legal:"قانوني",footer_privacy:"سياسة الخصوصية",footer_privacy_exp:"خصوصية المستكشف",footer_terms:"شروط الخدمة",footer_terms_app:"شروط التطبيق"
         },
         fr: {
-            nav_features: "Fonctionnalités", nav_how: "Comment ça marche", nav_explorer: "Explorateur",
-            nav_tokenomics: "Tokenomics", nav_learn: "Apprendre", nav_faq: "FAQ",
-            nav_launch: "Ouvrir l'App",
-            hero_badge: "Réseau actif — Mainnet en ligne",
-            hero_title: "L'Avenir de la Blockchain Décentralisée",
-            hero_desc: "Access Network est une plateforme blockchain haute performance conçue pour la vitesse, la sécurité et l'évolutivité.",
-            dl_open: "Ouvrir dans le navigateur", dl_webapp: "App Web", dl_geton: "Télécharger sur", dl_soon: "Bientôt",
-            dl_direct: "Téléchargement direct",
-            stat_block: "Temps de bloc", stat_supply: "Supply max", stat_consensus: "Consensus", stat_compat: "Compatible",
-            feat_tag: "FONCTIONNALITÉS", feat_title: "Construit pour la prochaine génération",
-            feat_desc: "Access Network combine la technologie blockchain de pointe avec une expérience utilisateur intuitive.",
-            cta_title: "Prêt à rejoindre le réseau ?", cta_desc: "Commencez à gagner des tokens ACCESS aujourd'hui.",
-            cta_btn: "Commencer maintenant",
-            faq_tag: "FAQ", faq_title: "Questions Fréquentes",
-            footer_product: "Produit", footer_resources: "Ressources", footer_legal: "Légal"
+            nav_features:"Fonctionnalités",nav_how:"Comment ça marche",nav_explorer:"Explorateur",nav_tokenomics:"Tokenomics",nav_learn:"Apprendre",nav_faq:"FAQ",nav_launch:"Ouvrir l'App",
+            hero_badge:"Réseau actif — Mainnet en ligne",hero_title:"L'Avenir de la Blockchain Décentralisée",
+            hero_desc:"Access Network est une plateforme blockchain haute performance conçue pour la vitesse, la sécurité et l'évolutivité. Créez des dApps, gagnez des tokens ACCESS et explorez une nouvelle ère de finance décentralisée.",
+            dl_open:"Ouvrir dans le navigateur",dl_webapp:"App Web",dl_geton:"Télécharger sur",dl_soon:"Bientôt",dl_direct:"Téléchargement direct",
+            stat_block:"Temps de bloc",stat_supply:"Supply max",stat_consensus:"Consensus",stat_compat:"Compatible",
+            feat_tag:"FONCTIONNALITÉS",feat_title:"Construit pour la prochaine génération",feat_desc:"Access Network combine la technologie blockchain de pointe avec une expérience utilisateur intuitive.",
+            feat1_title:"Transactions ultra-rapides",feat1_desc:"Confirmations quasi-instantanées avec des temps de bloc d'environ 3 secondes.",
+            feat2_title:"Sécurité de niveau entreprise",feat2_desc:"Protégé par 5 couches de sécurité avancée incluant des portefeuilles chiffrés et l'authentification biométrique.",
+            feat3_title:"Compatible EVM",feat3_desc:"Compatibilité totale avec les outils Ethereum et les contrats intelligents.",
+            feat4_title:"Minage Proof of Stake",feat4_desc:"Gagnez des tokens ACCESS grâce au système de traitement. Aucun matériel coûteux requis.",
+            feat5_title:"Frais minimaux",feat5_desc:"Frais de Gas extrêmement bas pour toutes les transactions sur le réseau.",
+            feat6_title:"Conçu pour le mobile",feat6_desc:"Disponible en tant qu'application web progressive et application Android native.",
+            net_tag:"SPÉCIFICATIONS",net_title:"Aperçu technique",net_name:"Nom du réseau",net_symbol:"Symbole",net_block:"Temps de bloc",net_consensus:"Consensus",net_supply:"Supply max",net_type:"Type de réseau",
+            how_tag:"DÉMARRAGE",how_title:"Comment ça marche",how_desc:"Commencez à utiliser Access Network en quelques étapes simples.",
+            step1_title:"Créer un compte",step1_desc:"Inscrivez-vous avec votre email. Votre portefeuille sécurisé est automatiquement généré.",
+            step2_title:"Démarrer une session",step2_desc:"Activez votre session pour commencer à valider les transactions.",
+            step3_title:"Gagner des tokens",step3_desc:"Collectez des récompenses automatiquement avec un système de halving dynamique.",
+            step4_title:"Explorer et transférer",step4_desc:"Utilisez AccessScan pour surveiller les transactions et envoyer des tokens.",
+            exp_tag:"EXPLORATEUR",exp_title:"Explorateur AccessScan",exp_desc:"Un explorateur blockchain puissant et intuitif pour Access Network.",
+            exp_sub:"Transparence totale",exp_subdesc:"Chaque transaction, chaque bloc, entièrement traçable.",
+            expf1_title:"Recherche de transactions",expf1_desc:"Recherchez par hash, adresse ou numéro de bloc.",
+            expf2_title:"Détails des blocs",expf2_desc:"Informations complètes sur les blocs.",
+            expf3_title:"Suivi d'adresses",expf3_desc:"Surveillez le solde et l'historique de toute adresse.",
+            expf4_title:"Top comptes",expf4_desc:"Voir les comptes les plus riches du réseau.",
+            exp_btn:"Ouvrir l'explorateur",
+            tok_tag:"TOKENOMICS",tok_title:"Économie du token ACCESS",tok_desc:"Un modèle économique soigneusement conçu avec une rareté intégrée.",
+            tok1_title:"Supply totale",tok1_desc:"Supply maximale fixe de 25 millions de tokens ACCESS.",
+            tok2_title:"Système de halving",tok2_val:"Récompenses dynamiques",tok2_desc:"Les récompenses sont automatiquement réduites à des seuils prédéfinis.",
+            tok3_title:"Distribution",tok3_val:"Lancement équitable",tok3_desc:"Pas de pré-minage, pas d'ICO. 100% gagnés par participation.",
+            sec_tag:"SÉCURITÉ",sec_title:"Protection multicouche",sec_desc:"Vos actifs sont protégés par plusieurs couches de sécurité.",
+            sec1_title:"Portefeuilles chiffrés",sec1_desc:"Clés privées chiffrées AES-256, ne quittent jamais votre appareil.",
+            sec2_title:"Authentification biométrique",sec2_desc:"Sécurisez avec l'empreinte digitale et le code PIN.",
+            sec3_title:"Surveillance anti-attaque",sec3_desc:"Détection des menaces en temps réel 24h/24.",
+            sec4_title:"API sécurisée",sec4_desc:"Communications chiffrées TLS 1.3 avec limitation de débit.",
+            art_tag:"EN SAVOIR PLUS",art_title:"Comprendre Access Network",art_desc:"Plongez dans la technologie et l'écosystème.",
+            art1_tag:"BLOCKCHAIN",art1_title:"Ce qui rend Access Network différent",art1_desc:"Construit sur un EVM optimisé pour un haut débit et une faible latence. Transactions en 3 secondes avec support complet de Solidity.",
+            art2_tag:"TOKENOMICS",art2_title:"Le modèle de halving ACCESS",art2_desc:"Inspiré du halving Bitcoin. Commence à 0.25 ACCESS et diminue progressivement.",
+            art3_tag:"SÉCURITÉ",art3_title:"Comment Access Network protège vos actifs",art3_desc:"Stratégie de défense multicouche: AES-256, biométrie, anti-attaque, TLS 1.3.",
+            faq_tag:"FAQ",faq_title:"Questions fréquentes",
+            faq1_q:"Qu'est-ce que Access Network?",faq1_a:"Une plateforme blockchain haute performance basée sur la technologie EVM.",
+            faq2_q:"Comment gagner des tokens ACCESS?",faq2_a:"Démarrez une session d'activité dans l'app pour participer à la validation.",
+            faq3_q:"Access Network est-il gratuit?",faq3_a:"Oui! Aucun frais caché. Seuls les frais de Gas minimes s'appliquent.",
+            faq4_q:"Quelle est la supply maximale?",faq4_a:"25,000,000 tokens ACCESS, fixée au niveau du protocole.",
+            faq5_q:"Mon portefeuille est-il sécurisé?",faq5_a:"Protégé par AES-256, PIN, biométrie et surveillance anti-attaque.",
+            faq6_q:"Puis-je utiliser MetaMask?",faq6_a:"Oui! Ajoutez le réseau: Access Network, Chain ID: 22888, Symbole: ACCESS.",
+            faq7_q:"Où télécharger l'app?",faq7_a:"Disponible sur le web, Google Play, et en téléchargement APK direct.",
+            cta_title:"Prêt à rejoindre?",cta_desc:"Commencez à gagner des tokens ACCESS aujourd'hui.",cta_btn:"Commencer",
+            footer_desc:"Plateforme blockchain haute performance pour les applications décentralisées.",
+            footer_product:"Produit",footer_app:"App Web",footer_explorer:"Explorateur",footer_whitepaper:"Livre blanc",footer_apk:"Télécharger APK",
+            footer_resources:"Ressources",footer_about:"À propos",footer_faq:"FAQ",footer_contact:"Contact",footer_top:"Top comptes",
+            footer_legal:"Légal",footer_privacy:"Politique de confidentialité",footer_privacy_exp:"Confidentialité explorateur",footer_terms:"Conditions d'utilisation",footer_terms_app:"Conditions de l'app"
         },
         es: {
-            nav_features: "Características", nav_how: "Cómo funciona", nav_launch: "Abrir App",
-            hero_badge: "Red activa — Mainnet en vivo",
-            hero_title: "El Futuro del Blockchain Descentralizado",
-            hero_desc: "Access Network es una plataforma blockchain de alto rendimiento diseñada para velocidad, seguridad y escalabilidad.",
-            cta_title: "¿Listo para unirte?", cta_btn: "Comenzar ahora",
-            faq_tag: "FAQ", faq_title: "Preguntas Frecuentes"
+            nav_features:"Características",nav_how:"Cómo funciona",nav_explorer:"Explorador",nav_tokenomics:"Tokenomics",nav_learn:"Aprender",nav_faq:"FAQ",nav_launch:"Abrir App",
+            hero_badge:"Red activa — Mainnet en vivo",hero_title:"El Futuro del Blockchain Descentralizado",
+            hero_desc:"Access Network es una plataforma blockchain de alto rendimiento diseñada para velocidad, seguridad y escalabilidad.",
+            dl_open:"Abrir en navegador",dl_webapp:"App Web",dl_geton:"Descargar en",dl_soon:"Próximamente",dl_direct:"Descarga directa",
+            stat_block:"Tiempo de bloque",stat_supply:"Supply máx",stat_consensus:"Consenso",stat_compat:"Compatible",
+            feat_tag:"CARACTERÍSTICAS",feat_title:"Construido para la próxima generación",feat_desc:"Access Network combina tecnología blockchain con una experiencia de usuario intuitiva.",
+            feat1_title:"Transacciones ultrarrápidas",feat1_desc:"Confirmaciones casi instantáneas con bloques de ~3 segundos.",
+            feat2_title:"Seguridad empresarial",feat2_desc:"5 capas de seguridad avanzada con cifrado y biometría.",
+            feat3_title:"Compatible EVM",feat3_desc:"Compatibilidad total con herramientas Ethereum y contratos inteligentes.",
+            feat4_title:"Minería Proof of Stake",feat4_desc:"Gana tokens ACCESS sin hardware costoso.",
+            feat5_title:"Tarifas mínimas",feat5_desc:"Tarifas de Gas extremadamente bajas.",
+            feat6_title:"Diseño móvil primero",feat6_desc:"Disponible como PWA y app nativa Android.",
+            net_tag:"ESPECIFICACIONES",net_title:"Visión técnica",net_name:"Nombre de red",net_symbol:"Símbolo",net_block:"Tiempo de bloque",net_consensus:"Consenso",net_supply:"Supply máx",net_type:"Tipo de red",
+            how_tag:"INICIO",how_title:"Cómo funciona",how_desc:"Empieza con Access Network en simples pasos.",
+            step1_title:"Crear cuenta",step1_desc:"Regístrate con tu email. Tu billetera se genera automáticamente.",
+            step2_title:"Iniciar sesión",step2_desc:"Activa tu sesión para validar transacciones y ganar recompensas.",
+            step3_title:"Ganar tokens",step3_desc:"Recompensas automáticas con sistema de halving dinámico.",
+            step4_title:"Explorar y transaccionar",step4_desc:"Usa AccessScan para monitorear transacciones.",
+            exp_tag:"EXPLORADOR",exp_title:"Explorador AccessScan",exp_desc:"Un explorador blockchain potente e intuitivo.",
+            exp_sub:"Transparencia total",exp_subdesc:"Cada transacción, cada bloque, totalmente trazable.",
+            expf1_title:"Buscar transacciones",expf1_desc:"Busca por hash, dirección o número de bloque.",
+            expf2_title:"Detalles de bloques",expf2_desc:"Información completa de bloques.",
+            expf3_title:"Seguimiento de direcciones",expf3_desc:"Monitorea saldos e historial.",
+            expf4_title:"Top cuentas",expf4_desc:"Cuentas más ricas de la red.",
+            exp_btn:"Abrir explorador",
+            tok_tag:"TOKENOMICS",tok_title:"Economía del token ACCESS",tok_desc:"Modelo económico con escasez incorporada.",
+            tok1_title:"Supply total",tok1_desc:"Supply máxima fija de 25 millones de tokens ACCESS.",
+            tok2_title:"Sistema de halving",tok2_val:"Recompensas dinámicas",tok2_desc:"Las recompensas se reducen automáticamente en umbrales predefinidos.",
+            tok3_title:"Distribución",tok3_val:"Lanzamiento justo",tok3_desc:"Sin pre-minado, sin ICO. 100% ganado por participación.",
+            sec_tag:"SEGURIDAD",sec_title:"Protección multicapa",sec_desc:"Tus activos protegidos por múltiples capas de seguridad.",
+            sec1_title:"Billeteras cifradas",sec1_desc:"Claves privadas cifradas con AES-256.",
+            sec2_title:"Autenticación biométrica",sec2_desc:"Huella digital y PIN para doble protección.",
+            sec3_title:"Monitoreo anti-ataques",sec3_desc:"Detección de amenazas en tiempo real 24/7.",
+            sec4_title:"API segura",sec4_desc:"Comunicaciones cifradas con TLS 1.3.",
+            art_tag:"APRENDE MÁS",art_title:"Entendiendo Access Network",art_desc:"Profundiza en la tecnología y el ecosistema.",
+            art1_tag:"BLOCKCHAIN",art1_title:"¿Qué hace diferente a Access Network?",art1_desc:"Construida sobre EVM optimizado. Transacciones en 3 segundos con soporte completo de Solidity.",
+            art2_tag:"TOKENOMICS",art2_title:"El modelo de halving ACCESS",art2_desc:"Inspirado en Bitcoin. Comienza en 0.25 ACCESS y disminuye progresivamente.",
+            art3_tag:"SEGURIDAD",art3_title:"Cómo Access Network protege tus activos",art3_desc:"Defensa multicapa: AES-256, biometría, anti-ataques, TLS 1.3.",
+            faq_tag:"FAQ",faq_title:"Preguntas frecuentes",
+            faq1_q:"¿Qué es Access Network?",faq1_a:"Plataforma blockchain de alto rendimiento basada en EVM.",
+            faq2_q:"¿Cómo gano tokens ACCESS?",faq2_a:"Inicia una sesión de actividad en la app.",
+            faq3_q:"¿Es gratis?",faq3_a:"¡Sí! Solo hay tarifas mínimas de Gas para transacciones.",
+            faq4_q:"¿Cuál es la supply máxima?",faq4_a:"25,000,000 tokens ACCESS, fijada a nivel de protocolo.",
+            faq5_q:"¿Es segura mi billetera?",faq5_a:"AES-256, PIN, biometría y monitoreo anti-ataques.",
+            faq6_q:"¿Puedo usar MetaMask?",faq6_a:"¡Sí! Chain ID: 22888, Símbolo: ACCESS.",
+            faq7_q:"¿Dónde descargar la app?",faq7_a:"Web, Google Play, o APK directo. iOS próximamente.",
+            cta_title:"¿Listo para unirte?",cta_desc:"Empieza a ganar tokens ACCESS hoy.",cta_btn:"Comenzar ahora",
+            footer_desc:"Plataforma blockchain de alto rendimiento.",footer_product:"Producto",footer_resources:"Recursos",footer_legal:"Legal",
+            footer_app:"App Web",footer_explorer:"Explorador",footer_whitepaper:"Libro blanco",footer_apk:"Descargar APK",
+            footer_about:"Acerca de",footer_faq:"FAQ",footer_contact:"Contacto",footer_top:"Top cuentas",
+            footer_privacy:"Política de privacidad",footer_privacy_exp:"Privacidad del explorador",footer_terms:"Términos del servicio",footer_terms_app:"Términos de la app"
         },
         tr: {
-            nav_features: "Özellikler", nav_how: "Nasıl Çalışır", nav_launch: "Uygulamayı Aç",
-            hero_badge: "Ağ aktif — Ana ağ canlı",
-            hero_title: "Merkeziyetsiz Blockchain'in Geleceği",
-            hero_desc: "Access Network, hız, güvenlik ve ölçeklenebilirlik için tasarlanmış yüksek performanslı bir blockchain platformudur.",
-            cta_title: "Ağa katılmaya hazır mısın?", cta_btn: "Şimdi başla"
+            nav_features:"Özellikler",nav_how:"Nasıl Çalışır",nav_explorer:"Gezgin",nav_tokenomics:"Tokenomics",nav_learn:"Öğren",nav_faq:"SSS",nav_launch:"Uygulamayı Aç",
+            hero_badge:"Ağ aktif — Ana ağ canlı",hero_title:"Merkeziyetsiz Blockchain'in Geleceği",
+            hero_desc:"Access Network, hız, güvenlik ve ölçeklenebilirlik için tasarlanmış yüksek performanslı bir blockchain platformudur.",
+            dl_open:"Tarayıcıda aç",dl_webapp:"Web Uygulaması",dl_geton:"İndir",dl_soon:"Yakında",dl_direct:"Doğrudan indirin",
+            stat_block:"Blok süresi",stat_supply:"Maks arz",stat_consensus:"Konsensüs",stat_compat:"Uyumlu",
+            feat_tag:"ÖZELLİKLER",feat_title:"Gelecek nesil için inşa edildi",feat_desc:"Access Network, son teknoloji blockchain ile sezgisel kullanıcı deneyimini birleştirir.",
+            feat1_title:"Işık hızında işlemler",feat1_desc:"~3 saniye blok süreleriyle neredeyse anında onay.",
+            feat2_title:"Kurumsal güvenlik",feat2_desc:"Şifreli cüzdanlar ve biyometrik kimlik doğrulama ile 5 katmanlı güvenlik.",
+            feat3_title:"EVM uyumlu",feat3_desc:"Ethereum araçları ve akıllı sözleşmelerle tam uyumluluk.",
+            feat4_title:"Proof of Stake madenciliği",feat4_desc:"Pahalı donanım olmadan ACCESS token kazanın.",
+            feat5_title:"Minimum ücretler",feat5_desc:"Son derece düşük Gas ücretleri.",
+            feat6_title:"Mobil öncelikli tasarım",feat6_desc:"PWA ve yerel Android uygulaması olarak mevcut.",
+            how_tag:"BAŞLANGIÇ",how_title:"Nasıl Çalışır",how_desc:"Birkaç basit adımda başlayın.",
+            step1_title:"Hesap oluştur",step1_desc:"E-posta ile kaydolun. Güvenli cüzdanınız otomatik oluşturulur.",
+            step2_title:"Oturum başlat",step2_desc:"İşlemleri doğrulamak için oturumunuzu etkinleştirin.",
+            step3_title:"Token kazan",step3_desc:"Dinamik halving sistemiyle otomatik ödüller.",
+            step4_title:"Keşfet ve işlem yap",step4_desc:"AccessScan ile işlemleri izleyin.",
+            exp_tag:"BLOK GEZGİNİ",exp_title:"AccessScan Gezgini",exp_desc:"Access Network için güçlü bir blok gezgini.",
+            tok_tag:"TOKENOMİCS",tok_title:"ACCESS Token Ekonomisi",tok_desc:"Halving ile kıtlık içeren ekonomik model.",
+            sec_tag:"GÜVENLİK",sec_title:"Çok katmanlı koruma",sec_desc:"Varlıklarınız birden fazla güvenlik katmanıyla korunur.",
+            cta_title:"Katılmaya hazır mısın?",cta_desc:"Bugün ACCESS token kazanmaya başlayın.",cta_btn:"Şimdi başla",
+            faq_tag:"SSS",faq_title:"Sık Sorulan Sorular",
+            footer_product:"Ürün",footer_resources:"Kaynaklar",footer_legal:"Yasal",
+            footer_privacy:"Gizlilik politikası",footer_privacy_exp:"Gezgin gizliliği",footer_terms:"Kullanım şartları",footer_terms_app:"Uygulama şartları"
         },
         de: {
-            nav_features: "Funktionen", nav_how: "Wie es funktioniert", nav_launch: "App öffnen",
-            hero_badge: "Netzwerk aktiv — Mainnet live",
-            hero_title: "Die Zukunft der dezentralen Blockchain",
-            cta_title: "Bereit dem Netzwerk beizutreten?", cta_btn: "Jetzt starten"
+            nav_features:"Funktionen",nav_how:"Wie es funktioniert",nav_explorer:"Explorer",nav_tokenomics:"Tokenomics",nav_learn:"Lernen",nav_faq:"FAQ",nav_launch:"App öffnen",
+            hero_badge:"Netzwerk aktiv — Mainnet live",hero_title:"Die Zukunft der dezentralen Blockchain",
+            hero_desc:"Access Network ist eine leistungsstarke Blockchain-Plattform für Geschwindigkeit, Sicherheit und Skalierbarkeit.",
+            dl_open:"Im Browser öffnen",dl_webapp:"Web-App",dl_geton:"Herunterladen",dl_soon:"Bald verfügbar",dl_direct:"Direkter Download",
+            stat_block:"Blockzeit",stat_supply:"Max Supply",stat_consensus:"Konsens",stat_compat:"Kompatibel",
+            feat_tag:"FUNKTIONEN",feat_title:"Für die nächste Generation gebaut",feat_desc:"Access Network kombiniert modernste Blockchain-Technologie mit intuitiver Benutzerfreundlichkeit.",
+            feat1_title:"Blitzschnelle Transaktionen",feat1_desc:"Nahezu sofortige Bestätigungen mit ~3 Sekunden Blockzeiten.",
+            feat2_title:"Unternehmensgrade Sicherheit",feat2_desc:"5 Sicherheitsebenen mit verschlüsselten Wallets und Biometrie.",
+            feat3_title:"EVM-kompatibel",feat3_desc:"Volle Kompatibilität mit Ethereum-Tools und Smart Contracts.",
+            feat4_title:"Proof-of-Stake-Mining",feat4_desc:"ACCESS-Token ohne teure Hardware verdienen.",
+            feat5_title:"Minimale Gebühren",feat5_desc:"Extrem niedrige Gas-Gebühren.",
+            feat6_title:"Mobile-First-Design",feat6_desc:"Als PWA und native Android-App verfügbar.",
+            how_tag:"ERSTE SCHRITTE",how_title:"Wie es funktioniert",how_desc:"Starten Sie in wenigen einfachen Schritten.",
+            step1_title:"Konto erstellen",step1_desc:"Registrieren Sie sich per E-Mail. Ihr sicheres Wallet wird automatisch erstellt.",
+            step2_title:"Sitzung starten",step2_desc:"Aktivieren Sie Ihre Sitzung zur Transaktionsvalidierung.",
+            step3_title:"Token verdienen",step3_desc:"Automatische Belohnungen mit dynamischem Halving-System.",
+            step4_title:"Erkunden und handeln",step4_desc:"Nutzen Sie AccessScan zur Transaktionsüberwachung.",
+            exp_tag:"BLOCK-EXPLORER",exp_title:"AccessScan Explorer",exp_desc:"Ein leistungsstarker Block-Explorer für Access Network.",
+            tok_tag:"TOKENOMICS",tok_title:"ACCESS Token-Ökonomie",tok_desc:"Wirtschaftsmodell mit eingebauter Knappheit durch Halving.",
+            sec_tag:"SICHERHEIT",sec_title:"Mehrschichtiger Schutz",sec_desc:"Ihre Vermögenswerte sind durch mehrere Sicherheitsebenen geschützt.",
+            cta_title:"Bereit beizutreten?",cta_desc:"Beginnen Sie heute ACCESS-Token zu verdienen.",cta_btn:"Jetzt starten",
+            faq_tag:"FAQ",faq_title:"Häufig gestellte Fragen",
+            footer_product:"Produkt",footer_resources:"Ressourcen",footer_legal:"Rechtliches",
+            footer_privacy:"Datenschutz",footer_privacy_exp:"Explorer-Datenschutz",footer_terms:"Nutzungsbedingungen",footer_terms_app:"App-Bedingungen"
+        },
+        pt: {
+            nav_features:"Recursos",nav_how:"Como funciona",nav_explorer:"Explorador",nav_tokenomics:"Tokenomics",nav_learn:"Aprender",nav_faq:"FAQ",nav_launch:"Abrir App",
+            hero_badge:"Rede ativa — Mainnet ao vivo",hero_title:"O Futuro do Blockchain Descentralizado",
+            hero_desc:"Access Network é uma plataforma blockchain de alto desempenho projetada para velocidade, segurança e escalabilidade.",
+            dl_open:"Abrir no navegador",dl_webapp:"App Web",dl_geton:"Baixar em",dl_soon:"Em breve",dl_direct:"Download direto",
+            stat_block:"Tempo de bloco",stat_supply:"Supply máx",stat_consensus:"Consenso",stat_compat:"Compatível",
+            feat_tag:"RECURSOS",feat_title:"Construído para a próxima geração",feat_desc:"Access Network combina tecnologia blockchain com experiência de usuário intuitiva.",
+            feat1_title:"Transações ultrarrápidas",feat1_desc:"Confirmações quase instantâneas com blocos de ~3 segundos.",
+            feat2_title:"Segurança empresarial",feat2_desc:"5 camadas de segurança com criptografia e biometria.",
+            feat3_title:"Compatível EVM",feat3_desc:"Compatibilidade total com ferramentas Ethereum.",
+            feat4_title:"Mineração Proof of Stake",feat4_desc:"Ganhe tokens ACCESS sem hardware caro.",
+            feat5_title:"Taxas mínimas",feat5_desc:"Taxas de Gas extremamente baixas.",
+            feat6_title:"Design mobile-first",feat6_desc:"Disponível como PWA e app Android nativo.",
+            how_tag:"INÍCIO",how_title:"Como funciona",how_desc:"Comece com passos simples.",
+            cta_title:"Pronto para participar?",cta_desc:"Comece a ganhar tokens ACCESS hoje.",cta_btn:"Começar agora",
+            faq_tag:"FAQ",faq_title:"Perguntas frequentes",
+            footer_product:"Produto",footer_resources:"Recursos",footer_legal:"Legal",
+            footer_privacy:"Política de privacidade",footer_privacy_exp:"Privacidade do explorador",footer_terms:"Termos de serviço",footer_terms_app:"Termos do app"
+        },
+        ru: {
+            nav_features:"Возможности",nav_how:"Как это работает",nav_explorer:"Обозреватель",nav_tokenomics:"Токеномика",nav_learn:"Узнать",nav_faq:"FAQ",nav_launch:"Открыть",
+            hero_badge:"Сеть активна — основная сеть",hero_title:"Будущее децентрализованного блокчейна",
+            hero_desc:"Access Network — высокопроизводительная блокчейн-платформа для скорости, безопасности и масштабируемости.",
+            dl_open:"Открыть в браузере",dl_webapp:"Веб-приложение",dl_geton:"Скачать",dl_soon:"Скоро",dl_direct:"Прямая загрузка",
+            stat_block:"Время блока",stat_supply:"Макс. запас",stat_consensus:"Консенсус",stat_compat:"Совместимый",
+            feat_tag:"ВОЗМОЖНОСТИ",feat_title:"Создано для нового поколения",feat_desc:"Access Network сочетает передовые технологии блокчейна с интуитивным интерфейсом.",
+            feat1_title:"Молниеносные транзакции",feat1_desc:"Мгновенные подтверждения с блоками ~3 секунды.",
+            feat2_title:"Корпоративная безопасность",feat2_desc:"5 уровней защиты с шифрованием и биометрией.",
+            feat3_title:"Совместимость с EVM",feat3_desc:"Полная совместимость с инструментами Ethereum.",
+            feat4_title:"Proof of Stake майнинг",feat4_desc:"Зарабатывайте ACCESS без дорогого оборудования.",
+            feat5_title:"Минимальные комиссии",feat5_desc:"Крайне низкие комиссии Gas.",
+            feat6_title:"Мобильный дизайн",feat6_desc:"Доступно как PWA и Android приложение.",
+            how_tag:"НАЧАЛО",how_title:"Как это работает",how_desc:"Начните за несколько простых шагов.",
+            cta_title:"Готовы присоединиться?",cta_desc:"Начните зарабатывать ACCESS сегодня.",cta_btn:"Начать",
+            faq_tag:"FAQ",faq_title:"Часто задаваемые вопросы",
+            footer_product:"Продукт",footer_resources:"Ресурсы",footer_legal:"Правовая информация",
+            footer_privacy:"Конфиденциальность",footer_privacy_exp:"Конфиденциальность обозревателя",footer_terms:"Условия",footer_terms_app:"Условия приложения"
+        },
+        zh: {
+            nav_features:"功能",nav_how:"工作原理",nav_explorer:"浏览器",nav_tokenomics:"代币经济",nav_learn:"学习",nav_faq:"常见问题",nav_launch:"打开应用",
+            hero_badge:"网络活跃 — 主网上线",hero_title:"去中心化区块链的未来",
+            hero_desc:"Access Network是一个高性能区块链平台，专为速度、安全性和可扩展性而设计。",
+            dl_open:"在浏览器中打开",dl_webapp:"网页应用",dl_geton:"下载",dl_soon:"即将推出",dl_direct:"直接下载",
+            stat_block:"出块时间",stat_supply:"最大供应",stat_consensus:"共识",stat_compat:"兼容",
+            feat_tag:"平台功能",feat_title:"为下一代而建",feat_desc:"Access Network将尖端区块链技术与直觉式用户体验相结合。",
+            feat1_title:"闪电般快速的交易",feat1_desc:"约3秒出块，近乎即时确认。",
+            feat2_title:"企业级安全",feat2_desc:"5层高级安全保护，包括加密钱包和生物识别。",
+            feat3_title:"EVM兼容",feat3_desc:"完全兼容以太坊工具和智能合约。",
+            feat4_title:"PoS挖矿",feat4_desc:"无需昂贵硬件即可赚取ACCESS代币。",
+            feat5_title:"最低费用",feat5_desc:"极低的Gas费用。",
+            feat6_title:"移动优先设计",feat6_desc:"提供PWA和原生Android应用。",
+            how_tag:"入门",how_title:"工作原理",how_desc:"简单几步即可开始。",
+            cta_title:"准备加入了吗？",cta_desc:"今天开始赚取ACCESS代币。",cta_btn:"立即开始",
+            faq_tag:"常见问题",faq_title:"常见问题解答",
+            footer_product:"产品",footer_resources:"资源",footer_legal:"法律",
+            footer_privacy:"隐私政策",footer_privacy_exp:"浏览器隐私",footer_terms:"服务条款",footer_terms_app:"应用条款"
+        },
+        ja: {
+            nav_features:"機能",nav_how:"仕組み",nav_explorer:"エクスプローラー",nav_tokenomics:"トケノミクス",nav_learn:"学ぶ",nav_faq:"FAQ",nav_launch:"アプリを開く",
+            hero_badge:"ネットワーク稼働中 — メインネットライブ",hero_title:"分散型ブロックチェーンの未来",
+            hero_desc:"Access Networkは、速度、セキュリティ、スケーラビリティのために設計された高性能ブロックチェーンプラットフォームです。",
+            dl_open:"ブラウザで開く",dl_webapp:"Webアプリ",dl_geton:"ダウンロード",dl_soon:"近日公開",dl_direct:"直接ダウンロード",
+            stat_block:"ブロック時間",stat_supply:"最大供給量",stat_consensus:"コンセンサス",stat_compat:"互換性",
+            feat_tag:"機能",feat_title:"次世代のために構築",feat_desc:"最先端のブロックチェーン技術と直感的なユーザー体験を融合。",
+            feat1_title:"超高速トランザクション",feat1_desc:"約3秒のブロック時間でほぼ即座に確認。",
+            feat2_title:"エンタープライズグレードのセキュリティ",feat2_desc:"暗号化ウォレットと生体認証による5層セキュリティ。",
+            feat3_title:"EVM互換",feat3_desc:"Ethereumツールとスマートコントラクトに完全対応。",
+            feat4_title:"PoSマイニング",feat4_desc:"高価なハードウェアなしでACCESSトークンを獲得。",
+            feat5_title:"最小手数料",feat5_desc:"極めて低いGas手数料。",
+            feat6_title:"モバイルファーストデザイン",feat6_desc:"PWAとネイティブAndroidアプリとして利用可能。",
+            how_tag:"はじめに",how_title:"仕組み",how_desc:"簡単なステップで始めましょう。",
+            cta_title:"参加する準備はできましたか？",cta_desc:"今日からACCESSトークンを獲得しましょう。",cta_btn:"今すぐ始める",
+            faq_tag:"FAQ",faq_title:"よくある質問",
+            footer_product:"製品",footer_resources:"リソース",footer_legal:"法的情報",
+            footer_privacy:"プライバシーポリシー",footer_privacy_exp:"エクスプローラーのプライバシー",footer_terms:"利用規約",footer_terms_app:"アプリ利用規約"
+        },
+        ko: {
+            nav_features:"기능",nav_how:"작동 방식",nav_explorer:"탐색기",nav_tokenomics:"토크노믹스",nav_learn:"배우기",nav_faq:"FAQ",nav_launch:"앱 열기",
+            hero_badge:"네트워크 활성화 — 메인넷 라이브",hero_title:"탈중앙화 블록체인의 미래",
+            hero_desc:"Access Network는 속도, 보안 및 확장성을 위해 설계된 고성능 블록체인 플랫폼입니다.",
+            dl_open:"브라우저에서 열기",dl_webapp:"웹 앱",dl_geton:"다운로드",dl_soon:"곧 출시",dl_direct:"직접 다운로드",
+            stat_block:"블록 시간",stat_supply:"최대 공급",stat_consensus:"합의",stat_compat:"호환",
+            feat_tag:"기능",feat_title:"차세대를 위해 구축",feat_desc:"최첨단 블록체인 기술과 직관적인 사용자 경험의 결합.",
+            cta_title:"참여할 준비가 되셨나요?",cta_desc:"오늘부터 ACCESS 토큰을 획득하세요.",cta_btn:"지금 시작",
+            faq_tag:"FAQ",faq_title:"자주 묻는 질문",
+            footer_product:"제품",footer_resources:"리소스",footer_legal:"법적 정보",
+            footer_privacy:"개인정보 보호",footer_privacy_exp:"탐색기 개인정보",footer_terms:"서비스 약관",footer_terms_app:"앱 약관"
+        },
+        hi: {
+            nav_features:"सुविधाएँ",nav_how:"कैसे काम करता है",nav_explorer:"एक्सप्लोरर",nav_tokenomics:"टोकनॉमिक्स",nav_learn:"सीखें",nav_faq:"FAQ",nav_launch:"ऐप खोलें",
+            hero_badge:"नेटवर्क सक्रिय — मेननेट लाइव",hero_title:"विकेंद्रीकृत ब्लॉकचेन का भविष्य",
+            hero_desc:"Access Network गति, सुरक्षा और स्केलेबिलिटी के लिए डिज़ाइन किया गया उच्च प्रदर्शन ब्लॉकचेन प्लेटफ़ॉर्म है।",
+            dl_open:"ब्राउज़र में खोलें",dl_webapp:"वेब ऐप",dl_geton:"डाउनलोड",dl_soon:"जल्द आ रहा है",dl_direct:"सीधा डाउनलोड",
+            stat_block:"ब्लॉक समय",stat_supply:"अधिकतम आपूर्ति",stat_consensus:"सहमति",stat_compat:"संगत",
+            feat_tag:"सुविधाएँ",feat_title:"अगली पीढ़ी के लिए निर्मित",feat_desc:"Access Network अत्याधुनिक ब्लॉकचेन तकनीक को सहज उपयोगकर्ता अनुभव के साथ जोड़ता है।",
+            cta_title:"शामिल होने के लिए तैयार?",cta_desc:"आज ही ACCESS टोकन कमाना शुरू करें।",cta_btn:"अभी शुरू करें",
+            faq_tag:"FAQ",faq_title:"अक्सर पूछे जाने वाले प्रश्न",
+            footer_product:"उत्पाद",footer_resources:"संसाधन",footer_legal:"कानूनी",
+            footer_privacy:"गोपनीयता नीति",footer_privacy_exp:"एक्सप्लोरर गोपनीयता",footer_terms:"सेवा की शर्तें",footer_terms_app:"ऐप की शर्तें"
+        },
+        it: {
+            nav_features:"Funzionalità",nav_how:"Come funziona",nav_explorer:"Esploratore",nav_tokenomics:"Tokenomics",nav_learn:"Impara",nav_faq:"FAQ",nav_launch:"Apri App",
+            hero_badge:"Rete attiva — Mainnet live",hero_title:"Il Futuro della Blockchain Decentralizzata",
+            hero_desc:"Access Network è una piattaforma blockchain ad alte prestazioni progettata per velocità, sicurezza e scalabilità.",
+            dl_open:"Apri nel browser",dl_webapp:"App Web",dl_geton:"Scarica su",dl_soon:"In arrivo",dl_direct:"Download diretto",
+            stat_block:"Tempo blocco",stat_supply:"Supply max",stat_consensus:"Consenso",stat_compat:"Compatibile",
+            feat_tag:"FUNZIONALITÀ",feat_title:"Costruito per la prossima generazione",feat_desc:"Access Network combina tecnologia blockchain all'avanguardia con un'esperienza utente intuitiva.",
+            feat1_title:"Transazioni fulminee",feat1_desc:"Conferme quasi istantanee con blocchi di ~3 secondi.",
+            feat2_title:"Sicurezza enterprise",feat2_desc:"5 livelli di sicurezza con crittografia e biometria.",
+            feat3_title:"Compatibile EVM",feat3_desc:"Compatibilità totale con strumenti Ethereum e smart contract.",
+            feat4_title:"Mining Proof of Stake",feat4_desc:"Guadagna token ACCESS senza hardware costoso.",
+            feat5_title:"Commissioni minime",feat5_desc:"Commissioni Gas estremamente basse.",
+            feat6_title:"Design mobile-first",feat6_desc:"Disponibile come PWA e app nativa Android.",
+            how_tag:"INIZIO",how_title:"Come funziona",how_desc:"Inizia con pochi semplici passaggi.",
+            cta_title:"Pronto a unirti?",cta_desc:"Inizia a guadagnare token ACCESS oggi.",cta_btn:"Inizia ora",
+            faq_tag:"FAQ",faq_title:"Domande frequenti",
+            footer_product:"Prodotto",footer_resources:"Risorse",footer_legal:"Legale",
+            footer_privacy:"Privacy policy",footer_privacy_exp:"Privacy esploratore",footer_terms:"Termini di servizio",footer_terms_app:"Termini dell'app"
+        },
+        id: {
+            nav_features:"Fitur",nav_how:"Cara Kerja",nav_explorer:"Penjelajah",nav_tokenomics:"Tokenomics",nav_learn:"Pelajari",nav_faq:"FAQ",nav_launch:"Buka Aplikasi",
+            hero_badge:"Jaringan aktif — Mainnet langsung",hero_title:"Masa Depan Blockchain Terdesentralisasi",
+            hero_desc:"Access Network adalah platform blockchain berkinerja tinggi yang dirancang untuk kecepatan, keamanan, dan skalabilitas.",
+            dl_open:"Buka di browser",dl_webapp:"Aplikasi Web",dl_geton:"Unduh di",dl_soon:"Segera hadir",dl_direct:"Unduh langsung",
+            stat_block:"Waktu blok",stat_supply:"Supply maks",stat_consensus:"Konsensus",stat_compat:"Kompatibel",
+            feat_tag:"FITUR",feat_title:"Dibangun untuk generasi berikutnya",feat_desc:"Access Network menggabungkan teknologi blockchain mutakhir dengan pengalaman pengguna yang intuitif.",
+            cta_title:"Siap bergabung?",cta_desc:"Mulai dapatkan token ACCESS hari ini.",cta_btn:"Mulai sekarang",
+            faq_tag:"FAQ",faq_title:"Pertanyaan yang sering diajukan",
+            footer_product:"Produk",footer_resources:"Sumber daya",footer_legal:"Hukum",
+            footer_privacy:"Kebijakan privasi",footer_privacy_exp:"Privasi penjelajah",footer_terms:"Syarat layanan",footer_terms_app:"Syarat aplikasi"
+        },
+        nl: {
+            nav_features:"Functies",nav_how:"Hoe het werkt",nav_explorer:"Verkenner",nav_tokenomics:"Tokenomics",nav_learn:"Leren",nav_faq:"FAQ",nav_launch:"App openen",
+            hero_badge:"Netwerk actief — Mainnet live",hero_title:"De Toekomst van Gedecentraliseerde Blockchain",
+            hero_desc:"Access Network is een high-performance blockchain platform ontworpen voor snelheid, veiligheid en schaalbaarheid.",
+            dl_open:"Openen in browser",dl_webapp:"Web App",dl_geton:"Downloaden op",dl_soon:"Binnenkort",dl_direct:"Directe download",
+            stat_block:"Bloktijd",stat_supply:"Max supply",stat_consensus:"Consensus",stat_compat:"Compatibel",
+            feat_tag:"FUNCTIES",feat_title:"Gebouwd voor de volgende generatie",feat_desc:"Access Network combineert geavanceerde blockchain-technologie met een intuïtieve gebruikerservaring.",
+            cta_title:"Klaar om mee te doen?",cta_desc:"Begin vandaag ACCESS tokens te verdienen.",cta_btn:"Nu starten",
+            faq_tag:"FAQ",faq_title:"Veelgestelde vragen",
+            footer_product:"Product",footer_resources:"Bronnen",footer_legal:"Juridisch",
+            footer_privacy:"Privacybeleid",footer_privacy_exp:"Verkenner privacy",footer_terms:"Servicevoorwaarden",footer_terms_app:"App-voorwaarden"
         }
     };
 
@@ -1276,15 +1590,48 @@
         defaultTexts[el.getAttribute('data-i18n')] = el.innerHTML;
     });
 
+    // Build language menu
+    function buildLangMenu() {
+        const menu = document.getElementById('langMenu');
+        menu.innerHTML = LANGS.map(l =>
+            `<button class="lang-option${l.code === currentLang ? ' active' : ''}" data-lang="${l.code}">
+                <span class="lang-flag">${l.flag}</span>
+                <span>${l.name}</span>
+            </button>`
+        ).join('');
+        menu.querySelectorAll('.lang-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setLanguage(btn.dataset.lang);
+                document.getElementById('langDropdown').classList.remove('open');
+            });
+        });
+    }
+
+    // Toggle dropdown
+    document.getElementById('langToggle').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('langDropdown').classList.toggle('open');
+    });
+    document.addEventListener('click', () => {
+        document.getElementById('langDropdown').classList.remove('open');
+    });
+
     function detectLanguage() {
         const lang = (navigator.language || navigator.userLanguage || 'en').substring(0, 2);
-        return translations[lang] ? lang : 'en';
+        return T[lang] ? lang : 'en';
+    }
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('access_project_lang', lang);
+        applyTranslation(lang);
+        buildLangMenu();
     }
 
     function applyTranslation(lang) {
-        currentLang = lang;
-        const t = translations[lang] || {};
-        const isRTL = lang === 'ar';
+        const t = T[lang] || {};
+        const langInfo = LANGS.find(l => l.code === lang) || LANGS[0];
+        const isRTL = langInfo.rtl;
         
         document.documentElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
         document.documentElement.setAttribute('lang', lang);
@@ -1298,21 +1645,15 @@
             }
         });
         
-        document.getElementById('langLabel').textContent = lang.toUpperCase();
+        document.getElementById('langLabel').textContent = langInfo.name;
     }
 
-    function toggleLanguage() {
-        const langs = ['en', 'ar', 'fr', 'es', 'tr', 'de'];
-        const idx = langs.indexOf(currentLang);
-        const next = langs[(idx + 1) % langs.length];
-        applyTranslation(next);
-    }
-
-    // Auto-detect language on load
-    const detectedLang = detectLanguage();
-    if (detectedLang !== 'en') {
-        applyTranslation(detectedLang);
-    }
+    // Init: check localStorage > detect device language > default English
+    const savedLang = localStorage.getItem('access_project_lang');
+    const initLang = savedLang && T[savedLang] ? savedLang : detectLanguage();
+    currentLang = initLang;
+    if (initLang !== 'en') applyTranslation(initLang);
+    buildLangMenu();
     </script>
 </body>
 </html>
