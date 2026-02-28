@@ -2,6 +2,10 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
+    <style id="i18n-cloak">
+    /* Hide ALL text content until translation is applied - prevents English flash */
+    [data-i18n] { visibility: hidden; }
+    </style>
     <script>
     // Apply saved language INSTANTLY before any rendering
     (function(){
@@ -14,11 +18,11 @@
         }
         document.documentElement.setAttribute('lang', s);
         document.documentElement.setAttribute('dir', rtlLangs.indexOf(s) !== -1 ? 'rtl' : 'ltr');
-        if (s !== 'en') document.documentElement.classList.add('translating');
+        // If English, remove cloak immediately - no translation needed
+        if (s === 'en') document.getElementById('i18n-cloak').remove();
     })();
     </script>
-    <style>html.translating [data-i18n]{color:transparent!important;}</style>
-    <link rel="preload" as="image" href="access-logo.png">
+    <link rel="preload" as="image" href="access-logo-1.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Access Network — Decentralized Blockchain Platform</title>
     <link rel="icon" type="image/png" href="access-logo-1.png">
@@ -741,7 +745,7 @@
     <nav class="nav">
         <div class="nav-inner">
             <a href="#" class="nav-logo">
-                <img src="access-logo.png" alt="Access Network" width="36" height="36" loading="eager" decoding="sync">
+                <img src="access-logo-1.png" alt="Access Network" width="36" height="36" loading="eager" decoding="sync">
                 <span>Access Network</span>
             </a>
             <ul class="nav-links">
@@ -1154,7 +1158,7 @@
         <div class="footer-inner">
             <div class="footer-brand">
                 <a href="#" class="nav-logo" style="margin-bottom:8px;">
-                    <img src="access-logo.png" alt="Access Network" width="36" height="36" loading="eager" decoding="sync">
+                    <img src="access-logo-1.png" alt="Access Network" width="36" height="36" loading="eager" decoding="sync">
                     <span>Access Network</span>
                 </a>
                 <p data-i18n="footer_desc">A high-performance blockchain platform for decentralized applications, digital assets, and smart contracts. Building the future of decentralized finance, one block at a time.</p>
@@ -2089,7 +2093,9 @@
     const initLang = validSaved ? savedLang : detectLanguage();
     currentLang = initLang;
     if (initLang !== 'en') applyTranslation(initLang);
-    document.documentElement.classList.remove('translating');
+    // Remove cloak - show all translated text
+    var cloak = document.getElementById('i18n-cloak');
+    if (cloak) cloak.remove();
     buildLangMenu();
     </script>
 </body>
