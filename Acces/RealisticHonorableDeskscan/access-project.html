@@ -2,6 +2,20 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
+    <script>
+    // Apply saved language INSTANTLY before any rendering
+    (function(){
+        var rtlLangs = ['ar'];
+        var validLangs = ['en','ar','fr','es','tr','de','pt','ru','zh','ja','ko','hi','it','id','nl','pl'];
+        var s = localStorage.getItem('access_project_lang');
+        if (!s || validLangs.indexOf(s) === -1) {
+            var nav = (navigator.language || navigator.userLanguage || 'en').substring(0,2);
+            s = validLangs.indexOf(nav) !== -1 ? nav : 'en';
+        }
+        document.documentElement.setAttribute('lang', s);
+        document.documentElement.setAttribute('dir', rtlLangs.indexOf(s) !== -1 ? 'rtl' : 'ltr');
+    })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Access Network — Decentralized Blockchain Platform</title>
     <link rel="icon" type="image/png" href="access-logo-1.png">
@@ -81,6 +95,11 @@
             color: var(--text);
             line-height: 1.7;
             overflow-x: hidden;
+            opacity: 0;
+        }
+        body.lang-ready {
+            opacity: 1;
+            transition: opacity 0.08s ease;
         }
 
         /* ===== LANGUAGE DROPDOWN ===== */
@@ -2086,6 +2105,8 @@
     currentLang = initLang;
     if (initLang !== 'en') applyTranslation(initLang);
     buildLangMenu();
+    // Show page after translation applied
+    document.body.classList.add('lang-ready');
     </script>
 </body>
 </html>
