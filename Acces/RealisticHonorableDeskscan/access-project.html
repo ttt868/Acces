@@ -95,10 +95,6 @@
             color: var(--text);
             line-height: 1.7;
             overflow-x: hidden;
-            visibility: hidden;
-        }
-        body.lang-ready {
-            visibility: visible;
         }
 
         /* ===== LANGUAGE DROPDOWN ===== */
@@ -734,23 +730,7 @@
             .network-grid { grid-template-columns: 1fr 1fr; }
         }
 
-        /* ===== ANIMATIONS ===== */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(16px);
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        /* Hero loads instantly - no animation */
-        .hero .fade-in, .hero.fade-in,
-        section:first-of-type .fade-in {
-            opacity: 1;
-            transform: none;
-            transition: none;
-        }
+
     </style>
 </head>
 <body>
@@ -1214,11 +1194,7 @@
     </footer>
 
     <script>
-    // ===== SCROLL ANIMATIONS =====
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
 
     // ===== 15 LANGUAGES =====
     const LANGS = [
@@ -2111,8 +2087,7 @@
     currentLang = initLang;
     if (initLang !== 'en') applyTranslation(initLang);
     buildLangMenu();
-    // Show page after translation applied
-    document.body.classList.add('lang-ready');
+
     </script>
 </body>
 </html>
