@@ -904,7 +904,7 @@
                 </div>
                 <div class="network-item">
                     <div class="network-item-label">RPC</div>
-                    <div class="network-item-value" style="font-size:0.85rem;">https://accesschain.org/rpc</div>
+                    <div class="network-item-value" style="font-size:0.85rem;display:flex;align-items:center;justify-content:center;gap:6px;"><span>accesschain.org/rpc</span><button onclick="navigator.clipboard.writeText('https://accesschain.org/rpc').then(()=>{this.innerHTML='&#10003;';this.style.color='#00e676';setTimeout(()=>{this.innerHTML='&#128203;';this.style.color=''},1500)})" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;color:var(--text3);" title="Copy">&#128203;</button></div>
                 </div>
             </div>
         </div>
@@ -1120,7 +1120,7 @@
                     <span data-i18n="faq6_q">Can I use Access Network with MetaMask?</span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
-                <div class="faq-a"><div class="faq-a-inner" data-i18n="faq6_a">Yes! Access Network is fully EVM compatible. You can add the network to MetaMask using the following details: Network Name: Access Network, Chain ID: 22888, Currency Symbol: ACCESS, RPC URL: https://accesschain.org/rpc. Once added, you can send, receive, and interact with smart contracts using MetaMask.</div></div>
+                <div class="faq-a"><div class="faq-a-inner" data-i18n="faq6_a">Yes! Access Network is fully EVM compatible. You can add the network to MetaMask using the following details: Network Name: Access Network, Chain ID: 22888, Currency Symbol: ACCESS, Once added, you can send, receive, and interact with smart contracts using MetaMask.</div></div>
             </div>
             <div class="faq-item fade-in">
                 <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
@@ -1262,7 +1262,7 @@
             faq3_q:"هل Access Network مجانية؟",faq3_a:"نعم! إنشاء الحساب والمشاركة مجاني تماماً. الرسوم الوحيدة هي تكاليف Gas الضئيلة عند إرسال المعاملات.",
             faq4_q:"ما هو الحد الأقصى لتوكنات ACCESS؟",faq4_a:"25,000,000 توكن ACCESS. هذا الحد ثابت على مستوى البروتوكول ولا يمكن تغييره.",
             faq5_q:"ما مدى أمان محفظتي؟",faq5_a:"محمية بطبقات أمان متعددة: تشفير AES-256، قفل PIN، مصادقة بيومترية، ونظام مراقبة ضد الهجمات.",
-            faq6_q:"هل يمكن استخدام MetaMask؟",faq6_a:"نعم! أضف الشبكة: الاسم: Access Network، Chain ID: 22888، الرمز: ACCESS، RPC: https://accesschain.org/rpc.",
+            faq6_q:"هل يمكن استخدام MetaMask؟",faq6_a:"نعم! أضف الشبكة: الاسم: Access Network، Chain ID: 22888، الرمز: ACCESS.",
             faq7_q:"أين يمكن تحميل التطبيق؟",faq7_a:"متاح على الويب في accesschain.org، وعلى Google Play، وكتحميل APK مباشر. نسخة iOS قريباً.",
             cta_title:"مستعد للانضمام؟",cta_desc:"ابدأ كسب توكنات ACCESS اليوم. لا تحتاج أجهزة خاصة.",cta_btn:"ابدأ الآن",
             footer_desc:"منصة بلوكتشين عالية الأداء للتطبيقات اللامركزية والأصول الرقمية والعقود الذكية.",
@@ -1315,7 +1315,7 @@
             faq3_q:"Access Network est-il gratuit?",faq3_a:"Oui! Aucun frais caché. Seuls les frais de Gas minimes s'appliquent.",
             faq4_q:"Quelle est la supply maximale?",faq4_a:"25,000,000 tokens ACCESS, fixée au niveau du protocole.",
             faq5_q:"Mon portefeuille est-il sécurisé?",faq5_a:"Protégé par AES-256, PIN, biométrie et surveillance anti-attaque.",
-            faq6_q:"Puis-je utiliser MetaMask?",faq6_a:"Oui! Ajoutez le réseau: Access Network, Chain ID: 22888, Symbole: ACCESS, RPC: https://accesschain.org/rpc.",
+            faq6_q:"Puis-je utiliser MetaMask?",faq6_a:"Oui! Ajoutez le réseau: Access Network, Chain ID: 22888, Symbole: ACCESS.",
             faq7_q:"Où télécharger l'app?",faq7_a:"Disponible sur le web, Google Play, et en téléchargement APK direct.",
             cta_title:"Prêt à rejoindre?",cta_desc:"Commencez à gagner des tokens ACCESS aujourd'hui.",cta_btn:"Commencer",
             footer_desc:"Plateforme blockchain haute performance pour les applications décentralisées.",
@@ -1368,7 +1368,7 @@
             faq3_q:"¿Es gratis?",faq3_a:"¡Sí! Solo hay tarifas mínimas de Gas para transacciones.",
             faq4_q:"¿Cuál es la supply máxima?",faq4_a:"25,000,000 tokens ACCESS, fijada a nivel de protocolo.",
             faq5_q:"¿Es segura mi billetera?",faq5_a:"AES-256, PIN, biometría y monitoreo anti-ataques.",
-            faq6_q:"¿Puedo usar MetaMask?",faq6_a:"¡Sí! Chain ID: 22888, Símbolo: ACCESS, RPC: https://accesschain.org/rpc.",
+            faq6_q:"¿Puedo usar MetaMask?",faq6_a:"¡Sí! Chain ID: 22888, Símbolo: ACCESS.",
             faq7_q:"¿Dónde descargar la app?",faq7_a:"Web, Google Play, o APK directo. iOS próximamente.",
             cta_title:"¿Listo para unirte?",cta_desc:"Empieza a ganar tokens ACCESS hoy.",cta_btn:"Comenzar ahora",
             footer_desc:"Plataforma blockchain de alto rendimiento.",footer_product:"Producto",footer_resources:"Recursos",footer_legal:"Legal",
@@ -1421,7 +1421,7 @@
             faq3_q:"Access Network ücretsiz mi?",faq3_a:"Evet! Hesap oluşturma ve katılım tamamen ücretsizdir. Sadece minimal Gas ücretleri uygulanır.",
             faq4_q:"Maksimum ACCESS arzı nedir?",faq4_a:"25.000.000 ACCESS token. Bu sınır protokol düzeyinde belirlenmiştir ve değiştirilemez.",
             faq5_q:"Cüzdanım güvenli mi?",faq5_a:"AES-256 şifreleme, PIN kilidi, biyometrik doğrulama ve saldırı izleme ile korunur.",
-            faq6_q:"MetaMask kullanabilir miyim?",faq6_a:"Evet! Ağ: Access Network, Chain ID: 22888, Sembol: ACCESS, RPC: https://accesschain.org/rpc olarak ekleyin.",
+            faq6_q:"MetaMask kullanabilir miyim?",faq6_a:"Evet! Ağ: Access Network, Chain ID: 22888, Sembol: ACCESS olarak ekleyin.",
             faq7_q:"Uygulamayı nereden indirebilirim?",faq7_a:"Web, Google Play ve doğrudan APK olarak mevcuttur. iOS yakında geliyor.",
             cta_title:"Katılmaya hazır mısın?",cta_desc:"Bugün ACCESS token kazanmaya başlayın. Özel donanım gerekmez.",cta_btn:"Şimdi başla",
             footer_desc:"Merkeziyetsiz uygulamalar ve akıllı sözleşmeler için yüksek performanslı blockchain platformu.",
@@ -1474,7 +1474,7 @@
             faq3_q:"Ist Access Network kostenlos?",faq3_a:"Ja! Kontoerstellung und Teilnahme sind komplett kostenlos. Nur minimale Gas-Gebühren für Transaktionen.",
             faq4_q:"Was ist das maximale Angebot?",faq4_a:"25.000.000 ACCESS-Token, auf Protokollebene festgelegt und unveränderbar.",
             faq5_q:"Ist mein Wallet sicher?",faq5_a:"Geschützt durch AES-256, PIN-Sperre, biometrische Authentifizierung und Angriffsüberwachung.",
-            faq6_q:"Kann ich MetaMask verwenden?",faq6_a:"Ja! Netzwerk: Access Network, Chain ID: 22888, Symbol: ACCESS, RPC: https://accesschain.org/rpc hinzufügen.",
+            faq6_q:"Kann ich MetaMask verwenden?",faq6_a:"Ja! Netzwerk: Access Network, Chain ID: 22888, Symbol: ACCESS hinzufügen.",
             faq7_q:"Wo kann ich die App herunterladen?",faq7_a:"Verfügbar als Web-App, auf Google Play und als direkter APK-Download. iOS kommt bald.",
             cta_title:"Bereit beizutreten?",cta_desc:"Beginnen Sie heute ACCESS-Token zu verdienen. Keine spezielle Hardware nötig.",cta_btn:"Jetzt starten",
             footer_desc:"Leistungsstarke Blockchain-Plattform für dezentrale Anwendungen und Smart Contracts.",
@@ -1527,7 +1527,7 @@
             faq3_q:"Access Network é gratuito?",faq3_a:"Sim! Criação de conta e participação são gratuitas. Apenas taxas mínimas de Gas para transações.",
             faq4_q:"Qual é a supply máxima?",faq4_a:"25.000.000 tokens ACCESS, fixada no nível do protocolo e imutável.",
             faq5_q:"Minha carteira é segura?",faq5_a:"Protegida por AES-256, PIN, biometria e monitoramento anti-ataque.",
-            faq6_q:"Posso usar MetaMask?",faq6_a:"Sim! Adicione a rede: Access Network, Chain ID: 22888, Símbolo: ACCESS, RPC: https://accesschain.org/rpc.",
+            faq6_q:"Posso usar MetaMask?",faq6_a:"Sim! Adicione a rede: Access Network, Chain ID: 22888, Símbolo: ACCESS.",
             faq7_q:"Onde baixar o app?",faq7_a:"Disponível na web, Google Play e download direto de APK. iOS em breve.",
             cta_title:"Pronto para participar?",cta_desc:"Comece a ganhar tokens ACCESS hoje. Sem hardware especial necessário.",cta_btn:"Começar agora",
             footer_desc:"Plataforma blockchain de alto desempenho para aplicações descentralizadas e contratos inteligentes.",
@@ -1580,7 +1580,7 @@
             faq3_q:"Access Network бесплатна?",faq3_a:"Да! Создание аккаунта и участие полностью бесплатны. Только минимальные комиссии Gas.",
             faq4_q:"Каков максимальный запас?",faq4_a:"25.000.000 токенов ACCESS, зафиксировано на уровне протокола и неизменно.",
             faq5_q:"Безопасен ли мой кошелёк?",faq5_a:"Защищён AES-256, PIN, биометрией и мониторингом атак.",
-            faq6_q:"Можно ли использовать MetaMask?",faq6_a:"Да! Добавьте сеть: Access Network, Chain ID: 22888, Символ: ACCESS, RPC: https://accesschain.org/rpc.",
+            faq6_q:"Можно ли использовать MetaMask?",faq6_a:"Да! Добавьте сеть: Access Network, Chain ID: 22888, Символ: ACCESS.",
             faq7_q:"Где скачать приложение?",faq7_a:"Доступно в вебе, Google Play и как APK. iOS скоро.",
             cta_title:"Готовы присоединиться?",cta_desc:"Начните зарабатывать ACCESS сегодня. Специальное оборудование не нужно.",cta_btn:"Начать",
             footer_desc:"Высокопроизводительная блокчейн-платформа для децентрализованных приложений и смарт-контрактов.",
@@ -1633,7 +1633,7 @@
             faq3_q:"Access Network免费吗？",faq3_a:"是的！创建账户和参与完全免费。仅在发送交易时收取极少的Gas费。",
             faq4_q:"最大供应量是多少？",faq4_a:"2500万ACCESS代币，在协议层面固定，不可更改。",
             faq5_q:"我的钱包安全吗？",faq5_a:"受AES-256加密、PIN锁、生物识别认证和攻击监控保护。",
-            faq6_q:"可以使用MetaMask吗？",faq6_a:"可以！添加网络：Access Network，Chain ID：22888，符号：ACCESS，RPC：https://accesschain.org/rpc。",
+            faq6_q:"可以使用MetaMask吗？",faq6_a:"可以！添加网络：Access Network，Chain ID：22888，符号：ACCESS。",
             faq7_q:"在哪里下载应用？",faq7_a:"可在网页、Google Play和直接APK下载获取。iOS即将推出。",
             cta_title:"准备加入了吗？",cta_desc:"今天开始赚取ACCESS代币。无需特殊硬件。",cta_btn:"立即开始",
             footer_desc:"用于去中心化应用和智能合约的高性能区块链平台。",
@@ -1686,7 +1686,7 @@
             faq3_q:"Access Networkは無料ですか？",faq3_a:"はい！アカウント作成と参加は完全無料。トランザクション送信時のみ最小限のGas手数料。",
             faq4_q:"最大供給量は？",faq4_a:"2500万ACCESSトークン。プロトコルレベルで固定、変更不可。",
             faq5_q:"ウォレットは安全ですか？",faq5_a:"AES-256暗号化、PINロック、生体認証、攻撃監視で保護されています。",
-            faq6_q:"MetaMaskは使えますか？",faq6_a:"はい！ネットワーク追加：Access Network、Chain ID：22888、シンボル：ACCESS、RPC：https://accesschain.org/rpc。",
+            faq6_q:"MetaMaskは使えますか？",faq6_a:"はい！ネットワーク追加：Access Network、Chain ID：22888、シンボル：ACCESS。",
             faq7_q:"アプリはどこでダウンロード？",faq7_a:"Web、Google Play、直接APKダウンロードで利用可能。iOS版は近日公開。",
             cta_title:"参加する準備はできましたか？",cta_desc:"今日からACCESSトークンを獲得しましょう。特別な機器は不要。",cta_btn:"今すぐ始める",
             footer_desc:"分散型アプリケーションとスマートコントラクトのための高性能ブロックチェーンプラットフォーム。",
@@ -1739,7 +1739,7 @@
             faq3_q:"Access Network는 무료인가요?",faq3_a:"네! 계정 생성과 참여는 완전 무료. 트랜잭션 전송 시 최소한의 Gas 수수료만 적용.",
             faq4_q:"최대 공급량은?",faq4_a:"2,500만 ACCESS 토큰. 프로토콜 수준에서 고정되어 변경 불가.",
             faq5_q:"지갑은 안전한가요?",faq5_a:"AES-256 암호화, PIN 잠금, 생체 인증, 공격 모니터링으로 보호됩니다.",
-            faq6_q:"MetaMask를 사용할 수 있나요?",faq6_a:"네! 네트워크 추가: Access Network, Chain ID: 22888, 기호: ACCESS, RPC: https://accesschain.org/rpc.",
+            faq6_q:"MetaMask를 사용할 수 있나요?",faq6_a:"네! 네트워크 추가: Access Network, Chain ID: 22888, 기호: ACCESS.",
             faq7_q:"앱은 어디서 다운로드하나요?",faq7_a:"웹, Google Play, 직접 APK 다운로드로 이용 가능. iOS 곧 출시.",
             cta_title:"참여할 준비가 되셨나요?",cta_desc:"오늘부터 ACCESS 토큰을 획득하세요. 특별한 장비 불필요.",cta_btn:"지금 시작",
             footer_desc:"탈중앙화 애플리케이션과 스마트 컨트랙트를 위한 고성능 블록체인 플랫폼.",
@@ -1792,7 +1792,7 @@
             faq3_q:"क्या Access Network मुफ़्त है?",faq3_a:"हां! अकाउंट बनाना और भागीदारी पूरी तरह मुफ़्त। केवल लेनदेन भेजते समय न्यूनतम Gas शुल्क।",
             faq4_q:"अधिकतम आपूर्ति कितनी है?",faq4_a:"2,50,00,000 ACCESS टोकन, प्रोटोकॉल स्तर पर निर्धारित और अपरिवर्तनीय।",
             faq5_q:"क्या मेरा वॉलेट सुरक्षित है?",faq5_a:"AES-256 एन्क्रिप्शन, PIN लॉक, बायोमेट्रिक प्रमाणीकरण और अटैक मॉनिटरिंग से सुरक्षित।",
-            faq6_q:"क्या MetaMask उपयोग कर सकते हैं?",faq6_a:"हां! नेटवर्क जोड़ें: Access Network, Chain ID: 22888, सिंबल: ACCESS, RPC: https://accesschain.org/rpc।",
+            faq6_q:"क्या MetaMask उपयोग कर सकते हैं?",faq6_a:"हां! नेटवर्क जोड़ें: Access Network, Chain ID: 22888, सिंबल: ACCESS।",
             faq7_q:"ऐप कहां से डाउनलोड करें?",faq7_a:"वेब, Google Play और सीधे APK डाउनलोड पर उपलब्ध। iOS जल्द आ रहा है।",
             cta_title:"शामिल होने के लिए तैयार?",cta_desc:"आज ही ACCESS टोकन कमाना शुरू करें। विशेष हार्डवेयर की जरूरत नहीं।",cta_btn:"अभी शुरू करें",
             footer_desc:"विकेंद्रीकृत अनुप्रयोगों और स्मार्ट कॉन्ट्रैक्ट्स के लिए उच्च प्रदर्शन ब्लॉकचेन प्लेटफ़ॉर्म।",
@@ -1845,7 +1845,7 @@
             faq3_q:"Access Network è gratuito?",faq3_a:"Sì! Creazione account e partecipazione sono completamente gratuite. Solo commissioni Gas minime.",
             faq4_q:"Qual è la supply massima?",faq4_a:"25.000.000 token ACCESS, fissata a livello di protocollo e immutabile.",
             faq5_q:"Il mio wallet è sicuro?",faq5_a:"Protetto da AES-256, PIN, autenticazione biometrica e monitoraggio anti-attacco.",
-            faq6_q:"Posso usare MetaMask?",faq6_a:"Sì! Aggiungi rete: Access Network, Chain ID: 22888, Simbolo: ACCESS, RPC: https://accesschain.org/rpc.",
+            faq6_q:"Posso usare MetaMask?",faq6_a:"Sì! Aggiungi rete: Access Network, Chain ID: 22888, Simbolo: ACCESS.",
             faq7_q:"Dove scarico l'app?",faq7_a:"Disponibile su web, Google Play e download diretto APK. iOS in arrivo.",
             cta_title:"Pronto a unirti?",cta_desc:"Inizia a guadagnare token ACCESS oggi. Nessun hardware speciale necessario.",cta_btn:"Inizia ora",
             footer_desc:"Piattaforma blockchain ad alte prestazioni per applicazioni decentralizzate e smart contract.",
@@ -1898,7 +1898,7 @@
             faq3_q:"Apakah Access Network gratis?",faq3_a:"Ya! Membuat akun dan berpartisipasi sepenuhnya gratis. Hanya biaya Gas minimal untuk mengirim transaksi.",
             faq4_q:"Berapa supply maksimum?",faq4_a:"25.000.000 token ACCESS, ditetapkan pada level protokol dan tidak dapat diubah.",
             faq5_q:"Apakah dompet saya aman?",faq5_a:"Dilindungi oleh enkripsi AES-256, PIN, autentikasi biometrik, dan pemantauan serangan.",
-            faq6_q:"Bisa menggunakan MetaMask?",faq6_a:"Ya! Tambahkan jaringan: Access Network, Chain ID: 22888, Simbol: ACCESS, RPC: https://accesschain.org/rpc.",
+            faq6_q:"Bisa menggunakan MetaMask?",faq6_a:"Ya! Tambahkan jaringan: Access Network, Chain ID: 22888, Simbol: ACCESS.",
             faq7_q:"Di mana mengunduh aplikasi?",faq7_a:"Tersedia di web, Google Play, dan unduhan langsung APK. iOS segera hadir.",
             cta_title:"Siap bergabung?",cta_desc:"Mulai dapatkan token ACCESS hari ini. Tidak perlu perangkat keras khusus.",cta_btn:"Mulai sekarang",
             footer_desc:"Platform blockchain berkinerja tinggi untuk aplikasi terdesentralisasi dan smart contract.",
@@ -1951,7 +1951,7 @@
             faq3_q:"Is Access Network gratis?",faq3_a:"Ja! Account aanmaken en deelname zijn volledig gratis. Alleen minimale Gas-kosten.",
             faq4_q:"Wat is de maximale supply?",faq4_a:"25.000.000 ACCESS tokens, vastgelegd op protocolniveau en onveranderlijk.",
             faq5_q:"Is mijn wallet veilig?",faq5_a:"Beschermd door AES-256, PIN-vergrendeling, biometrie en aanvalsmonitoring.",
-            faq6_q:"Kan ik MetaMask gebruiken?",faq6_a:"Ja! Netwerk toevoegen: Access Network, Chain ID: 22888, Symbool: ACCESS, RPC: https://accesschain.org/rpc.",
+            faq6_q:"Kan ik MetaMask gebruiken?",faq6_a:"Ja! Netwerk toevoegen: Access Network, Chain ID: 22888, Symbool: ACCESS.",
             faq7_q:"Waar download ik de app?",faq7_a:"Beschikbaar op web, Google Play en directe APK-download. iOS komt binnenkort.",
             cta_title:"Klaar om mee te doen?",cta_desc:"Begin vandaag ACCESS tokens te verdienen. Geen speciale hardware nodig.",cta_btn:"Nu starten",
             footer_desc:"High-performance blockchain platform voor gedecentraliseerde applicaties en smart contracts.",
@@ -2004,7 +2004,7 @@
             faq3_q:"Czy Access Network jest darmowy?",faq3_a:"Tak! Tworzenie konta i uczestnictwo są całkowicie darmowe. Tylko minimalne opłaty Gas.",
             faq4_q:"Jaka jest maksymalna podaż?",faq4_a:"25 000 000 tokenów ACCESS, ustalone na poziomie protokołu i niezmienne.",
             faq5_q:"Czy mój portfel jest bezpieczny?",faq5_a:"Chroniony szyfrowaniem AES-256, PIN-em, biometrią i monitorowaniem ataków.",
-            faq6_q:"Czy mogę używać MetaMask?",faq6_a:"Tak! Dodaj sieć: Access Network, Chain ID: 22888, Symbol: ACCESS, RPC: https://accesschain.org/rpc.",
+            faq6_q:"Czy mogę używać MetaMask?",faq6_a:"Tak! Dodaj sieć: Access Network, Chain ID: 22888, Symbol: ACCESS.",,
             faq7_q:"Gdzie pobrać aplikację?",faq7_a:"Dostępna w wersji web, na Google Play i jako bezpośrednie pobranie APK. iOS wkrótce.",
             cta_title:"Gotowy, by dołączyć?",cta_desc:"Zacznij zdobywać tokeny ACCESS już dziś. Nie potrzebujesz specjalnego sprzętu.",cta_btn:"Zacznij teraz",
             footer_desc:"Wysokowydajna platforma blockchain dla zdecentralizowanych aplikacji i smart kontraktów.",
