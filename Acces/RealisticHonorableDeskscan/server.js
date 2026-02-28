@@ -10419,6 +10419,12 @@ const server = http.createServer(async (req, res) => {
   }
   // *** END ROOT REDIRECT ***
 
+  // *** CLEAR CACHED 301 - Force browsers to forget old redirect ***
+  if (pathname === "/about.html") {
+    res.setHeader("Clear-Site-Data", '"cache"');
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  }
+
   // ORIGINAL LINE (uncomment after removing redirect above):
   // let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
   let filePath = path.join(__dirname, pathname);
