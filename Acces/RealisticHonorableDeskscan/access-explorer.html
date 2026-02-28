@@ -2117,7 +2117,7 @@
                                 <div class="stat-label">TRANSACTIONS</div>
                                 <div class="stat-secondary">
                                     <div class="stat-secondary-left">
-                                        <div class="stat-value" id="totalTransactions">—</div>
+                                        <div class="stat-value" id="totalTransactions"></div>
                                         <div class="stat-secondary-right" id="tps"></div>
                                     </div>
                                 </div>
@@ -2137,7 +2137,7 @@
                                 <div class="stat-label">LATEST BLOCK</div>
                                 <div class="stat-secondary">
                                     <div class="stat-secondary-left">
-                                        <div class="stat-value" id="latestBlock">—</div>
+                                        <div class="stat-value" id="latestBlock"></div>
                                         <div class="stat-secondary-right" id="blockTime"></div>
                                     </div>
                                 </div>
@@ -2148,6 +2148,23 @@
             </div>
         </div>
     </section>
+
+    <!-- Instant stats from cache (like Etherscan) -->
+    <script>
+    (function(){
+        try {
+            var c = JSON.parse(localStorage.getItem('explorerStatsCache'));
+            if (c && c.totalTransactions) {
+                var tx = Number(c.totalTransactions);
+                var blk = Number(c.latestBlock);
+                if (tx > 0) document.getElementById('totalTransactions').textContent = tx.toLocaleString();
+                if (c.tps !== undefined) document.getElementById('tps').innerHTML = '(' + c.tps + ' TPS)';
+                if (blk > 0) document.getElementById('latestBlock').textContent = blk.toLocaleString();
+                if (c.blockTime) document.getElementById('blockTime').innerHTML = '(' + c.blockTime + 's)';
+            }
+        } catch(e){}
+    })();
+    </script>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -2542,6 +2559,19 @@
                 latestBlock: typeof latestBlock === 'string' ? latestBlock : latestBlock.toLocaleString(),
                 blockTime: blockTime + 's'
             });
+
+            // Cache stats for instant display on next page load (Etherscan-style)
+            try {
+                if (typeof totalTx === 'number' && totalTx > 0) {
+                    localStorage.setItem('explorerStatsCache', JSON.stringify({
+                        totalTransactions: totalTx,
+                        tps: currentTps,
+                        latestBlock: latestBlock,
+                        blockTime: blockTime,
+                        ts: Date.now()
+                    }));
+                }
+            } catch(e){}
         }
 
         // Load latest transactions - REAL DATA ONLY
