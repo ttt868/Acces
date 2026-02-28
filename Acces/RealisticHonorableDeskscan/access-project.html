@@ -95,11 +95,10 @@
             color: var(--text);
             line-height: 1.7;
             overflow-x: hidden;
-            opacity: 0;
+            visibility: hidden;
         }
         body.lang-ready {
-            opacity: 1;
-            transition: opacity 0.08s ease;
+            visibility: visible;
         }
 
         /* ===== LANGUAGE DROPDOWN ===== */
@@ -738,12 +737,19 @@
         /* ===== ANIMATIONS ===== */
         .fade-in {
             opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
+            transform: translateY(16px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
         .fade-in.visible {
             opacity: 1;
             transform: translateY(0);
+        }
+        /* Hero loads instantly - no animation */
+        .hero .fade-in, .hero.fade-in,
+        section:first-of-type .fade-in {
+            opacity: 1;
+            transform: none;
+            transition: none;
         }
     </style>
 </head>
