@@ -2,20 +2,8 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <style>
-    /* Page screen: covers everything with bg color until ready */
-    html::before {
-        content: '';
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        z-index: 99999;
-        background: #0a0e17;
-        pointer-events: none;
-    }
-    html.ready::before { display: none; }
-    </style>
+    <style>html{background:#0a0e17}body{opacity:0}</style>
     <script>
-    // Apply saved language INSTANTLY before any rendering
     (function(){
         var rtlLangs = ['ar'];
         var validLangs = ['en','ar','fr','es','tr','de','pt','ru','zh','ja','ko','hi','it','id','nl','pl'];
@@ -2100,8 +2088,8 @@
     currentLang = initLang;
     if (initLang !== 'en') applyTranslation(initLang);
     buildLangMenu();
-    // Reveal page — everything is translated and ready
-    document.documentElement.classList.add('ready');
+    document.body.offsetHeight;
+    document.body.style.opacity='1';
     </script>
 </body>
 </html>
