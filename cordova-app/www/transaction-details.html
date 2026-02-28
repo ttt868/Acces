@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
+    <script src="base-url.js"></script>
+    <script src="cordova.js"></script>
+    <script src="cordova-init.js"></script>
     <meta charset="UTF-8">
     <!-- Cordova API Path Converter - ENHANCED -->
     <script>
@@ -1737,29 +1740,6 @@
     </footer>
 
     <script>
-        // Smart number formatting for ACCESS amounts
-        function formatAccessAmount(value) {
-            const num = parseFloat(value) || 0;
-            if (num === 0) return '0 ACCESS';
-            const abs = Math.abs(num);
-            if (abs >= 1) {
-                const str = num.toFixed(8);
-                const parts = str.split('.');
-                let intPart = parseInt(parts[0]).toLocaleString('en-US');
-                let decPart = parts[1].replace(/0+$/, '');
-                if (decPart.length === 1) decPart += '0';
-                if (decPart.length === 0) return (num < 0 ? '-' : '') + intPart + ' ACCESS';
-                return (num < 0 ? '-' : '') + intPart + '.' + decPart + ' ACCESS';
-            } else {
-                const str = num.toFixed(8);
-                const trimmed = str.replace(/0+$/, '');
-                const parts = trimmed.split('.');
-                let decPart = parts[1] || '';
-                if (decPart.length < 2) decPart = decPart.padEnd(2, '0');
-                return parts[0] + '.' + decPart + ' ACCESS';
-            }
-        }
-
         // Global variables
         let currentExplorerUser = null;
         let explorerSessionToken = null;
@@ -1842,13 +1822,36 @@
             }
         }
 
+        // Smart number formatting for ACCESS amounts
+        function formatAccessAmount(value) {
+            const num = parseFloat(value) || 0;
+            if (num === 0) return '0 ACCESS';
+            const abs = Math.abs(num);
+            if (abs >= 1) {
+                const str = num.toFixed(8);
+                const parts = str.split('.');
+                let intPart = parseInt(parts[0]).toLocaleString('en-US');
+                let decPart = parts[1].replace(/0+$/, '');
+                if (decPart.length === 1) decPart += '0';
+                if (decPart.length === 0) return (num < 0 ? '-' : '') + intPart + ' ACCESS';
+                return (num < 0 ? '-' : '') + intPart + '.' + decPart + ' ACCESS';
+            } else {
+                const str = num.toFixed(8);
+                const trimmed = str.replace(/0+$/, '');
+                const parts = trimmed.split('.');
+                let decPart = parts[1] || '';
+                if (decPart.length < 2) decPart = decPart.padEnd(2, '0');
+                return parts[0] + '.' + decPart + ' ACCESS';
+            }
+        }
+
         // Google Client ID - loaded securely from server
         let GOOGLE_CLIENT_ID = null;
 
         // Load Google Client ID from secure server endpoint
         async function loadGoogleClientId() {
             try {
-                const response = await fetch(window.location.origin + '/api/oauth-config');
+                const response = await fetch('https://accesschain.org/api/oauth-config');
                 const data = await response.json();
                 if (data.success && data.clientId) {
                     GOOGLE_CLIENT_ID = data.clientId;
@@ -1920,7 +1923,7 @@
 
                 // ✅ Save user to database
                 try {
-                    const response = await fetch(window.location.origin + '/api/auth/explorer-google', {
+                    const response = await fetch('https://accesschain.org/api/auth/explorer-google', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -2029,7 +2032,7 @@
 
             // Try direct transaction API first
             try {
-                const response = await fetch(window.location.origin + '/api/network/transaction/' + txHash);
+                const response = await fetch('https://accesschain.org/api/network/transaction/' + txHash);
                 const result = await response.json();
                 
                 if (result && (result.success || result.transaction)) {
@@ -2042,7 +2045,7 @@
 
             // Fallback: Search in latest transactions (last 500)
             try {
-                const response = await fetch(window.location.origin + '/api/explorer/latest-transactions?limit=500');
+                const response = await fetch('https://accesschain.org/api/explorer/latest-transactions?limit=500');
                 const result = await response.json();
                 
                 if (result.success && result.data) {
@@ -2097,7 +2100,7 @@
                     timestamp: 1757350803565,
                     blockNumber: 38,
                     blockIndex: 38,
-                    gasUsed: 21000,
+                    gasUsed: 20000,
                     gasPrice: 0.00002,
                     gasFee: 0.00002,
                     confirmed: true,
@@ -2140,7 +2143,7 @@
                         amount: foundTx.amount || foundTx.value,
                         timestamp: foundTx.timestamp,
                         blockNumber: blockNum,
-                        gasUsed: foundTx.gasUsed || foundTx.gasLimit || 21000,
+                        gasUsed: foundTx.gasUsed || foundTx.gasLimit || 20000,
                         gasPrice: foundTx.gasPrice || 0.00002,
                         confirmed: true,
                         nonce: foundTx.nonce || 0,
@@ -2185,7 +2188,7 @@
                       amount: data.amount || data.value || 0,
                       timestamp: data.timestamp || Date.now(),
                       blockNumber: data.blockNumber || 0,
-                      gasUsed: data.gasUsed || 21000,
+                      gasUsed: data.gasUsed || 20000,
                       gasPrice: data.gasPrice || 0.00002,
                       confirmed: true,
                       nonce: data.nonce || 0,
@@ -2207,7 +2210,7 @@
                             amount: foundTx.amount || foundTx.value || 0,
                             timestamp: foundTx.timestamp || Date.now(),
                             blockNumber: foundTx.blockNumber || item.index || 0,
-                            gasUsed: foundTx.gasUsed || 21000,
+                            gasUsed: foundTx.gasUsed || 20000,
                             gasPrice: foundTx.gasPrice || 0.00002,
                             confirmed: true,
                             nonce: foundTx.nonce || 0,
@@ -2297,7 +2300,7 @@
             console.log('📊 Displaying RPC transaction data:', tx);
 
             const value = tx.value ? parseInt(tx.value, 16) / 1e18 : 0;
-            const gasUsed = tx.gas ? parseInt(tx.gas, 16) : 21000;
+            const gasUsed = tx.gas ? parseInt(tx.gas, 16) : 20000;
             const gasPrice = tx.gasPrice ? parseInt(tx.gasPrice, 16) : 952380952; // ✅ صحيح: 0.952 Gwei
             const blockNumber = tx.blockNumber ? parseInt(tx.blockNumber, 16) : 0;
 
@@ -2581,8 +2584,8 @@
                 console.log(`📊 INDEX KEEP: Keeping current value ${currentIndexDisplay}`);
             }
 
-            const realGasUsed = parseInt(tx.gasUsed) || 21000;
-            const gasLimit = tx.gasLimit || 21000;
+            const realGasUsed = parseInt(tx.gasUsed) || 20000;
+            const gasLimit = tx.gasLimit || 20000;
             const gasPercentage = ((realGasUsed / gasLimit) * 100).toFixed(1);
 
             document.getElementById('gasLimit').textContent = gasLimit.toLocaleString();
@@ -2623,7 +2626,7 @@
         // Get current network height for accurate confirmations
         async function getCurrentBlockHeight() {
             const endpoints = [
-                window.location.origin + '/api/network/block/latest'
+                'https://accesschain.org/api/network/block/latest'
             ];
 
             for (const endpoint of endpoints) {
@@ -2763,8 +2766,89 @@
             }
         }
 
+        // ✅ Handle Google Sign-In callback (used by Cordova native sign-in)
+        async function handleGoogleSignIn(response) {
+            try {
+                const credential = response.credential;
+                if (!credential) throw new Error('No credential received');
+
+                const base64Url = credential.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                const userInfo = JSON.parse(jsonPayload);
+
+                const userData = {
+                    email: userInfo.email,
+                    name: userInfo.name,
+                    picture: userInfo.picture,
+                    sub: userInfo.sub
+                };
+
+                try {
+                    const resp = await fetch('https://accesschain.org/api/auth/explorer-google', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: userData.email, name: userData.name, googleId: userData.sub, picture: userData.picture })
+                    });
+                    const data = await resp.json();
+                    if (data.success) console.log('✅ User saved to database:', data.user.email);
+                } catch (dbError) {
+                    console.error('❌ Error saving user to database:', dbError);
+                }
+
+                saveExplorerSession(credential, userData);
+                console.log('✅ Google sign in successful:', userData.name);
+                hideAuthModal();
+                window.location.reload();
+            } catch (error) {
+                console.error('❌ Error processing Google Sign-In:', error);
+                showAuthMessage('Sign in failed. Please try again.');
+            }
+        }
+
         // Trigger Google Sign In using OAuth 2.0 redirect flow
         function triggerGoogleSignIn() {
+
+            // 📱 Cordova: Use native Google Sign-In (independent from mining)
+            if (window.IS_CORDOVA_APP && window.plugins && window.plugins.googleplus) {
+                console.log('📱 Explorer: Using native Google Sign-In');
+                const termsCheckbox = document.getElementById('termsCheckbox');
+                if (!termsCheckbox || !termsCheckbox.checked) {
+                    showAuthMessage('Please accept the Terms of Service first.');
+                    return;
+                }
+                // Do NOT disconnect - that would affect mining session
+                window.plugins.googleplus.login(
+                    {
+                        scopes: 'profile email',
+                        webClientId: window.GOOGLE_CLIENT_ID_WEB || GOOGLE_CLIENT_ID,
+                        offline: false
+                    },
+                    function(userData) {
+                        console.log('✅ Explorer native sign-in success:', userData.email);
+                        const explorerUser = {
+                            email: userData.email,
+                            name: userData.displayName,
+                            picture: userData.imageUrl || userData.photoUrl || '',
+                            sub: userData.userId
+                        };
+                        // Build fake credential for handleGoogleSignIn
+                        const b64 = str => btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                        const header = b64(JSON.stringify({alg: 'none', typ: 'JWT'}));
+                        const body = b64(JSON.stringify(explorerUser));
+                        const fakeCredential = header + '.' + body + '.explorer';
+                        handleGoogleSignIn({ credential: fakeCredential });
+                    },
+                    function(error) {
+                        console.error('❌ Explorer native sign-in error:', error);
+                        showAuthMessage('Sign in failed. Please try again.');
+                    }
+                );
+                return;
+            }
+
             if (!GOOGLE_CLIENT_ID) {
                 showAuthMessage('Google authentication not configured. Please try again.');
                 return;
