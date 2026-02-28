@@ -254,6 +254,20 @@
 
     modal.style.display = 'flex';
     setTimeout(() => modal.classList.add('active'), 10);
+
+    // Show biometric button only in disable mode when biometric is enabled
+    const setupBioBtn = document.getElementById('pin-setup-biometric-btn');
+    if (setupBioBtn) {
+      if (step === 'disable' && biometricEnabled && biometricAvailable) {
+        setupBioBtn.style.visibility = 'visible';
+        // Auto-trigger biometric after a short delay
+        setTimeout(() => {
+          if (setupStep === 'disable') triggerSetupBiometricAuth();
+        }, 400);
+      } else {
+        setupBioBtn.style.visibility = 'hidden';
+      }
+    }
   }
 
   window.closePinModal = function() {
@@ -640,6 +654,93 @@
   // Expose for button tap (manual trigger)
   window.pinBiometricAuth = function() {
     triggerBiometricAuth();
+  };
+
+  // ===== BIOMETRIC AUTH FOR DISABLE PIN =====
+  function triggerSetupBiometricAuth() {
+    if (!window.Fingerprint || !biometricAvailable || !biometricEnabled) return;
+    if (window._biometricInProgress) return;
+    window._biometricInProgress = true;
+
+    const t = (key) => window.translator ? window.translator.translate(key) : key;
+
+    window.Fingerprint.show(
+      {
+        title: t('Disable PIN'),
+        disableBackup: true
+      },
+      function() {
+        // Success - animate dots then disable PIN
+        window._biometricInProgress = false;
+        animateSetupDotsAndDisable();
+      },
+      function(error) {
+        window._biometricInProgress = false;
+        console.log('[PIN] Biometric for disable cancelled/failed:', error);
+      }
+    );
+  }
+
+  // Animate setup modal dots filling, then disable PIN via biometric endpoint
+  function animateSetupDotsAndDisable() {
+    const dots = document.querySelectorAll('#pin-setup-dots .pin-dot');
+    if (!dots.length) {
+      disablePinViaBiometric();
+      return;
+    }
+
+    let i = 0;
+    const fillInterval = setInterval(() => {
+      if (i < dots.length) {
+        dots[i].classList.add('filled');
+        if (navigator.vibrate) navigator.vibrate(15);
+        i++;
+      } else {
+        clearInterval(fillInterval);
+        setTimeout(() => {
+          disablePinViaBiometric();
+        }, 200);
+      }
+    }, 80);
+  }
+
+  async function disablePinViaBiometric() {
+    const t = (key) => window.translator ? window.translator.translate(key) : key;
+    try {
+      const userId = getUserId();
+      if (!userId) return;
+
+      const response = await fetch(getApiBase() + '/api/pin/disable-biometric', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        pinEnabled = false;
+        biometricEnabled = false;
+        window.closePinModal();
+        updateSettingsUI();
+        if (window.showNotification) {
+          window.showNotification(t('PIN disabled'), 'success');
+        }
+      } else {
+        showSetupError(data.error || t('Failed to disable PIN'));
+        pinInput = '';
+        clearSetupDots();
+      }
+    } catch (error) {
+      console.error('[PIN] Error disabling via biometric:', error);
+      showSetupError(t('Network error'));
+      pinInput = '';
+      clearSetupDots();
+    }
+  }
+
+  // Expose for button tap
+  window.pinSetupBiometricAuth = function() {
+    triggerSetupBiometricAuth();
   };
 
   // ===== APP LIFECYCLE =====
