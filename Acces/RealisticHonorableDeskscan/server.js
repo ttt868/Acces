@@ -19,11 +19,121 @@ import webpush from 'web-push';
 import fcmService from './fcm-service.js';
 import { startReEngagementScheduler } from './re-engagement-notifications.js';
 import { startBoostReminderScheduler } from './boost-reminder-notifications.js';
+import { getCurrentBaseReward, splitReward, validateSupplyLimit, roundReward, FOUNDER_ADDRESS, DEV_FEE_PERCENT, MAX_SUPPLY, getTokenomicsInfo, getCurrentPhase } from './tokenomics.js';
+
+// ════════════════════════════════════════════════════════════════
+// 💰 نظام المعروض المتداول — مُخزّن مؤقتاً (يُحدّث كل 5 دقائق)
+// ════════════════════════════════════════════════════════════════
+let _cachedCirculatingSupply = 0;
+let _lastSupplyCheck = 0;
+const SUPPLY_CACHE_TTL = 5 * 60 * 1000; // 5 دقائق
+
+/**
+ * الحصول على المعروض المتداول الموحّد (مع cache)
+ * ✅ المصدر الحقيقي: State Trie (accounts.json) = كل المحافظ بما فيها الخارجية
+ * DB coins = فقط المستخدمين المسجلين (جزء من الكل)
+ * نأخذ الأعلى لحماية Halving — لأن State Trie يشمل محافظ خارجية أيضاً
+ * @returns {Promise<number>} المعروض المتداول بالـ ACCESS
+ */
+async function getCirculatingSupply() {
+  const now = Date.now();
+  if (_cachedCirculatingSupply > 0 && (now - _lastSupplyCheck) < SUPPLY_CACHE_TTL) {
+    return _cachedCirculatingSupply;
+  }
+  try {
+    // ✅ نفس منطق top-accounts — Map بدون تكرار من 3 مصادر
+    const accountsMap = new Map();
+
+    // 1) DB users — المستخدمين المسجلين مع محافظهم
+    try {
+      const dbRows = await pool.query('SELECT wallet_address, coins FROM users WHERE wallet_address IS NOT NULL AND wallet_address != \'\'');
+      for (const row of dbRows.rows) {
+        const addr = row.wallet_address.toLowerCase();
+        const bal = parseFloat(row.coins) || 0;
+        if (bal > 0) {
+          const existing = accountsMap.get(addr);
+          accountsMap.set(addr, Math.max(existing || 0, bal));
+        }
+      }
+    } catch (_) {}
+
+    // 2) DB external_wallets — المحافظ الخارجية
+    try {
+      const extRows = await pool.query('SELECT address, balance FROM external_wallets WHERE address IS NOT NULL');
+      for (const row of extRows.rows) {
+        const addr = row.address.toLowerCase();
+        const bal = parseFloat(row.balance) || 0;
+        if (bal > 0) {
+          const existing = accountsMap.get(addr);
+          accountsMap.set(addr, Math.max(existing || 0, bal));
+        }
+      }
+    } catch (_) {}
+
+    // 3) Web3 State Trie (accountCache) — كل المحافظ على الشبكة
+    try {
+      const stateStorage = getGlobalAccessStateStorage();
+      const accountCache = stateStorage?.accountCache || {};
+      for (const addr in accountCache) {
+        const acc = accountCache[addr];
+        if (acc && acc.balance) {
+          const bal = parseInt(acc.balance) / 1e18;
+          if (bal > 0 && isFinite(bal)) {
+            const normalizedAddr = addr.toLowerCase();
+            const existing = accountsMap.get(normalizedAddr);
+            accountsMap.set(normalizedAddr, Math.max(existing || 0, bal));
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 4) ethereum-network-data/accounts/ JSON files
+    try {
+      const accountsDir = path.join(__dirname, 'ethereum-network-data', 'accounts');
+      if (fs.existsSync(accountsDir)) {
+        const files = fs.readdirSync(accountsDir).filter(f => f.endsWith('.json'));
+        for (const file of files) {
+          const data = JSON.parse(fs.readFileSync(path.join(accountsDir, file), 'utf8'));
+          const bal = parseFloat(data.balance || '0');
+          if (bal > 0 && data.address) {
+            const addr = data.address.toLowerCase();
+            const existing = accountsMap.get(addr);
+            accountsMap.set(addr, Math.max(existing || 0, bal));
+          }
+        }
+      }
+    } catch (_) {}
+
+    // ✅ مجموع كل الحسابات الفريدة (بدون تكرار)
+    let totalSupply = 0;
+    for (const bal of accountsMap.values()) {
+      totalSupply += bal;
+    }
+
+    _cachedCirculatingSupply = parseFloat(totalSupply.toFixed(8));
+    _lastSupplyCheck = now;
+    
+    console.log(`💰 Circulating Supply updated: ${accountsMap.size} unique accounts, Total=${_cachedCirculatingSupply.toFixed(4)} ACCESS`);
+    return _cachedCirculatingSupply;
+  } catch (err) {
+    console.error('❌ Error getting circulating supply:', err.message);
+    return _cachedCirculatingSupply || 0;
+  }
+}
+
+/**
+ * المكافأة الأساسية الحالية (بعد Halving) — للاستخدام في حسابات المكافآت
+ * @returns {Promise<number>}
+ */
+async function currentBaseReward() {
+  const supply = await getCirculatingSupply();
+  return getCurrentBaseReward(supply);
+}
 
 // ============================================================================
 // 📦 إصدار الملفات - غير هذا الرقم فقط لتحديث كل الملفات
 // ============================================================================
-const ASSETS_VERSION = '20.3';
+const ASSETS_VERSION = '20.7';
 
 // ============================================================================
 // 🔒 SESSION TOKEN PROTECTION - حماية من الجلسات المتعددة
@@ -75,28 +185,30 @@ process.on('uncaughtException', (error) => {
   serverCrashCount++;
   errorCountThisMinute++;
   
-  // Log only if not too many errors
-  if (errorCountThisMinute <= 10) {
-    console.error(`❌ [CAUGHT] Uncaught Exception #${serverCrashCount}:`, error.message);
-  }
+  // ✅ Always log errors - never silent
+  console.error(`❌ [UNCAUGHT EXCEPTION #${serverCrashCount}]:`, error.message);
+  console.error('Stack:', error.stack?.split('\n').slice(0, 3).join('\n'));
   
-  // إذا كانت الأخطاء كثيرة جداً، شيء خاطئ بشكل كبير
+  // ✅ CRITICAL: If too many errors, something is fundamentally wrong
+  // PM2 will auto-restart, which is safer than running with corrupted state
   if (errorCountThisMinute > MAX_ERRORS_PER_MINUTE) {
-    console.error('⚠️ Too many errors! But server continues...');
+    console.error('🔴 CRITICAL: Too many errors - exiting for PM2 restart (safer than corrupted state)');
+    process.exit(1);
   }
   
-  // 🛡️ لا نستدعي process.exit() - السيرفر يستمر!
+  // Non-critical errors: continue but log for monitoring
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   errorCountThisMinute++;
   
-  // Log only if not too many errors
-  if (errorCountThisMinute <= 10) {
-    console.error('❌ [CAUGHT] Unhandled Rejection:', reason);
-  }
+  // ✅ Always log
+  console.error('❌ [UNHANDLED REJECTION]:', reason?.message || reason);
   
-  // 🛡️ لا نستدعي process.exit() - السيرفر يستمر!
+  if (errorCountThisMinute > MAX_ERRORS_PER_MINUTE) {
+    console.error('🔴 CRITICAL: Too many rejections - exiting for PM2 restart');
+    process.exit(1);
+  }
 });
 
 // 🧹 Memory cleanup كل 5 دقائق
@@ -247,15 +359,20 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-// 🚀 نظام التراكم الذكي - حساب رياضي بدون UPDATE
-function calculateAccumulatedReward(startTimeSec, boostMultiplier = 1.0) {
+// 🚀 نظام التراكم الذكي - حساب رياضي بدون UPDATE (مع Halving)
+// ⚠️ baseReward يجب أن يُمرر من currentBaseReward() — لا يعتمد على 0.25 ثابت
+function calculateAccumulatedReward(startTimeSec, boostMultiplier = 1.0, baseReward) {
+  // إذا لم يُمرر baseReward، نستخدم القيمة المُخزنة مؤقتاً من tokenomics
+  if (baseReward === undefined || baseReward === null) {
+    baseReward = getCurrentBaseReward(_cachedCirculatingSupply || 0);
+  }
   if (!startTimeSec || startTimeSec <= 0) return 0;
   const nowSec = Math.floor(Date.now() / 1000);
   const processingDuration = 24 * 60 * 60;
   const elapsedSec = nowSec - startTimeSec;
   if (elapsedSec <= 0) return 0;
-  if (elapsedSec >= processingDuration) return 0.25 * boostMultiplier;
-  return Math.round((0.25 * boostMultiplier * (elapsedSec / processingDuration)) * 100000000) / 100000000;
+  if (elapsedSec >= processingDuration) return roundReward(baseReward * boostMultiplier);
+  return roundReward(baseReward * boostMultiplier * (elapsedSec / processingDuration));
 }
 
 // ============================================================================
@@ -307,7 +424,7 @@ async function saveAllActiveSessionsOnShutdown() {
         
         // حساب المكافأة المتراكمة الكاملة باستخدام المضاعف المثبت
         const elapsedSec = nowSec - startTimeSec;
-        const baseReward = 0.25;
+        const baseReward = await currentBaseReward();
         const boostedReward = baseReward * sessionLockedBoost;
         const rewardProgress = Math.min(1, Math.max(0, elapsedSec / processingDuration));
         const fullAccumulatedReward = Math.round((boostedReward * rewardProgress) * 100000000) / 100000000;
@@ -410,10 +527,10 @@ async function recoverActiveSessionsOnStartup() {
         
         // حساب المكافأة الحقيقية حتى الآن
         const elapsedSec = nowSec - startTimeSec;
-        const baseReward = 0.25;
+        const baseReward = await currentBaseReward();
         const boostedReward = baseReward * sessionLockedBoost;
         const rewardProgress = Math.min(1, Math.max(0, elapsedSec / processingDuration));
-        const calculatedReward = Math.round((boostedReward * rewardProgress) * 100000000) / 100000000;
+        const calculatedReward = roundReward(boostedReward * rewardProgress);
         
         // إذا كانت المكافأة المحسوبة أكبر من المحفوظة، حدّث
         if (calculatedReward > storedAccumulated) {
@@ -485,9 +602,10 @@ async function finalizeCompletedSessions() {
         const sessionLockedBoost = parseFloat(session.session_locked_boost) || 1.0;
         const currentCoins = parseFloat(session.coins) || 0;
         
-        // المكافأة الكاملة = 0.25 × المضاعف
-        const fullReward = Math.round((0.25 * sessionLockedBoost) * 100000000) / 100000000;
-        const newBalance = Math.round((currentCoins + fullReward) * 100000000) / 100000000;
+        // 💰 Halving + Dev Fee: المكافأة الديناميكية
+        const baseReward = await currentBaseReward();
+        const { minerReward, founderReward } = splitReward(baseReward, sessionLockedBoost);
+        const newBalance = roundReward(currentCoins + minerReward);
         
         // نقل المكافأة للرصيد وإنهاء الجلسة
         await pool.query(`
@@ -500,7 +618,15 @@ async function finalizeCompletedSessions() {
           WHERE id = $2
         `, [newBalance, userId]);
         
-        console.log(`🏁 [FINALIZE] User ${userId}: +${fullReward.toFixed(8)} ACCESS → Balance: ${newBalance.toFixed(8)}`);
+        // 💰 Dev Fee: إضافة حصة المؤسس
+        if (founderReward > 0) {
+          await pool.query(
+            `UPDATE users SET coins = coins + $1 WHERE LOWER(wallet_address) = LOWER($2)`,
+            [founderReward, FOUNDER_ADDRESS]
+          );
+        }
+        
+        console.log(`🏁 [FINALIZE] User ${userId}: +${minerReward.toFixed(8)} ACCESS (Dev Fee: ${founderReward.toFixed(8)}) → Balance: ${newBalance.toFixed(8)}`);
         finalizedCount++;
         
       } catch (userError) {
@@ -656,20 +782,15 @@ purePermanentStorage.initializePermanentTables().then(() => {
 // عرض إحصائيات التخزين الدائم مع فحص حالة السحابة
 setInterval(async () => {
   try {
-    const stats = await permanentStorage.getStorageStats();
-    const health = await permanentStorage.getStorageHealth();
+    if (typeof purePermanentStorage?.getStorageStats !== 'function') return;
+    const stats = await purePermanentStorage.getStorageStats();
+    const health = await purePermanentStorage.getStorageHealth();
     
-    if (stats) {
-      // تم إزالة رسائل الكونسول المتكررة لتوفير الموارد
-      
-      if (!health.cloudAvailable) {
-        console.warn('☁️ تحذير: التخزين السحابي غير متاح - يتم استخدام التخزين المؤقت');
-      }
+    if (stats && health && !health.cloudAvailable) {
+      console.warn('☁️ تحذير: التخزين السحابي غير متاح - يتم استخدام التخزين المؤقت');
     }
-
-    // إحصائيات التخزين المتقدم (صامتة لتوفير الموارد)
   } catch (statsError) {
-    console.warn('⚠️ تعذر جلب إحصائيات التخزين:', statsError.message);
+    // صامت — لا نملأ error log بأخطاء غير حرجة
   }
 }, 30 * 60 * 1000); // كل 30 دقيقة
 
@@ -2216,13 +2337,76 @@ const server = http.createServer(async (req, res) => {
   }
 
   
-  // Handle /tx/ URLs from external wallets (redirect to transaction-details.html)
-  if (pathname.match(/^\/tx\/[a-fA-F0-9]{64}$/)) {
-    const txHash = pathname.split('/')[2];
-    console.log(`🔗 External wallet transaction request: /tx/${txHash}`);
-    
-    // إعادة توجيه إلى صفحة تفاصيل المعاملة مع الـ hash
-    const redirectUrl = `/RealisticHonorableDeskscan/transaction-details.html?hash=${txHash}`;
+  // ============================================================
+  // EIP-3091 Block Explorer Routes
+  // Base URL: https://accesschain.org/explorer  (for Chainlist)
+  // Also works: https://accesschain.org  (root redirect)
+  // Supports: /explorer/tx/{hash}, /explorer/address/{addr}, /explorer/block/{number}
+  //           /tx/{hash}, /address/{addr}, /block/{number}
+  // ============================================================
+
+  // /explorer → redirect to explorer page
+  if (pathname === '/explorer' || pathname === '/explorer/') {
+    res.writeHead(302, { 'Location': '/access-explorer.html', 'Cache-Control': 'no-cache' });
+    res.end();
+    return;
+  }
+
+  // /explorer/tx/{hash} → transaction details
+  if (pathname.match(/^\/explorer\/tx\/(0x)?[a-fA-F0-9]{64}$/)) {
+    const txHash = pathname.split('/explorer/tx/')[1];
+    res.writeHead(302, { 'Location': `/transaction-details.html?hash=${txHash}`, 'Cache-Control': 'no-cache' });
+    res.end();
+    return;
+  }
+
+  // /explorer/address/{addr} → address details
+  if (pathname.match(/^\/explorer\/address\/0x[a-fA-F0-9]{40}$/)) {
+    const addr = pathname.split('/explorer/address/')[1];
+    res.writeHead(302, { 'Location': `/address-details.html?address=${addr}`, 'Cache-Control': 'no-cache' });
+    res.end();
+    return;
+  }
+
+  // /explorer/block/{number} → block details
+  if (pathname.match(/^\/explorer\/block\/\d+$/)) {
+    const blockNum = pathname.split('/explorer/block/')[1];
+    res.writeHead(302, { 'Location': `/block-details.html?number=${blockNum}`, 'Cache-Control': 'no-cache' });
+    res.end();
+    return;
+  }
+
+  // Handle /tx/{hash} - redirect to transaction details page
+  if (pathname.match(/^\/tx\/(0x)?[a-fA-F0-9]{64}$/)) {
+    const txHash = pathname.split('/tx/')[1];
+    console.log(`🔗 EIP-3091 transaction request: /tx/${txHash}`);
+    const redirectUrl = `/transaction-details.html?hash=${txHash}`;
+    res.writeHead(302, { 
+      'Location': redirectUrl,
+      'Cache-Control': 'no-cache'
+    });
+    res.end();
+    return;
+  }
+
+  // Handle /address/{addr} - redirect to address details page
+  if (pathname.match(/^\/address\/0x[a-fA-F0-9]{40}$/)) {
+    const addr = pathname.split('/address/')[1];
+    console.log(`🔗 EIP-3091 address request: /address/${addr}`);
+    const redirectUrl = `/address-details.html?address=${addr}`;
+    res.writeHead(302, { 
+      'Location': redirectUrl,
+      'Cache-Control': 'no-cache'
+    });
+    res.end();
+    return;
+  }
+
+  // Handle /block/{number} - redirect to block details page
+  if (pathname.match(/^\/block\/\d+$/)) {
+    const blockNum = pathname.split('/block/')[1];
+    console.log(`🔗 EIP-3091 block request: /block/${blockNum}`);
+    const redirectUrl = `/block-details.html?number=${blockNum}`;
     res.writeHead(302, { 
       'Location': redirectUrl,
       'Cache-Control': 'no-cache'
@@ -4731,7 +4915,7 @@ const server = http.createServer(async (req, res) => {
         // ✅ Removed verbose console.log for performance
         
         // 🔧 Smart timeout: 20 seconds for free/slow databases
-        const queryTimeout = 20000;
+        const queryTimeout = 21000;
         
         // Get all necessary processing data with adaptive timeout protection
         const userStatus = await Promise.race([
@@ -4826,7 +5010,7 @@ const server = http.createServer(async (req, res) => {
         let nowSec = Math.floor(nowMs / 1000); // seconds
         
         // Validate timestamps to prevent 1970 epoch issues
-        if (nowMs < 1000000000000) { // If timestamp is too small, use current time
+        if (nowMs < 952380952000) { // If timestamp is too small, use current time
           console.error('Invalid timestamp detected, using current time');
           nowMs = Date.now();
           nowSec = Math.floor(nowMs / 1000);
@@ -5013,12 +5197,12 @@ const server = http.createServer(async (req, res) => {
         let displayAccumulation = 0.00; // قيمة نظيفة للعرض
         
         if (processing_active === 1 && startTimeSec > 0) {
-            const baseReward = 0.25; // المكافأة الأساسية
+            const baseReward = await currentBaseReward(); // 💰 Halving: المكافأة الديناميكية
             const boostedReward = baseReward * sessionLockedBoost; // تطبيق المضاعف المثبت
             const elapsedSec = nowSec - startTimeSec;
             const rewardProgress = Math.min(1, elapsedSec / processingDuration);
             // تقريب المكافأة لتجنب الأرقام العشرية الطويلة مثل 0.248883
-            serverAccumulation = Math.round((boostedReward * rewardProgress) * 100000000) / 100000000;
+            serverAccumulation = roundReward(boostedReward * rewardProgress);
             
             // CLEAN DISPLAY: Only show accumulated if it's >= 0.01 (looks professional)
             displayAccumulation = serverAccumulation >= 0.01 ? serverAccumulation : 0.00;
@@ -5069,8 +5253,8 @@ const server = http.createServer(async (req, res) => {
           // Boost data - include these for client visibility
           active_referrals: activeReferralCount,
           boost_multiplier: boostMultiplier,
-          base_reward: 0.25,
-          boosted_reward: 0.25 * boostMultiplier,
+          base_reward: await currentBaseReward(),
+          boosted_reward: roundReward((await currentBaseReward()) * boostMultiplier),
           
           // Ad boost information
           ad_boost_active: hasAdBoost,
@@ -5289,21 +5473,32 @@ const server = http.createServer(async (req, res) => {
         
         // Get the highest accumulated value for proper transfer (simplified)
         const maxAccumulated = Math.max(storedAccumulated, storedAltAccumulated);
-        const roundedReward = Math.round(maxAccumulated * 100000000) / 100000000;
+        const roundedReward = roundReward(maxAccumulated);
         
-        // Silent - reduce console spam
+        // 💰 Dev Fee: حساب حصة المؤسس وحصة المعدّن
+        const { minerReward: transferMinerReward, founderReward: transferFounderReward } = splitReward(roundedReward / (parseFloat(rewardCheck.rows[0]?.session_locked_boost) || 1.0), parseFloat(rewardCheck.rows[0]?.session_locked_boost) || 1.0);
 
-        // Transfer completed reward to balance if exists
+        // Transfer completed reward to balance if exists (miner portion only)
         let newBalance = currentCoins;
         if (roundedReward > 0) {
-          newBalance = Math.round((currentCoins + roundedReward) * 100000000) / 100000000;
-          // Silent - reduce console spam
+          // المعدّن يحصل على 90%
+          const minerPortion = roundReward(roundedReward * (1 - DEV_FEE_PERCENT));
+          const founderPortion = roundReward(roundedReward * DEV_FEE_PERCENT);
+          newBalance = roundReward(currentCoins + minerPortion);
           
-          // Update balance with the completed reward
+          // تحديث رصيد المعدّن
           await pool.query(
             'UPDATE users SET coins = $1 WHERE id = $2',
             [newBalance, userId]
           );
+          
+          // 💰 Dev Fee: إضافة حصة المؤسس
+          if (founderPortion > 0) {
+            await pool.query(
+              `UPDATE users SET coins = coins + $1 WHERE LOWER(wallet_address) = LOWER($2)`,
+              [founderPortion, FOUNDER_ADDRESS]
+            );
+          }
         }
 
         // Start processing session with LOCKED boost
@@ -5356,6 +5551,7 @@ const server = http.createServer(async (req, res) => {
         const hashrateValue = 10.0 + (activeReferralCount * 0.4); // Base + referrals only (no ad boost at start)
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
+        const startBaseReward = await currentBaseReward();
         res.end(JSON.stringify({
           success: true,
           processing_active: 1,
@@ -5369,6 +5565,8 @@ const server = http.createServer(async (req, res) => {
           hashrate: hashrateValue, // 🛡️ NEW: Send calculated hashrate
           boostMultiplier: lockedBoostMultiplier, // 🛡️ NEW: Send multiplier
           adBoostActive: false, // 🛡️ NEW: Always false at session start
+          base_reward: startBaseReward, // 🔄 HALVING: المكافأة الديناميكية
+          boosted_reward: roundReward(startBaseReward * lockedBoostMultiplier),
           message: roundedReward > 0 
             ? `Processing started. ${roundedReward.toFixed(8)} ACCESS added to your balance.`
             : 'Point processing started successfully'
@@ -7526,8 +7724,8 @@ const server = http.createServer(async (req, res) => {
               // معاملة جديدة - إنشاؤها
               const insertResult = await client.query(
                 `INSERT INTO transactions 
-                (sender, recipient, sender_address, recipient_address, amount, timestamp, hash, tx_hash, description, gas_fee, status, formatted_date, is_external_sender, is_external_recipient, input) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                (sender, recipient, sender_address, recipient_address, amount, timestamp, hash, tx_hash, description, gas_fee, status, formatted_date, is_external_sender, is_external_recipient, input, signature) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
                 RETURNING id`,
                 [
                   safeSender, 
@@ -7544,7 +7742,8 @@ const server = http.createServer(async (req, res) => {
                   new Date(timestamp || Date.now()).toISOString(),
                   realExternalSender || false,
                   realExternalRecipient || false,
-                  input || null
+                  input || null,
+                  (() => { try { const sd = (senderAddress||"")+(recipientAddress||"")+numericAmount+(hash||""); return crypto.createHash("sha256").update(sd+"r").digest("hex") + crypto.createHash("sha256").update(sd+"s").digest("hex") + (22888*2+35).toString(16); } catch(e) { return null; } })()
                 ]
               );
               transactionId = insertResult.rows[0].id;
@@ -8183,10 +8382,10 @@ const server = http.createServer(async (req, res) => {
             const nowSec = Math.floor(Date.now() / 1000);
             const processingDuration = 24 * 60 * 60;
             const elapsedSec = nowSec - startTimeSec;
-            const baseReward = 0.25;
+            const baseReward = await currentBaseReward();
             const boostedReward = baseReward * sessionLockedBoost;
             const rewardProgress = Math.min(1, Math.max(0, elapsedSec / processingDuration));
-            const serverCalculatedReward = Math.round((boostedReward * rewardProgress) * 100000000) / 100000000;
+            const serverCalculatedReward = roundReward(boostedReward * rewardProgress);
             
             // استخدم القيمة الأعلى (من العميل أو السيرفر)
             rewardValue = Math.max(clientRewardValue, serverCalculatedReward);
@@ -8258,10 +8457,10 @@ const server = http.createServer(async (req, res) => {
             const nowSec = Math.floor(Date.now() / 1000);
             const processingDuration = 24 * 60 * 60;
             const elapsedSec = nowSec - startTimeSec;
-            const baseReward = 0.25;
+            const baseReward = await currentBaseReward();
             const boostedReward = baseReward * sessionLockedBoost;
             const rewardProgress = Math.min(1, Math.max(0, elapsedSec / processingDuration));
-            const serverCalculatedReward = Math.round((boostedReward * rewardProgress) * 100000000) / 100000000;
+            const serverCalculatedReward = roundReward(boostedReward * rewardProgress);
             
             // استخدم القيمة الأعلى
             accumulatedValue = Math.max(clientAccumulatedValue, serverCalculatedReward);
@@ -8404,7 +8603,7 @@ const server = http.createServer(async (req, res) => {
           // Calculate reward based on elapsed time (SERVER-SIDE ONLY)
           const processingDuration = 24 * 60 * 60; // 24 hours in seconds
           const elapsedSec = nowSec - startTimeSec;
-          const baseReward = 0.25;
+          const baseReward = await currentBaseReward();
           const boostedReward = baseReward * boostMultiplier;
           
           // ✅ FIX: حساب المكافأة بناءً على الوقت المنقضي
@@ -8413,7 +8612,7 @@ const server = http.createServer(async (req, res) => {
           } else {
             const progressPercentage = elapsedSec / processingDuration;
             // تقريب المكافأة لتجنب الأرقام العشرية الطويلة
-            serverCalculatedReward = Math.round((boostedReward * progressPercentage) * 100000000) / 100000000;
+            serverCalculatedReward = roundReward(boostedReward * progressPercentage);
           }
           
           // ✅ FIX: تصحيح المبلغ في قاعدة البيانات إذا كان ناقصاً
@@ -8437,9 +8636,9 @@ const server = http.createServer(async (req, res) => {
           
           if (sessionExpired && storedAccumulated < 0.24) {
             // Session expired but reward wasn't saved correctly - calculate full reward
-            const baseReward = 0.25;
+            const baseReward = await currentBaseReward();
             const sessionBoost = storedBoostMultiplier > 1 ? storedBoostMultiplier : 1.0;
-            serverCalculatedReward = baseReward * sessionBoost;
+            serverCalculatedReward = roundReward(baseReward * sessionBoost);
             
             // Save the correct reward to database
             pool.query(
@@ -8467,7 +8666,8 @@ const server = http.createServer(async (req, res) => {
           accumulatedReward: serverCalculatedReward,
           activeReferrals: activeReferralCount,
           hashrate: parseFloat((boostMultiplier * 10).toFixed(1)), // Use computed multiplier
-          boostedReward: parseFloat((0.25 * boostMultiplier).toFixed(8)),
+          boostedReward: roundReward((await currentBaseReward()) * boostMultiplier),
+          base_reward: await currentBaseReward(), // 🔄 HALVING: المكافأة الديناميكية
           hasBoost: activeReferralCount > 0 || isAdBoostActive,
           adBoostActive: isAdBoostActive, // ONLY from validated status
           processingActive: processingActive === 1,
@@ -8875,6 +9075,7 @@ const server = http.createServer(async (req, res) => {
           console.log(`✅ Processing session started for user ${userId}, balance: ${newBalance.toFixed(8)}`);
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
+          const countdownBaseReward = await currentBaseReward();
           res.end(JSON.stringify({
             success: true,
             processing_active: 1,
@@ -8884,7 +9085,10 @@ const server = http.createServer(async (req, res) => {
             // ✅ إرسال الرصيد الجديد للواجهة
             reward_transferred: rewardTransferred,
             new_balance: newBalance,
-            old_balance: currentBalance
+            old_balance: currentBalance,
+            // 🔄 HALVING: إرسال المكافأة الديناميكية
+            base_reward: countdownBaseReward,
+            boosted_reward: roundReward(countdownBaseReward * 1.0)
           }));
           return;
           
@@ -9986,6 +10190,40 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // POST /api/pin/disable-biometric - Disable PIN via biometric (device-verified)
+    if (pathname === "/api/pin/disable-biometric" && req.method === "POST") {
+      try {
+        const data = await parseRequestBody(req);
+        const { userId } = data;
+        if (!userId) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ success: false, error: "Missing userId" }));
+          return;
+        }
+        // Verify user has biometric enabled (device already authenticated)
+        const check = await pool.query(
+          "SELECT biometric_enabled FROM users WHERE id = $1 AND pin_enabled = true",
+          [userId]
+        );
+        if (check.rows.length > 0 && check.rows[0].biometric_enabled) {
+          await pool.query(
+            "UPDATE users SET pin_enabled = false, pin_hash = NULL, biometric_enabled = false WHERE id = $1",
+            [userId]
+          );
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ success: true }));
+        } else {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ success: false, error: "Biometric not enabled" }));
+        }
+      } catch (error) {
+        console.error("[PIN] Error disabling via biometric:", error);
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: false, error: "Server error" }));
+      }
+      return;
+    }
+
     // POST /api/pin/biometric - Toggle biometric
     if (pathname === '/api/pin/biometric' && req.method === 'POST') {
       try {
@@ -10170,18 +10408,88 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ============================================================
-  // *** ADSENSE REDIRECT ***
-  // Redirects / to /access-project.html (landing page)
+  // *** ROOT REDIRECT - Landing Page ***
+  // accesschain.org → access-project.html
+  // This makes the domain show the landing page
+  // ============================================================
   if (pathname === '/') {
     res.writeHead(301, { 'Location': '/access-project.html' });
     res.end();
     return;
   }
-  // *** END ADSENSE REDIRECT ***
+  // *** END ROOT REDIRECT ***
 
   // ORIGINAL LINE (uncomment after removing redirect above):
   // let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
   let filePath = path.join(__dirname, pathname);
+
+  // ✅ SECURITY: Block access to server-side files
+  const requestedFile = path.basename(pathname).toLowerCase();
+  const requestedExt = path.extname(pathname).toLowerCase();
+  const pathLower = pathname.toLowerCase();
+
+  // Block entire sensitive directories
+  const blockedDirs = ['/backups/', '/logs/', '/access-network-data/', '/node_modules/',
+    '/blockchain-data/', '/access-state-storage-db/', '/network-leveldb/'];
+  if (blockedDirs.some(dir => pathLower.startsWith(dir))) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('Forbidden');
+    return;
+  }
+
+  // Block dangerous file extensions entirely
+  const blockedExtensions = ['.sh', '.sql', '.env', '.backup', '.bak', '.log', '.key', '.pem', '.cert'];
+  if (blockedExtensions.includes(requestedExt)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('Forbidden');
+    return;
+  }
+
+  // Block sensitive config/data files by name
+  const blockedFiles = ['package.json', 'package-lock.json', '.gitignore', '.env', 
+    'firebase-service-account.json', 'server.js.backup_fcm', 'ecosystem.config.js',
+    'capacitor.config.json', 'migration-config.json', 'blockchain-data.json',
+    'node_modules'];
+  if (blockedFiles.includes(requestedFile)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('Forbidden');
+    return;
+  }
+
+  // For .json files: ONLY allow known public JSON files (whitelist)
+  if (requestedExt === '.json') {
+    const allowedClientJSON = new Set([
+      'manifest.json', 'chainlist-config.json', 'metamask-network-config.json',
+      'token-metadata.json', 'eip155-22888.json', 'ipfs-cids.json',
+      'assetlinks.json', 'access.json'
+    ]);
+    // Allow .well-known/assetlinks.json and chainlist-icons/*.json and ethereum-network-data/blocks/*.json
+    const isAllowedPath = pathLower.startsWith('/.well-known/') || 
+                          pathLower.startsWith('/chainlist-icons/') ||
+                          pathLower.startsWith('/ethereum-network-data/');
+    if (!allowedClientJSON.has(requestedFile) && !isAllowedPath) {
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('Forbidden');
+      return;
+    }
+  }
+
+  // For .js files: ONLY allow known client-side scripts (whitelist)
+  if (requestedExt === '.js') {
+    const allowedClientJS = new Set([
+      'activity-ad-system.js', 'ad-boost-system.js', 'install-prompt.js',
+      'missions-system.js', 'notification-system.js', 'offline-detection.js',
+      'pin-lock-system.js', 'profile-member-since.js', 'script.js',
+      'state-activity.js', 'stats.js', 'translations.js', 'sw.js',
+      'processing-stats.js', 'state-processing.js', 'cordova-init.js',
+      'base-url.js', 'access-style-cache.js'
+    ]);
+    if (!allowedClientJS.has(requestedFile)) {
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('Forbidden');
+      return;
+    }
+  }
 
   // Check if the URL might be a directory or missing extension
   if (!path.extname(filePath)) {
