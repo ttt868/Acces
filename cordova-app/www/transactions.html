@@ -2736,19 +2736,25 @@ This is Access Network's own API, completely independent from Ethereum.`;
                         if (explorerResponse.ok) {
                             const explorerData = await explorerResponse.json();
                             if (explorerData.success && explorerData.data && explorerData.data.length > 0) {
-                                realTransactions = explorerData.data.map(tx => ({
-                                    hash: tx.hash || tx.tx_hash,
-                                    method: 'Transfer',
-                                    block: tx.blockNumber || tx.block_number || tx.block, // Use tx.block for the new link
-                                    blockHash: tx.blockHash, // Added for saveBlockData
-                                    age: formatAge(tx.timestamp),
-                                    from: tx.from || tx.from_address,
-                                    to: tx.to || tx.to_address,
-                                    amount: formatAccessAmount(tx.value || tx.amount || 0),
-                                    fee: '0.00002 ACCESS',
-                                    timestamp: tx.timestamp,
-                                    status: 'confirmed'
-                                }));
+                                realTransactions = explorerData.data
+                                    .filter(tx => {
+                                        const from = tx.from || tx.from_address;
+                                        const to = tx.to || tx.to_address;
+                                        return from && to && from !== 'N/A' && to !== 'N/A';
+                                    })
+                                    .map(tx => ({
+                                        hash: tx.hash || tx.tx_hash,
+                                        method: 'Transfer',
+                                        block: tx.blockNumber || tx.block_number || tx.block,
+                                        blockHash: tx.blockHash,
+                                        age: formatAge(tx.timestamp),
+                                        from: tx.from || tx.from_address,
+                                        to: tx.to || tx.to_address,
+                                        amount: formatAccessAmount(tx.value || tx.amount || 0),
+                                        fee: formatAccessAmount(0.00002),
+                                        timestamp: tx.timestamp,
+                                        status: 'confirmed'
+                                    }));
                                 console.log(`✅ Loaded ${realTransactions.length} from explorer API`);
                             }
                         }
@@ -3108,9 +3114,12 @@ This is Access Network's own API, completely independent from Ethereum.`;
             if (!timestamp) return 'Unknown';
 
             const now = Date.now();
-            const txTime = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp;
+            let txTime = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp;
+            // Auto-detect seconds vs milliseconds (10 digits = seconds, 13 = ms)
+            if (txTime < 1e12) txTime *= 1000;
             const timeDiff = Math.floor((now - txTime) / 1000);
 
+            if (timeDiff < 0) return '0s';
             if (timeDiff < 60) return timeDiff + 's';
             if (timeDiff < 3600) return Math.floor(timeDiff / 60) + 'm';
             if (timeDiff < 86400) return Math.floor(timeDiff / 3600) + 'h';
