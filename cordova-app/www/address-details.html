@@ -1787,7 +1787,7 @@
                 </a>
             </div>
             <div class="address-hash" style="max-width: 900px;">
-                <span id="addressHash">Loading...</span>
+                <span id="addressHash"></span>
                 <div style="display: flex; gap: 10px;">
                     <button class="copy-btn" onclick="copyAddressToClipboard()">
                         <i class="fas fa-copy"></i> Copy
@@ -1806,27 +1806,45 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-label">Balance</div>
-                    <div class="stat-value" id="addressBalance">Loading...</div>
+                    <div class="stat-value" id="addressBalance"></div>
                     <div class="stat-secondary">ACCESS</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Total Transactions</div>
-                    <div class="stat-value" id="addressTxCount">Loading...</div>
+                    <div class="stat-value" id="addressTxCount"></div>
                     <div class="stat-secondary">All time</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Total Sent</div>
-                    <div class="stat-value" id="addressTotalSent">Loading...</div>
+                    <div class="stat-value" id="addressTotalSent"></div>
                     <div class="stat-secondary">ACCESS</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Total Received</div>
-                    <div class="stat-value" id="addressTotalReceived">Loading...</div>
+                    <div class="stat-value" id="addressTotalReceived"></div>
                     <div class="stat-secondary">ACCESS</div>
                 </div>
             </div>
         </div>
     </section>
+
+
+    <!-- Instant address cache (Etherscan-style: no flash) -->
+    <script>
+    (function(){
+        try {
+            var addr = new URLSearchParams(window.location.search).get('address');
+            if (!addr) return;
+            var c = JSON.parse(localStorage.getItem('addrCache_' + addr.toLowerCase()));
+            if (!c) return;
+            document.getElementById('addressHash').textContent = addr;
+            if (c.balance) document.getElementById('addressBalance').textContent = c.balance;
+            if (c.txCount) document.getElementById('addressTxCount').textContent = c.txCount;
+            if (c.totalSent) document.getElementById('addressTotalSent').textContent = c.totalSent;
+            if (c.totalReceived) document.getElementById('addressTotalReceived').textContent = c.totalReceived;
+        } catch(e){}
+    })();
+    </script>
 
     <!-- Token Holdings Section - BscScan Style -->
     <section class="transactions-section">
@@ -2241,6 +2259,17 @@
                     // Update transaction count
                     const txCount = data.data.transactionCount || 0;
                     document.getElementById('addressTxCount').textContent = txCount.toLocaleString();
+
+                    // Cache for instant reload
+                    try {
+                        var key = 'addrCache_' + address.toLowerCase();
+                        var existing = {};
+                        try { existing = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){}
+                        existing.balance = formatAccessNumber(balance);
+                        existing.txCount = txCount.toLocaleString();
+                        existing.ts = Date.now();
+                        localStorage.setItem(key, JSON.stringify(existing));
+                    } catch(e){}
                 } else {
                     document.getElementById('addressBalance').textContent = '0.00000000';
                     document.getElementById('addressTxCount').textContent = '0';
@@ -2467,6 +2496,17 @@
                 
                 document.getElementById('addressTotalSent').textContent = formatAccessNumber(totalSent);
                 document.getElementById('addressTotalReceived').textContent = formatAccessNumber(totalReceived);
+
+                // Cache sent/received for instant reload
+                try {
+                    var key = 'addrCache_' + address.toLowerCase();
+                    var existing = {};
+                    try { existing = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){}
+                    existing.totalSent = formatAccessNumber(totalSent);
+                    existing.totalReceived = formatAccessNumber(totalReceived);
+                    existing.ts = Date.now();
+                    localStorage.setItem(key, JSON.stringify(existing));
+                } catch(e){}
                 return;
             }
 
@@ -2507,6 +2547,18 @@
             document.getElementById('addressTxCount').textContent = txCount.toLocaleString();
             document.getElementById('addressTotalSent').textContent = formatAccessNumber(totalSent);
             document.getElementById('addressTotalReceived').textContent = formatAccessNumber(totalReceived);
+
+            // Cache fallback stats
+            try {
+                var key = 'addrCache_' + address.toLowerCase();
+                var existing = {};
+                try { existing = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){}
+                existing.txCount = txCount.toLocaleString();
+                existing.totalSent = formatAccessNumber(totalSent);
+                existing.totalReceived = formatAccessNumber(totalReceived);
+                existing.ts = Date.now();
+                localStorage.setItem(key, JSON.stringify(existing));
+            } catch(e){}
         }
 
         // Show no transactions message
