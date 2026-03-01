@@ -2077,15 +2077,15 @@
             // Burnt Fees
             document.getElementById('burntFees').textContent = formatAccessAmount(totalBurntFees);
 
-            // Cache stats for instant reload
+            // Cache stats for instant reload (preserve existing counter values)
             try {
-                localStorage.setItem('blockStatsCache', JSON.stringify({
-                    networkUtilization: `${networkUtilization}%`,
-                    blockSize: formatBytes(avgBlockSize),
-                    blockRewards: formatAccessAmount(totalRewards),
-                    burntFees: formatAccessAmount(totalBurntFees),
-                    ts: Date.now()
-                }));
+                var prev = JSON.parse(localStorage.getItem('blockStatsCache') || '{}');
+                prev.networkUtilization = `${networkUtilization}%`;
+                prev.blockSize = formatBytes(avgBlockSize);
+                prev.blockRewards = formatAccessAmount(totalRewards);
+                prev.burntFees = formatAccessAmount(totalBurntFees);
+                prev.ts = Date.now();
+                localStorage.setItem('blockStatsCache', JSON.stringify(prev));
             } catch(e){}
         }
 
@@ -2102,10 +2102,9 @@
             const endIndex = Math.min(startIndex + entriesPerPage, totalBlocks);
             const blocksToDisplay = allBlocks.slice(startIndex, endIndex);
 
-            // Update total blocks display (only use real total, don't show API limit)
-            if (realTotalBlocks > 0) {
-                document.getElementById('totalBlocksDisplay').textContent = realTotalBlocks.toLocaleString('en-US');
-            }
+            // Update total blocks display (use real total if available)
+            const displayTotal = realTotalBlocks > 0 ? realTotalBlocks : totalBlocks;
+            document.getElementById('totalBlocksDisplay').textContent = displayTotal.toLocaleString('en-US');
 
             // Update block range (showing first and last block numbers)
             if (blocksToDisplay.length > 0) {
