@@ -2113,10 +2113,7 @@
                 document.getElementById('addressHash').textContent = address;
                 loadAddressData(address);
             } else {
-                // لا نعرض خطأ إذا كنا في OAuth redirect (سيتم استعادة العنوان)
-                const isOAuthRedirect = window.location.hash && window.location.hash.length > 1;
-                    showError('No address specified');
-                }
+                showError('No address specified');
             }
         }
 
