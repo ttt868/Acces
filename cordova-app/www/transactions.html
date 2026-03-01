@@ -2698,19 +2698,14 @@ This is Access Network's own API, completely independent from Ethereum.`;
 
                         if (data.success && data.data && Array.isArray(data.data)) {
                             realTransactions = data.data
-                                .filter(tx => {
-                                    const from = tx.from_address || tx.from || tx.sender_address;
-                                    const to = tx.to_address || tx.to || tx.recipient_address;
-                                    return from && to && from !== 'N/A' && to !== 'N/A';
-                                })
                                 .map(tx => ({
                                     hash: tx.tx_hash || tx.hash || tx.transactionHash,
                                     method: 'Transfer',
-                                    block: tx.block_index || tx.blockNumber || tx.block, // Use tx.block for the new link
-                                    blockHash: tx.block_hash, // Added for saveBlockData
+                                    block: tx.block_index || tx.blockNumber || tx.block,
+                                    blockHash: tx.block_hash,
                                     age: formatAge(tx.timestamp),
-                                    from: tx.from_address || tx.from || tx.sender_address,
-                                    to: tx.to_address || tx.to || tx.recipient_address,
+                                    from: tx.from_address || tx.from || tx.sender_address || 'System',
+                                    to: tx.to_address || tx.to || tx.recipient_address || 'System',
                                     amount: formatAccessAmount(tx.amount || tx.value || 0),
                                     fee: formatAccessAmount(tx.gas_fee || tx.fee || 0.00002),
                                     timestamp: tx.timestamp,
