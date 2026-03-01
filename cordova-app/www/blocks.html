@@ -2019,6 +2019,17 @@
                     allBlocks = result.data;
                     totalBlocks = allBlocks.length;
 
+                    // Always fetch real total blocks count (not limited by API limit)
+                    try {
+                        const statsResp = await fetch('https://accesschain.org/api/explorer/stats');
+                        if (statsResp.ok) {
+                            const statsData = await statsResp.json();
+                            if (statsData.success && statsData.data && statsData.data.latestBlock) {
+                                realTotalBlocks = statsData.data.latestBlock;
+                            }
+                        }
+                    } catch(e) { console.warn('Stats fetch failed, using array length'); }
+
                     // Update statistics
                     updateBlockStatistics(allBlocks);
 
