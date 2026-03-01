@@ -2093,7 +2093,6 @@
                 if (c.totalAccounts) document.getElementById('totalAccounts').textContent = c.totalAccounts;
                 if (c.totalSupply) document.getElementById('totalSupply').textContent = c.totalSupply;
                 if (c.top10Holdings) document.getElementById('top10Holdings').textContent = c.top10Holdings;
-                if (c.totalAccountsCount) document.getElementById('totalAccountsCount').textContent = c.totalAccountsCount;
             } catch(e){}
         })();
         </script>
@@ -2106,6 +2105,15 @@
                     <span style="color: var(--text-primary); font-size: 16px; font-weight: 400;">
                         More than <span id="totalAccountsCount">—</span> accounts found
                     </span>
+                    <!-- Cache for counter (after element exists in DOM) -->
+                    <script>
+                    (function(){
+                        try {
+                            var c = JSON.parse(localStorage.getItem('accountStatsCache'));
+                            if (c && c.totalAccountsCount) document.getElementById('totalAccountsCount').textContent = c.totalAccountsCount;
+                        } catch(e){}
+                    })();
+                    </script>
                     <br>
                     <span style="color: var(--text-secondary); font-size: 13px;">
                         (Showing transactions between #<span id="startTxNumber"></span> to #<span id="endTxNumber"></span>)
