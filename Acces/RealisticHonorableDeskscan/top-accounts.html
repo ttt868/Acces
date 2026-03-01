@@ -2093,6 +2093,7 @@
                 if (c.totalAccounts) document.getElementById('totalAccounts').textContent = c.totalAccounts;
                 if (c.totalSupply) document.getElementById('totalSupply').textContent = c.totalSupply;
                 if (c.top10Holdings) document.getElementById('top10Holdings').textContent = c.top10Holdings;
+                if (c.totalAccountsCount) document.getElementById('totalAccountsCount').textContent = c.totalAccountsCount;
             } catch(e){}
         })();
         </script>
@@ -2103,11 +2104,11 @@
             <div class="section-header" style="display: block; padding: 16px 20px;">
                 <div style="margin-bottom: 12px;">
                     <span style="color: var(--text-primary); font-size: 16px; font-weight: 400;">
-                        More than <span id="totalAccountsCount">0</span> accounts found
+                        More than <span id="totalAccountsCount"></span> accounts found
                     </span>
                     <br>
                     <span style="color: var(--text-secondary); font-size: 13px;">
-                        (Showing transactions between #<span id="startTxNumber">0</span> to #<span id="endTxNumber">0</span>)
+                        (Showing transactions between #<span id="startTxNumber"></span> to #<span id="endTxNumber"></span>)
                     </span>
                 </div>
                 <button class="download-btn" onclick="downloadPageData()">
