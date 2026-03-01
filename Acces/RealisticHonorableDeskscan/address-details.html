@@ -2301,7 +2301,7 @@
                 }
             } catch (error) {
                 console.error('Error loading address data:', error);
-                document.getElementById('addressBalance').textContent = 'Error';
+                // Don't show 'Error' text - keep cached values or empty
             }
         }
 
@@ -2595,10 +2595,7 @@
                 </div>
             `;
 
-            // Update stats
-            document.getElementById('addressTxCount').textContent = '0';
-            document.getElementById('addressTotalSent').textContent = '0.00000000';
-            document.getElementById('addressTotalReceived').textContent = '0.00000000';
+            // Don't overwrite stat fields - keep cached values
         }
 
         // Show transaction error
@@ -2614,13 +2611,10 @@
             `;
         }
 
-        // Show error message
+        // Show error message (only in transactions area, never in stat fields)
         function showError(message) {
-            document.getElementById('addressHash').textContent = 'Error';
-            document.getElementById('addressBalance').textContent = 'Error';
-            document.getElementById('addressTxCount').textContent = 'Error';
-            document.getElementById('addressTotalSent').textContent = 'Error';
-            document.getElementById('addressTotalReceived').textContent = 'Error';
+            console.error('Address error:', message);
+            // Don't write 'Error' to stat fields - keep cached values or empty
 
             document.getElementById('addressTransactions').innerHTML = `
                 <div class="no-transactions">

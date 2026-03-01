@@ -2272,11 +2272,10 @@
                     } catch(e){}
                 } else {
                     document.getElementById('addressBalance').textContent = '0.00000000';
-                    document.getElementById('addressTxCount').textContent = '0';
                 }
             } catch (error) {
                 console.error('Error loading address data:', error);
-                document.getElementById('addressBalance').textContent = 'Error';
+                // Don't show Error - keep cached values
             }
         }
 
@@ -2571,9 +2570,6 @@
             `;
 
             // Update stats
-            document.getElementById('addressTxCount').textContent = '0';
-            document.getElementById('addressTotalSent').textContent = '0.00000000';
-            document.getElementById('addressTotalReceived').textContent = '0.00000000';
         }
 
         // Show transaction error
@@ -2591,11 +2587,7 @@
 
         // Show error message
         function showError(message) {
-            document.getElementById('addressHash').textContent = 'Error';
-            document.getElementById('addressBalance').textContent = 'Error';
-            document.getElementById('addressTxCount').textContent = 'Error';
-            document.getElementById('addressTotalSent').textContent = 'Error';
-            document.getElementById('addressTotalReceived').textContent = 'Error';
+            console.error('Address error');
 
             document.getElementById('addressTransactions').innerHTML = `
                 <div class="no-transactions">
