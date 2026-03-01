@@ -2034,22 +2034,15 @@
             const savedTheme = localStorage.getItem('theme') || 'light';
             updateThemeUI(savedTheme);
 
-            // إذا كنا في OAuth redirect، استعادة URL params أولاً قبل أي شيء
-            const hash = window.location.hash;
-            if (hash && hash.length > 1 && sessionStorage.getItem('googleAuthInProgress')) {
-                const savedParams = sessionStorage.getItem('urlParamsBeforeAuth');
-                if (savedParams) {
-                    const cleanUrl = window.location.pathname + savedParams;
-                    window.history.replaceState(null, '', cleanUrl);
-                    console.log('🔄 URL params restored before init:', savedParams);
-                }
+            // Handle OAuth callback FIRST (process hash before anything else)
+            // handleOAuthCallback is async - it will call initializeAddressDetails after login
+            const isOAuthReturn = window.location.hash && window.location.hash.length > 1 && sessionStorage.getItem('googleAuthInProgress');
+            if (isOAuthReturn) {
+                handleOAuthCallback();
+            } else {
+                // Normal page load - initialize address details directly
+                initializeAddressDetails();
             }
-
-            // Initialize address details
-            initializeAddressDetails();
-
-            // Handle OAuth callback on page load
-            handleOAuthCallback();
         });
 
         // Initialize Google Identity Services with error handling
@@ -2145,11 +2138,7 @@
                 document.getElementById('addressHash').textContent = address;
                 loadAddressData(address);
             } else {
-                // لا نعرض خطأ إذا كنا في OAuth redirect (سيتم استعادة العنوان)
-                const isOAuthRedirect = window.location.hash && window.location.hash.length > 1;
-                if (!isOAuthRedirect) {
-                    showError('No address specified');
-                }
+                showError('No address specified');
             }
         }
 
@@ -2997,11 +2986,9 @@
                 hideAuthModal();
                 updateExplorerAuthUI();
 
-                // إعادة تحميل بيانات العنوان إذا لم تكن محملة
-                if (!currentAddress) {
-                    initializeAddressDetails();
-                }
-                console.log('✅ Auth UI updated without page reload');
+                // الآن تحميل بيانات العنوان (بعد استعادة URL)
+                initializeAddressDetails();
+                console.log('✅ Auth complete + address data loading');
 
             } catch (error) {
                 console.error('❌ Error processing OAuth callback:', error);
