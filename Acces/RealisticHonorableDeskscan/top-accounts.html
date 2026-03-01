@@ -2347,7 +2347,7 @@
 
             // Google Identity Services is loaded via script tag - no manual initialization needed
             loadTopAccounts(); // Changed from loadTransactions to loadTopAccounts
-            loadAccountStats(); // Load stats specific to accounts
+            // loadAccountStats removed here - called inside loadTopAccounts after data is ready
         });
 
         // Dropdown toggle function
@@ -2857,12 +2857,8 @@
                         }));
                     } catch(e){}
                 } else {
-                     // Set default values if no accounts or totalSupply is 0
-                    updateStatElement('totalAccounts', '0');
-                    updateStatElement('totalSupply', '0.00 ACCESS');
-                    updateStatElement('top10Holdings', '0.00%');
-                    updateStatElement('totalAccountsCount', '0');
-                    updateStatElement('totalSupplyText', '0.00000000');
+                     // Don't overwrite cached values with 0 - cache read already shows last known values
+                     return;
                 }
 
             } catch (error) {
