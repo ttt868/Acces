@@ -2066,11 +2066,11 @@
         <div class="stats-section">
             <div class="stat-card">
                 <div class="stat-label">Total Accounts</div>
-                <div class="stat-value" id="totalAccounts"></div>
+                <div class="stat-value" id="totalAccounts">—</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Circulating Supply<br><span style="font-size: 10px; opacity: 0.7;">(Total in Accounts)</span></div>
-                <div class="stat-value" id="totalSupply"></div>
+                <div class="stat-value" id="totalSupply">—</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Max Supply<br><span style="font-size: 10px; opacity: 0.7;">(Network Total)</span></div>
@@ -2078,7 +2078,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-label">Top 10 Holdings<br><span style="font-size: 10px; opacity: 0.7;">(% of Circulating)</span></div>
-                <div class="stat-value" id="top10Holdings"></div>
+                <div class="stat-value" id="top10Holdings">—</div>
             </div>
         </div>
         <!-- Instant stats from cache -->
@@ -2100,8 +2100,17 @@
             <div class="section-header" style="display: block; padding: 16px 20px;">
                 <div style="margin-bottom: 12px;">
                     <span style="color: var(--text-primary); font-size: 16px; font-weight: 400;">
-                        More than <span id="totalAccountsCount">0</span> accounts found
+                        More than <span id="totalAccountsCount">—</span> accounts found
                     </span>
+                    <!-- Cache for counter (after element exists in DOM) -->
+                    <script>
+                    (function(){
+                        try {
+                            var c = JSON.parse(localStorage.getItem('accountStatsCache'));
+                            if (c && c.totalAccountsCount) document.getElementById('totalAccountsCount').textContent = c.totalAccountsCount;
+                        } catch(e){}
+                    })();
+                    </script>
                     <br>
                     <span style="color: var(--text-secondary); font-size: 13px;">
                         (Showing transactions between #<span id="startTxNumber">0</span> to #<span id="endTxNumber">0</span>)
@@ -2335,7 +2344,7 @@
 
             // Google Identity Services is loaded via script tag - no manual initialization needed
             loadTopAccounts(); // Changed from loadTransactions to loadTopAccounts
-            loadAccountStats(); // Load stats specific to accounts
+            // loadAccountStats removed here - called inside loadTopAccounts after data is ready
         });
 
         // Dropdown toggle function
@@ -2872,12 +2881,8 @@
                         }));
                     } catch(e){}
                 } else {
-                     // Set default values if no accounts or totalSupply is 0
-                    updateStatElement('totalAccounts', '0');
-                    updateStatElement('totalSupply', '0.00 ACCESS');
-                    updateStatElement('top10Holdings', '0.00%');
-                    updateStatElement('totalAccountsCount', '0');
-                    updateStatElement('totalSupplyText', '0.00000000');
+                     // Don't overwrite cached values with 0 - cache read already shows last known values
+                     return;
                 }
 
             } catch (error) {

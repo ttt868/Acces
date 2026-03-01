@@ -1674,19 +1674,19 @@
         <div class="stats-section">
             <div class="stat-card">
                 <div class="stat-label">Network Utilization (24H)</div>
-                <div class="stat-value" id="networkUtilization"></div>
+                <div class="stat-value" id="networkUtilization">—</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Block Size (24H)</div>
-                <div class="stat-value" id="blockSize"></div>
+                <div class="stat-value" id="blockSize">—</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Block Rewards (24H)</div>
-                <div class="stat-value" id="blockRewards"></div>
+                <div class="stat-value" id="blockRewards">—</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Burnt Fees 🔥</div>
-                <div class="stat-value" id="burntFees"></div>
+                <div class="stat-value" id="burntFees">—</div>
             </div>
         </div>
         <!-- Instant stats from cache -->
@@ -1707,10 +1707,22 @@
         <div class="blocks-section">
             <div class="section-header">
                 <div class="blocks-info">
-                    <div class="blocks-total">Total of <span id="totalBlocksDisplay">0</span> blocks</div>
-                    <div class="blocks-range">(Showing blocks between #<span id="startBlockNum">0</span> to #<span id="endBlockNum">0</span>)</div>
+                    <div class="blocks-total">Total of <span id="totalBlocksDisplay">—</span> blocks</div>
+                    <div class="blocks-range">(Showing blocks between #<span id="startBlockNum">—</span> to #<span id="endBlockNum">—</span>)</div>
                 </div>
             </div>
+            <!-- Cache for block counters (after elements exist in DOM) -->
+            <script>
+            (function(){
+                try {
+                    var c = JSON.parse(localStorage.getItem('blockStatsCache'));
+                    if (!c) return;
+                    if (c.totalBlocks) document.getElementById('totalBlocksDisplay').textContent = c.totalBlocks;
+                    if (c.startBlock) document.getElementById('startBlockNum').textContent = c.startBlock;
+                    if (c.endBlock) document.getElementById('endBlockNum').textContent = c.endBlock;
+                } catch(e){}
+            })();
+            </script>
 
             <div class="table-controls">
                 <button class="download-btn" onclick="downloadPageData()">
@@ -1977,6 +1989,13 @@
 
                         // تحديث العرض
                         document.getElementById('totalBlocksDisplay').textContent = realTotalBlocks.toLocaleString();
+
+                        // Save to cache
+                        try {
+                            var prev = JSON.parse(localStorage.getItem('blockStatsCache') || '{}');
+                            prev.totalBlocks = realTotalBlocks.toLocaleString();
+                            localStorage.setItem('blockStatsCache', JSON.stringify(prev));
+                        } catch(e){}
                     }
                 }
             } catch (error) {
@@ -2093,6 +2112,14 @@
                 const lastBlockNum = blocksToDisplay[blocksToDisplay.length - 1].index || blocksToDisplay[blocksToDisplay.length - 1].number;
                 document.getElementById('startBlockNum').textContent = Math.min(firstBlockNum, lastBlockNum).toLocaleString();
                 document.getElementById('endBlockNum').textContent = Math.max(firstBlockNum, lastBlockNum).toLocaleString();
+
+                // Save counter values to cache
+                try {
+                    var prev = JSON.parse(localStorage.getItem('blockStatsCache') || '{}');
+                    prev.startBlock = Math.min(firstBlockNum, lastBlockNum).toLocaleString();
+                    prev.endBlock = Math.max(firstBlockNum, lastBlockNum).toLocaleString();
+                    localStorage.setItem('blockStatsCache', JSON.stringify(prev));
+                } catch(e){}
             }
 
             const tableBody = document.getElementById('blocksTableBody');
