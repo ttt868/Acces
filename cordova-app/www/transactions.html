@@ -2086,13 +2086,9 @@
             try {
                 const state = {
                     currentPage,
-                    entriesPerPage,
-                    filteredTransactions: filteredTransactions.map(tx => tx.hash), // Save only hashes for efficiency
-                    allTransactions: allTransactions.map(tx => tx.hash), // Save only hashes for efficiency
-                    totalTransactions
+                    entriesPerPage
                 };
                 localStorage.setItem('transactionsState', JSON.stringify(state));
-                console.log('✅ Transactions state saved:', state);
             } catch (error) {
                 console.warn('⚠️ Could not save transactions state:', error);
             }
@@ -2104,21 +2100,17 @@
                 try {
                     const state = JSON.parse(savedState);
                     currentPage = state.currentPage || 1;
-                    entriesPerPage = state.entriesPerPage || 50; // Load saved value or default
+                    entriesPerPage = state.entriesPerPage || 50;
 
-                    // Filter transactions based on saved hashes
-                    allTransactions = allTransactions.filter(tx => state.allTransactions.includes(tx.hash));
-                    filteredTransactions = filteredTransactions.filter(tx => state.filteredTransactions.includes(tx.hash));
-                    totalTransactions = state.totalTransactions || 0;
-
-                    console.log('✅ Transactions state loaded:', state);
+                    // Only restore pagination settings, don't filter transactions
+                    console.log('✅ Transactions state loaded: page=' + currentPage + ', perPage=' + entriesPerPage);
 
                     // Update UI elements
                     document.getElementById('entriesPerPage').value = entriesPerPage;
                     return true;
                 } catch (error) {
                     console.warn('⚠️ Could not load transactions state:', error);
-                    localStorage.removeItem('transactionsState'); // Clear corrupted state
+                    localStorage.removeItem('transactionsState');
                 }
             }
             return false;
