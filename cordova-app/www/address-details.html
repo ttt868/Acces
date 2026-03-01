@@ -2875,7 +2875,8 @@
                 saveExplorerSession(credential, userData);
                 console.log('✅ Google sign in successful:', userData.name);
                 hideAuthModal();
-                window.location.reload();
+                updateExplorerAuthUI();
+                console.log('✅ Auth UI updated without page reload');
             } catch (error) {
                 console.error('❌ Error processing Google Sign-In:', error);
                 showAuthMessage('Sign in failed. Please try again.');
@@ -3048,18 +3049,21 @@
 
                 console.log('✅ Google sign in successful:', userData.name);
 
-                // استعادة معاملات URL المحفوظة
+                // تحديث واجهة المستخدم بدون إعادة تحميل الصفحة (لا وميض)
                 const savedParams = sessionStorage.getItem('urlParamsBeforeAuth');
                 if (savedParams) {
                     sessionStorage.removeItem('urlParamsBeforeAuth');
                     console.log('🔄 Restoring URL params after auth:', savedParams);
-                    // إعادة التوجيه مع المعاملات المحفوظة
-                    window.location.href = window.location.pathname + savedParams;
-                } else {
-                    // Hide auth modal and reload
-                    hideAuthModal();
-                    window.location.reload();
                 }
+
+                // مسح الـ hash من URL بدون إعادة تحميل
+                const cleanUrl = window.location.pathname + (savedParams || window.location.search);
+                window.history.replaceState(null, '', cleanUrl);
+
+                // تحديث واجهة تسجيل الدخول فوراً
+                hideAuthModal();
+                updateExplorerAuthUI();
+                console.log('✅ Auth UI updated without page reload');
 
             } catch (error) {
                 console.error('❌ Error processing OAuth callback:', error);
