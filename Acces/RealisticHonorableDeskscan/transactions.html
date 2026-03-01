@@ -1923,9 +1923,6 @@
                 if (c.pendingTxCount !== undefined) document.getElementById('pendingTxCount').textContent = c.pendingTxCount;
                 if (c.dailyFees) document.getElementById('dailyFees').textContent = c.dailyFees;
                 if (c.avgFee) document.getElementById('avgFee').textContent = c.avgFee;
-                if (c.totalTxCount) document.getElementById('totalTxCount').textContent = c.totalTxCount;
-                if (c.startTxNumber !== undefined) document.getElementById('startTxNumber').textContent = c.startTxNumber;
-                if (c.endTxNumber) document.getElementById('endTxNumber').textContent = c.endTxNumber;
             } catch(e){}
         })();
         </script>
@@ -1934,7 +1931,7 @@
         <div class="transactions-section">
             <!-- Transaction Count and Download -->
             <div class="section-header" style="display: block; padding: 16px 20px;">
-                <div style="margin-bottom: 12px;">
+                <div id="txCountInfo" style="margin-bottom: 12px; display: none;">
                     <span style="color: var(--text-primary); font-size: 16px; font-weight: 400;">
                         More than <span id="totalTxCount"></span> transactions found
                     </span>
@@ -2768,15 +2765,10 @@ This is Access Network's own API, completely independent from Ethereum.`;
                             });
 
                             // Update statistics with REALISTIC data
-                            updateStatElement('totalTxCount', allTransactions.length.toLocaleString());
                             updateStatElement('dailyTxCount', transactionCount);
                             updateStatElement('pendingTxCount', '0');
                             updateStatElement('dailyFees', formatAccessAmount(totalRealisticGasFees));
                             updateStatElement('avgFee', formatAccessAmount(avgRealisticFee));
-
-                            // Update transaction range display
-                            updateStatElement('startTxNumber', '0');
-                            updateStatElement('endTxNumber', allTransactions.length.toString());
 
                             // Cache stats for instant reload
                             try {
@@ -2785,9 +2777,6 @@ This is Access Network's own API, completely independent from Ethereum.`;
                                     pendingTxCount: '0',
                                     dailyFees: formatAccessAmount(totalRealisticGasFees),
                                     avgFee: formatAccessAmount(avgRealisticFee),
-                                    totalTxCount: allTransactions.length.toLocaleString(),
-                                    startTxNumber: '0',
-                                    endTxNumber: allTransactions.length.toString(),
                                     ts: Date.now()
                                 }));
                             } catch(e){}
@@ -2818,15 +2807,10 @@ This is Access Network's own API, completely independent from Ethereum.`;
                                 avgGasFee: stats.avgGasFee + ' access'
                             });
 
-                            updateStatElement('totalTxCount', (stats.totalTransactions || 0).toLocaleString());
                             updateStatElement('dailyTxCount', stats.dailyTransactions || 0);
                             updateStatElement('pendingTxCount', stats.pendingTransactions || '0');
                             updateStatElement('dailyFees', formatAccessAmount(stats.totalGasFees || 0));
                             updateStatElement('avgFee', formatAccessAmount(stats.avgGasFee || 0));
-
-                            // Update transaction range display
-                            updateStatElement('startTxNumber', '0');
-                            updateStatElement('endTxNumber', (stats.totalTransactions || 0).toString());
 
                             // Cache stats for instant reload
                             try {
@@ -2835,9 +2819,6 @@ This is Access Network's own API, completely independent from Ethereum.`;
                                     pendingTxCount: (stats.pendingTransactions || '0').toString(),
                                     dailyFees: formatAccessAmount(stats.totalGasFees || 0),
                                     avgFee: formatAccessAmount(stats.avgGasFee || 0),
-                                    totalTxCount: (stats.totalTransactions || 0).toLocaleString(),
-                                    startTxNumber: '0',
-                                    endTxNumber: (stats.totalTransactions || 0).toString(),
                                     ts: Date.now()
                                 }));
                             } catch(e){}
@@ -2875,15 +2856,10 @@ This is Access Network's own API, completely independent from Ethereum.`;
                                 totalEstimatedFees: formatAccessAmount(estimatedGasFees)
                             });
 
-                            updateStatElement('totalTxCount', totalTransactions.toLocaleString());
                             updateStatElement('dailyTxCount', estimatedDailyTx);
                             updateStatElement('pendingTxCount', nodeData.stats?.pendingTransactions || '0');
                             updateStatElement('dailyFees', formatAccessAmount(estimatedGasFees));
                             updateStatElement('avgFee', formatAccessAmount(gasPrice));
-
-                            // Update transaction range display
-                            updateStatElement('startTxNumber', '0');
-                            updateStatElement('endTxNumber', totalTransactions.toString());
 
                             // Cache stats for instant reload
                             try {
@@ -2892,9 +2868,6 @@ This is Access Network's own API, completely independent from Ethereum.`;
                                     pendingTxCount: (nodeData.stats?.pendingTransactions || '0').toString(),
                                     dailyFees: formatAccessAmount(estimatedGasFees),
                                     avgFee: formatAccessAmount(gasPrice),
-                                    totalTxCount: totalTransactions.toLocaleString(),
-                                    startTxNumber: '0',
-                                    endTxNumber: totalTransactions.toString(),
                                     ts: Date.now()
                                 }));
                             } catch(e){}
@@ -2909,24 +2882,13 @@ This is Access Network's own API, completely independent from Ethereum.`;
 
                 // Fallback: Show real zero values instead of fake data
                 console.log('⚠️ No real data available - showing actual zero values');
-                updateStatElement('totalTxCount', '0');
                 updateStatElement('dailyTxCount', '0');
                 updateStatElement('pendingTxCount', '0');
                 updateStatElement('dailyFees', '0 ACCESS');
                 updateStatElement('avgFee', '0 ACCESS');
 
-                // Update transaction range display
-                updateStatElement('startTxNumber', '0');
-                updateStatElement('endTxNumber', '0');
-
             } catch (error) {
                 console.error('Error loading REAL network stats:', error);
-                // Show real error state instead of fake values
-                updateStatElement('totalTxCount', 'Error');
-                updateStatElement('dailyTxCount', 'Error');
-                updateStatElement('pendingTxCount', 'Error');
-                updateStatElement('dailyFees', 'Error');
-                updateStatElement('avgFee', 'Error');
             }
         }
 
@@ -3322,10 +3284,10 @@ This is Access Network's own API, completely independent from Ethereum.`;
                 updateStatElement('totalTxCount', filteredTransactions.length.toLocaleString());
                 updateStatElement('startTxNumber', startTxNumber.toString());
                 updateStatElement('endTxNumber', endTxNumber.toString());
-            } else {
-                updateStatElement('totalTxCount', '0');
-                updateStatElement('startTxNumber', '0');
-                updateStatElement('endTxNumber', '0');
+
+                // Show counter info once real data is ready
+                var info = document.getElementById('txCountInfo');
+                if (info) info.style.display = '';
             }
         }
 
