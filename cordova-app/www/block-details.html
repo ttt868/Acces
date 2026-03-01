@@ -1892,19 +1892,19 @@
             const gasPercent = ((gasUsed / gasLimit) * 100).toFixed(2);
 
             // Set all values
-            document.getElementById('blockNumber').textContent = number.toLocaleString();
+            document.getElementById('blockNumber').textContent = number.toLocaleString('en-US');
             document.getElementById('blockValidator').textContent = validator;
             document.getElementById('blockTime').textContent = getRealTimeAgo(timestamp);
-            document.getElementById('blockHeight').textContent = number.toLocaleString();
+            document.getElementById('blockHeight').textContent = number.toLocaleString('en-US');
             document.getElementById('blockTimestamp').textContent = dateTime;
-            document.getElementById('transactionCount').textContent = txCount.toLocaleString();
+            document.getElementById('transactionCount').textContent = txCount.toLocaleString('en-US');
             document.getElementById('blockMiner').textContent = validator;
             document.getElementById('blockReward').textContent = formatAccessAmount(block.reward || window.currentBlockReward || 0.25);
-            document.getElementById('blockDifficulty').textContent = (block.difficulty || 1).toLocaleString();
-            document.getElementById('totalDifficulty').textContent = (block.totalDifficulty || (number + 1)).toLocaleString();
-            document.getElementById('blockSize').textContent = (block.size || 1024).toLocaleString() + ' bytes';
-            document.getElementById('gasUsed').textContent = gasUsed.toLocaleString() + ' (' + gasPercent + '%)';
-            document.getElementById('gasLimit').textContent = gasLimit.toLocaleString();
+            document.getElementById('blockDifficulty').textContent = (block.difficulty || 1).toLocaleString('en-US');
+            document.getElementById('totalDifficulty').textContent = (block.totalDifficulty || (number + 1)).toLocaleString('en-US');
+            document.getElementById('blockSize').textContent = (block.size || 1024).toLocaleString('en-US') + ' bytes';
+            document.getElementById('gasUsed').textContent = gasUsed.toLocaleString('en-US') + ' (' + gasPercent + '%)';
+            document.getElementById('gasLimit').textContent = gasLimit.toLocaleString('en-US');
             document.getElementById('burntFees').textContent = '0.00000000 ACCESS';
             document.getElementById('extraData').textContent = block.extraData || '0x';
             document.getElementById('blockHash').textContent = hash;
@@ -2027,7 +2027,7 @@
                             </div>
                             <div class="tx-detail">
                                 <span style="color: var(--text-secondary); font-weight: 500;">Gas Used:</span>
-                                <span style="margin-left: 8px;">${gasUsed.toLocaleString()}</span>
+                                <span style="margin-left: 8px;">${gasUsed.toLocaleString('en-US')}</span>
                             </div>
                             <div class="tx-detail">
                                 <span style="color: var(--text-secondary); font-weight: 500;">Time:</span>

@@ -2262,7 +2262,7 @@
 
                     // Update transaction count
                     const txCount = data.data.transactionCount || 0;
-                    document.getElementById('addressTxCount').textContent = txCount.toLocaleString();
+                    document.getElementById('addressTxCount').textContent = txCount.toLocaleString('en-US');
 
                     // Cache for instant reload
                     try {
@@ -2270,7 +2270,7 @@
                         var existing = {};
                         try { existing = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){}
                         existing.balance = formatAccessNumber(balance);
-                        existing.txCount = txCount.toLocaleString();
+                        existing.txCount = txCount.toLocaleString('en-US');
                         existing.ts = Date.now();
                         localStorage.setItem(key, JSON.stringify(existing));
                     } catch(e){}
@@ -2488,7 +2488,7 @@
         function updateTransactionStats(transactions, address, apiData = null) {
             // إذا كان لدينا بيانات من API، استخدمها مباشرة
             if (apiData && apiData.pagination) {
-                document.getElementById('addressTxCount').textContent = apiData.pagination.totalTransactions.toLocaleString();
+                document.getElementById('addressTxCount').textContent = apiData.pagination.totalTransactions.toLocaleString('en-US');
                 
                 // تحويل القيم من Wei إلى ACCESS
                 let totalSent = apiData.totalSent || 0;
@@ -2547,7 +2547,7 @@
                 }
             });
 
-            document.getElementById('addressTxCount').textContent = txCount.toLocaleString();
+            document.getElementById('addressTxCount').textContent = txCount.toLocaleString('en-US');
             document.getElementById('addressTotalSent').textContent = formatAccessNumber(totalSent);
             document.getElementById('addressTotalReceived').textContent = formatAccessNumber(totalReceived);
 
@@ -2556,7 +2556,7 @@
                 var key = 'addrCache_' + address.toLowerCase();
                 var existing = {};
                 try { existing = JSON.parse(localStorage.getItem(key)) || {}; } catch(e){}
-                existing.txCount = txCount.toLocaleString();
+                existing.txCount = txCount.toLocaleString('en-US');
                 existing.totalSent = formatAccessNumber(totalSent);
                 existing.totalReceived = formatAccessNumber(totalReceived);
                 existing.ts = Date.now();

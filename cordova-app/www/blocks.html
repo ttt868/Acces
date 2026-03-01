@@ -1962,9 +1962,9 @@
             // ✅ استعادة حالة الصفحة المحفوظة
             loadBlocksState();
 
-            // Load blocks and real block count
+            // Fetch real block count FIRST, then load blocks
+            await fetchRealBlockCount();
             loadBlocks();
-            fetchRealBlockCount();
 
             // تحديث تلقائي كل 30 ثانية
             setInterval(fetchRealBlockCount, 30000);
@@ -1988,12 +1988,12 @@
                         console.log('✅ Real total blocks from network:', realTotalBlocks);
 
                         // تحديث العرض
-                        document.getElementById('totalBlocksDisplay').textContent = realTotalBlocks.toLocaleString();
+                        document.getElementById('totalBlocksDisplay').textContent = realTotalBlocks.toLocaleString('en-US');
 
                         // Save to cache
                         try {
                             var prev = JSON.parse(localStorage.getItem('blockStatsCache') || '{}');
-                            prev.totalBlocks = realTotalBlocks.toLocaleString();
+                            prev.totalBlocks = realTotalBlocks.toLocaleString('en-US');
                             localStorage.setItem('blockStatsCache', JSON.stringify(prev));
                         } catch(e){}
                     }
@@ -2094,7 +2094,7 @@
             const k = 1024;
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return Math.round(bytes / Math.pow(k, i)).toLocaleString() + ' ' + sizes[i];
+            return Math.round(bytes / Math.pow(k, i)).toLocaleString('en-US') + ' ' + sizes[i];
         }
 
         function displayBlocks() {
@@ -2102,22 +2102,23 @@
             const endIndex = Math.min(startIndex + entriesPerPage, totalBlocks);
             const blocksToDisplay = allBlocks.slice(startIndex, endIndex);
 
-            // Update total blocks display (use real total if available)
-            const displayTotal = realTotalBlocks > 0 ? realTotalBlocks : totalBlocks;
-            document.getElementById('totalBlocksDisplay').textContent = displayTotal.toLocaleString();
+            // Update total blocks display (only use real total, don't show API limit)
+            if (realTotalBlocks > 0) {
+                document.getElementById('totalBlocksDisplay').textContent = realTotalBlocks.toLocaleString('en-US');
+            }
 
             // Update block range (showing first and last block numbers)
             if (blocksToDisplay.length > 0) {
                 const firstBlockNum = blocksToDisplay[0].index || blocksToDisplay[0].number;
                 const lastBlockNum = blocksToDisplay[blocksToDisplay.length - 1].index || blocksToDisplay[blocksToDisplay.length - 1].number;
-                document.getElementById('startBlockNum').textContent = Math.min(firstBlockNum, lastBlockNum).toLocaleString();
-                document.getElementById('endBlockNum').textContent = Math.max(firstBlockNum, lastBlockNum).toLocaleString();
+                document.getElementById('startBlockNum').textContent = Math.min(firstBlockNum, lastBlockNum).toLocaleString('en-US');
+                document.getElementById('endBlockNum').textContent = Math.max(firstBlockNum, lastBlockNum).toLocaleString('en-US');
 
                 // Save counter values to cache
                 try {
                     var prev = JSON.parse(localStorage.getItem('blockStatsCache') || '{}');
-                    prev.startBlock = Math.min(firstBlockNum, lastBlockNum).toLocaleString();
-                    prev.endBlock = Math.max(firstBlockNum, lastBlockNum).toLocaleString();
+                    prev.startBlock = Math.min(firstBlockNum, lastBlockNum).toLocaleString('en-US');
+                    prev.endBlock = Math.max(firstBlockNum, lastBlockNum).toLocaleString('en-US');
                     localStorage.setItem('blockStatsCache', JSON.stringify(prev));
                 } catch(e){}
             }
@@ -2153,9 +2154,9 @@
                         <span class="validator-badge">${block.validator || block.processor || 'AccessValidator'}</span>
                     </td>
                     <td class="gas-value">
-                        ${gasUsed.toLocaleString()} (${gasUsedPercent}%)
+                        ${gasUsed.toLocaleString('en-US')} (${gasUsedPercent}%)
                     </td>
-                    <td class="gas-value">${gasLimit.toLocaleString()}</td>
+                    <td class="gas-value">${gasLimit.toLocaleString('en-US')}</td>
                     <td class="reward-value">${formatAccessAmount(block.reward || 0)}</td>
                     <td class="gas-value">0.00000000 ACCESS</td>
                 `;

@@ -2862,21 +2862,21 @@
                     const top100Percentage = (top100Holdings / totalSupply * 100).toFixed(2);
 
                     // Update statistics
-                    updateStatElement('totalAccounts', totalAccounts.toLocaleString());
+                    updateStatElement('totalAccounts', totalAccounts.toLocaleString('en-US'));
                     updateStatElement('totalSupply', formatAccessAmount(totalSupply));
                     updateStatElement('top10Holdings', top10Percentage + '%');
                     // Assuming there's a placeholder for top 100 holdings if needed
                     // updateStatElement('top100Holdings', top100Percentage + '%');
-                    updateStatElement('totalAccountsCount', totalAccounts.toLocaleString());
+                    updateStatElement('totalAccountsCount', totalAccounts.toLocaleString('en-US'));
                     updateStatElement('totalSupplyText', formatAccessNumber(totalSupply)); // Assuming this element exists
 
                     // Cache stats for instant reload
                     try {
                         localStorage.setItem('accountStatsCache', JSON.stringify({
-                            totalAccounts: totalAccounts.toLocaleString(),
+                            totalAccounts: totalAccounts.toLocaleString('en-US'),
                             totalSupply: formatAccessAmount(totalSupply),
                             top10Holdings: top10Percentage + '%',
-                            totalAccountsCount: totalAccounts.toLocaleString(),
+                            totalAccountsCount: totalAccounts.toLocaleString('en-US'),
                             ts: Date.now()
                         }));
                     } catch(e){}
@@ -3160,7 +3160,7 @@
                     <td>${account.nameTag || '-'}</td>
                     <td>${formatAccessAmount(account.balance)}</td>
                     <td>${parseFloat(account.percentage).toFixed(4)}%</td>
-                    <td style="text-align: center;">${account.txCount.toLocaleString()}</td>
+                    <td style="text-align: center;">${account.txCount.toLocaleString('en-US')}</td>
                 `;
                 tbody.appendChild(row);
             });
@@ -3305,7 +3305,7 @@
                     `"${account.nameTag || '-'}"`, // Enclose name tag in quotes in case of commas
                     formatAccessNumber(account.balance),
                     parseFloat(account.percentage).toFixed(4),
-                    account.txCount.toLocaleString()
+                    account.txCount.toLocaleString('en-US')
                 ];
                 csvRows.push(row.join(','));
             });

@@ -2105,9 +2105,10 @@
             const endIndex = Math.min(startIndex + entriesPerPage, totalBlocks);
             const blocksToDisplay = allBlocks.slice(startIndex, endIndex);
 
-            // Update total blocks display (use real total if available)
-            const displayTotal = realTotalBlocks > 0 ? realTotalBlocks : totalBlocks;
-            document.getElementById('totalBlocksDisplay').textContent = displayTotal.toLocaleString();
+            // Update total blocks display (only use real total, don't show API limit)
+            if (realTotalBlocks > 0) {
+                document.getElementById('totalBlocksDisplay').textContent = realTotalBlocks.toLocaleString();
+            }
 
             // Update block range (showing first and last block numbers)
             if (blocksToDisplay.length > 0) {

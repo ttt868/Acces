@@ -3353,7 +3353,7 @@ This is Access Network's own API, completely independent from Ethereum.`;
                 const startTxNumber = startIndex + 1;
                 const endTxNumber = endIndex;
 
-                updateStatElement('totalTxCount', filteredTransactions.length.toLocaleString());
+                updateStatElement('totalTxCount', filteredTransactions.length.toLocaleString('en-US'));
                 updateStatElement('startTxNumber', startTxNumber.toString());
                 updateStatElement('endTxNumber', endTxNumber.toString());
 
