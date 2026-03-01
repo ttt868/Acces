@@ -2707,15 +2707,9 @@ This is Access Network's own API, completely independent from Ethereum.`;
                         if (data.success && data.data && Array.isArray(data.data)) {
                             realTransactions = data.data
                                 .filter(tx => {
-                                    // Keep transactions with valid addresses
                                     const from = tx.from_address || tx.from || tx.sender_address;
                                     const to = tx.to_address || tx.to || tx.recipient_address;
-
-                                    return from && to &&
-                                           from !== 'N/A' &&
-                                           to !== 'N/A' &&
-                                           from.startsWith('0x') &&
-                                           to.startsWith('0x');
+                                    return from && to && from !== 'N/A' && to !== 'N/A';
                                 })
                                 .map(tx => ({
                                     hash: tx.tx_hash || tx.hash || tx.transactionHash,
