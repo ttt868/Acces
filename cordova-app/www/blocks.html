@@ -1674,21 +1674,34 @@
         <div class="stats-section">
             <div class="stat-card">
                 <div class="stat-label">Network Utilization (24H)</div>
-                <div class="stat-value" id="networkUtilization">0%</div>
+                <div class="stat-value" id="networkUtilization"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Block Size (24H)</div>
-                <div class="stat-value" id="blockSize">0 Bytes</div>
+                <div class="stat-value" id="blockSize"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Block Rewards (24H)</div>
-                <div class="stat-value" id="blockRewards">0 ACCESS</div>
+                <div class="stat-value" id="blockRewards"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Burnt Fees 🔥</div>
-                <div class="stat-value" id="burntFees">0 ACCESS</div>
+                <div class="stat-value" id="burntFees"></div>
             </div>
         </div>
+        <!-- Instant stats from cache -->
+        <script>
+        (function(){
+            try {
+                var c = JSON.parse(localStorage.getItem('blockStatsCache'));
+                if (!c) return;
+                if (c.networkUtilization) document.getElementById('networkUtilization').textContent = c.networkUtilization;
+                if (c.blockSize) document.getElementById('blockSize').textContent = c.blockSize;
+                if (c.blockRewards) document.getElementById('blockRewards').textContent = c.blockRewards;
+                if (c.burntFees) document.getElementById('burntFees').textContent = c.burntFees;
+            } catch(e){}
+        })();
+        </script>
 
         <!-- Blocks Table -->
         <div class="blocks-section">
@@ -2044,6 +2057,17 @@
 
             // Burnt Fees
             document.getElementById('burntFees').textContent = formatAccessAmount(totalBurntFees);
+
+            // Cache stats for instant reload
+            try {
+                localStorage.setItem('blockStatsCache', JSON.stringify({
+                    networkUtilization: `${networkUtilization}%`,
+                    blockSize: formatBytes(avgBlockSize),
+                    blockRewards: formatAccessAmount(totalRewards),
+                    burntFees: formatAccessAmount(totalBurntFees),
+                    ts: Date.now()
+                }));
+            } catch(e){}
         }
 
         function formatBytes(bytes) {

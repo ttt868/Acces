@@ -2069,11 +2069,11 @@
         <div class="stats-section">
             <div class="stat-card">
                 <div class="stat-label">Total Accounts</div>
-                <div class="stat-value" id="totalAccounts">0</div>
+                <div class="stat-value" id="totalAccounts"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Circulating Supply<br><span style="font-size: 10px; opacity: 0.7;">(Total in Accounts)</span></div>
-                <div class="stat-value" id="totalSupply">0</div>
+                <div class="stat-value" id="totalSupply"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Max Supply<br><span style="font-size: 10px; opacity: 0.7;">(Network Total)</span></div>
@@ -2081,9 +2081,21 @@
             </div>
             <div class="stat-card">
                 <div class="stat-label">Top 10 Holdings<br><span style="font-size: 10px; opacity: 0.7;">(% of Circulating)</span></div>
-                <div class="stat-value" id="top10Holdings">0.00%</div>
+                <div class="stat-value" id="top10Holdings"></div>
             </div>
         </div>
+        <!-- Instant stats from cache -->
+        <script>
+        (function(){
+            try {
+                var c = JSON.parse(localStorage.getItem('accountStatsCache'));
+                if (!c) return;
+                if (c.totalAccounts) document.getElementById('totalAccounts').textContent = c.totalAccounts;
+                if (c.totalSupply) document.getElementById('totalSupply').textContent = c.totalSupply;
+                if (c.top10Holdings) document.getElementById('top10Holdings').textContent = c.top10Holdings;
+            } catch(e){}
+        })();
+        </script>
 
         <!-- Transactions Table -->
         <div class="transactions-section">
@@ -2824,6 +2836,17 @@
                     // updateStatElement('top100Holdings', top100Percentage + '%');
                     updateStatElement('totalAccountsCount', totalAccounts.toLocaleString());
                     updateStatElement('totalSupplyText', formatAccessNumber(totalSupply)); // Assuming this element exists
+
+                    // Cache stats for instant reload
+                    try {
+                        localStorage.setItem('accountStatsCache', JSON.stringify({
+                            totalAccounts: totalAccounts.toLocaleString(),
+                            totalSupply: formatAccessAmount(totalSupply),
+                            top10Holdings: top10Percentage + '%',
+                            totalAccountsCount: totalAccounts.toLocaleString(),
+                            ts: Date.now()
+                        }));
+                    } catch(e){}
                 } else {
                      // Set default values if no accounts or totalSupply is 0
                     updateStatElement('totalAccounts', '0');
