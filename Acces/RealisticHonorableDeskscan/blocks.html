@@ -1702,9 +1702,6 @@
                 if (c.blockSize) document.getElementById('blockSize').textContent = c.blockSize;
                 if (c.blockRewards) document.getElementById('blockRewards').textContent = c.blockRewards;
                 if (c.burntFees) document.getElementById('burntFees').textContent = c.burntFees;
-                if (c.totalBlocks) document.getElementById('totalBlocksDisplay').textContent = c.totalBlocks;
-                if (c.startBlock) document.getElementById('startBlockNum').textContent = c.startBlock;
-                if (c.endBlock) document.getElementById('endBlockNum').textContent = c.endBlock;
             } catch(e){}
         })();
         </script>
@@ -1717,6 +1714,18 @@
                     <div class="blocks-range">(Showing blocks between #<span id="startBlockNum">—</span> to #<span id="endBlockNum">—</span>)</div>
                 </div>
             </div>
+            <!-- Cache for block counters (after elements exist in DOM) -->
+            <script>
+            (function(){
+                try {
+                    var c = JSON.parse(localStorage.getItem('blockStatsCache'));
+                    if (!c) return;
+                    if (c.totalBlocks) document.getElementById('totalBlocksDisplay').textContent = c.totalBlocks;
+                    if (c.startBlock) document.getElementById('startBlockNum').textContent = c.startBlock;
+                    if (c.endBlock) document.getElementById('endBlockNum').textContent = c.endBlock;
+                } catch(e){}
+            })();
+            </script>
 
             <div class="table-controls">
                 <button class="download-btn" onclick="downloadPageData()">
