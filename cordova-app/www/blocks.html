@@ -2127,8 +2127,10 @@
                 // Save counter values to cache
                 try {
                     var prev = JSON.parse(localStorage.getItem('blockStatsCache') || '{}');
+                    prev.totalBlocks = displayTotal.toLocaleString('en-US');
                     prev.startBlock = Math.min(firstBlockNum, lastBlockNum).toLocaleString('en-US');
                     prev.endBlock = Math.max(firstBlockNum, lastBlockNum).toLocaleString('en-US');
+                    prev.ts = Date.now();
                     localStorage.setItem('blockStatsCache', JSON.stringify(prev));
                 } catch(e){}
             }
