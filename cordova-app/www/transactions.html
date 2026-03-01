@@ -1894,21 +1894,37 @@
         <div class="stats-section">
             <div class="stat-card">
                 <div class="stat-label">Transactions (24H)</div>
-                <div class="stat-value" id="dailyTxCount">0</div>
+                <div class="stat-value" id="dailyTxCount"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Pending Transactions</div>
-                <div class="stat-value" id="pendingTxCount">0</div>
+                <div class="stat-value" id="pendingTxCount"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Total Transaction Fee (24H)</div>
-                <div class="stat-value" id="dailyFees">0.00 access</div>
+                <div class="stat-value" id="dailyFees"></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Avg. Transaction Fee</div>
-                <div class="stat-value" id="avgFee">0.00002 access</div>
+                <div class="stat-value" id="avgFee"></div>
             </div>
         </div>
+        <!-- Instant stats from cache -->
+        <script>
+        (function(){
+            try {
+                var c = JSON.parse(localStorage.getItem('txStatsCache'));
+                if (!c) return;
+                if (c.dailyTxCount) document.getElementById('dailyTxCount').textContent = c.dailyTxCount;
+                if (c.pendingTxCount !== undefined) document.getElementById('pendingTxCount').textContent = c.pendingTxCount;
+                if (c.dailyFees) document.getElementById('dailyFees').textContent = c.dailyFees;
+                if (c.avgFee) document.getElementById('avgFee').textContent = c.avgFee;
+                if (c.totalTxCount) document.getElementById('totalTxCount').textContent = c.totalTxCount;
+                if (c.startTxNumber !== undefined) document.getElementById('startTxNumber').textContent = c.startTxNumber;
+                if (c.endTxNumber) document.getElementById('endTxNumber').textContent = c.endTxNumber;
+            } catch(e){}
+        })();
+        </script>
 
         <!-- Transactions Table -->
         <div class="transactions-section">
@@ -1916,11 +1932,11 @@
             <div class="section-header" style="display: block; padding: 16px 20px;">
                 <div style="margin-bottom: 12px;">
                     <span style="color: var(--text-primary); font-size: 16px; font-weight: 400;">
-                        More than <span id="totalTxCount">0</span> transactions found
+                        More than <span id="totalTxCount"></span> transactions found
                     </span>
                     <br>
                     <span style="color: var(--text-secondary); font-size: 13px;">
-                        (Showing transactions between #<span id="startTxNumber">0</span> to #<span id="endTxNumber">0</span>)
+                        (Showing transactions between #<span id="startTxNumber"></span> to #<span id="endTxNumber"></span>)
                     </span>
                 </div>
                 <button class="download-btn" onclick="downloadPageData()">
@@ -2839,6 +2855,20 @@ This is Access Network's own API, completely independent from Ethereum.`;
                             updateStatElement('startTxNumber', '0');
                             updateStatElement('endTxNumber', allTransactions.length.toString());
 
+
+                            // Cache stats for instant reload
+                            try {
+                                localStorage.setItem('txStatsCache', JSON.stringify({
+                                    dailyTxCount: transactionCount.toString(),
+                                    pendingTxCount: '0',
+                                    dailyFees: formatAccessAmount(totalRealisticGasFees),
+                                    avgFee: formatAccessAmount(avgRealisticFee),
+                                    totalTxCount: allTransactions.length.toLocaleString(),
+                                    startTxNumber: '0',
+                                    endTxNumber: allTransactions.length.toString(),
+                                    ts: Date.now()
+                                }));
+                            } catch(e){}
                             console.log(`✅ REALISTIC network stats loaded successfully`);
                             return;
                         }
@@ -2875,6 +2905,20 @@ This is Access Network's own API, completely independent from Ethereum.`;
                             updateStatElement('startTxNumber', '0');
                             updateStatElement('endTxNumber', (stats.totalTransactions || 0).toString());
 
+
+                            // Cache stats for instant reload
+                            try {
+                                localStorage.setItem('txStatsCache', JSON.stringify({
+                                    dailyTxCount: (stats.dailyTransactions || 0).toString(),
+                                    pendingTxCount: (stats.pendingTransactions || '0').toString(),
+                                    dailyFees: formatAccessAmount(stats.totalGasFees || 0),
+                                    avgFee: formatAccessAmount(stats.avgGasFee || 0),
+                                    totalTxCount: (stats.totalTransactions || 0).toLocaleString(),
+                                    startTxNumber: '0',
+                                    endTxNumber: (stats.totalTransactions || 0).toString(),
+                                    ts: Date.now()
+                                }));
+                            } catch(e){}
                             console.log('✅ Real database stats loaded successfully');
                             return;
                         }
@@ -2918,6 +2962,20 @@ This is Access Network's own API, completely independent from Ethereum.`;
                             updateStatElement('startTxNumber', '0');
                             updateStatElement('endTxNumber', totalTransactions.toString());
 
+
+                            // Cache stats for instant reload
+                            try {
+                                localStorage.setItem('txStatsCache', JSON.stringify({
+                                    dailyTxCount: estimatedDailyTx.toString(),
+                                    pendingTxCount: (nodeData.stats?.pendingTransactions || '0').toString(),
+                                    dailyFees: formatAccessAmount(estimatedGasFees),
+                                    avgFee: formatAccessAmount(gasPrice),
+                                    totalTxCount: totalTransactions.toLocaleString(),
+                                    startTxNumber: '0',
+                                    endTxNumber: totalTransactions.toString(),
+                                    ts: Date.now()
+                                }));
+                            } catch(e){}
                             console.log('✅ Node estimated real stats loaded');
                             return;
                         }
