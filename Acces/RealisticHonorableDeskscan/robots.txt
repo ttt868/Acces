@@ -19,7 +19,15 @@ Allow: /whitepaper.html
 Allow: /contact.html
 Allow: /top-accounts.html
 Allow: /privacy-policy.html
+Allow: /privacy-policy-explorer.html
 Allow: /terms-of-service.html
+Allow: /terms-of-service-app.html
+Allow: /block-details.html
+Allow: /transaction-details.html
+Allow: /address-details.html
+Allow: /gastracker.html
+Allow: /developer-api.html
+Allow: /index.html
 
 User-agent: AdsBot-Google
 Allow: /access-project.html
@@ -31,6 +39,16 @@ Allow: /faq.html
 Allow: /whitepaper.html
 Allow: /contact.html
 Allow: /top-accounts.html
+Allow: /privacy-policy.html
+Allow: /privacy-policy-explorer.html
+Allow: /terms-of-service.html
+Allow: /terms-of-service-app.html
+Allow: /block-details.html
+Allow: /transaction-details.html
+Allow: /address-details.html
+Allow: /gastracker.html
+Allow: /developer-api.html
+Allow: /index.html
 
 User-agent: Googlebot
 Allow: /
