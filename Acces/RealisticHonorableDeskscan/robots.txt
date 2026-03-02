@@ -55,38 +55,3 @@ Allow: /
 
 # Crawl delay for all bots
 Crawl-delay: 1
-
-# ============================================
-# Block private/sensitive files
-# ============================================
-
-# API endpoints
-Disallow: /api/
-
-# Configuration files
-Disallow: /config.js
-Disallow: /database-config.js
-Disallow: /development-config.js
-Disallow: /chainlist-config.json
-Disallow: /capacitor.config.json
-Disallow: /migration-config.json
-
-# Server files
-Disallow: /server.js
-
-# Database & Security scripts
-Disallow: /api-key-manager.js
-Disallow: /encrypt-existing-keys.js
-Disallow: /add-wallet-key-encrypted-column.js
-Disallow: /database-optimizer.js
-Disallow: /backup-system.js
-Disallow: /advanced-security-system.js
-Disallow: /data-protection-ultimate.js
-
-# Development/Test files
-Disallow: /test-*.html
-Disallow: /node_modules/
-Disallow: /.git/
-Disallow: /*.sql$
-Disallow: /package.json
-Disallow: /package-lock.json
