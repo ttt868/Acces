@@ -64,6 +64,13 @@
   </url>
   
   <url>
+    <loc>https://accesschain.org/terms-of-service-app.html</loc>
+    <lastmod>2026-01-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://accesschain.org/privacy-policy-explorer.html</loc>
     <lastmod>2026-01-29</lastmod>
     <changefreq>yearly</changefreq>
@@ -122,13 +129,6 @@
   
   <url>
     <loc>https://accesschain.org/gastracker.html</loc>
-    <lastmod>2026-01-29</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://accesschain.org/latest-mint.html</loc>
     <lastmod>2026-01-29</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.6</priority>
