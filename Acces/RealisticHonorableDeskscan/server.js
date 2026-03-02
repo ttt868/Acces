@@ -133,7 +133,7 @@ async function currentBaseReward() {
 // ============================================================================
 // 📦 إصدار الملفات - غير هذا الرقم فقط لتحديث كل الملفات
 // ============================================================================
-const ASSETS_VERSION = '20.8';
+const ASSETS_VERSION = '20.9';
 
 // ============================================================================
 // 🔒 SESSION TOKEN PROTECTION - حماية من الجلسات المتعددة
@@ -1784,7 +1784,7 @@ const server = http.createServer(async (req, res) => {
       const robotsContent = fs.readFileSync(robotsPath, 'utf8');
       res.writeHead(200, { 
         'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
       });
       res.end(robotsContent);
       return;
