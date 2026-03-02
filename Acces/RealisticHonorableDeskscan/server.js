@@ -1747,7 +1747,7 @@ const server = http.createServer(async (req, res) => {
       const sitemapContent = fs.readFileSync(sitemapPath, 'utf8');
       res.writeHead(200, { 
         'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, max-age=3600'
+        'Cache-Control': 'no-cache'
       });
       res.end(sitemapContent);
       return;
@@ -1765,7 +1765,7 @@ const server = http.createServer(async (req, res) => {
       const adsContent = fs.readFileSync(adsPath, 'utf8');
       res.writeHead(200, { 
         'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'public, max-age=86400',
+        'Cache-Control': 'no-cache',
         'X-Robots-Tag': 'noarchive'
       });
       res.end(adsContent);
@@ -1784,7 +1784,7 @@ const server = http.createServer(async (req, res) => {
       const robotsContent = fs.readFileSync(robotsPath, 'utf8');
       res.writeHead(200, { 
         'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'public, max-age=86400'
+        'Cache-Control': 'no-cache'
       });
       res.end(robotsContent);
       return;
