@@ -26,6 +26,66 @@
     <allow-intent href="sms:*" />
     <allow-intent href="mailto:*" />
     
+    <!-- ==================== iOS Platform ==================== -->
+    <platform name="ios">
+        <!-- iOS Icons - will be generated from 512px source in CI -->
+        <icon src="www/access-store-512.png" width="1024" height="1024" />
+        <icon src="www/access-store-192.png" width="180" height="180" />
+        <icon src="www/access-store-152.png" width="152" height="152" />
+        <icon src="www/access-store-144.png" width="144" height="144" />
+        <icon src="www/access-store-128.png" width="120" height="120" />
+        <icon src="www/access-store-96.png" width="87" height="87" />
+        <icon src="www/access-store-96.png" width="80" height="80" />
+        <icon src="www/access-store-72.png" width="76" height="76" />
+        <icon src="www/access-store-72.png" width="60" height="60" />
+        <icon src="www/access-store-48.png" width="58" height="58" />
+        <icon src="www/access-store-48.png" width="40" height="40" />
+        <icon src="www/access-store-48.png" width="29" height="29" />
+        <icon src="www/access-store-48.png" width="20" height="20" />
+
+        <!-- Deployment Target -->
+        <preference name="deployment-target" value="14.0" />
+        <preference name="SwiftVersion" value="5.0" />
+
+        <!-- WKWebView Settings -->
+        <preference name="WKWebViewOnly" value="true" />
+        <preference name="CordovaWebViewEngine" value="CDVWKWebViewEngine" />
+        <preference name="WKFrameSetContentInsetAdjustmentAutomatic" value="true" />
+        
+        <!-- Allow mixed content for API calls -->
+        <preference name="AllowBackForwardNavigationGestures" value="false" />
+
+        <!-- iOS Permissions - displayed in permission dialogs -->
+        <config-file parent="NSCameraUsageDescription" target="*-Info.plist">
+            <string>Access Network needs camera access to scan QR codes for wallet addresses</string>
+        </config-file>
+        <config-file parent="NSFaceIDUsageDescription" target="*-Info.plist">
+            <string>Access Network uses Face ID to unlock the app securely</string>
+        </config-file>
+        <config-file parent="NSUserTrackingUsageDescription" target="*-Info.plist">
+            <string>This identifier will be used to deliver personalized ads to you</string>
+        </config-file>
+        
+        <!-- Background modes for push notifications -->
+        <config-file parent="UIBackgroundModes" target="*-Info.plist">
+            <array>
+                <string>remote-notification</string>
+            </array>
+        </config-file>
+
+        <!-- Allow HTTP traffic for API server -->
+        <config-file parent="NSAppTransportSecurity" target="*-Info.plist">
+            <dict>
+                <key>NSAllowsArbitraryLoads</key>
+                <true />
+            </dict>
+        </config-file>
+
+        <!-- Status bar -->
+        <preference name="StatusBarStyle" value="lightcontent" />
+    </platform>
+
+    <!-- ==================== Android Platform ==================== -->
     <!-- Android specific -->
     <platform name="android">
         <icon src="www/access-store-192.png" density="xxxhdpi" />
@@ -157,6 +217,22 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="accessnetwork" />
             </intent-filter>
+        </config-file>
+    </platform>
+
+    <!-- ✅ iOS Associated Domains for Universal Links -->
+    <platform name="ios">
+        <config-file parent="com.apple.developer.associated-domains" target="*-Debug.plist">
+            <array>
+                <string>applinks:accesschain.org</string>
+                <string>applinks:www.accesschain.org</string>
+            </array>
+        </config-file>
+        <config-file parent="com.apple.developer.associated-domains" target="*-Release.plist">
+            <array>
+                <string>applinks:accesschain.org</string>
+                <string>applinks:www.accesschain.org</string>
+            </array>
         </config-file>
     </platform>
 </widget>

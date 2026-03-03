@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  ⚠️ PLACEHOLDER FILE - REPLACE WITH REAL FILE FROM FIREBASE CONSOLE
+	  
+	  Steps to get the real GoogleService-Info.plist:
+	  1. Go to https://console.firebase.google.com
+	  2. Select project: acces-app-90fdb
+	  3. Click "Add app" → iOS
+	  4. Bundle ID: io.accessnetwork.app
+	  5. Download GoogleService-Info.plist
+	  6. Replace this file with the downloaded one
+	  
+	  Also required for Push Notifications:
+	  1. Go to Firebase Console → Project Settings → Cloud Messaging
+	  2. Upload APNs Authentication Key (.p8 file)
+	  3. Get key from Apple Developer → Certificates → Keys → Create APNs Key
+	-->
+	<key>API_KEY</key>
+	<string>AIzaSyBl9O3_vMgPNKBnhifZLZjO6SAzRu8pY_I</string>
+	<key>GCM_SENDER_ID</key>
+	<string>804899641984</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>io.accessnetwork.app</string>
+	<key>PROJECT_ID</key>
+	<string>acces-app-90fdb</string>
+	<key>STORAGE_BUCKET</key>
+	<string>acces-app-90fdb.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false/>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false/>
+	<key>IS_APPINVITE_ENABLED</key>
+	<false/>
+	<key>IS_GCM_ENABLED</key>
+	<true/>
+	<key>IS_SIGNIN_ENABLED</key>
+	<false/>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:804899641984:ios:PLACEHOLDER_REPLACE_ME</string>
+</dict>
+</plist>

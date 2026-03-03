@@ -1,0 +1,248 @@
+name: Build iOS App
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'cordova-app/**'
+      - '.github/workflows/build-ios.yml'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.4'
+    
+    - name: Install CocoaPods
+      run: |
+        echo '📦 Installing CocoaPods...'
+        sudo gem install cocoapods
+        pod --version
+        echo '✅ CocoaPods installed'
+    
+    - name: Install Cordova CLI
+      run: npm install -g cordova@12
+    
+    - name: Install project dependencies
+      working-directory: cordova-app
+      run: npm install
+    
+    - name: Generate iOS icon sizes from source
+      working-directory: cordova-app
+      run: |
+        echo '🖼️ Generating all required iOS icon sizes...'
+        SOURCE="www/access-store-512.png"
+        if [ ! -f "$SOURCE" ]; then
+          echo "⚠️ 512px source not found, trying access-store.png"
+          SOURCE="www/access-store.png"
+        fi
+        
+        mkdir -p res/ios-icons
+        
+        # Generate all iOS required icon sizes
+        for SIZE in 20 29 40 58 60 76 80 87 120 152 167 180 1024; do
+          sips -z $SIZE $SIZE "$SOURCE" --out "res/ios-icons/icon-${SIZE}.png" > /dev/null 2>&1
+          echo "  ✅ icon-${SIZE}.png"
+        done
+        
+        echo '✅ All iOS icons generated'
+        ls -la res/ios-icons/
+    
+    - name: Install Cordova Plugins for iOS
+      working-directory: cordova-app
+      run: |
+        echo '🔌 Installing Cordova plugins for iOS...'
+        
+        # Splash screen
+        cordova plugin add cordova-plugin-splashscreen@6.0.2 --save 2>/dev/null || true
+        
+        # Google Sign-In
+        cordova plugin add cordova-plugin-googleplus@8.5.2 --save \
+          --variable WEB_APPLICATION_CLIENT_ID="586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com" \
+          --variable REVERSED_CLIENT_ID="com.googleusercontent.apps.586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn" \
+          2>/dev/null || true
+        
+        # Firebase Cloud Messaging (iOS compatible version)
+        cordova plugin add cordova-plugin-firebase-messaging@7.0.2 --save 2>/dev/null || true
+        
+        # AdMob - cordova-plugin-ads
+        # Using test App ID for now (replace with real iOS App ID when available)
+        cordova plugin add cordova-plugin-ads@2.0.5 --save \
+          --variable ADMOB_IOS_APP_ID="ca-app-pub-3940256099942544~1458002511" \
+          2>/dev/null || true
+        
+        # Biometric (Face ID / Touch ID)
+        cordova plugin add cordova-plugin-fingerprint-aio@5.0.1 --save \
+          --variable FACEID_USAGE_DESCRIPTION="Access Network uses Face ID to unlock the app securely" \
+          2>/dev/null || true
+        
+        # Skip android-permissions (Android only)
+        echo '⏭️ Skipping cordova-plugin-android-permissions (Android only)'
+        
+        echo '✅ All plugins installed'
+    
+    - name: Add iOS platform
+      working-directory: cordova-app
+      run: |
+        echo '📱 Adding iOS platform (cordova-ios 7.1.1)...'
+        cordova platform remove ios 2>/dev/null || true
+        cordova platform add ios@7.1.1 --verbose
+        echo '✅ iOS platform added'
+    
+    - name: Copy GoogleService-Info.plist
+      working-directory: cordova-app
+      run: |
+        echo '🔥 Copying GoogleService-Info.plist for Firebase iOS...'
+        PLIST_DEST=$(find platforms/ios -name "Access Network" -type d | head -1)
+        if [ -n "$PLIST_DEST" ]; then
+          cp GoogleService-Info.plist "$PLIST_DEST/GoogleService-Info.plist"
+          echo "✅ Copied to: $PLIST_DEST/GoogleService-Info.plist"
+        else
+          # Fallback - try Resources directory
+          PLIST_DEST=$(find platforms/ios -name "Resources" -type d | head -1)
+          if [ -n "$PLIST_DEST" ]; then
+            cp GoogleService-Info.plist "$PLIST_DEST/GoogleService-Info.plist"
+            echo "✅ Copied to: $PLIST_DEST/GoogleService-Info.plist"
+          else
+            echo "⚠️ Could not find iOS project directory"
+            find platforms/ios -type d -maxdepth 3
+          fi
+        fi
+    
+    - name: Copy generated iOS icons to platform
+      working-directory: cordova-app
+      run: |
+        echo '🖼️ Updating iOS icons with correctly sized versions...'
+        IOS_ICONS_DIR=$(find platforms/ios -path "*/Assets.xcassets/AppIcon.appiconset" -type d | head -1)
+        
+        if [ -n "$IOS_ICONS_DIR" ]; then
+          echo "Found icons directory: $IOS_ICONS_DIR"
+          # Copy correctly sized icons
+          for SIZE in 20 29 40 58 60 76 80 87 120 152 167 180 1024; do
+            if [ -f "res/ios-icons/icon-${SIZE}.png" ]; then
+              cp "res/ios-icons/icon-${SIZE}.png" "$IOS_ICONS_DIR/" 2>/dev/null || true
+            fi
+          done
+          echo '✅ iOS icons updated'
+        else
+          echo '⚠️ Could not find AppIcon.appiconset directory'
+          find platforms/ios -name "*.appiconset" -type d 2>/dev/null || true
+        fi
+
+    - name: Fix AdMob iOS App ID
+      working-directory: cordova-app
+      run: |
+        echo '🔧 Fixing AdMob App ID for iOS...'
+        # Replace hardcoded AdMob App ID with test ID
+        find platforms/ios -name "Info.plist" -exec grep -l "GADApplicationIdentifier" {} \; | while read plist; do
+          echo "Found plist with AdMob: $plist"
+          # Use PlistBuddy to set the correct test App ID
+          /usr/libexec/PlistBuddy -c "Set :GADApplicationIdentifier ca-app-pub-3940256099942544~1458002511" "$plist" 2>/dev/null || true
+        done
+        echo '✅ AdMob App ID fixed'
+    
+    - name: Install CocoaPods dependencies
+      working-directory: cordova-app
+      run: |
+        echo '📦 Installing CocoaPods dependencies...'
+        cd platforms/ios
+        if [ -f "Podfile" ]; then
+          pod install --repo-update
+          echo '✅ CocoaPods installed'
+        else
+          echo '⚠️ No Podfile found'
+        fi
+
+    - name: Build iOS (Simulator - No Signing Required)
+      working-directory: cordova-app
+      run: |
+        echo '🚧 Building iOS for Simulator (no code signing needed)...'
+        cordova build ios --debug --device --buildFlag="-UseModernBuildSystem=YES" \
+          --buildFlag="CODE_SIGN_IDENTITY=" \
+          --buildFlag="CODE_SIGNING_REQUIRED=NO" \
+          --buildFlag="CODE_SIGNING_ALLOWED=NO" \
+          --buildFlag="CODE_SIGN_ENTITLEMENTS=" \
+          --buildFlag="CODE_SIGN_IDENTITY=-" 2>&1 || {
+            echo '⚠️ Device build failed, trying simulator build...'
+            cordova build ios --debug --emulator --buildFlag="-UseModernBuildSystem=YES" \
+              --buildFlag="CODE_SIGN_IDENTITY=" \
+              --buildFlag="CODE_SIGNING_REQUIRED=NO" \
+              --buildFlag="CODE_SIGNING_ALLOWED=NO" 2>&1
+        }
+        echo '✅ iOS build completed'
+    
+    - name: List build output
+      run: |
+        echo '📱 iOS build output:'
+        find cordova-app/platforms/ios/build -name "*.app" -o -name "*.ipa" -o -name "*.xcarchive" 2>/dev/null | head -20 || echo "No build output found"
+        echo ''
+        echo '📁 Build directory structure:'
+        ls -la cordova-app/platforms/ios/build/ 2>/dev/null || echo "No build directory"
+    
+    # ============================================================
+    # SIGNED BUILD (uncomment when Apple Developer account is ready)
+    # ============================================================
+    # To enable signed builds:
+    # 1. Get Apple Developer account ($99/year)
+    # 2. Create Distribution Certificate + Provisioning Profile
+    # 3. Add these GitHub Secrets:
+    #    - IOS_CERTIFICATE_P12: Base64 encoded .p12 certificate
+    #    - IOS_CERTIFICATE_PASSWORD: Password for the .p12
+    #    - IOS_PROVISIONING_PROFILE: Base64 encoded .mobileprovision
+    #    - APPLE_TEAM_ID: Your Apple Developer Team ID
+    #
+    # - name: Import Code Signing Certificate
+    #   env:
+    #     IOS_CERTIFICATE_P12: ${{ secrets.IOS_CERTIFICATE_P12 }}
+    #     IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+    #   run: |
+    #     echo "$IOS_CERTIFICATE_P12" | base64 --decode > certificate.p12
+    #     security create-keychain -p "" build.keychain
+    #     security import certificate.p12 -k build.keychain -P "$IOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+    #     security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
+    #     security default-keychain -s build.keychain
+    #     security unlock-keychain -p "" build.keychain
+    #
+    # - name: Import Provisioning Profile
+    #   env:
+    #     IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+    #   run: |
+    #     mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+    #     echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+    #
+    # - name: Build Signed Release IPA
+    #   working-directory: cordova-app
+    #   run: |
+    #     cordova build ios --release --device --buildConfig=build.json
+    #
+    # - name: Upload Release IPA
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: access-network-ios-ipa
+    #     path: cordova-app/platforms/ios/build/device/*.ipa
+    #     retention-days: 30
+
+    - name: Upload iOS Simulator Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: access-network-ios-simulator
+        path: |
+          cordova-app/platforms/ios/build/**/*.app
+          cordova-app/platforms/ios/build/**/*.ipa
+        if-no-files-found: warn
+        retention-days: 30
