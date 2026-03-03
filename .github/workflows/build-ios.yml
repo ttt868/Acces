@@ -234,50 +234,65 @@ jobs:
       run: |
         echo '🚧 Building iOS (unsigned - no code signing)...'
         
-        # Use xcodebuild directly for more control
-        WORKSPACE=$(find platforms/ios -name "*.xcworkspace" | head -1)
+        # Use the CocoaPods-generated .xcworkspace (NOT the one inside .xcodeproj)
+        WORKSPACE=$(find platforms/ios -maxdepth 1 -name "*.xcworkspace" | head -1)
         SCHEME="Access Network"
         
+        if [ -z "$WORKSPACE" ]; then
+          # Fallback to the one inside xcodeproj
+          WORKSPACE=$(find platforms/ios -name "*.xcworkspace" ! -path "*xcodeproj*" | head -1)
+        fi
+        
+        if [ -z "$WORKSPACE" ]; then
+          echo '⚠️ No standalone .xcworkspace found, looking for any...'
+          WORKSPACE=$(find platforms/ios -name "*.xcworkspace" | head -1)
+        fi
+        
+        echo "Using workspace: $WORKSPACE"
+        echo "Scheme: $SCHEME"
+        
+        # Ensure pods are synced
+        cd platforms/ios
+        pod install 2>&1 | tail -10 || true
+        cd ../..
+        
         if [ -n "$WORKSPACE" ]; then
-          echo "Using workspace: $WORKSPACE"
-          echo "Scheme: $SCHEME"
-          
           xcodebuild build \
             -workspace "$WORKSPACE" \
             -scheme "$SCHEME" \
             -configuration Debug \
-            -destination 'generic/platform=iOS Simulator' \
-            -allowProvisioningUpdates \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             DEVELOPMENT_TEAM="" \
             CODE_SIGN_ENTITLEMENTS="" \
             ONLY_ACTIVE_ARCH=NO \
-            2>&1 | tail -50
+            | tail -60
           
-          echo '✅ iOS build completed successfully'
-        else
-          echo '⚠️ No .xcworkspace found, trying .xcodeproj...'
-          PROJ=$(find platforms/ios -name "*.xcodeproj" | head -1)
-          if [ -n "$PROJ" ]; then
+          BUILD_EXIT=$?
+          if [ $BUILD_EXIT -eq 0 ]; then
+            echo '✅ iOS build completed successfully'
+          else
+            echo "⚠️ Build exited with code $BUILD_EXIT"
+            echo 'Trying with xcodeproj instead...'
+            PROJ=$(find platforms/ios -name "*.xcodeproj" | head -1)
             xcodebuild build \
               -project "$PROJ" \
               -scheme "$SCHEME" \
               -configuration Debug \
-              -destination 'generic/platform=iOS Simulator' \
+              -sdk iphonesimulator \
               CODE_SIGN_IDENTITY="" \
               CODE_SIGNING_REQUIRED=NO \
               CODE_SIGNING_ALLOWED=NO \
-              DEVELOPMENT_TEAM="" \
               ONLY_ACTIVE_ARCH=NO \
-              2>&1 | tail -50
-            echo '✅ iOS build completed'
-          else
-            echo '❌ No Xcode project found'
-            find platforms/ios -maxdepth 2 -type d
-            exit 1
+              | tail -40
           fi
+        else
+          echo '❌ No Xcode workspace/project found'
+          find platforms/ios -maxdepth 3 -type d
+          exit 1
         fi
     
     - name: List build output
