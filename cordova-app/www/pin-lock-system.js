@@ -5,6 +5,30 @@
 (function() {
   'use strict';
 
+  // ===== EARLY LOCK: Show lock screen IMMEDIATELY if PIN was previously enabled =====
+  // Prevents content from being visible before API check completes (app update, fresh start)
+  var _pinCachedEnabled = false;
+  try { _pinCachedEnabled = localStorage.getItem('_pinLockEnabled') === 'true'; } catch(e) {}
+
+  if (_pinCachedEnabled) {
+    var _earlyLockApplied = false;
+    function _applyEarlyLock() {
+      if (_earlyLockApplied) return;
+      var lockEl = document.getElementById('pin-lock-screen');
+      if (lockEl) {
+        _earlyLockApplied = true;
+        lockEl.style.display = 'flex';
+        lockEl.style.opacity = '1';
+        lockEl.classList.add('active');
+        console.log('[PIN] Early lock applied from cache');
+      }
+    }
+    if (document.readyState !== 'loading') {
+      _applyEarlyLock();
+    }
+    document.addEventListener('DOMContentLoaded', _applyEarlyLock);
+  }
+
   // ===== STATE =====
   let pinInput = '';
   let setupPin = '';
@@ -14,6 +38,7 @@
   let biometricAvailable = false;
   let isLocked = false;
   let pinSetupCallback = null;
+  let _internalUnlocked = false; // Internal unlock flag (NOT on window - can't be bypassed from console)
 
   // ===== API HELPERS =====
   function getApiBase() {
@@ -40,11 +65,28 @@
         const data = await response.json();
         pinEnabled = data.pinEnabled;
         biometricEnabled = data.biometricEnabled;
+
+        // Cache PIN enabled state for instant lock on next app start
+        try {
+          if (pinEnabled) {
+            localStorage.setItem('_pinLockEnabled', 'true');
+          } else {
+            localStorage.removeItem('_pinLockEnabled');
+          }
+        } catch(e) {}
+
         updateSettingsUI();
 
         // If PIN is enabled and app just opened, show lock screen
-        if (pinEnabled && !isLocked && !window._pinUnlocked) {
+        if (pinEnabled && !isLocked && !_internalUnlocked) {
           showLockScreen();
+        } else if (!pinEnabled && _pinCachedEnabled) {
+          // PIN was disabled (e.g. from another device) - hide early lock if showing
+          var lockEl = document.getElementById('pin-lock-screen');
+          if (lockEl) {
+            lockEl.style.display = 'none';
+            lockEl.classList.remove('active');
+          }
         }
       }
     } catch (error) {
@@ -400,6 +442,7 @@
       const data = await response.json();
       if (data.success) {
         pinEnabled = true;
+        try { localStorage.setItem('_pinLockEnabled', 'true'); } catch(e) {}
         window.closePinModal();
         updateSettingsUI();
         if (window.showNotification) {
@@ -453,6 +496,7 @@
       if (data.success) {
         pinEnabled = false;
         biometricEnabled = false;
+        try { localStorage.removeItem('_pinLockEnabled'); } catch(e) {}
         window.closePinModal();
         updateSettingsUI();
         if (window.showNotification) {
@@ -486,12 +530,17 @@
     clearLockDots();
     hideLockError();
 
-    lockScreen.style.display = 'flex';
-    lockScreen.style.opacity = '0';
-    requestAnimationFrame(() => {
-      lockScreen.classList.add('active');
-      lockScreen.style.opacity = '1';
-    });
+    // Check if already visible from early lock (avoid flicker)
+    var alreadyVisible = lockScreen.style.display === 'flex' && lockScreen.classList.contains('active');
+    
+    if (!alreadyVisible) {
+      lockScreen.style.display = 'flex';
+      lockScreen.style.opacity = '0';
+      requestAnimationFrame(() => {
+        lockScreen.classList.add('active');
+        lockScreen.style.opacity = '1';
+      });
+    }
 
     // Show biometric button if enabled
     const bioBtn = document.getElementById('pin-biometric-btn');
@@ -510,7 +559,7 @@
   function hideLockScreen() {
     if (!isLocked) return;
     isLocked = false;
-    window._pinUnlocked = true;
+    _internalUnlocked = true;
     window._biometricInProgress = false;
     
     // Cooldown: prevent re-locking for 2 seconds after unlock
@@ -720,6 +769,7 @@
       if (data.success) {
         pinEnabled = false;
         biometricEnabled = false;
+        try { localStorage.removeItem('_pinLockEnabled'); } catch(e) {}
         window.closePinModal();
         updateSettingsUI();
         if (window.showNotification) {
@@ -772,8 +822,8 @@
       return;
     }
     
-    if (pinEnabled && window._pinUnlocked) {
-      window._pinUnlocked = false;
+    if (pinEnabled && _internalUnlocked) {
+      _internalUnlocked = false;
       showLockScreen();
     }
   }
