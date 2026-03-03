@@ -7,8 +7,19 @@
 
   // ===== EARLY LOCK: Show lock screen IMMEDIATELY if PIN was previously enabled =====
   // Prevents content from being visible before API check completes (app update, fresh start)
+  // Uses userId from stored session so lock only applies to the correct user on this device
   var _pinCachedEnabled = false;
-  try { _pinCachedEnabled = localStorage.getItem('_pinLockEnabled') === 'true'; } catch(e) {}
+  var _cachedUserId = null;
+  try {
+    var _sessionStr = localStorage.getItem('accessoireUser');
+    if (_sessionStr) {
+      var _sessionUser = JSON.parse(_sessionStr);
+      if (_sessionUser && _sessionUser.id) {
+        _cachedUserId = _sessionUser.id;
+        _pinCachedEnabled = localStorage.getItem('_pinLockEnabled_' + _cachedUserId) === 'true';
+      }
+    }
+  } catch(e) {}
 
   if (_pinCachedEnabled) {
     var _earlyLockApplied = false;
@@ -20,7 +31,7 @@
         lockEl.style.display = 'flex';
         lockEl.style.opacity = '1';
         lockEl.classList.add('active');
-        console.log('[PIN] Early lock applied from cache');
+        console.log('[PIN] Early lock applied from cache for user', _cachedUserId);
       }
     }
     if (document.readyState !== 'loading') {
@@ -66,12 +77,12 @@
         pinEnabled = data.pinEnabled;
         biometricEnabled = data.biometricEnabled;
 
-        // Cache PIN enabled state for instant lock on next app start
+        // Cache PIN enabled state for instant lock on next app start (per-user)
         try {
           if (pinEnabled) {
-            localStorage.setItem('_pinLockEnabled', 'true');
+            localStorage.setItem('_pinLockEnabled_' + userId, 'true');
           } else {
-            localStorage.removeItem('_pinLockEnabled');
+            localStorage.removeItem('_pinLockEnabled_' + userId);
           }
         } catch(e) {}
 
@@ -442,7 +453,7 @@
       const data = await response.json();
       if (data.success) {
         pinEnabled = true;
-        try { localStorage.setItem('_pinLockEnabled', 'true'); } catch(e) {}
+        try { var _uid = getUserId(); if (_uid) localStorage.setItem('_pinLockEnabled_' + _uid, 'true'); } catch(e) {}
         window.closePinModal();
         updateSettingsUI();
         if (window.showNotification) {
@@ -496,7 +507,7 @@
       if (data.success) {
         pinEnabled = false;
         biometricEnabled = false;
-        try { localStorage.removeItem('_pinLockEnabled'); } catch(e) {}
+        try { var _uid = getUserId(); if (_uid) localStorage.removeItem('_pinLockEnabled_' + _uid); } catch(e) {}
         window.closePinModal();
         updateSettingsUI();
         if (window.showNotification) {
@@ -769,7 +780,7 @@
       if (data.success) {
         pinEnabled = false;
         biometricEnabled = false;
-        try { localStorage.removeItem('_pinLockEnabled'); } catch(e) {}
+        try { var _uid = getUserId(); if (_uid) localStorage.removeItem('_pinLockEnabled_' + _uid); } catch(e) {}
         window.closePinModal();
         updateSettingsUI();
         if (window.showNotification) {
