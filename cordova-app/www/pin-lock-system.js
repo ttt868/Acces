@@ -45,36 +45,10 @@
         // If PIN is enabled and app just opened, show lock screen
         if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
-        } else if (!pinEnabled) {
-          // SECURITY: PIN is NOT enabled - remove early block if it was applied
-          const lockScreen = document.getElementById('pin-lock-screen');
-          if (lockScreen) {
-            lockScreen.style.display = 'none';
-            lockScreen.classList.remove('active');
-          }
-          const appContainer = document.getElementById('app-container');
-          if (appContainer) appContainer.style.visibility = '';
-        }
-      } else {
-        // SECURITY: Server error - remove early block to not lock user out
-        const lockScreen = document.getElementById('pin-lock-screen');
-        if (lockScreen && !pinEnabled) {
-          lockScreen.style.display = 'none';
-          lockScreen.classList.remove('active');
-          const appContainer = document.getElementById('app-container');
-          if (appContainer) appContainer.style.visibility = '';
         }
       }
     } catch (error) {
       console.error('[PIN] Error loading status:', error);
-      // SECURITY: Network error - remove early block to not lock user out
-      const lockScreen = document.getElementById('pin-lock-screen');
-      if (lockScreen && !pinEnabled) {
-        lockScreen.style.display = 'none';
-        lockScreen.classList.remove('active');
-        const appContainer = document.getElementById('app-container');
-        if (appContainer) appContainer.style.visibility = '';
-      }
     }
   }
 
@@ -805,44 +779,12 @@
     }
   }
 
-  // ===== EARLY PIN CHECK (before app-ready) =====
-  // SECURITY: Check localStorage for PIN state IMMEDIATELY to block content
-  function earlyPinBlock() {
-    try {
-      // Check if user had PIN enabled from previous session
-      const savedUser = localStorage.getItem('accessoireUser');
-      if (savedUser) {
-        const user = JSON.parse(savedUser);
-        if (user && user.id) {
-          // Quick sync check - show lock screen preemptively
-          const lockScreen = document.getElementById('pin-lock-screen');
-          if (lockScreen && !window._pinUnlocked) {
-            // We'll verify with server shortly, but block UI NOW
-            // The lock screen starts hidden, we make it ready
-            lockScreen.style.display = 'flex';
-            lockScreen.style.opacity = '1';
-            lockScreen.classList.add('active');
-            // Hide app content behind it
-            const appContainer = document.getElementById('app-container');
-            if (appContainer) appContainer.style.visibility = 'hidden';
-            console.log('[PIN] Early block: lock screen shown preemptively');
-          }
-        }
-      }
-    } catch(e) {
-      console.log('[PIN] Early check error:', e);
-    }
-  }
-
   // ===== INITIALIZATION =====
   function initPinSystem() {
     console.log('[PIN] Initializing PIN lock system...');
 
     // Listen for app resume (Cordova)
     document.addEventListener('resume', onAppResume, false);
-    
-    // SECURITY: Block UI early if PIN might be enabled
-    earlyPinBlock();
 
     // Load PIN status after user is logged in
     // We use an interval to wait for currentUser to be available
@@ -855,14 +797,6 @@
       }
       if (checkCount > 60) { // Give up after 30 seconds
         clearInterval(checkInterval);
-        // SECURITY: If no user after 30s, remove early block
-        const lockScreen = document.getElementById('pin-lock-screen');
-        if (lockScreen && !pinEnabled) {
-          lockScreen.style.display = 'none';
-          lockScreen.classList.remove('active');
-          const appContainer = document.getElementById('app-container');
-          if (appContainer) appContainer.style.visibility = '';
-        }
       }
     }, 500);
   }
