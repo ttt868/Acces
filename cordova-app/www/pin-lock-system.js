@@ -486,14 +486,12 @@
     clearLockDots();
     hideLockError();
 
-    // SECURITY: Show lock screen INSTANTLY - no fade-in delay
     lockScreen.style.display = 'flex';
-    lockScreen.style.opacity = '1';
-    lockScreen.classList.add('active');
-    
-    // SECURITY: Hide app content behind lock screen
-    const appContainer = document.getElementById('app-container');
-    if (appContainer) appContainer.style.visibility = 'hidden';
+    lockScreen.style.opacity = '0';
+    requestAnimationFrame(() => {
+      lockScreen.classList.add('active');
+      lockScreen.style.opacity = '1';
+    });
 
     // Show biometric button if enabled
     const bioBtn = document.getElementById('pin-biometric-btn');
@@ -518,10 +516,6 @@
     // Cooldown: prevent re-locking for 2 seconds after unlock
     _unlockCooldown = true;
     setTimeout(() => { _unlockCooldown = false; }, 2000);
-    
-    // SECURITY: Restore app content visibility BEFORE hiding lock screen
-    const appContainer = document.getElementById('app-container');
-    if (appContainer) appContainer.style.visibility = '';
     
     const lockScreen = document.getElementById('pin-lock-screen');
     if (lockScreen) {
@@ -752,7 +746,7 @@
   // ===== APP LIFECYCLE =====
   // Track when app goes to background
   var _pausedAt = 0;
-  var PIN_BACKGROUND_THRESHOLD = 5000; // Only show PIN if app was in background > 5 seconds
+  var PIN_BACKGROUND_THRESHOLD = 30000; // Only show PIN if app was in background > 30 seconds
 
   document.addEventListener('pause', function() {
     _pausedAt = Date.now();
@@ -764,7 +758,8 @@
     var backgroundDuration = Date.now() - _pausedAt;
     console.log('[PIN] App resumed, background duration:', backgroundDuration, 'ms');
 
-    // Only skip PIN for very short pauses (camera, share dialog, ads)
+    // Only show PIN lock if app was in background for more than 5 seconds
+    // Short pauses = camera, gallery, share dialog, modals, ads, etc.
     if (backgroundDuration < PIN_BACKGROUND_THRESHOLD) {
       console.log('[PIN] Short pause (' + backgroundDuration + 'ms < ' + PIN_BACKGROUND_THRESHOLD + 'ms), skipping PIN');
       return;
@@ -772,9 +767,6 @@
     
     if (pinEnabled && window._pinUnlocked) {
       window._pinUnlocked = false;
-      // SECURITY: Hide app content INSTANTLY before showing lock
-      const appContainer = document.getElementById('app-container');
-      if (appContainer) appContainer.style.visibility = 'hidden';
       showLockScreen();
     }
   }
