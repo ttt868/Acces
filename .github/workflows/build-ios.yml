@@ -123,6 +123,17 @@ jobs:
           echo '✅ Firebase Analytics pod version set to ~> 8.15.0'
         fi
         
+        # Fix GoogleUtilities version conflict:
+        # googleplus plugin pins GoogleUtilities to ~> 7.2.2 (max 7.2.x)
+        # but Firebase 8.15 needs GoogleUtilities ~> 7.7
+        # Solution: Relax GoogleUtilities to ~> 7.7 (compatible with both)
+        GP_PLUGIN="plugins/cordova-plugin-googleplus/plugin.xml"
+        if [ -f "$GP_PLUGIN" ]; then
+          sed -i '' 's|GoogleUtilities" spec="~> 7.2.2"|GoogleUtilities" spec="~> 7.7"|g' "$GP_PLUGIN"
+          echo '✅ GoogleUtilities version relaxed to ~> 7.7'
+          grep -n 'GoogleUtilities' "$GP_PLUGIN" || true
+        fi
+        
         echo '📋 GoogleSignIn version in googleplus plugin:'
         grep -n 'GoogleSignIn' plugins/cordova-plugin-googleplus/plugin.xml || true
     
@@ -172,13 +183,26 @@ jobs:
         sed -i '' "s|pod 'Firebase/Analytics', '~> 9.[0-9.]*'|pod 'Firebase/Analytics', '~> 8.15.0'|g" Podfile
         sed -i '' "s|pod 'Firebase/Analytics', '~> 10.[0-9.]*'|pod 'Firebase/Analytics', '~> 8.15.0'|g" Podfile
         
+        # Fix GoogleUtilities version (must be ~> 7.7 to work with Firebase 8.15)
+        sed -i '' "s|pod 'GoogleUtilities', '~> 7.2.2'|pod 'GoogleUtilities', '~> 7.7'|g" Podfile
+        
         echo '📋 Fixed Podfile:'
         cat Podfile
         echo ''
         
         # Fresh pod install
         echo '📦 Running pod install with fresh resolution...'
-        pod install --repo-update --verbose 2>&1 | tail -40
+        pod install --repo-update 2>&1 | tail -30
+        
+        # Verify Podfile.lock was created
+        if [ -f "Podfile.lock" ]; then
+          echo '✅ Podfile.lock created'
+          echo '📋 Installed pods:'
+          grep '  - ' Podfile.lock | head -20
+        else
+          echo '❌ Podfile.lock NOT created - pod install failed'
+          exit 1
+        fi
         
         echo '✅ CocoaPods resolved successfully'
     
