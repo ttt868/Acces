@@ -746,7 +746,7 @@
   // ===== APP LIFECYCLE =====
   // Track when app goes to background
   var _pausedAt = 0;
-  var PIN_BACKGROUND_THRESHOLD = 5000; // Show PIN if app was in background > 5 seconds
+  var PIN_BACKGROUND_THRESHOLD = 30000; // Show PIN if app was in background > 30 seconds
   var APP_RELOAD_THRESHOLD = 300000; // Full reload if in background > 5 minutes
 
   document.addEventListener('pause', function() {
