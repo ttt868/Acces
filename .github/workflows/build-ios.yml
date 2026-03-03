@@ -263,7 +263,6 @@ jobs:
         SCHEME="Access Network"
         
         if [ -z "$WORKSPACE" ]; then
-          # Fallback to the one inside xcodeproj
           WORKSPACE=$(find platforms/ios -name "*.xcworkspace" ! -path "*xcodeproj*" | head -1)
         fi
         
@@ -281,37 +280,33 @@ jobs:
         cd ../..
         
         if [ -n "$WORKSPACE" ]; then
+          # Build for generic iOS device (no signing needed, produces .app for device arch)
+          # GoogleSignIn 5.x framework doesn't include simulator arm64 slices
+          # So we build for device architecture without code signing
+          set -o pipefail
           xcodebuild build \
             -workspace "$WORKSPACE" \
             -scheme "$SCHEME" \
             -configuration Debug \
-            -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             DEVELOPMENT_TEAM="" \
             CODE_SIGN_ENTITLEMENTS="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
             ONLY_ACTIVE_ARCH=NO \
-            | tail -60
+            2>&1 | tee /tmp/xcodebuild.log | tail -80
           
-          BUILD_EXIT=$?
+          BUILD_EXIT=${PIPESTATUS[0]}
           if [ $BUILD_EXIT -eq 0 ]; then
             echo '✅ iOS build completed successfully'
           else
-            echo "⚠️ Build exited with code $BUILD_EXIT"
-            echo 'Trying with xcodeproj instead...'
-            PROJ=$(find platforms/ios -name "*.xcodeproj" | head -1)
-            xcodebuild build \
-              -project "$PROJ" \
-              -scheme "$SCHEME" \
-              -configuration Debug \
-              -sdk iphonesimulator \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              ONLY_ACTIVE_ARCH=NO \
-              | tail -40
+            echo "❌ Build failed with code $BUILD_EXIT"
+            echo '📋 Last 30 errors:'
+            grep -i "error:" /tmp/xcodebuild.log | tail -30
+            exit 1
           fi
         else
           echo '❌ No Xcode workspace/project found'
@@ -322,10 +317,11 @@ jobs:
     - name: List build output
       run: |
         echo '📱 iOS build output:'
-        find cordova-app/platforms/ios/build -name "*.app" -o -name "*.ipa" -o -name "*.xcarchive" 2>/dev/null | head -20 || echo "No build output found"
+        find cordova-app/platforms/ios/build -name "*.app" -type d 2>/dev/null | head -20 || echo "No .app found"
+        find cordova-app/platforms/ios/build -name "*.ipa" 2>/dev/null | head -20 || echo "No .ipa found"
         echo ''
         echo '📁 Build directory structure:'
-        ls -la cordova-app/platforms/ios/build/ 2>/dev/null || echo "No build directory"
+        find cordova-app/platforms/ios/build -maxdepth 4 -type d 2>/dev/null || echo "No build directory"
     
     # ============================================================
     # SIGNED BUILD (uncomment when Apple Developer account is ready)
