@@ -45,10 +45,36 @@
         // If PIN is enabled and app just opened, show lock screen
         if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
+        } else if (!pinEnabled) {
+          // SECURITY: PIN is NOT enabled - remove early block if it was applied
+          const lockScreen = document.getElementById('pin-lock-screen');
+          if (lockScreen) {
+            lockScreen.style.display = 'none';
+            lockScreen.classList.remove('active');
+          }
+          const appContainer = document.getElementById('app-container');
+          if (appContainer) appContainer.style.visibility = '';
+        }
+      } else {
+        // SECURITY: Server error - remove early block to not lock user out
+        const lockScreen = document.getElementById('pin-lock-screen');
+        if (lockScreen && !pinEnabled) {
+          lockScreen.style.display = 'none';
+          lockScreen.classList.remove('active');
+          const appContainer = document.getElementById('app-container');
+          if (appContainer) appContainer.style.visibility = '';
         }
       }
     } catch (error) {
       console.error('[PIN] Error loading status:', error);
+      // SECURITY: Network error - remove early block to not lock user out
+      const lockScreen = document.getElementById('pin-lock-screen');
+      if (lockScreen && !pinEnabled) {
+        lockScreen.style.display = 'none';
+        lockScreen.classList.remove('active');
+        const appContainer = document.getElementById('app-container');
+        if (appContainer) appContainer.style.visibility = '';
+      }
     }
   }
 
@@ -486,12 +512,14 @@
     clearLockDots();
     hideLockError();
 
+    // SECURITY: Show lock screen INSTANTLY - no fade-in delay
     lockScreen.style.display = 'flex';
-    lockScreen.style.opacity = '0';
-    requestAnimationFrame(() => {
-      lockScreen.classList.add('active');
-      lockScreen.style.opacity = '1';
-    });
+    lockScreen.style.opacity = '1';
+    lockScreen.classList.add('active');
+    
+    // SECURITY: Hide app content behind lock screen
+    const appContainer = document.getElementById('app-container');
+    if (appContainer) appContainer.style.visibility = 'hidden';
 
     // Show biometric button if enabled
     const bioBtn = document.getElementById('pin-biometric-btn');
@@ -516,6 +544,10 @@
     // Cooldown: prevent re-locking for 2 seconds after unlock
     _unlockCooldown = true;
     setTimeout(() => { _unlockCooldown = false; }, 2000);
+    
+    // SECURITY: Restore app content visibility BEFORE hiding lock screen
+    const appContainer = document.getElementById('app-container');
+    if (appContainer) appContainer.style.visibility = '';
     
     const lockScreen = document.getElementById('pin-lock-screen');
     if (lockScreen) {
@@ -746,7 +778,7 @@
   // ===== APP LIFECYCLE =====
   // Track when app goes to background
   var _pausedAt = 0;
-  var PIN_BACKGROUND_THRESHOLD = 30000; // Only show PIN if app was in background > 30 seconds
+  var PIN_BACKGROUND_THRESHOLD = 5000; // Only show PIN if app was in background > 5 seconds
 
   document.addEventListener('pause', function() {
     _pausedAt = Date.now();
@@ -758,8 +790,7 @@
     var backgroundDuration = Date.now() - _pausedAt;
     console.log('[PIN] App resumed, background duration:', backgroundDuration, 'ms');
 
-    // Only show PIN lock if app was in background for more than 5 seconds
-    // Short pauses = camera, gallery, share dialog, modals, ads, etc.
+    // Only skip PIN for very short pauses (camera, share dialog, ads)
     if (backgroundDuration < PIN_BACKGROUND_THRESHOLD) {
       console.log('[PIN] Short pause (' + backgroundDuration + 'ms < ' + PIN_BACKGROUND_THRESHOLD + 'ms), skipping PIN');
       return;
@@ -767,7 +798,39 @@
     
     if (pinEnabled && window._pinUnlocked) {
       window._pinUnlocked = false;
+      // SECURITY: Hide app content INSTANTLY before showing lock
+      const appContainer = document.getElementById('app-container');
+      if (appContainer) appContainer.style.visibility = 'hidden';
       showLockScreen();
+    }
+  }
+
+  // ===== EARLY PIN CHECK (before app-ready) =====
+  // SECURITY: Check localStorage for PIN state IMMEDIATELY to block content
+  function earlyPinBlock() {
+    try {
+      // Check if user had PIN enabled from previous session
+      const savedUser = localStorage.getItem('accessoireUser');
+      if (savedUser) {
+        const user = JSON.parse(savedUser);
+        if (user && user.id) {
+          // Quick sync check - show lock screen preemptively
+          const lockScreen = document.getElementById('pin-lock-screen');
+          if (lockScreen && !window._pinUnlocked) {
+            // We'll verify with server shortly, but block UI NOW
+            // The lock screen starts hidden, we make it ready
+            lockScreen.style.display = 'flex';
+            lockScreen.style.opacity = '1';
+            lockScreen.classList.add('active');
+            // Hide app content behind it
+            const appContainer = document.getElementById('app-container');
+            if (appContainer) appContainer.style.visibility = 'hidden';
+            console.log('[PIN] Early block: lock screen shown preemptively');
+          }
+        }
+      }
+    } catch(e) {
+      console.log('[PIN] Early check error:', e);
     }
   }
 
@@ -777,6 +840,9 @@
 
     // Listen for app resume (Cordova)
     document.addEventListener('resume', onAppResume, false);
+    
+    // SECURITY: Block UI early if PIN might be enabled
+    earlyPinBlock();
 
     // Load PIN status after user is logged in
     // We use an interval to wait for currentUser to be available
@@ -789,6 +855,14 @@
       }
       if (checkCount > 60) { // Give up after 30 seconds
         clearInterval(checkInterval);
+        // SECURITY: If no user after 30s, remove early block
+        const lockScreen = document.getElementById('pin-lock-screen');
+        if (lockScreen && !pinEnabled) {
+          lockScreen.style.display = 'none';
+          lockScreen.classList.remove('active');
+          const appContainer = document.getElementById('app-container');
+          if (appContainer) appContainer.style.visibility = '';
+        }
       }
     }, 500);
   }
