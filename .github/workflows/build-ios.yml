@@ -108,7 +108,7 @@ jobs:
         FCM_PLUGIN="plugins/cordova-plugin-firebase-messaging/plugin.xml"
         if [ -f "$FCM_PLUGIN" ]; then
           # Change Firebase pod version to 8.x (last version compatible with GoogleSignIn 5)
-          sed -i 's|spec="$IOS_FIREBASE_POD_VERSION"|spec="~> 8.15.0"|g' "$FCM_PLUGIN"
+          sed -i '' 's|spec="$IOS_FIREBASE_POD_VERSION"|spec="~> 8.15.0"|g' "$FCM_PLUGIN"
           # Also change any hardcoded 9.x or 10.x to 8.15
           perl -pi -e 's/Firebase\/Messaging.*?spec="[^"]*"/Firebase\/Messaging" spec="~> 8.15.0"/g' "$FCM_PLUGIN"
           perl -pi -e 's/Firebase\/Analytics.*?spec="[^"]*"/Firebase\/Analytics" spec="~> 8.15.0"/g' "$FCM_PLUGIN"
@@ -167,10 +167,10 @@ jobs:
         # GoogleSignIn 5.x is required because cordova-plugin-googleplus uses v5 delegate API
         
         # Force Firebase to 8.x (compatible with GoogleSignIn 5.x and GoogleUtilities 7.x)
-        sed -i "s|pod 'Firebase/Messaging', '~> 9.[0-9.]*'|pod 'Firebase/Messaging', '~> 8.15.0'|g" Podfile
-        sed -i "s|pod 'Firebase/Messaging', '~> 10.[0-9.]*'|pod 'Firebase/Messaging', '~> 8.15.0'|g" Podfile
-        sed -i "s|pod 'Firebase/Analytics', '~> 9.[0-9.]*'|pod 'Firebase/Analytics', '~> 8.15.0'|g" Podfile
-        sed -i "s|pod 'Firebase/Analytics', '~> 10.[0-9.]*'|pod 'Firebase/Analytics', '~> 8.15.0'|g" Podfile
+        sed -i '' "s|pod 'Firebase/Messaging', '~> 9.[0-9.]*'|pod 'Firebase/Messaging', '~> 8.15.0'|g" Podfile
+        sed -i '' "s|pod 'Firebase/Messaging', '~> 10.[0-9.]*'|pod 'Firebase/Messaging', '~> 8.15.0'|g" Podfile
+        sed -i '' "s|pod 'Firebase/Analytics', '~> 9.[0-9.]*'|pod 'Firebase/Analytics', '~> 8.15.0'|g" Podfile
+        sed -i '' "s|pod 'Firebase/Analytics', '~> 10.[0-9.]*'|pod 'Firebase/Analytics', '~> 8.15.0'|g" Podfile
         
         echo '📋 Fixed Podfile:'
         cat Podfile
