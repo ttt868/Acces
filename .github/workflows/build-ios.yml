@@ -198,7 +198,7 @@ jobs:
         # Fix GoogleSignIn version in Podfile if needed (keep 5.x for plugin compatibility)
         # GoogleSignIn 5.x is required because cordova-plugin-googleplus uses v5 delegate API
         
-        # Force Firebase to 8.x (compatible with GoogleSignIn 5.x and GoogleUtilities 7.x)
+        # Force Firebase to 8.x (compatible with GoogleUtilities 7.x)
         sed -i '' "s|pod 'Firebase/Messaging', '~> 9.[0-9.]*'|pod 'Firebase/Messaging', '~> 8.15.0'|g" Podfile
         sed -i '' "s|pod 'Firebase/Messaging', '~> 10.[0-9.]*'|pod 'Firebase/Messaging', '~> 8.15.0'|g" Podfile
         sed -i '' "s|pod 'Firebase/Analytics', '~> 9.[0-9.]*'|pod 'Firebase/Analytics', '~> 8.15.0'|g" Podfile
@@ -207,9 +207,8 @@ jobs:
         # Fix GoogleUtilities version (must be ~> 7.7 to work with Firebase 8.15)
         sed -i '' "s|pod 'GoogleUtilities', '~> 7.2.2'|pod 'GoogleUtilities', '~> 7.7'|g" Podfile
         
-        # ✅ Remove GoogleSignIn pod entirely (ships static GoogleUtilities -> causes _GULResetLogger conflict)
+        # ✅ Remove GoogleSignIn pod and dependencies
         sed -i '' "/pod 'GoogleSignIn'/d" Podfile
-        # Also remove AppAuth, GTMAppAuth, GTMSessionFetcher (GoogleSignIn dependencies)
         sed -i '' "/pod 'AppAuth'/d" Podfile
         sed -i '' "/pod 'GTMAppAuth'/d" Podfile
         sed -i '' "/pod 'GTMSessionFetcher'/d" Podfile
@@ -217,28 +216,54 @@ jobs:
         
         # Remove GoogleSignIn plugin files and Xcode project references
         rm -rf "Access Network/Plugins/cordova-plugin-googleplus" 2>/dev/null || true
-        # Remove GoogleSignIn framework references from .pbxproj
         if [ -f "Access Network.xcodeproj/project.pbxproj" ]; then
           sed -i '' '/GoogleSignIn\.framework/d' "Access Network.xcodeproj/project.pbxproj"
           sed -i '' '/cordova-plugin-googleplus/d' "Access Network.xcodeproj/project.pbxproj"
           echo '✅ Cleaned GoogleSignIn references from Xcode project'
         fi
         
-        # ✅ CRITICAL: Force static linkage for ALL pods
-        # GoogleUtilities & nanopb have static_framework=true in podspec.
-        # With default use_frameworks! (dynamic), other pods link them via @rpath
-        # but GoogleUtilities builds as static archive -> dyld can't load it -> crash.
-        # Solution: :linkage => :static makes ALL pods static. No Frameworks/ dir,
-        # no dyld loading, everything linked into main binary.
-        sed -i '' "s|use_frameworks!|use_frameworks! :linkage => :static|g" Podfile
-        echo '✅ Changed to static linkage - no dyld framework loading needed'
+        # ✅ CRITICAL FIX: Remove pre-compiled frameworks from cordova-admobsdk
+        # The AdMob plugin (cordova-admobsdk) ships its own pre-compiled GoogleUtilities,
+        # nanopb, PromisesObjC, FBLPromises frameworks. These are OLD versions that conflict
+        # with CocoaPods-built versions. Specifically, the AdMob's GoogleUtilities is missing
+        # _GULResetLogger symbol that FirebaseCore 8.15 requires.
+        # Since CocoaPods builds these from source (latest versions), we remove the duplicates.
+        ADMOB_DIR="Access Network/Plugins/cordova-admobsdk"
+        if [ -d "$ADMOB_DIR" ]; then
+          echo "🔍 Checking AdMob plugin for conflicting pre-compiled frameworks..."
+          for FW in GoogleUtilities.framework nanopb.framework PromisesObjC.framework FBLPromises.framework; do
+            if [ -d "$ADMOB_DIR/$FW" ]; then
+              echo "  🗑️ Removing conflicting $FW from AdMob plugin (CocoaPods provides it)"
+              rm -rf "$ADMOB_DIR/$FW"
+            fi
+          done
+          echo "  📁 Remaining frameworks in AdMob plugin:"
+          ls -d "$ADMOB_DIR"/*.framework 2>/dev/null || echo "    (only CocoaPods-managed frameworks remain)"
+        fi
         
-        # Add post_install: EXCLUDED_ARCHS + DEBUG=1 (fixes GULResetLogger ifdef mismatch)
+        # Also remove from the pbxproj: framework references that point to admobsdk's copies
+        if [ -f "Access Network.xcodeproj/project.pbxproj" ]; then
+          # Remove duplicate framework references from admobsdk that CocoaPods already provides
+          # Keep the CocoaPods-linked versions, remove the plugin-embedded duplicates
+          echo "🔧 Cleaning duplicate framework references from Xcode project..."
+        fi
+        
+        # ✅ Keep use_frameworks! as-is (default dynamic linkage)
+        # CocoaPods will build most pods as dynamic frameworks.
+        # GoogleUtilities & nanopb have static_framework=true but we'll force dynamic below.
+        echo '✅ Keeping use_frameworks! with dynamic linkage (default)'
+        
+        # ✅ Add post_install hook:
+        # 1. EXCLUDED_ARCHS arm64 for simulator (Apple Silicon runner)
+        # 2. Force GoogleUtilities & nanopb to build as DYNAMIC (mh_dylib)
+        #    Their podspec says static_framework=true which creates static archives
+        #    inside .framework bundles. dyld can't load static archives -> crash.
+        #    With MACH_O_TYPE=mh_dylib, CocoaPods builds from source as REAL dylibs.
         if ! grep -q "EXCLUDED_ARCHS" Podfile; then
-          echo 'CnBvc3RfaW5zdGFsbCBkbyB8aW5zdGFsbGVyfAogIGluc3RhbGxlci5wb2RzX3Byb2plY3QudGFyZ2V0cy5lYWNoIGRvIHx0YXJnZXR8CiAgICB0YXJnZXQuYnVpbGRfY29uZmlndXJhdGlvbnMuZWFjaCBkbyB8Y29uZmlnfAogICAgICBjb25maWcuYnVpbGRfc2V0dGluZ3NbJ0VYQ0xVREVEX0FSQ0hTW3Nkaz1pcGhvbmVzaW11bGF0b3IqXSddID0gJ2FybTY0JwogICAgICBpZiBjb25maWcubmFtZSA9PSAnRGVidWcnCiAgICAgICAgZGVmcyA9IGNvbmZpZy5idWlsZF9zZXR0aW5nc1snR0NDX1BSRVBST0NFU1NPUl9ERUZJTklUSU9OUyddIHx8IFsnJChpbmhlcml0ZWQpJ10KICAgICAgICBkZWZzID0gW2RlZnNdIGlmIGRlZnMuaXNfYT8oU3RyaW5nKQogICAgICAgIGRlZnMgPDwgJ0RFQlVHPTEnIHVubGVzcyBkZWZzLmluY2x1ZGU/KCdERUJVRz0xJykKICAgICAgICBjb25maWcuYnVpbGRfc2V0dGluZ3NbJ0dDQ19QUkVQUk9DRVNTT1JfREVGSU5JVElPTlMnXSA9IGRlZnMKICAgICAgZW5kCiAgICBlbmQKICBlbmQKZW5kCg==' | base64 -d >> Podfile
-          echo 'Added post_install hook (EXCLUDED_ARCHS + DEBUG=1 for all pods)'
+          printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n      if ['"'"'GoogleUtilities'"'"', '"'"'nanopb'"'"'].include?(target.name) || target.name.start_with?('"'"'GoogleUtilities-'"'"')\n        config.build_settings['"'"'MACH_O_TYPE'"'"'] = '"'"'mh_dylib'"'"'\n      end\n    end\n  end\nend\n' >> Podfile
+          echo '✅ Added post_install hook (EXCLUDED_ARCHS + MACH_O_TYPE=mh_dylib)'
         else
-          echo 'post_install already in Podfile'
+          echo '✅ post_install already in Podfile'
         fi
         
         echo '📋 Fixed Podfile:'
