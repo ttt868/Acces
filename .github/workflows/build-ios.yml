@@ -480,12 +480,6 @@ jobs:
       run: |
         echo '🔥 Ensuring Firebase is configured in AppDelegate...'
         
-        # STRATEGY: Inject [FIRApp configure] directly into Cordova's own AppDelegate.m
-        # This is the SAFEST approach:
-        # - No extra category files that can conflict
-        # - No method swizzling conflicts with FCM plugin
-        # - Runs first thing in didFinishLaunchingWithOptions
-        
         APPDELEGATE=$(find platforms/ios -name "AppDelegate.m" ! -path "*/Pods/*" ! -path "*/Plugins/*" | head -1)
         
         if [ -z "$APPDELEGATE" ]; then
@@ -496,68 +490,60 @@ jobs:
         
         echo "Found: $APPDELEGATE"
         
-        # Check if Firebase is already configured
-        if grep -q "FIRApp configure" "$APPDELEGATE"; then
-          echo "ℹ️ [FIRApp configure] already in AppDelegate.m"
-        else
-          echo "📝 Injecting [FIRApp configure] into AppDelegate.m..."
-          
-          # Add @import Firebase at the top (after existing imports)
-          if ! grep -q "@import Firebase" "$APPDELEGATE"; then
-            sed -i '' '/#import/a\
-        @import Firebase;' "$APPDELEGATE"
-            echo "  Added @import Firebase"
-          fi
-          
-          # Inject [FIRApp configure] at the beginning of didFinishLaunchingWithOptions
-          # Cordova's AppDelegate.m has: - (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:...
-          # We inject right after the opening brace of that method
-          export APPDELEGATE_FILE="$APPDELEGATE"
-          python3 << 'PYEOF'
+        export APPDELEGATE_FILE="$APPDELEGATE"
+        python3 << 'PYEOF'
         import re, os
         
         filepath = os.environ['APPDELEGATE_FILE']
         with open(filepath, 'r') as f:
             content = f.read()
         
-        # Find didFinishLaunchingWithOptions method and inject after its opening {
-        pattern = r'(didFinishLaunchingWithOptions[^{]*\{)'
-        firebase_code = r'''\1
-            // Firebase early init - before any plugin loads
+        original = content
+        
+        # Step 1: Add @import Firebase after the last #import line
+        if '@import Firebase' not in content:
+            lines = content.split('\n')
+            last_import_idx = -1
+            for i, line in enumerate(lines):
+                if line.strip().startswith('#import'):
+                    last_import_idx = i
+            if last_import_idx >= 0:
+                lines.insert(last_import_idx + 1, '@import Firebase;')
+                content = '\n'.join(lines)
+                print('Added @import Firebase')
+        
+        # Step 2: Inject [FIRApp configure] into didFinishLaunchingWithOptions
+        if '[FIRApp configure]' not in content:
+            firebase_inject = '''
+            // Firebase early init
             if (![FIRApp defaultApp]) {
                 [FIRApp configure];
-                NSLog(@"Firebase configured in AppDelegate.didFinishLaunching");
-            }
-        '''
-        
-        new_content = re.sub(pattern, firebase_code, content, count=1)
-        
-        if new_content != content:
-            with open(filepath, 'w') as f:
-                f.write(new_content)
-            print('Injected [FIRApp configure] into didFinishLaunchingWithOptions')
-        else:
-            print('WARNING: Could not find didFinishLaunchingWithOptions pattern')
-            # Fallback: try simpler pattern
-            pattern2 = r'(- \(BOOL\)application:.*didFinishLaunching.*\n\{)'
-            new_content2 = re.sub(pattern2, firebase_code, content, count=1)
-            if new_content2 != content:
-                with open(filepath, 'w') as f:
-                    f.write(new_content2)
-                print('Injected via fallback pattern')
+                NSLog(@"Firebase configured in AppDelegate");
+            }'''
+            # Find the opening { of didFinishLaunchingWithOptions
+            pattern = r'(didFinishLaunchingWithOptions[^{]*\{)'
+            match = re.search(pattern, content)
+            if match:
+                insert_pos = match.end()
+                content = content[:insert_pos] + firebase_inject + content[insert_pos:]
+                print('Injected [FIRApp configure] into didFinishLaunchingWithOptions')
             else:
-                print('FAILED: No matching pattern found')
-                print('--- File contents ---')
-                print(content[:2000])
-        PYEOF
-          
-          echo "📋 AppDelegate.m after patch:"
-          grep -n -A 5 "didFinishLaunching\|FIRApp" "$APPDELEGATE" | head -20
-        fi
+                print('WARNING: didFinishLaunchingWithOptions not found')
         
-        # Remove any conflicting AppDelegate+FirebaseInit.m category files
+        if content != original:
+            with open(filepath, 'w') as f:
+                f.write(content)
+            print('AppDelegate.m patched successfully')
+        else:
+            print('No changes needed')
+        PYEOF
+        
+        # Remove any conflicting category files
         find platforms/ios -name "AppDelegate+FirebaseInit.m" -delete 2>/dev/null || true
-        echo "✅ Firebase init complete (direct injection into AppDelegate.m)"
+        
+        echo "📋 AppDelegate.m key lines:"
+        grep -n "import\|FIRApp\|didFinish" "$APPDELEGATE" | head -10
+        echo "✅ Firebase init complete"
 
     - name: Fix InAppBrowser crash on close
       working-directory: cordova-app
