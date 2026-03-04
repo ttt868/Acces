@@ -194,6 +194,26 @@ jobs:
         # Fix GoogleUtilities version (must be ~> 7.7 to work with Firebase 8.15)
         sed -i '' "s|pod 'GoogleUtilities', '~> 7.2.2'|pod 'GoogleUtilities', '~> 7.7'|g" Podfile
         
+        # ✅ CRITICAL: Add post_install hook to exclude arm64 from ALL simulator targets
+        # macOS-14 runners are Apple Silicon (arm64). Without this, CocoaPods dynamic
+        # frameworks are built for arm64 only, but Appetize.io needs x86_64 simulator.
+        # This ensures ALL targets (pods + app) build for x86_64 simulator.
+        if ! grep -q "EXCLUDED_ARCHS" Podfile; then
+          cat >> Podfile << 'POSTINSTALL'
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+    end
+  end
+end
+POSTINSTALL
+          echo '✅ Added post_install hook to exclude arm64 from simulator pods'
+        else
+          echo '✅ EXCLUDED_ARCHS already in Podfile'
+        fi
+        
         echo '📋 Fixed Podfile:'
         cat Podfile
         echo ''
