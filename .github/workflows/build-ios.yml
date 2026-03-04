@@ -46,17 +46,25 @@ jobs:
       working-directory: cordova-app
       run: |
         echo '🖼️ Generating all required iOS icon sizes...'
-        SOURCE="www/access-store-512.png"
+        # Use the same icon as Android: test-icon.jpg (1024x1024)
+        SOURCE="www/test-icon.jpg"
         if [ ! -f "$SOURCE" ]; then
-          echo "⚠️ 512px source not found, trying access-store.png"
+          echo "⚠️ test-icon.jpg not found, falling back to access-store-512.png"
+          SOURCE="www/access-store-512.png"
+        fi
+        if [ ! -f "$SOURCE" ]; then
           SOURCE="www/access-store.png"
         fi
         
         mkdir -p res/ios-icons
         
-        # Generate all iOS required icon sizes
+        # Convert JPEG source to PNG first (iOS requires PNG icons)
+        sips -s format png "$SOURCE" --out "res/ios-icons/source-1024.png" > /dev/null 2>&1
+        PNG_SOURCE="res/ios-icons/source-1024.png"
+        
+        # Generate all iOS required icon sizes from the PNG source
         for SIZE in 20 29 40 58 60 76 80 87 120 152 167 180 1024; do
-          sips -z $SIZE $SIZE "$SOURCE" --out "res/ios-icons/icon-${SIZE}.png" > /dev/null 2>&1
+          sips -z $SIZE $SIZE "$PNG_SOURCE" --out "res/ios-icons/icon-${SIZE}.png" > /dev/null 2>&1
           echo "  ✅ icon-${SIZE}.png"
         done
         
