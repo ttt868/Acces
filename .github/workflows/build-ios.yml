@@ -194,20 +194,21 @@ jobs:
         # Fix GoogleUtilities version (must be ~> 7.7 to work with Firebase 8.15)
         sed -i '' "s|pod 'GoogleUtilities', '~> 7.2.2'|pod 'GoogleUtilities', '~> 7.7'|g" Podfile
         
-        # ✅ CRITICAL: Force dynamic linkage for frameworks
-        # CocoaPods 1.9+ with use_frameworks! builds STATIC frameworks by default.
-        # Static archives (.a) wrapped in .framework bundles cause dyld crash because
-        # they're embedded in Frameworks/ but dyld expects dynamic Mach-O, not ar archives.
-        # Changing to :linkage => :dynamic builds real dynamic frameworks that dyld can load.
-        sed -i '' "s|use_frameworks!|use_frameworks! :linkage => :dynamic|g" Podfile
-        echo '✅ Forced dynamic linkage for frameworks'
+        # ✅ CRITICAL: Fix framework linkage for simulator compatibility
+        # Problem: use_frameworks! creates framework bundles with STATIC libraries inside.
+        # dyld can't load static archives (.a) as dynamic frameworks -> instant crash.
+        # Solution: Remove use_frameworks!, use modular headers instead.
+        # Pods will be STATICALLY LINKED into the main binary (no dyld loading needed).
+        # Add :linkage => :static explicitly and use_modular_headers! for Swift compatibility.
+        sed -i '' "s|use_frameworks!|# use_frameworks! -- replaced with static linking\nuse_modular_headers!|g" Podfile
+        echo '✅ Replaced use_frameworks! with use_modular_headers! (static linking)'
         
-        # ✅ CRITICAL: Add post_install hook to exclude arm64 from ALL simulator targets
-        # macOS-14 runners are Apple Silicon (arm64). Without this, CocoaPods dynamic
-        # frameworks are built for arm64 only, but Appetize.io needs x86_64 simulator.
+        # ✅ CRITICAL: Add post_install hook to:
+        # 1. Exclude arm64 from ALL simulator targets (Apple Silicon runner)
+        # 2. Add -ObjC linker flag (needed for static library categories)
         if ! grep -q "EXCLUDED_ARCHS" Podfile; then
-          printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n    end\n  end\nend\n' >> Podfile
-          echo '✅ Added post_install hook to exclude arm64 from simulator pods'
+          printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n      config.build_settings['"'"'OTHER_LDFLAGS'"'"'] = '"'"'$(inherited) -ObjC'"'"'\n    end\n  end\nend\n' >> Podfile
+          echo '✅ Added post_install hook (EXCLUDED_ARCHS + -ObjC flag)'
         else
           echo '✅ EXCLUDED_ARCHS already in Podfile'
         fi
@@ -430,6 +431,38 @@ jobs:
           echo "✅ Simulator .app found: $SIM_APP"
           mkdir -p output-simulator
           cp -R "$SIM_APP" output-simulator/
+          
+          # ✅ CRITICAL: Remove any static frameworks from Frameworks/ directory
+          # With use_modular_headers! (static linking), pods are linked INTO the main binary.
+          # But some framework bundles may still be copied to Frameworks/ by CocoaPods scripts.
+          # These contain static archives (.a files) that dyld can't load -> instant crash.
+          # Safe to remove since the code is already in the main binary.
+          FRAMEWORKS_DIR="output-simulator/Access Network.app/Frameworks"
+          if [ -d "$FRAMEWORKS_DIR" ]; then
+            echo "🔍 Checking Frameworks/ for static archives..."
+            find "$FRAMEWORKS_DIR" -name "*.framework" -type d | while read fw; do
+              FW_NAME=$(basename "$fw" .framework)
+              BINARY="$fw/$FW_NAME"
+              if [ -f "$BINARY" ]; then
+                FILE_TYPE=$(file "$BINARY")
+                echo "  📋 $FW_NAME: $FILE_TYPE"
+                if echo "$FILE_TYPE" | grep -q "ar archive"; then
+                  echo "  🗑️ Removing STATIC framework: $FW_NAME (ar archive can't be loaded by dyld)"
+                  rm -rf "$fw"
+                elif echo "$FILE_TYPE" | grep -q "current ar archive"; then
+                  echo "  🗑️ Removing STATIC framework: $FW_NAME (ar archive can't be loaded by dyld)"
+                  rm -rf "$fw"
+                else
+                  echo "  ✅ Keeping dynamic framework: $FW_NAME"
+                fi
+              fi
+            done
+            echo "📁 Remaining frameworks after cleanup:"
+            ls -la "$FRAMEWORKS_DIR" 2>/dev/null || echo "  (Frameworks directory empty or removed)"
+          else
+            echo "ℹ️ No Frameworks/ directory found (expected with static linking)"
+          fi
+          
           # Create a ready-to-upload zip for Appetize.io
           cd output-simulator
           zip -r ../AccessNetwork-Simulator.zip "Access Network.app"
