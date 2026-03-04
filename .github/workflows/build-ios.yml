@@ -90,10 +90,12 @@ jobs:
         # Firebase Cloud Messaging
         cordova plugin add cordova-plugin-firebase-messaging@7.0.2 --save 2>/dev/null || true
         
-        # AdMob - cordova-plugin-ads (test App ID for now)
-        cordova plugin add cordova-plugin-ads@2.0.5 --save \
-          --variable ADMOB_IOS_APP_ID="ca-app-pub-3940256099942544~1458002511" \
-          2>/dev/null || true
+        # ⚠️ SKIP AdMob for iOS builds
+        # cordova-plugin-ads (cordova-admobsdk) ships pre-compiled GoogleAppMeasurement,
+        # GoogleUtilities, nanopb, PromisesObjC frameworks that CONFLICT with CocoaPods-
+        # built versions from Firebase. Causes duplicate symbols / missing symbols crash.
+        # AdMob will work on Android. iOS AdMob can be added later via CocoaPods directly.
+        echo '⏭️ Skipping cordova-plugin-ads for iOS (pre-compiled framework conflicts)'
         
         # Biometric (Face ID / Touch ID)
         cordova plugin add cordova-plugin-fingerprint-aio@5.0.1 --save \
@@ -130,32 +132,55 @@ jobs:
         echo '✅ Pod version fixes applied (no GoogleSignIn in iOS build)'
     
 
-    - name: Remove GoogleSignIn from config.xml for iOS
+    - name: Remove conflicting plugins from config.xml for iOS
       working-directory: cordova-app
       run: |
-        echo '🔧 Removing cordova-plugin-googleplus from config.xml for iOS build...'
-        echo '   GoogleSignIn 5.x ships pre-compiled STATIC GoogleUtilities -> dyld crash.'
-        echo '   Google Sign-In still works on Android via build-android.yml.'
+        echo '🔧 Removing conflicting plugins from config.xml for iOS build...'
+        echo '   GoogleSignIn 5.x & AdMob ship pre-compiled frameworks that conflict with'
+        echo '   CocoaPods Firebase. Both still work on Android via build-android.yml.'
+        
+        # Remove cordova-plugin-googleplus
         perl -0777 -i -pe 's|\s*<!-- Google Sign-In.*?-->\s*<plugin name="cordova-plugin-googleplus".*?</plugin>||s' config.xml
         if grep -q 'cordova-plugin-googleplus' config.xml; then
-          echo 'Plugin still in config.xml, trying sed fallback...'
           sed -i '' '/<plugin name="cordova-plugin-googleplus"/,/<\/plugin>/d' config.xml
           sed -i '' '/Google Sign-In Plugin/d' config.xml
         fi
-        echo '✅ cordova-plugin-googleplus removed from config.xml'
-        grep -n 'googleplus\|GoogleSignIn' config.xml || echo '   (confirmed: no GoogleSignIn references)'
+        echo '✅ cordova-plugin-googleplus removed'
         
-        # Also remove from package.json to prevent Cordova from restoring it during platform add
-        echo '🔧 Removing cordova-plugin-googleplus from package.json...'
+        # Remove cordova-plugin-ads (cordova-admobsdk)
+        perl -0777 -i -pe 's|\s*<plugin name="cordova-plugin-ads".*?</plugin>||s' config.xml
+        if grep -q 'cordova-plugin-ads' config.xml; then
+          sed -i '' '/<plugin name="cordova-plugin-ads"/,/<\/plugin>/d' config.xml
+        fi
+        # Also remove cordova-admobsdk reference
+        perl -0777 -i -pe 's|\s*<plugin name="cordova-admobsdk".*?</plugin>||s' config.xml
+        if grep -q 'cordova-admobsdk' config.xml; then
+          sed -i '' '/<plugin name="cordova-admobsdk"/,/<\/plugin>/d' config.xml
+        fi
+        echo '✅ cordova-plugin-ads / cordova-admobsdk removed'
+        
+        # Verify
+        grep -n 'googleplus\|GoogleSignIn\|cordova-plugin-ads\|cordova-admobsdk\|admob' config.xml || echo '   (confirmed: no conflicting plugins)'
+        
+        # Remove from package.json
+        echo '🔧 Cleaning package.json...'
         node -e "
           const fs = require('fs');
           const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
-          if (pkg.dependencies) delete pkg.dependencies['cordova-plugin-googleplus'];
-          if (pkg.cordova && pkg.cordova.plugins) delete pkg.cordova.plugins['cordova-plugin-googleplus'];
+          if (pkg.dependencies) {
+            delete pkg.dependencies['cordova-plugin-googleplus'];
+            delete pkg.dependencies['cordova-plugin-ads'];
+            delete pkg.dependencies['cordova-admobsdk'];
+          }
+          if (pkg.cordova && pkg.cordova.plugins) {
+            delete pkg.cordova.plugins['cordova-plugin-googleplus'];
+            delete pkg.cordova.plugins['cordova-plugin-ads'];
+            delete pkg.cordova.plugins['cordova-admobsdk'];
+          }
           fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
-          console.log('✅ Removed from package.json');
+          console.log('✅ Cleaned package.json');
         "
-        grep -i 'googleplus' package.json && echo '⚠️ Still in package.json' || echo '   (confirmed: no googleplus in package.json)'
+        grep -i 'googleplus\|admob' package.json && echo '⚠️ Still references' || echo '   (confirmed: clean package.json)'
 
 
     - name: Add iOS platform (allow pod install to fail, we fix it later)
@@ -190,80 +215,46 @@ jobs:
         # Remove stale lock file to allow fresh resolution
         rm -f Podfile.lock
         
-        # Check current Podfile
         echo '📋 Current Podfile:'
         cat Podfile
         echo ''
         
-        # Fix GoogleSignIn version in Podfile if needed (keep 5.x for plugin compatibility)
-        # GoogleSignIn 5.x is required because cordova-plugin-googleplus uses v5 delegate API
-        
-        # Force Firebase to 8.x (compatible with GoogleUtilities 7.x)
+        # Force Firebase to 8.x (stable, compatible with current SDK versions)
         sed -i '' "s|pod 'Firebase/Messaging', '~> 9.[0-9.]*'|pod 'Firebase/Messaging', '~> 8.15.0'|g" Podfile
         sed -i '' "s|pod 'Firebase/Messaging', '~> 10.[0-9.]*'|pod 'Firebase/Messaging', '~> 8.15.0'|g" Podfile
         sed -i '' "s|pod 'Firebase/Analytics', '~> 9.[0-9.]*'|pod 'Firebase/Analytics', '~> 8.15.0'|g" Podfile
         sed -i '' "s|pod 'Firebase/Analytics', '~> 10.[0-9.]*'|pod 'Firebase/Analytics', '~> 8.15.0'|g" Podfile
         
-        # Fix GoogleUtilities version (must be ~> 7.7 to work with Firebase 8.15)
-        sed -i '' "s|pod 'GoogleUtilities', '~> 7.2.2'|pod 'GoogleUtilities', '~> 7.7'|g" Podfile
-        
-        # ✅ Remove GoogleSignIn pod and dependencies
+        # Remove any leftover GoogleSignIn/AppAuth/GTM pods (from prior builds)
         sed -i '' "/pod 'GoogleSignIn'/d" Podfile
+        sed -i '' "/pod 'GoogleUtilities'/d" Podfile
         sed -i '' "/pod 'AppAuth'/d" Podfile
         sed -i '' "/pod 'GTMAppAuth'/d" Podfile
         sed -i '' "/pod 'GTMSessionFetcher'/d" Podfile
-        echo '✅ Removed GoogleSignIn and dependencies from Podfile'
+        echo '✅ Cleaned Podfile of GoogleSignIn/AdMob leftovers'
         
-        # Remove GoogleSignIn plugin files and Xcode project references
+        # Remove GoogleSignIn and AdMob plugin files from the Xcode project
         rm -rf "Access Network/Plugins/cordova-plugin-googleplus" 2>/dev/null || true
+        rm -rf "Access Network/Plugins/cordova-admobsdk" 2>/dev/null || true
+        rm -rf "Access Network/Plugins/cordova-plugin-ads" 2>/dev/null || true
         if [ -f "Access Network.xcodeproj/project.pbxproj" ]; then
-          sed -i '' '/GoogleSignIn\.framework/d' "Access Network.xcodeproj/project.pbxproj"
+          sed -i '' '/GoogleSignIn/d' "Access Network.xcodeproj/project.pbxproj"
           sed -i '' '/cordova-plugin-googleplus/d' "Access Network.xcodeproj/project.pbxproj"
-          echo '✅ Cleaned GoogleSignIn references from Xcode project'
+          sed -i '' '/cordova-admobsdk/d' "Access Network.xcodeproj/project.pbxproj"
+          sed -i '' '/cordova-plugin-ads/d' "Access Network.xcodeproj/project.pbxproj"
+          sed -i '' '/GoogleMobileAds/d' "Access Network.xcodeproj/project.pbxproj"
+          sed -i '' '/GoogleAppMeasurement/d' "Access Network.xcodeproj/project.pbxproj"
+          sed -i '' '/UserMessagingPlatform/d' "Access Network.xcodeproj/project.pbxproj"
+          echo '✅ Cleaned Xcode project references'
         fi
         
-        # ✅ CRITICAL FIX: Remove pre-compiled frameworks from cordova-admobsdk
-        # The AdMob plugin (cordova-admobsdk) ships its own pre-compiled GoogleUtilities,
-        # nanopb, PromisesObjC, FBLPromises frameworks. These are OLD versions that conflict
-        # with CocoaPods-built versions. Specifically, the AdMob's GoogleUtilities is missing
-        # _GULResetLogger symbol that FirebaseCore 8.15 requires.
-        # Since CocoaPods builds these from source (latest versions), we remove the duplicates.
-        ADMOB_DIR="Access Network/Plugins/cordova-admobsdk"
-        if [ -d "$ADMOB_DIR" ]; then
-          echo "🔍 Checking AdMob plugin for conflicting pre-compiled frameworks..."
-          for FW in GoogleUtilities.framework nanopb.framework PromisesObjC.framework FBLPromises.framework; do
-            if [ -d "$ADMOB_DIR/$FW" ]; then
-              echo "  🗑️ Removing conflicting $FW from AdMob plugin (CocoaPods provides it)"
-              rm -rf "$ADMOB_DIR/$FW"
-            fi
-          done
-          echo "  📁 Remaining frameworks in AdMob plugin:"
-          ls -d "$ADMOB_DIR"/*.framework 2>/dev/null || echo "    (only CocoaPods-managed frameworks remain)"
-        fi
-        
-        # Also remove from the pbxproj: framework references that point to admobsdk's copies
-        if [ -f "Access Network.xcodeproj/project.pbxproj" ]; then
-          # Remove duplicate framework references from admobsdk that CocoaPods already provides
-          # Keep the CocoaPods-linked versions, remove the plugin-embedded duplicates
-          echo "🔧 Cleaning duplicate framework references from Xcode project..."
-        fi
-        
-        # ✅ Keep use_frameworks! as-is (default dynamic linkage)
-        # CocoaPods will build most pods as dynamic frameworks.
-        # GoogleUtilities & nanopb have static_framework=true but we'll force dynamic below.
-        echo '✅ Keeping use_frameworks! with dynamic linkage (default)'
-        
-        # ✅ Add post_install hook:
-        # 1. EXCLUDED_ARCHS arm64 for simulator (Apple Silicon runner)
-        # 2. Force GoogleUtilities & nanopb to build as DYNAMIC (mh_dylib)
-        #    Their podspec says static_framework=true which creates static archives
-        #    inside .framework bundles. dyld can't load static archives -> crash.
-        #    With MACH_O_TYPE=mh_dylib, CocoaPods builds from source as REAL dylibs.
+        # ✅ Add post_install hook: EXCLUDED_ARCHS for Apple Silicon runner
+        # Also force GoogleUtilities & nanopb to build as REAL dynamic libraries.
+        # Their podspec has static_framework=true -> builds static archives in .framework
+        # bundles -> dyld can't load them. MACH_O_TYPE=mh_dylib overrides this.
         if ! grep -q "EXCLUDED_ARCHS" Podfile; then
           printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n      if ['"'"'GoogleUtilities'"'"', '"'"'nanopb'"'"'].include?(target.name) || target.name.start_with?('"'"'GoogleUtilities-'"'"')\n        config.build_settings['"'"'MACH_O_TYPE'"'"'] = '"'"'mh_dylib'"'"'\n      end\n    end\n  end\nend\n' >> Podfile
-          echo '✅ Added post_install hook (EXCLUDED_ARCHS + MACH_O_TYPE=mh_dylib)'
-        else
-          echo '✅ post_install already in Podfile'
+          echo '✅ Added post_install hook'
         fi
         
         echo '📋 Fixed Podfile:'
@@ -274,7 +265,7 @@ jobs:
         echo '📦 Running pod install with fresh resolution...'
         pod install --repo-update 2>&1 | tail -30
         
-        # Verify Podfile.lock was created
+        # Verify Podfile.lock
         if [ -f "Podfile.lock" ]; then
           echo '✅ Podfile.lock created'
           echo '📋 Installed pods:'
@@ -344,36 +335,24 @@ jobs:
           find platforms/ios -name "*.appiconset" -type d 2>/dev/null || true
         fi
 
-    - name: Fix AdMob iOS App ID in Info.plist
+    - name: Fix Firebase iOS plist settings
       working-directory: cordova-app
       run: |
-        echo '🔧 Fixing AdMob App ID for iOS...'
-        # Find the MAIN APP Info.plist (not CordovaLib, not Pods, not Frameworks)
+        echo '🔧 Setting Firebase plist entries...'
         APP_PLIST=$(find platforms/ios -maxdepth 3 -name "*-Info.plist" ! -path "*/Pods/*" ! -path "*/CordovaLib/*" | head -1)
         if [ -z "$APP_PLIST" ]; then
-          # Fallback: look for Info.plist in the app directory specifically
           APP_PLIST=$(find platforms/ios -path "*/Access Network/Info.plist" | head -1)
         fi
         if [ -z "$APP_PLIST" ]; then
-          # Last resort: any Info.plist not in CordovaLib/Pods/Frameworks
           APP_PLIST=$(find platforms/ios -maxdepth 3 -name "Info.plist" ! -path "*/Pods/*" ! -path "*/Frameworks/*" ! -path "*/CordovaLib/*" | head -1)
         fi
         if [ -n "$APP_PLIST" ]; then
           echo "Main app Info.plist: $APP_PLIST"
-          # Set GADApplicationIdentifier (try Set first, then Add if key doesn't exist)
-          /usr/libexec/PlistBuddy -c "Set :GADApplicationIdentifier ca-app-pub-3940256099942544~1458002511" "$APP_PLIST" 2>/dev/null || \
-          /usr/libexec/PlistBuddy -c "Add :GADApplicationIdentifier string ca-app-pub-3940256099942544~1458002511" "$APP_PLIST" 2>/dev/null || true
-          # Delay AdMob measurement init to prevent early crash
-          /usr/libexec/PlistBuddy -c "Set :GADDelayAppMeasurementInit bool true" "$APP_PLIST" 2>/dev/null || \
-          /usr/libexec/PlistBuddy -c "Add :GADDelayAppMeasurementInit bool true" "$APP_PLIST" 2>/dev/null || true
           # Disable Firebase AppDelegate proxy (prevents swizzling conflicts with cordova-ios 7.x)
           /usr/libexec/PlistBuddy -c "Set :FirebaseAppDelegateProxyEnabled bool false" "$APP_PLIST" 2>/dev/null || \
           /usr/libexec/PlistBuddy -c "Add :FirebaseAppDelegateProxyEnabled bool false" "$APP_PLIST" 2>/dev/null || true
-          echo "✅ AdMob, Firebase plist entries fixed"
-          echo "Verifying..."
-          /usr/libexec/PlistBuddy -c "Print :GADApplicationIdentifier" "$APP_PLIST" 2>/dev/null || echo "⚠️ GADApplicationIdentifier not set"
-          /usr/libexec/PlistBuddy -c "Print :GADDelayAppMeasurementInit" "$APP_PLIST" 2>/dev/null || echo "⚠️ GADDelayAppMeasurementInit not set"
-          /usr/libexec/PlistBuddy -c "Print :FirebaseAppDelegateProxyEnabled" "$APP_PLIST" 2>/dev/null || echo "⚠️ FirebaseAppDelegateProxyEnabled not set"
+          echo "✅ Firebase plist entries set"
+          /usr/libexec/PlistBuddy -c "Print :FirebaseAppDelegateProxyEnabled" "$APP_PLIST" 2>/dev/null || echo "⚠️ Not set"
         else
           echo "⚠️ Could not find main Info.plist"
           find platforms/ios -name "Info.plist" -type f | head -10
