@@ -450,7 +450,7 @@ jobs:
         if 'LaunchScreen.storyboard' not in content:
             content = content.replace(
                 '/* End PBXFileReference section */',
-                f'\t\t{file_ref_id} /* LaunchScreen.storyboard */ = {{isa = PBXFileReference; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = "Access Network/LaunchScreen.storyboard"; sourceTree = "<group>"; }};\n/* End PBXFileReference section */'
+                f'\t\t{file_ref_id} /* LaunchScreen.storyboard */ = {{isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; }};\n/* End PBXFileReference section */'
             )
             content = content.replace(
                 '/* End PBXBuildFile section */',
@@ -461,6 +461,13 @@ jobs:
             if match:
                 insertion_point = match.end()
                 content = content[:insertion_point] + f'\t\t\t\t{build_file_id} /* LaunchScreen.storyboard in Resources */,\n' + content[insertion_point:]
+            
+            # Add to main group so Xcode can find the file
+            grp_pat = r'(children = \([^)]*AppDelegate\.m[^)]*?)(\);)'
+            grp = re.search(grp_pat, content)
+            if grp:
+                content = content[:grp.start(2)] + f'\n\t\t\t\t{file_ref_id} /* LaunchScreen.storyboard */,\n\t\t\t' + content[grp.start(2):]
+            
             with open(pbxproj, 'w') as f:
                 f.write(content)
             print("✅ LaunchScreen.storyboard added to Xcode project")
@@ -779,12 +786,13 @@ jobs:
             
             # ============================================
             # PHASE 9: Inject iOS safety script after <body>
-            # This is a BACKUP - CSS changes above should make content visible
-            # even without this script running
+            # - Visibility enforcement
+            # - Override window.open to use _system (Safari) not _blank (IAB)
+            #   This prevents InAppBrowser WebProcess crash loop
             # ============================================
             safety = """<script>
-        // iOS WKWebView safety - backup visibility enforcement
         (function() {
+          // Visibility enforcement
           var t = setInterval(function() {
             if (document.body) {
               document.body.style.opacity = '1';
@@ -793,6 +801,27 @@ jobs:
               clearInterval(t);
             }
           }, 100);
+
+          // Override window.open: use _system (Safari) instead of _blank (IAB)
+          // InAppBrowser close() on iOS causes WebProcess crash loop
+          var _origOpen = window.open;
+          window.open = function(url, target, opts) {
+            if (url && typeof url === 'string') {
+              // External URLs → open in Safari (_system)
+              if (url.startsWith('http://') || url.startsWith('https://')) {
+                if (window.cordova && window.cordova.InAppBrowser) {
+                  return window.cordova.InAppBrowser.open(url, '_system');
+                }
+                return _origOpen.call(window, url, '_system', opts);
+              }
+              // Local files → open inline, no IAB
+              if (url.startsWith('./') || url.startsWith('/') || url.startsWith('app://')) {
+                window.location.href = url;
+                return null;
+              }
+            }
+            return _origOpen.call(window, url, '_system', opts);
+          };
         })();
         </script>"""
             content = re.sub(r'(<body[^>]*>)', r'\1\n' + safety, content, count=1)
