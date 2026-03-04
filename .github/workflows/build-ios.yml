@@ -366,10 +366,29 @@ jobs:
         # Find the Xcode project paths
         APP_DIR=$(find platforms/ios -maxdepth 2 -name "Access Network" -type d ! -path "*.xcworkspace*" ! -path "*.xcodeproj*" | head -1)
         STORYBOARD_DIR="$APP_DIR"
-        XCASSETS_DIR=$(find platforms/ios -path "*/Images.xcassets" -type d | head -1)
+        
+        # Find xcassets - try multiple patterns
+        XCASSETS_DIR=$(find platforms/ios -name "Images.xcassets" -type d 2>/dev/null | head -1)
+        if [ -z "$XCASSETS_DIR" ]; then
+          XCASSETS_DIR=$(find platforms/ios -name "Assets.xcassets" -type d 2>/dev/null | head -1)
+        fi
+        if [ -z "$XCASSETS_DIR" ]; then
+          # Create it in the app directory
+          XCASSETS_DIR="$APP_DIR/Images.xcassets"
+          mkdir -p "$XCASSETS_DIR"
+          echo '{"info":{"author":"xcode","version":1}}' > "$XCASSETS_DIR/Contents.json"
+          echo "Created xcassets at: $XCASSETS_DIR"
+        fi
         
         echo "App dir: $APP_DIR"
         echo "Xcassets: $XCASSETS_DIR"
+        
+        if [ -z "$APP_DIR" ]; then
+          echo "⚠️ Could not find app directory, listing platform structure:"
+          find platforms/ios -maxdepth 3 -type d | head -20
+          echo "Skipping LaunchScreen setup"
+          exit 0
+        fi
         
         # 1. Create LaunchStoryboard.imageset with the app icon as launch image
         LAUNCH_IMAGESET="$XCASSETS_DIR/LaunchStoryboard.imageset"
