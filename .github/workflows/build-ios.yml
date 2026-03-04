@@ -221,12 +221,60 @@ jobs:
         # Find the app directory (usually "Access Network" or similar)
         PLIST_DEST=$(find platforms/ios -maxdepth 2 -name "Access Network" -type d | head -1)
         if [ -z "$PLIST_DEST" ]; then
-          # Try the app name without space
           PLIST_DEST=$(find platforms/ios -maxdepth 2 -name "Access*" -type d ! -name "*.xcworkspace" ! -name "*.xcodeproj" | head -1)
         fi
         if [ -n "$PLIST_DEST" ]; then
           cp GoogleService-Info.plist "$PLIST_DEST/GoogleService-Info.plist"
           echo "✅ Copied to: $PLIST_DEST/GoogleService-Info.plist"
+          
+          # ✅ CRITICAL: Add GoogleService-Info.plist to Xcode project so it gets bundled
+          PBXPROJ=$(find platforms/ios -name "project.pbxproj" | head -1)
+          if [ -n "$PBXPROJ" ]; then
+            echo "Adding GoogleService-Info.plist to Xcode project: $PBXPROJ"
+            # Check if already referenced
+            if ! grep -q "GoogleService-Info.plist" "$PBXPROJ"; then
+              # Use Ruby (available on macOS) to add file reference to pbxproj
+              ruby -e '
+                content = File.read(ARGV[0])
+                
+                # Generate unique UUIDs for the file reference and build file
+                file_ref_uuid = "GSPLIST0000000000000001"
+                build_file_uuid = "GSPLIST0000000000000002"
+                
+                # Add PBXFileReference
+                fr_section = "/* Begin PBXFileReference section */"
+                fr_entry = "#{file_ref_uuid} /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = \"GoogleService-Info.plist\"; sourceTree = \"<group>\"; };"
+                content.sub!(fr_section, "#{fr_section}\n\t\t#{fr_entry}")
+                
+                # Add PBXBuildFile
+                bf_section = "/* Begin PBXBuildFile section */"
+                bf_entry = "#{build_file_uuid} /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = #{file_ref_uuid} /* GoogleService-Info.plist */; };"
+                content.sub!(bf_section, "#{bf_section}\n\t\t#{bf_entry}")
+                
+                # Add to PBXResourcesBuildPhase (find the resources section with files = ()
+                content.gsub!(/files = \(([^)]*)\);/) do |match|
+                  files_content = $1
+                  if match.include?("in Resources") || files_content.empty? || files_content.include?("Resources")
+                    "files = (#{build_file_uuid} /* GoogleService-Info.plist in Resources */,#{files_content});"
+                  else
+                    match
+                  end
+                end
+                
+                # Add to main group children
+                # Find the group that contains other source files
+                content.gsub!(/children = \(([^)]*?config\.xml[^)]*?)\);/m) do |match|
+                  inner = $1
+                  "children = (#{file_ref_uuid} /* GoogleService-Info.plist */,#{inner});"
+                end
+                
+                File.write(ARGV[0], content)
+                puts "✅ Added GoogleService-Info.plist to Xcode project"
+              ' "$PBXPROJ"
+            else
+              echo "GoogleService-Info.plist already in project"
+            fi
+          fi
         else
           echo "⚠️ Could not find iOS project directory, listing:"
           find platforms/ios -maxdepth 3 -type d
@@ -272,8 +320,16 @@ jobs:
       working-directory: cordova-app
       run: |
         echo '🔧 Fixing AdMob App ID for iOS...'
-        # Find the main app Info.plist
-        APP_PLIST=$(find platforms/ios -maxdepth 3 -name "Info.plist" ! -path "*/Pods/*" ! -path "*/Frameworks/*" | head -1)
+        # Find the MAIN APP Info.plist (not CordovaLib, not Pods, not Frameworks)
+        APP_PLIST=$(find platforms/ios -maxdepth 3 -name "*-Info.plist" ! -path "*/Pods/*" ! -path "*/CordovaLib/*" | head -1)
+        if [ -z "$APP_PLIST" ]; then
+          # Fallback: look for Info.plist in the app directory specifically
+          APP_PLIST=$(find platforms/ios -path "*/Access Network/Info.plist" | head -1)
+        fi
+        if [ -z "$APP_PLIST" ]; then
+          # Last resort: any Info.plist not in CordovaLib/Pods/Frameworks
+          APP_PLIST=$(find platforms/ios -maxdepth 3 -name "Info.plist" ! -path "*/Pods/*" ! -path "*/Frameworks/*" ! -path "*/CordovaLib/*" | head -1)
+        fi
         if [ -n "$APP_PLIST" ]; then
           echo "Main app Info.plist: $APP_PLIST"
           # Set GADApplicationIdentifier (try Set first, then Add if key doesn't exist)
