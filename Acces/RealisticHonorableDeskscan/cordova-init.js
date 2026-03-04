@@ -39,8 +39,8 @@ window.getApiOrigin = function() {
             else if (url.startsWith('null/api') || url.startsWith('null/rpc')) {
                 finalUrl = window.API_BASE_URL + url.substring(4);
             }
-            // Case 4: https://localhost with API (Cordova WebView)
-            else if (url.includes('localhost') && (url.includes('/api') || url.includes('/rpc'))) {
+            // Case 4: app://localhost or http://localhost with API (Cordova iOS/Android WebView)
+            else if ((url.includes('localhost') || url.includes('app://')) && (url.includes('/api') || url.includes('/rpc'))) {
                 const idx = url.includes('/api') ? url.indexOf('/api') : url.indexOf('/rpc');
                 finalUrl = window.API_BASE_URL + url.substring(idx);
             }
@@ -72,7 +72,7 @@ window.getApiOrigin = function() {
                 const idx = url.includes('/api') ? url.indexOf('/api') : url.indexOf('/rpc');
                 finalUrl = window.API_BASE_URL + url.substring(idx);
             }
-            else if (url.includes('localhost') && (url.includes('/api') || url.includes('/rpc'))) {
+            else if ((url.includes('localhost') || url.includes('app://')) && (url.includes('/api') || url.includes('/rpc'))) {
                 const idx = url.includes('/api') ? url.indexOf('/api') : url.indexOf('/rpc');
                 finalUrl = window.API_BASE_URL + url.substring(idx);
             }
@@ -189,6 +189,28 @@ document.addEventListener('deviceready', function() {
     //     });
     // }
 }, false);
+
+// ✅ App Lifecycle - Fresh restart after long background (native app behavior)
+(function() {
+    var _appPausedAt = 0;
+    var APP_RESTART_THRESHOLD = 300000; // 5 minutes
+
+    document.addEventListener('pause', function() {
+        _appPausedAt = Date.now();
+    }, false);
+
+    document.addEventListener('resume', function() {
+        if (!_appPausedAt) return;
+        var elapsed = Date.now() - _appPausedAt;
+        if (elapsed >= APP_RESTART_THRESHOLD) {
+            console.log('[APP] Background ' + Math.round(elapsed/1000) + 's - fresh restart');
+            // Show native splash for seamless native feel
+            if (navigator.splashscreen) navigator.splashscreen.show();
+            // Full restart - app loads fresh like first launch
+            window.location.replace(window.location.pathname);
+        }
+    }, false);
+})();
 
 // ✅ Native Notifications System for Cordova
 function setupNativeNotifications() {
@@ -362,7 +384,7 @@ window.showNativeNotification = function(title, body, data = {}) {
     // Show in-app toast with logo image (like web notifications)
     var toast = document.createElement('div');
     toast.style.cssText = 'position:fixed;top:20px;left:10px;right:10px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:15px 20px;border-radius:12px;z-index:999999;font-family:-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 8px 32px rgba(0,0,0,0.3);animation:nativeNotifSlide 0.3s ease;display:flex;align-items:center;gap:12px;';
-    toast.innerHTML = '<img src="access-logo-1ipfs.png" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,0.3);" onerror="this.style.display=\'none\'">' +
+    toast.innerHTML = '<img src="https://accesschain.org/access-logo-1ipfs.png" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;border:2px solid rgba(255,255,255,0.3);" onerror="this.style.display=\'none\'">' +
       '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:15px;margin-bottom:4px;">' + title + '</div>' +
       '<div style="font-size:13px;opacity:0.9;white-space:pre-line;">' + body + '</div></div>';
     

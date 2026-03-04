@@ -190,6 +190,28 @@ document.addEventListener('deviceready', function() {
     // }
 }, false);
 
+// ✅ App Lifecycle - Fresh restart after long background (native app behavior)
+(function() {
+    var _appPausedAt = 0;
+    var APP_RESTART_THRESHOLD = 300000; // 5 minutes
+
+    document.addEventListener('pause', function() {
+        _appPausedAt = Date.now();
+    }, false);
+
+    document.addEventListener('resume', function() {
+        if (!_appPausedAt) return;
+        var elapsed = Date.now() - _appPausedAt;
+        if (elapsed >= APP_RESTART_THRESHOLD) {
+            console.log('[APP] Background ' + Math.round(elapsed/1000) + 's - fresh restart');
+            // Show native splash for seamless native feel
+            if (navigator.splashscreen) navigator.splashscreen.show();
+            // Full restart - app loads fresh like first launch
+            window.location.replace(window.location.pathname);
+        }
+    }, false);
+})();
+
 // ✅ Native Notifications System for Cordova
 function setupNativeNotifications() {
     // Check for local notification plugin

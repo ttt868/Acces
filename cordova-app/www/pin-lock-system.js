@@ -646,32 +646,17 @@
   // Track when app goes to background
   var _pausedAt = 0;
   var PIN_BACKGROUND_THRESHOLD = 30000; // Show PIN if app was in background > 30 seconds
-  var APP_RELOAD_THRESHOLD = 300000; // Full reload if in background > 5 minutes
 
   document.addEventListener('pause', function() {
     _pausedAt = Date.now();
-    console.log('[PIN] App paused at', _pausedAt);
   }, false);
 
   // Show lock screen when app resumes from background
   function onAppResume() {
     var backgroundDuration = Date.now() - _pausedAt;
-    console.log('[PIN] App resumed, background duration:', backgroundDuration, 'ms');
-
-    // Very long background (5+ minutes) = restart app like a fresh launch
-    if (backgroundDuration >= APP_RELOAD_THRESHOLD) {
-      console.log('[PIN] Long background (' + backgroundDuration + 'ms), restarting app...');
-      // Show native splash screen (Android) for native app feel
-      if (navigator.splashscreen) {
-        navigator.splashscreen.show();
-      }
-      window.location.reload();
-      return;
-    }
 
     // Short pauses = camera, gallery, share dialog, modals, ads, etc.
     if (backgroundDuration < PIN_BACKGROUND_THRESHOLD) {
-      console.log('[PIN] Short pause (' + backgroundDuration + 'ms < ' + PIN_BACKGROUND_THRESHOLD + 'ms), skipping PIN');
       return;
     }
     
