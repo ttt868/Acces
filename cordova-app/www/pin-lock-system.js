@@ -658,9 +658,13 @@
     var backgroundDuration = Date.now() - _pausedAt;
     console.log('[PIN] App resumed, background duration:', backgroundDuration, 'ms');
 
-    // Very long background (5+ minutes) = full app reload for fresh state
+    // Very long background (5+ minutes) = restart app like a fresh launch
     if (backgroundDuration >= APP_RELOAD_THRESHOLD) {
-      console.log('[PIN] Long background (' + backgroundDuration + 'ms), reloading app...');
+      console.log('[PIN] Long background (' + backgroundDuration + 'ms), restarting app...');
+      // Show native splash screen (Android) for native app feel
+      if (navigator.splashscreen) {
+        navigator.splashscreen.show();
+      }
       window.location.reload();
       return;
     }
