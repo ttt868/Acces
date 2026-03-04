@@ -41,10 +41,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="monetag" content="fbd3213b115b518a8dd608e024d622f5">
-  
-  <!-- AdMob is handled natively by admob-plus-cordova plugin -->
-  
+  <!-- monetag disabled in Cordova app -->
   
   <!-- PWA Meta Tags -->
   <meta name="application-name" content="Access Digital">
@@ -54,7 +51,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#4a90e2">
   <meta name="msapplication-tap-highlight" content="no">
-  <link rel="manifest" href="manifest.json">
+  <!-- manifest only for web (app:// scheme can't load it) -->
   <link rel="apple-touch-icon" href="access-logo-1ipfs.png">
   
   <title>Access Platform - Digital Points System</title>
@@ -220,7 +217,8 @@
   <!-- تحميل الخطوط مع fallback -->
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Arabic:wght@400;700&family=Noto+Sans+SC:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Google Fonts - non-blocking load to prevent web process crash -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <!-- Language Selection Modal -->
   <!-- Language Selection Modal -->
   <div id="languageModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
@@ -755,16 +753,13 @@ document.addEventListener('balanceUpdated', function(event) {
     // Google Identity Services will be initialized after OAuth config is loaded
     // No direct initialization needed here - loadGoogleOAuthConfig() handles it
   </script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <!-- Google Identity Services - DISABLED FOR CORDOVA -->
-  <!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
-
-  <!-- Additional icons for referral system -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" integrity="sha256-KHMI4idNwX80EfQGGvK+CetXZOHrB4x/DaYlvKcxF+8=" crossorigin="anonymous"></script>
-  <!-- Fallback QR code library if primary fails -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!-- Font Awesome - single version, non-blocking -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'" />
+  
+  <!-- External scripts - ALL deferred to prevent web process crash -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
   <script src="https://unpkg.com/qr-scanner@1.4.2/qr-scanner.umd.min.js" defer></script>
   <!-- عداد حقيقي احترافي بدون مكتبات خارجية -->
 
@@ -948,8 +943,8 @@ document.addEventListener('balanceUpdated', function(event) {
 
   <!-- AdMob rewarded ads are native - no GPT script needed -->
   
-  <!-- HTML5 QR Code Scanner Library -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- HTML5 QR Code Scanner Library - deferred -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
 </head>
 <body>
   
@@ -2890,9 +2885,9 @@ Access-Network is a digital rewards platform combining innovation, community fea
     <script src="script.js"></script>
     <script src="missions-system.js"></script>
     
-    <!-- PWA Service Worker Registration -->
+    <!-- PWA Service Worker Registration - SKIP in Cordova (app:// scheme doesn't support SW) -->
     <script>
-      if ('serviceWorker' in navigator) {
+      if ('serviceWorker' in navigator && !window.IS_CORDOVA_APP && window.location.protocol.startsWith('http')) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js', {
             scope: '/'

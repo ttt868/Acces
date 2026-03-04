@@ -93,15 +93,8 @@
         <!-- Status bar -->
         <preference name="StatusBarStyle" value="lightcontent" />
 
-        <!-- ✅ Prevent Firebase AppDelegate swizzling (conflicts with cordova-ios 7.x WKURLSchemeHandler) -->
-        <config-file parent="FirebaseAppDelegateProxyEnabled" target="*-Info.plist">
-            <false/>
-        </config-file>
-
-        <!-- ✅ Delay AdMob initialization to prevent crash before app is ready -->
-        <config-file parent="GADDelayAppMeasurementInit" target="*-Info.plist">
-            <true/>
-        </config-file>
+        <!-- Firebase auto-configuration enabled (default YES) -->
+        <!-- GADDelayAppMeasurementInit removed - AdMob not used on iOS -->
     </platform>
 
     <!-- ==================== Android Platform ==================== -->
