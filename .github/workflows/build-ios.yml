@@ -188,10 +188,10 @@ jobs:
         sed -i '' "s|use_frameworks!|use_frameworks! :linkage => :static|g" Podfile
         echo '✅ Changed to use_frameworks! :linkage => :static (all pods static)'
         
-        # ✅ Add post_install hook to exclude arm64 from ALL simulator targets
+        # ✅ Add post_install hook to exclude arm64 AND add -ObjC linker flag
         if ! grep -q "EXCLUDED_ARCHS" Podfile; then
-          printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n    end\n  end\nend\n' >> Podfile
-          echo '✅ Added post_install hook (EXCLUDED_ARCHS for simulator)'
+          printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n    end\n  end\n  \n  # Add -ObjC flag to main target for static framework symbol resolution\n  installer.aggregate_targets.each do |target|\n    target.xcconfigs.each do |config_name, config|\n      config.attributes['"'"'OTHER_LDFLAGS'"'"'] ||= '"'"'$(inherited)'"'"'\n      config.attributes['"'"'OTHER_LDFLAGS'"'"'] += '"'"' -ObjC'"'"'\n      xcconfig_path = target.xcconfig_path(config_name)\n      config.save_as(xcconfig_path)\n    end\n  end\nend\n' >> Podfile
+          echo '✅ Added post_install hook (EXCLUDED_ARCHS + -ObjC for static linking)'
         else
           echo '✅ post_install already in Podfile'
         fi
