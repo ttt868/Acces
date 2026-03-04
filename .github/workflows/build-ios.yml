@@ -358,74 +358,209 @@ jobs:
           find platforms/ios -name "Info.plist" -type f | head -10
         fi
 
-    - name: Patch www/index.html for iOS WKWebView compatibility
+    - name: Patch www/ files for iOS WKWebView compatibility
       working-directory: cordova-app
       run: |
-        echo '🔧 Patching index.html for iOS (WKWebView on app:// scheme)...'
-        INDEX="www/index.html"
+        echo '🔧 Comprehensive iOS WKWebView patches (v5 - fix web process crash)...'
         
-        # Also patch the platform copy if it exists
-        PLATFORM_INDEX=$(find platforms/ios -path "*/www/index.html" ! -path "*/Pods/*" | head -1)
+        python3 << 'PYEOF'
+        import re, os, glob
         
-        for FILE in "$INDEX" "$PLATFORM_INDEX"; do
-          [ -z "$FILE" ] && continue
-          [ ! -f "$FILE" ] && continue
-          echo "  Patching: $FILE"
-          
-          # ===== REMOVE HEADERS THAT CRASH WKWebView on app:// =====
-          sed -i '' '/<meta http-equiv="Cross-Origin-Embedder-Policy"/d' "$FILE"
-          sed -i '' '/<meta http-equiv="Cross-Origin-Opener-Policy"/d' "$FILE"
-          sed -i '' '/<meta http-equiv="Feature-Policy"/d' "$FILE"
-          sed -i '' '/<meta http-equiv="Permissions-Policy"/d' "$FILE"
-          
-          # ===== REMOVE ALL crossorigin AND integrity ATTRIBUTES =====
-          # crossorigin on app:// scheme causes CORS failures that crash web process
-          sed -i '' 's/ crossorigin="anonymous"//g' "$FILE"
-          sed -i '' 's/ crossorigin//g' "$FILE"
-          sed -i '' 's/ integrity="[^"]*"//g' "$FILE"
-          
-          # ===== REMOVE ALL preconnect links (crash on app:// scheme) =====
-          sed -i '' '/<link rel="preconnect"/d' "$FILE"
-          
-          # ===== REMOVE Google Fonts entirely (use system fonts on iOS) =====
-          sed -i '' '/fonts\.googleapis\.com\/css2/d' "$FILE"
-          
-          # ===== REMOVE duplicate Font Awesome 6.5.1 =====
-          sed -i '' '/font-awesome\/6\.5\./d' "$FILE"
-          
-          # ===== REMOVE manifest.json link (app:// can't load it) =====
-          sed -i '' 's|<link rel="manifest"[^>]*>|<!-- manifest removed for iOS -->|g' "$FILE"
-          
-          # ===== REMOVE monetag meta tag =====
-          sed -i '' '/<meta name="monetag"/d' "$FILE"
-          
-          # ===== Skip Service Worker on Cordova =====
-          sed -i '' "s/if ('serviceWorker' in navigator)/if ('serviceWorker' in navigator \&\& !window.IS_CORDOVA_APP \&\& window.location.protocol.startsWith('http'))/g" "$FILE"
-          
-          # ===== Make ALL external CDN scripts deferred =====
-          sed -i '' 's|<script src="https://cdn\.socket\.io/[^"]*"></script>|<!-- socket.io removed for iOS -->|g' "$FILE"
-          sed -i '' 's|<script src="https://cdn\.jsdelivr\.net/[^"]*"></script>|<!-- cdn script removed for iOS -->|g' "$FILE"
-          sed -i '' 's|<script src="https://cdnjs\.cloudflare\.com/ajax/libs/qrcodejs[^"]*"></script>|<!-- qrcodejs removed for iOS -->|g' "$FILE"
-          sed -i '' 's|<script src="https://unpkg\.com/qr-scanner[^"]*"></script>|<!-- qr-scanner removed for iOS -->|g' "$FILE"
-          sed -i '' 's|<script src="https://unpkg\.com/html5-qrcode[^"]*"></script>|<!-- html5-qrcode removed for iOS -->|g' "$FILE"
-          
-          # ===== Add safety timeout to force visibility =====
-          sed -i '' '/<\/head>/i\
-          <script>setTimeout(function(){if(!document.body)return;document.body.classList.add("app-ready");document.documentElement.classList.add("app-ready");document.body.style.opacity="1";document.body.style.visibility="visible";},2000);</script>' "$FILE"
-          
-          echo "  ✅ Patched: $FILE"
-          echo "  Lines after patching: $(wc -l < "$FILE")"
-        done
+        def patch_file(filepath):
+            if not os.path.exists(filepath):
+                print(f"  ⚠️ Not found: {filepath}")
+                return
+            print(f"\n  📝 Patching: {filepath}")
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+            original_len = len(content)
+            
+            # ============================================
+            # PHASE 1: Remove problematic meta tags
+            # ============================================
+            content = re.sub(r'<meta http-equiv="Cross-Origin-Embedder-Policy"[^>]*>\s*\n?', '', content)
+            content = re.sub(r'<meta http-equiv="Cross-Origin-Opener-Policy"[^>]*>\s*\n?', '', content)
+            content = re.sub(r'<meta http-equiv="Feature-Policy"[^>]*>\s*\n?', '', content)
+            content = re.sub(r'<meta http-equiv="Permissions-Policy"[^>]*>\s*\n?', '', content)
+            content = re.sub(r'<meta\s+name="monetag"[^>]*>\s*\n?', '', content)
+            
+            # ============================================
+            # PHASE 2: Remove ALL crossorigin and integrity
+            # ============================================
+            content = re.sub(r'\s+crossorigin="[^"]*"', '', content)
+            content = re.sub(r'\s+crossorigin(?=[>\s/])', '', content)
+            content = re.sub(r'\s+integrity="[^"]*"', '', content)
+            
+            # ============================================
+            # PHASE 3: Remove ALL external resources
+            # ============================================
+            # Preconnect links
+            content = re.sub(r'<link\s+rel="preconnect"[^>]*>\s*\n?', '', content)
+            # Google Fonts
+            content = re.sub(r'<link[^>]*fonts\.googleapis\.com[^>]*>\s*\n?', '', content)
+            # Font Awesome ALL versions from CDN
+            content = re.sub(r'<link[^>]*font-awesome/6\.[^>]*/?>\s*\n?', '', content)
+            content = re.sub(r'<link[^>]*cdnjs\.cloudflare\.com[^>]*/?>\s*\n?', '', content)
+            # Manifest
+            content = re.sub(r'<link\s+rel="manifest"[^>]*>\s*\n?', '', content)
+            # ALL external CDN scripts
+            content = re.sub(r'<script\s+src="https://[^"]*"[^>]*>\s*</script>\s*\n?', '', content)
+            
+            # ============================================
+            # PHASE 4: CRITICAL - Fix CSS to show content WITHOUT JavaScript
+            # The web process crashes before JS can run, so CSS alone must show content
+            # ============================================
+            
+            # 4a. body opacity: 0 → 1
+            content = re.sub(
+                r'body\s*\{\s*\n\s*opacity:\s*0\s*!important',
+                'body { \n      opacity: 1 !important',
+                content
+            )
+            
+            # 4b. Remove .app-ready requirement from container display rules
+            # BEFORE: html.user-logged-in.app-ready #app-container { display: flex !important; }
+            # AFTER:  html.user-logged-in #app-container { display: flex !important; }
+            content = re.sub(
+                r'html\.user-logged-in\.app-ready\s+#app-container',
+                'html.user-logged-in #app-container',
+                content
+            )
+            content = re.sub(
+                r'html\.user-logged-in\.app-ready\s+#login-container',
+                'html.user-logged-in #login-container',
+                content
+            )
+            content = re.sub(
+                r'html\.user-not-logged-in\.app-ready\s+#login-container',
+                'html.user-not-logged-in #login-container',
+                content
+            )
+            content = re.sub(
+                r'html\.user-not-logged-in\.app-ready\s+#app-container',
+                'html.user-not-logged-in #app-container',
+                content
+            )
+            
+            # 4c. Also remove body.app-ready requirement
+            content = re.sub(
+                r'body\.app-ready\s*\{',
+                'body {',
+                content
+            )
+            
+            # ============================================
+            # PHASE 5: Defer heavy scripts to prevent main thread blocking
+            # The web process crashes because synchronous JS execution blocks
+            # the main thread too long. Defer allows DOM to render first.
+            # Keep cordova.js, cordova-init.js, base-url.js NON-deferred (in <head>)
+            # ============================================
+            heavy_scripts = [
+                'translations.js',    # 882KB!
+                'script.js',          # 630KB!
+                'missions-system.js', # 32KB
+                'pin-lock-system.js', # 27KB
+                'notification-system.js', # 25KB
+                'offline-detection.js',   # 22KB
+                'fcm-notifications.js',   # 22KB
+                'cordova-re-engagement.js', # 18KB
+                'stats.js',
+                'state-activity.js',
+                'profile-member-since.js',
+                'install-prompt.js',
+            ]
+            for script_name in heavy_scripts:
+                # Match <script src="scriptname.js"></script> and add defer
+                pattern = r'(<script\s+src="' + re.escape(script_name) + r'")(>)'
+                content = re.sub(pattern, r'\1 defer\2', content)
+            
+            # ============================================
+            # PHASE 6: Remove ad-related scripts (no AdMob on iOS)
+            # ============================================
+            content = re.sub(r'<script\s+src="activity-ad-system\.js"[^>]*>\s*</script>\s*\n?', '<!-- ad system removed for iOS -->\n', content)
+            content = re.sub(r'<script\s+src="ad-boost-system\.js"[^>]*>\s*</script>\s*\n?', '<!-- ad boost removed for iOS -->\n', content)
+            
+            # ============================================
+            # PHASE 7: Fix Service Worker - skip in Cordova
+            # ============================================
+            content = content.replace(
+                "if ('serviceWorker' in navigator)",
+                "if (false && 'serviceWorker' in navigator)"
+            )
+            
+            # ============================================
+            # PHASE 8: Inject iOS safety script after <body>
+            # This is a BACKUP - CSS changes above should make content visible
+            # even without this script running
+            # ============================================
+            safety = """<script>
+        // iOS WKWebView safety - backup visibility enforcement
+        (function() {
+          var t = setInterval(function() {
+            if (document.body) {
+              document.body.style.opacity = '1';
+              document.body.classList.add('app-ready');
+              document.documentElement.classList.add('app-ready');
+              clearInterval(t);
+            }
+          }, 100);
+        })();
+        </script>"""
+            content = re.sub(r'(<body[^>]*>)', r'\1\n' + safety, content, count=1)
+            
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            new_len = len(content)
+            removed = original_len - new_len
+            print(f"  ✅ {original_len} → {new_len} bytes ({'+' if removed < 0 else '-'}{abs(removed)} bytes)")
         
-        # Verify patches applied correctly
-        echo '--- Verification ---'
-        echo "crossorigin count: $(grep -c 'crossorigin' www/index.html || echo 0)"
-        echo "integrity count: $(grep -c 'integrity=' www/index.html || echo 0)"
-        echo "preconnect count: $(grep -c 'preconnect' www/index.html || echo 0)"
-        echo "googleapis count: $(grep -c 'googleapis' www/index.html || echo 0)"
-        echo "COEP count: $(grep -c 'Embedder-Policy' www/index.html || echo 0)"
-        echo "monetag count: $(grep -c 'monetag' www/index.html || echo 0)"
-        echo '✅ iOS index.html patches applied'
+        # ====== PATCH FILES ======
+        patch_file('www/index.html')
+        
+        platform_files = glob.glob('platforms/ios/**/www/index.html', recursive=True)
+        for pf in platform_files:
+            if 'Pods' not in pf:
+                patch_file(pf)
+        
+        # ====== VERIFICATION ======
+        print('\n' + '='*50)
+        print('VERIFICATION')
+        print('='*50)
+        with open('www/index.html', 'r') as f:
+            html = f.read()
+        
+        checks = {
+            'crossorigin attrs': len(re.findall(r'\bcrossorigin\b', html)),
+            'integrity attrs': len(re.findall(r'\bintegrity=', html)),
+            'preconnect links': len(re.findall(r'rel="preconnect"', html)),
+            'Google Fonts': len(re.findall(r'fonts\.googleapis\.com', html)),
+            'COEP/COOP headers': len(re.findall(r'Embedder-Policy|Opener-Policy', html)),
+            'monetag': len(re.findall(r'monetag', html)),
+            'Font Awesome CDN': len(re.findall(r'font-awesome/6\.\d', html)),
+            'opacity: 0': len(re.findall(r'opacity:\s*0\s*!important', html)),
+            '.app-ready in CSS': len(re.findall(r'\.app-ready\s+#(?:login|app)-container', html)),
+        }
+        
+        # Count deferred scripts
+        deferred = len(re.findall(r'<script[^>]+defer', html))
+        non_deferred_src = re.findall(r'<script\s+src="([^"]+)"(?:(?!defer)[^>])*>', html)
+        
+        all_ok = True
+        for name, count in checks.items():
+            status = '✅' if count == 0 else '❌'
+            if count > 0: all_ok = False
+            print(f"  {status} {name}: {count}")
+        
+        print(f"\n  📊 Deferred scripts: {deferred}")
+        print(f"  📊 Non-deferred src scripts: {non_deferred_src}")
+        
+        if all_ok:
+            print('\n✅ ALL CHECKS PASSED - iOS page is optimized for WKWebView')
+        else:
+            print('\n⚠️ Some issues remain')
+        
+        PYEOF
 
     - name: Build iOS (No Code Signing - Unsigned)
       working-directory: cordova-app
