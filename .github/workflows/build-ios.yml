@@ -341,7 +341,6 @@ jobs:
             echo '❌ Both builds failed!'
             exit 1
           fi
-          fi
         else
           echo '❌ No Xcode workspace/project found'
           find platforms/ios -maxdepth 3 -type d
