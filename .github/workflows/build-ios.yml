@@ -194,11 +194,14 @@ jobs:
         # Fix GoogleUtilities version (must be ~> 7.7 to work with Firebase 8.15)
         sed -i '' "s|pod 'GoogleUtilities', '~> 7.2.2'|pod 'GoogleUtilities', '~> 7.7'|g" Podfile
         
-        # ✅ No need to change use_frameworks! linkage
-        # GoogleSignIn has been removed from iOS build, so no more
-        # pre-compiled static GoogleUtilities.framework conflict.
-        # All remaining pods (Firebase, AppAuth, etc.) build as real dynamic frameworks.
-        echo '✅ Keeping default use_frameworks! (dynamic) - no GoogleSignIn conflict'
+        # ✅ CRITICAL: Force static linkage for ALL pods
+        # GoogleUtilities & nanopb have static_framework=true in podspec.
+        # With default use_frameworks! (dynamic), other pods link them via @rpath
+        # but GoogleUtilities builds as static archive -> dyld can't load it -> crash.
+        # Solution: :linkage => :static makes ALL pods static. No Frameworks/ dir,
+        # no dyld loading, everything linked into main binary.
+        sed -i '' "s|use_frameworks!|use_frameworks! :linkage => :static|g" Podfile
+        echo '✅ Changed to static linkage - no dyld framework loading needed'
         
         # ✅ Add post_install hook to exclude arm64 from simulator builds
         # macOS-14 runners are Apple Silicon, but Appetize.io needs x86_64
