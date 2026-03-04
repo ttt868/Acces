@@ -191,13 +191,11 @@ document.addEventListener('deviceready', function() {
 }, false);
 
 // ✅ App Lifecycle - Native app behavior
-// 1. Back button = close app (not web history navigation)
-// 2. Resume from background:
-//    - < 30s:  nothing (instant resume)
-//    - 30s-5min: PIN lock handles security (no reload)
-//    - > 5min: full reload = fresh start like native app
+// 1. Back button = close app completely
+// 2. Background > 5min = kill app (next open = fresh start with native splash)
+//    No reload, no white flash, no web nonsense
 (function() {
-    // ── BACK BUTTON: Close app completely ──
+    // ── BACK BUTTON: Close app ──
     document.addEventListener('backbutton', function(e) {
         e.preventDefault();
         if (navigator.app && navigator.app.exitApp) {
@@ -205,25 +203,25 @@ document.addEventListener('deviceready', function() {
         }
     }, false);
 
-    // ── BACKGROUND → FOREGROUND: Reload only after long background ──
-    var _appPausedAt = 0;
-    var RELOAD_THRESHOLD = 300000; // 5 minutes
+    // ── BACKGROUND: Kill app after 5 minutes ──
+    var _killTimer = null;
+    var KILL_AFTER = 300000; // 5 minutes
 
     document.addEventListener('pause', function() {
-        _appPausedAt = Date.now();
+        _killTimer = setTimeout(function() {
+            // Kill the process while in background
+            // Next time user taps icon = completely fresh start
+            if (navigator.app && navigator.app.exitApp) {
+                navigator.app.exitApp();
+            }
+        }, KILL_AFTER);
     }, false);
 
     document.addEventListener('resume', function() {
-        if (_appPausedAt > 0) {
-            var elapsed = Date.now() - _appPausedAt;
-            _appPausedAt = 0;
-            if (elapsed >= RELOAD_THRESHOLD) {
-                // Long background = fresh start (native behavior)
-                setTimeout(function() {
-                    window.location.reload();
-                }, 300);
-            }
-            // Short background: PIN system handles security if needed
+        // Came back before 5min - cancel kill, resume normally
+        if (_killTimer) {
+            clearTimeout(_killTimer);
+            _killTimer = null;
         }
     }, false);
 })();
