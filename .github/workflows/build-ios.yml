@@ -194,10 +194,17 @@ jobs:
         # Fix GoogleUtilities version (must be ~> 7.7 to work with Firebase 8.15)
         sed -i '' "s|pod 'GoogleUtilities', '~> 7.2.2'|pod 'GoogleUtilities', '~> 7.7'|g" Podfile
         
+        # ✅ CRITICAL: Force dynamic linkage for frameworks
+        # CocoaPods 1.9+ with use_frameworks! builds STATIC frameworks by default.
+        # Static archives (.a) wrapped in .framework bundles cause dyld crash because
+        # they're embedded in Frameworks/ but dyld expects dynamic Mach-O, not ar archives.
+        # Changing to :linkage => :dynamic builds real dynamic frameworks that dyld can load.
+        sed -i '' "s|use_frameworks!|use_frameworks! :linkage => :dynamic|g" Podfile
+        echo '✅ Forced dynamic linkage for frameworks'
+        
         # ✅ CRITICAL: Add post_install hook to exclude arm64 from ALL simulator targets
         # macOS-14 runners are Apple Silicon (arm64). Without this, CocoaPods dynamic
         # frameworks are built for arm64 only, but Appetize.io needs x86_64 simulator.
-        # This ensures ALL targets (pods + app) build for x86_64 simulator.
         if ! grep -q "EXCLUDED_ARCHS" Podfile; then
           printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n    end\n  end\nend\n' >> Podfile
           echo '✅ Added post_install hook to exclude arm64 from simulator pods'
