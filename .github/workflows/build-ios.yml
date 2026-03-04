@@ -178,18 +178,21 @@ jobs:
         # Fix GoogleUtilities version (must be ~> 7.7 to work with Firebase 8.15)
         sed -i '' "s|pod 'GoogleUtilities', '~> 7.2.2'|pod 'GoogleUtilities', '~> 7.7'|g" Podfile
         
-        # ✅ Keep use_frameworks! as-is (CocoaPods default static linkage)
-        # Without GoogleSignIn vendored framework, all pods compile from source as static.
-        # Static frameworks: code linked into main binary, no dyld loading needed.
-        echo '✅ Keeping use_frameworks! (default static, no GoogleSignIn conflict)'
+        # ✅ Keep use_frameworks! as-is (dynamic frameworks)
+        echo '✅ Keeping use_frameworks! (dynamic frameworks)'
         
-        # ✅ Add post_install hook to exclude arm64 from ALL simulator targets
-        # macOS-14 runners are Apple Silicon. Appetize.io needs x86_64 simulator.
+        # ✅ CRITICAL: Add post_install hook to:
+        # 1. Force GoogleUtilities & nanopb to build as DYNAMIC libraries
+        #    These pods have static_framework=true in their podspecs, causing them to
+        #    build as static archives (.a). But other pods (FirebaseCore, etc.) are dynamic
+        #    and reference them via @rpath. dyld can't load static archives -> crash.
+        #    Fix: Override MACH_O_TYPE to mh_dylib for these specific targets.
+        # 2. Exclude arm64 from ALL simulator targets (Apple Silicon runner)
         if ! grep -q "EXCLUDED_ARCHS" Podfile; then
-          printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n    end\n  end\nend\n' >> Podfile
-          echo '✅ Added post_install hook (EXCLUDED_ARCHS for simulator)'
+          printf '\npost_install do |installer|\n  static_pods_to_fix = ['"'"'GoogleUtilities'"'"', '"'"'nanopb'"'"', '"'"'PromisesObjC'"'"']\n\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n      if static_pods_to_fix.include?(target.name)\n        config.build_settings['"'"'MACH_O_TYPE'"'"'] = '"'"'mh_dylib'"'"'\n      end\n    end\n  end\nend\n' >> Podfile
+          echo '✅ Added post_install hook (EXCLUDED_ARCHS + dynamic override for static pods)'
         else
-          echo '✅ EXCLUDED_ARCHS already in Podfile'
+          echo '✅ post_install already in Podfile'
         fi
         
         echo '📋 Fixed Podfile:'
