@@ -79,11 +79,13 @@ jobs:
         # Splash screen
         cordova plugin add cordova-plugin-splashscreen@6.0.2 --save 2>/dev/null || true
         
-        # Google Sign-In (iOS Client ID with correct REVERSED_CLIENT_ID for URL scheme)
-        cordova plugin add cordova-plugin-googleplus@8.5.2 --save \
-          --variable WEB_APPLICATION_CLIENT_ID="586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com" \
-          --variable REVERSED_CLIENT_ID="com.googleusercontent.apps.586936149662-db8i44p15dimn36g27sp78gb698cbthc" \
-          2>/dev/null || true
+        # ⚠️ SKIP Google Sign-In for iOS builds
+        # GoogleSignIn 5.x ships pre-compiled STATIC GoogleUtilities.framework that conflicts
+        # with Firebase's own GoogleUtilities pod.
+        # This causes dyld crash: "Library not loaded: @rpath/GoogleUtilities.framework"
+        # because the framework binary is a static archive, not a dynamic library.
+        # Google Sign-In will be re-enabled when upgrading to GoogleSignIn 7.x (XCFramework).
+        echo '⏭️ Skipping cordova-plugin-googleplus for iOS (GoogleSignIn 5.x dyld conflict)'
         
         # Firebase Cloud Messaging
         cordova plugin add cordova-plugin-firebase-messaging@7.0.2 --save 2>/dev/null || true
@@ -108,16 +110,10 @@ jobs:
       run: |
         echo '🔧 Fixing pod versions for iOS compatibility...'
         
-        # cordova-plugin-googleplus requires GoogleSignIn ~> 5.0.2 (v5 API)
-        # cordova-plugin-firebase-messaging defaults to Firebase 9.x which conflicts
-        # Solution: Force Firebase to 8.x which is compatible with GoogleSignIn 5.x
-        
-        # Fix firebase-messaging plugin to use Firebase 8.x (compatible with GoogleSignIn 5)
+        # Fix firebase-messaging plugin to use Firebase 8.x
         FCM_PLUGIN="plugins/cordova-plugin-firebase-messaging/plugin.xml"
         if [ -f "$FCM_PLUGIN" ]; then
-          # Change Firebase pod version to 8.x (last version compatible with GoogleSignIn 5)
           sed -i '' 's|spec="$IOS_FIREBASE_POD_VERSION"|spec="~> 8.15.0"|g' "$FCM_PLUGIN"
-          # Also change any hardcoded 9.x or 10.x to 8.15
           perl -pi -e 's/Firebase\/Messaging.*?spec="[^"]*"/Firebase\/Messaging" spec="~> 8.15.0"/g' "$FCM_PLUGIN"
           perl -pi -e 's/Firebase\/Analytics.*?spec="[^"]*"/Firebase\/Analytics" spec="~> 8.15.0"/g' "$FCM_PLUGIN"
           echo '✅ Firebase pod version set to ~> 8.15.0'
@@ -131,19 +127,7 @@ jobs:
           echo '✅ Firebase Analytics pod version set to ~> 8.15.0'
         fi
         
-        # Fix GoogleUtilities version conflict:
-        # googleplus plugin pins GoogleUtilities to ~> 7.2.2 (max 7.2.x)
-        # but Firebase 8.15 needs GoogleUtilities ~> 7.7
-        # Solution: Relax GoogleUtilities to ~> 7.7 (compatible with both)
-        GP_PLUGIN="plugins/cordova-plugin-googleplus/plugin.xml"
-        if [ -f "$GP_PLUGIN" ]; then
-          sed -i '' 's|GoogleUtilities" spec="~> 7.2.2"|GoogleUtilities" spec="~> 7.7"|g' "$GP_PLUGIN"
-          echo '✅ GoogleUtilities version relaxed to ~> 7.7'
-          grep -n 'GoogleUtilities' "$GP_PLUGIN" || true
-        fi
-        
-        echo '📋 GoogleSignIn version in googleplus plugin:'
-        grep -n 'GoogleSignIn' plugins/cordova-plugin-googleplus/plugin.xml || true
+        echo '✅ Pod version fixes applied (no GoogleSignIn in iOS build)'
     
     - name: Add iOS platform (allow pod install to fail, we fix it later)
       working-directory: cordova-app
@@ -194,21 +178,16 @@ jobs:
         # Fix GoogleUtilities version (must be ~> 7.7 to work with Firebase 8.15)
         sed -i '' "s|pod 'GoogleUtilities', '~> 7.2.2'|pod 'GoogleUtilities', '~> 7.7'|g" Podfile
         
-        # ✅ CRITICAL: Fix framework linkage for simulator compatibility
-        # Problem: use_frameworks! creates framework bundles with STATIC libraries inside.
-        # dyld can't load static archives (.a) as dynamic frameworks -> instant crash.
-        # Solution: Remove use_frameworks!, use modular headers instead.
-        # Pods will be STATICALLY LINKED into the main binary (no dyld loading needed).
-        # Add :linkage => :static explicitly and use_modular_headers! for Swift compatibility.
-        sed -i '' "s|use_frameworks!|# use_frameworks! -- replaced with static linking\nuse_modular_headers!|g" Podfile
-        echo '✅ Replaced use_frameworks! with use_modular_headers! (static linking)'
+        # ✅ Keep use_frameworks! as-is (CocoaPods default static linkage)
+        # Without GoogleSignIn vendored framework, all pods compile from source as static.
+        # Static frameworks: code linked into main binary, no dyld loading needed.
+        echo '✅ Keeping use_frameworks! (default static, no GoogleSignIn conflict)'
         
-        # ✅ CRITICAL: Add post_install hook to:
-        # 1. Exclude arm64 from ALL simulator targets (Apple Silicon runner)
-        # 2. Add -ObjC linker flag (needed for static library categories)
+        # ✅ Add post_install hook to exclude arm64 from ALL simulator targets
+        # macOS-14 runners are Apple Silicon. Appetize.io needs x86_64 simulator.
         if ! grep -q "EXCLUDED_ARCHS" Podfile; then
-          printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n      config.build_settings['"'"'OTHER_LDFLAGS'"'"'] = '"'"'$(inherited) -ObjC'"'"'\n    end\n  end\nend\n' >> Podfile
-          echo '✅ Added post_install hook (EXCLUDED_ARCHS + -ObjC flag)'
+          printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n    end\n  end\nend\n' >> Podfile
+          echo '✅ Added post_install hook (EXCLUDED_ARCHS for simulator)'
         else
           echo '✅ EXCLUDED_ARCHS already in Podfile'
         fi
@@ -432,11 +411,10 @@ jobs:
           mkdir -p output-simulator
           cp -R "$SIM_APP" output-simulator/
           
-          # ✅ CRITICAL: Remove any static frameworks from Frameworks/ directory
-          # With use_modular_headers! (static linking), pods are linked INTO the main binary.
-          # But some framework bundles may still be copied to Frameworks/ by CocoaPods scripts.
-          # These contain static archives (.a files) that dyld can't load -> instant crash.
-          # Safe to remove since the code is already in the main binary.
+          # ✅ Safety net: Remove any static frameworks from Frameworks/ directory
+          # With default use_frameworks! (static linkage), pods should be linked into
+          # the main binary. But CocoaPods may still copy .framework bundles.
+          # If any contain static archives (.a), dyld can't load them -> crash.
           FRAMEWORKS_DIR="output-simulator/Access Network.app/Frameworks"
           if [ -d "$FRAMEWORKS_DIR" ]; then
             echo "🔍 Checking Frameworks/ for static archives..."
