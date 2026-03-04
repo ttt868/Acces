@@ -192,11 +192,12 @@ document.addEventListener('deviceready', function() {
 
 // ✅ App Lifecycle - Native app behavior
 // 1. Back button = close app (not web history navigation)
-// 2. Resume from background = always fresh start (like Twitter, Instagram)
+// 2. Resume from background:
+//    - < 30s:  nothing (instant resume)
+//    - 30s-5min: PIN lock handles security (no reload)
+//    - > 5min: full reload = fresh start like native app
 (function() {
     // ── BACK BUTTON: Close app completely ──
-    // Real native apps close on back press from main screen.
-    // This is a web app, so any back press should close it.
     document.addEventListener('backbutton', function(e) {
         e.preventDefault();
         if (navigator.app && navigator.app.exitApp) {
@@ -204,23 +205,25 @@ document.addEventListener('deviceready', function() {
         }
     }, false);
 
-    // ── BACKGROUND → FOREGROUND: Always reload fresh ──
-    // Native apps like Twitter don't resume on the exact same pixel.
-    // They reload their content. We reload the entire page so user
-    // always sees the fresh app state (dashboard, latest data).
-    var _appPaused = false;
+    // ── BACKGROUND → FOREGROUND: Reload only after long background ──
+    var _appPausedAt = 0;
+    var RELOAD_THRESHOLD = 300000; // 5 minutes
 
     document.addEventListener('pause', function() {
-        _appPaused = true;
+        _appPausedAt = Date.now();
     }, false);
 
     document.addEventListener('resume', function() {
-        if (_appPaused) {
-            _appPaused = false;
-            // Small delay to let the webview fully resume before reload
-            setTimeout(function() {
-                window.location.reload();
-            }, 300);
+        if (_appPausedAt > 0) {
+            var elapsed = Date.now() - _appPausedAt;
+            _appPausedAt = 0;
+            if (elapsed >= RELOAD_THRESHOLD) {
+                // Long background = fresh start (native behavior)
+                setTimeout(function() {
+                    window.location.reload();
+                }, 300);
+            }
+            // Short background: PIN system handles security if needed
         }
     }, false);
 })();
