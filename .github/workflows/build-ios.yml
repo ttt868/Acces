@@ -581,13 +581,20 @@ jobs:
             echo "ℹ️ [FIRApp configure] already exists in AppDelegate category"
           else
             echo "📝 Adding [FIRApp configure] to swizzled didFinishLaunchingWithOptions..."
+            
+            # First ensure @import Firebase is in the .m file (not just .h)
+            if ! grep -q "@import Firebase" "$FCM_APPDELEGATE"; then
+              sed -i '' '1s/^/@import Firebase;\n/' "$FCM_APPDELEGATE"
+              echo "  Added @import Firebase to .m file"
+            fi
+            
             # Insert [FIRApp configure] right after the original method call
             sed -i '' '/BOOL handled = \[self identity_application/a\
         \
-            // ✅ Configure Firebase EARLY - before webview loads\
+            // Configure Firebase EARLY - before webview loads\
             if (![FIRApp defaultApp]) {\
                 [FIRApp configure];\
-                NSLog(@"🔥 Firebase configured in AppDelegate (early init)");\
+                NSLog(@"Firebase configured in AppDelegate (early init)");\
             }' "$FCM_APPDELEGATE"
             
             echo "✅ [FIRApp configure] injected into AppDelegate"
