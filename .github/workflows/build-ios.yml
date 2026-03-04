@@ -144,6 +144,18 @@ jobs:
         fi
         echo '✅ cordova-plugin-googleplus removed from config.xml'
         grep -n 'googleplus\|GoogleSignIn' config.xml || echo '   (confirmed: no GoogleSignIn references)'
+        
+        # Also remove from package.json to prevent Cordova from restoring it during platform add
+        echo '🔧 Removing cordova-plugin-googleplus from package.json...'
+        node -e "
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
+          if (pkg.dependencies) delete pkg.dependencies['cordova-plugin-googleplus'];
+          if (pkg.cordova && pkg.cordova.plugins) delete pkg.cordova.plugins['cordova-plugin-googleplus'];
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          console.log('✅ Removed from package.json');
+        "
+        grep -i 'googleplus' package.json && echo '⚠️ Still in package.json' || echo '   (confirmed: no googleplus in package.json)'
 
 
     - name: Add iOS platform (allow pod install to fail, we fix it later)
@@ -194,6 +206,23 @@ jobs:
         
         # Fix GoogleUtilities version (must be ~> 7.7 to work with Firebase 8.15)
         sed -i '' "s|pod 'GoogleUtilities', '~> 7.2.2'|pod 'GoogleUtilities', '~> 7.7'|g" Podfile
+        
+        # ✅ Remove GoogleSignIn pod entirely (ships static GoogleUtilities -> causes _GULResetLogger conflict)
+        sed -i '' "/pod 'GoogleSignIn'/d" Podfile
+        # Also remove AppAuth, GTMAppAuth, GTMSessionFetcher (GoogleSignIn dependencies)
+        sed -i '' "/pod 'AppAuth'/d" Podfile
+        sed -i '' "/pod 'GTMAppAuth'/d" Podfile
+        sed -i '' "/pod 'GTMSessionFetcher'/d" Podfile
+        echo '✅ Removed GoogleSignIn and dependencies from Podfile'
+        
+        # Remove GoogleSignIn plugin files and Xcode project references
+        rm -rf "Access Network/Plugins/cordova-plugin-googleplus" 2>/dev/null || true
+        # Remove GoogleSignIn framework references from .pbxproj
+        if [ -f "Access Network.xcodeproj/project.pbxproj" ]; then
+          sed -i '' '/GoogleSignIn\.framework/d' "Access Network.xcodeproj/project.pbxproj"
+          sed -i '' '/cordova-plugin-googleplus/d' "Access Network.xcodeproj/project.pbxproj"
+          echo '✅ Cleaned GoogleSignIn references from Xcode project'
+        fi
         
         # ✅ CRITICAL: Force static linkage for ALL pods
         # GoogleUtilities & nanopb have static_framework=true in podspec.
