@@ -358,6 +358,322 @@ jobs:
           find platforms/ios -name "Info.plist" -type f | head -10
         fi
 
+    - name: Setup LaunchStoryboard for iOS
+      working-directory: cordova-app
+      run: |
+        echo '🚀 Setting up iOS Launch Screen (LaunchStoryboard)...'
+        
+        # Find the Xcode project paths
+        APP_DIR=$(find platforms/ios -maxdepth 2 -name "Access Network" -type d ! -path "*.xcworkspace*" ! -path "*.xcodeproj*" | head -1)
+        STORYBOARD_DIR="$APP_DIR"
+        XCASSETS_DIR=$(find platforms/ios -path "*/Images.xcassets" -type d | head -1)
+        
+        echo "App dir: $APP_DIR"
+        echo "Xcassets: $XCASSETS_DIR"
+        
+        # 1. Create LaunchStoryboard.imageset with the app icon as launch image
+        LAUNCH_IMAGESET="$XCASSETS_DIR/LaunchStoryboard.imageset"
+        mkdir -p "$LAUNCH_IMAGESET"
+        
+        # Use the app icon (already generated) as the center image
+        cp res/ios-icons/icon-1024.png "$LAUNCH_IMAGESET/launch-logo.png"
+        sips -z 512 512 "$LAUNCH_IMAGESET/launch-logo.png" > /dev/null 2>&1
+        
+        cat > "$LAUNCH_IMAGESET/Contents.json" << 'IMGEOF'
+        {
+          "images": [
+            {
+              "filename": "launch-logo.png",
+              "idiom": "universal",
+              "scale": "1x"
+            },
+            {
+              "idiom": "universal",
+              "scale": "2x"
+            },
+            {
+              "idiom": "universal",
+              "scale": "3x"
+            }
+          ],
+          "info": {
+            "author": "xcode",
+            "version": 1
+          }
+        }
+        IMGEOF
+        echo "✅ LaunchStoryboard.imageset created"
+        
+        # 2. Create LaunchScreen.storyboard with centered logo + brand background
+        cat > "$STORYBOARD_DIR/LaunchScreen.storyboard" << 'SBEOF'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21701" targetRuntime="AppleSDK" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+            <device id="retina6_12" orientation="portrait" appearance="light"/>
+            <dependencies>
+                <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21679"/>
+                <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+                <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+            </dependencies>
+            <scenes>
+                <!--View Controller-->
+                <scene sceneID="EHf-IW-A2E">
+                    <objects>
+                        <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                            <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <subviews>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="LaunchStoryboard" translatesAutoresizingMaskIntoConstraints="NO" id="img-logo">
+                                        <rect key="frame" x="116.66666666666667" y="346" width="160" height="160"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="160" id="w-ct"/>
+                                            <constraint firstAttribute="height" constant="160" id="h-ct"/>
+                                        </constraints>
+                                    </imageView>
+                                </subviews>
+                                <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
+                                <color key="backgroundColor" red="0.10196078431372549" green="0.10196078431372549" blue="0.18039215686274511" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <constraints>
+                                    <constraint firstItem="img-logo" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="cx-ct"/>
+                                    <constraint firstItem="img-logo" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="cy-ct"/>
+                                </constraints>
+                            </view>
+                        </viewController>
+                        <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                    </objects>
+                    <point key="canvasLocation" x="0.0" y="0.0"/>
+                </scene>
+            </scenes>
+            <resources>
+                <image name="LaunchStoryboard" width="512" height="512"/>
+            </resources>
+        </document>
+        SBEOF
+        echo "✅ LaunchScreen.storyboard created"
+        
+        # 3. Update Info.plist to point to our LaunchScreen.storyboard
+        APP_PLIST=$(find platforms/ios -maxdepth 3 -name "*-Info.plist" ! -path "*/Pods/*" ! -path "*/CordovaLib/*" | head -1)
+        if [ -z "$APP_PLIST" ]; then
+          APP_PLIST=$(find platforms/ios -maxdepth 3 -name "Info.plist" ! -path "*/Pods/*" ! -path "*/Frameworks/*" ! -path "*/CordovaLib/*" | head -1)
+        fi
+        
+        if [ -n "$APP_PLIST" ]; then
+          /usr/libexec/PlistBuddy -c "Set :UILaunchStoryboardName LaunchScreen" "$APP_PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Add :UILaunchStoryboardName string LaunchScreen" "$APP_PLIST"
+          echo "✅ Info.plist → UILaunchStoryboardName = LaunchScreen"
+          
+          # Remove old LaunchImage reference if it exists
+          /usr/libexec/PlistBuddy -c "Delete :UILaunchImageName" "$APP_PLIST" 2>/dev/null || true
+        fi
+        
+        # 4. Add LaunchScreen.storyboard to Xcode project build resources
+        PBXPROJ=$(find platforms/ios -name "project.pbxproj" | head -1)
+        if [ -n "$PBXPROJ" ]; then
+          # Check if it's already referenced
+          if ! grep -q "LaunchScreen.storyboard" "$PBXPROJ"; then
+            echo "📝 Adding LaunchScreen.storyboard to Xcode project..."
+            # Use a Python script for safe pbxproj editing
+            python3 << 'PYEOF'
+        import re, os
+        
+        pbxproj = None
+        for root, dirs, files in os.walk('platforms/ios'):
+            for f in files:
+                if f == 'project.pbxproj':
+                    pbxproj = os.path.join(root, f)
+                    break
+            if pbxproj:
+                break
+        
+        if not pbxproj:
+            print("⚠️ project.pbxproj not found")
+            exit(0)
+        
+        with open(pbxproj, 'r') as f:
+            content = f.read()
+        
+        # Generate unique IDs for pbxproj entries
+        file_ref_id = 'LAUNCH0001000000000001'
+        build_file_id = 'LAUNCH0002000000000001'
+        
+        # Add PBXFileReference
+        if 'LaunchScreen.storyboard' not in content:
+            # Find the PBXFileReference section
+            content = content.replace(
+                '/* End PBXFileReference section */',
+                f'\t\t{file_ref_id} /* LaunchScreen.storyboard */ = {{isa = PBXFileReference; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = "Access Network/LaunchScreen.storyboard"; sourceTree = "<group>"; }};\n/* End PBXFileReference section */'
+            )
+            
+            # Add PBXBuildFile
+            content = content.replace(
+                '/* End PBXBuildFile section */',
+                f'\t\t{build_file_id} /* LaunchScreen.storyboard in Resources */ = {{isa = PBXBuildFile; fileRef = {file_ref_id} /* LaunchScreen.storyboard */; }};\n/* End PBXBuildFile section */'
+            )
+            
+            # Add to Resources build phase
+            resources_pattern = r'(/\* Resources \*/ = \{[^}]*files = \(\s*\n)'
+            match = re.search(resources_pattern, content)
+            if match:
+                insertion_point = match.end()
+                content = content[:insertion_point] + f'\t\t\t\t{build_file_id} /* LaunchScreen.storyboard in Resources */,\n' + content[insertion_point:]
+            
+            with open(pbxproj, 'w') as f:
+                f.write(content)
+            print("✅ LaunchScreen.storyboard added to Xcode project")
+        else:
+            print("ℹ️ LaunchScreen.storyboard already in project")
+        
+        PYEOF
+          else
+            echo "ℹ️ LaunchScreen.storyboard already referenced in project"
+          fi
+        fi
+        
+        echo "📁 Launch screen files:"
+        find platforms/ios -name "LaunchScreen*" -o -name "LaunchStoryboard*" 2>/dev/null | head -10
+        echo "✅ LaunchScreen setup complete"
+
+    - name: Ensure FirebaseApp.configure() runs early in AppDelegate
+      working-directory: cordova-app
+      run: |
+        echo '🔥 Ensuring Firebase is configured in AppDelegate...'
+        
+        # The cordova-plugin-firebase-messaging already has:
+        # 1. AppDelegate+FirebaseMessagingPlugin.m - swizzles didFinishLaunchingWithOptions
+        # 2. FirebaseMessagingPlugin.m - calls [FIRApp configure] in pluginInitialize
+        #
+        # BUT pluginInitialize runs LATE (after webview loads).
+        # We need [FIRApp configure] in didFinishLaunchingWithOptions BEFORE webview.
+        #
+        # Fix: Patch the swizzled method to call [FIRApp configure] directly.
+        
+        FCM_APPDELEGATE="platforms/ios/Access Network/Plugins/cordova-plugin-firebase-messaging/AppDelegate+FirebaseMessagingPlugin.m"
+        
+        if [ ! -f "$FCM_APPDELEGATE" ]; then
+          # Try finding it
+          FCM_APPDELEGATE=$(find platforms/ios -name "AppDelegate+FirebaseMessagingPlugin.m" ! -path "*/Pods/*" | head -1)
+        fi
+        
+        if [ -n "$FCM_APPDELEGATE" ] && [ -f "$FCM_APPDELEGATE" ]; then
+          echo "Found: $FCM_APPDELEGATE"
+          
+          # Check if [FIRApp configure] is already in the swizzled method
+          if grep -q "FIRApp configure" "$FCM_APPDELEGATE"; then
+            echo "ℹ️ [FIRApp configure] already exists in AppDelegate category"
+          else
+            echo "📝 Adding [FIRApp configure] to swizzled didFinishLaunchingWithOptions..."
+            # Insert [FIRApp configure] right after the original method call
+            sed -i '' '/BOOL handled = \[self identity_application/a\
+        \
+            // ✅ Configure Firebase EARLY - before webview loads\
+            if (![FIRApp defaultApp]) {\
+                [FIRApp configure];\
+                NSLog(@"🔥 Firebase configured in AppDelegate (early init)");\
+            }' "$FCM_APPDELEGATE"
+            
+            echo "✅ [FIRApp configure] injected into AppDelegate"
+          fi
+          
+          echo "📋 Current swizzled method:"
+          grep -A 15 "identity_application" "$FCM_APPDELEGATE" | head -20
+        else
+          echo "⚠️ AppDelegate+FirebaseMessagingPlugin.m not found, creating manual Firebase init..."
+          
+          # Create a separate AppDelegate category for Firebase init
+          PLUGINS_DIR=$(find platforms/ios -path "*/Plugins" -type d ! -path "*/Pods/*" | head -1)
+          if [ -n "$PLUGINS_DIR" ]; then
+            cat > "$PLUGINS_DIR/AppDelegate+FirebaseInit.m" << 'OBJCEOF'
+        #import "AppDelegate.h"
+        @import Firebase;
+
+        @implementation AppDelegate (FirebaseInit)
+
+        + (void)load {
+            // Register for notification when app finishes launching
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(firebaseInit:)
+                                                         name:UIApplicationDidFinishLaunchingNotification
+                                                       object:nil];
+        }
+
+        + (void)firebaseInit:(NSNotification *)notification {
+            if (![FIRApp defaultApp]) {
+                [FIRApp configure];
+                NSLog(@"🔥 Firebase configured via AppDelegate+FirebaseInit");
+            }
+        }
+
+        @end
+        OBJCEOF
+            echo "✅ Created AppDelegate+FirebaseInit.m"
+          fi
+        fi
+
+    - name: Fix InAppBrowser crash on close
+      working-directory: cordova-app
+      run: |
+        echo '🔧 Patching InAppBrowser to prevent crash on close...'
+        
+        # The crash occurs in CDVWKInAppBrowserViewController.close method:
+        # - Uses __weak UIViewController* weakSelf but doesn't nil-check before use
+        # - onReset calls close: which can race with deallocation
+        # 
+        # Fix 1: Add nil-check in the dispatch_async block
+        # Fix 2: Guard onReset to not close if already closing
+        
+        IAB_SOURCE=$(find platforms/ios -name "CDVWKInAppBrowser.m" ! -path "*/Pods/*" | head -1)
+        
+        if [ -z "$IAB_SOURCE" ]; then
+          # Also check the plugins directory (pre-platform-add source)
+          IAB_SOURCE="plugins/cordova-plugin-inappbrowser/src/ios/CDVWKInAppBrowser.m"
+        fi
+        
+        if [ -f "$IAB_SOURCE" ]; then
+          echo "Found IAB source: $IAB_SOURCE"
+          
+          # Fix 1: Patch the close method in CDVWKInAppBrowserViewController
+          # Add nil-check for weakSelf before calling dismissViewControllerAnimated
+          export IAB_FILE="$IAB_SOURCE"
+          python3 << 'PYEOF'
+        import re, os
+        
+        filepath = os.environ['IAB_FILE']
+        with open(filepath, 'r') as f:
+            content = f.read()
+        
+        original = content
+        
+        # Fix: Add nil-check for weakSelf in the dispatch_async block
+        # Use regex to find the dispatch_async block in the close method
+        pattern = r'(dispatch_async\(dispatch_get_main_queue\(\),\s*\^\s*\{\s*\n)(\s*isExiting\s*=\s*TRUE;)'
+        replacement = r'\1        if (!weakSelf) {\n            NSLog(@"IAB: weakSelf is nil, skipping dismiss");\n            return;\n        }\n\2'
+        
+        new_content = re.sub(pattern, replacement, content)
+        
+        if new_content != content:
+            with open(filepath, 'w') as f:
+                f.write(new_content)
+            print('✅ Patched CDVWKInAppBrowserViewController.close with weakSelf nil-check')
+        else:
+            print('⚠️ dispatch_async pattern not found in close method')
+        
+        PYEOF
+          
+          # Also patch in the platforms copy if different from plugins
+          PLATFORM_IAB=$(find platforms/ios -name "CDVWKInAppBrowser.m" ! -path "*/Pods/*" | head -1)
+          if [ -n "$PLATFORM_IAB" ] && [ "$PLATFORM_IAB" != "$IAB_SOURCE" ]; then
+            echo "Also patching platform copy: $PLATFORM_IAB"
+            cp "$IAB_SOURCE" "$PLATFORM_IAB"
+            echo "✅ Platform copy updated"
+          fi
+          
+          echo "📋 Patched close method:"
+          grep -A 15 "void)close" "$IAB_SOURCE" | grep -A 15 "dispatch_async" | head -18
+        else
+          echo "⚠️ CDVWKInAppBrowser.m not found"
+          find platforms/ios -name "CDVWK*" -type f 2>/dev/null
+        fi
+
     - name: Patch www/ files for iOS WKWebView compatibility
       working-directory: cordova-app
       run: |
