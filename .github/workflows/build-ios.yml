@@ -480,150 +480,84 @@ jobs:
       run: |
         echo '🔥 Ensuring Firebase is configured in AppDelegate...'
         
-        # STRATEGY: Always create AppDelegate+FirebaseInit.m using +load pattern
-        # This is the MOST RELIABLE approach:
-        # - +load runs before main(), before any plugin init
-        # - NSNotificationCenter fires on didFinishLaunching
-        # - Safe even if Firebase plugin also calls [FIRApp configure] (guarded by defaultApp check)
-        # - No fragile sed patterns to match specific plugin code
+        # STRATEGY: Inject [FIRApp configure] directly into Cordova's own AppDelegate.m
+        # This is the SAFEST approach:
+        # - No extra category files that can conflict
+        # - No method swizzling conflicts with FCM plugin
+        # - Runs first thing in didFinishLaunchingWithOptions
         
-        # Also try to patch the FCM plugin file as a bonus (sed approach)
-        FCM_APPDELEGATE=$(find platforms/ios -name "AppDelegate+FirebaseMessagingPlugin.m" ! -path "*/Pods/*" 2>/dev/null | head -1)
-        if [ -n "$FCM_APPDELEGATE" ] && [ -f "$FCM_APPDELEGATE" ]; then
-          echo "Found FCM plugin: $FCM_APPDELEGATE"
-          if ! grep -q "FIRApp configure" "$FCM_APPDELEGATE"; then
-            if ! grep -q "@import Firebase" "$FCM_APPDELEGATE"; then
-              sed -i '' '1s/^/@import Firebase;\n/' "$FCM_APPDELEGATE" 2>/dev/null || true
-            fi
-            # Try sed injection (may fail silently - that's OK, fallback below handles it)
-            sed -i '' '/identity_application/a\
-        \
-            if (![FIRApp defaultApp]) { [FIRApp configure]; }' "$FCM_APPDELEGATE" 2>/dev/null || true
-            echo "  Attempted sed injection into FCM plugin (bonus)"
+        APPDELEGATE=$(find platforms/ios -name "AppDelegate.m" ! -path "*/Pods/*" ! -path "*/Plugins/*" | head -1)
+        
+        if [ -z "$APPDELEGATE" ]; then
+          echo "⚠️ AppDelegate.m not found"
+          find platforms/ios -name "AppDelegate*" -type f | head -10
+          exit 0
+        fi
+        
+        echo "Found: $APPDELEGATE"
+        
+        # Check if Firebase is already configured
+        if grep -q "FIRApp configure" "$APPDELEGATE"; then
+          echo "ℹ️ [FIRApp configure] already in AppDelegate.m"
+        else
+          echo "📝 Injecting [FIRApp configure] into AppDelegate.m..."
+          
+          # Add @import Firebase at the top (after existing imports)
+          if ! grep -q "@import Firebase" "$APPDELEGATE"; then
+            sed -i '' '/#import/a\
+        @import Firebase;' "$APPDELEGATE"
+            echo "  Added @import Firebase"
           fi
-        fi
-        
-        # ALWAYS create the reliable fallback: AppDelegate+FirebaseInit.m
-        APP_DIR=$(find platforms/ios -maxdepth 2 -name "Access Network" -type d ! -path "*.xcworkspace*" ! -path "*.xcodeproj*" | head -1)
-        if [ -z "$APP_DIR" ]; then
-          APP_DIR=$(find platforms/ios -maxdepth 2 -type d -name "Plugins" ! -path "*/Pods/*" | head -1)
-          APP_DIR=$(dirname "$APP_DIR")
-        fi
-        
-        FIREBASE_INIT_FILE="$APP_DIR/AppDelegate+FirebaseInit.m"
-        echo "Creating: $FIREBASE_INIT_FILE"
-        
-        export FIREBASE_INIT_PATH="$FIREBASE_INIT_FILE"
-        python3 << 'PYEOF2'
-        import sys, os
-        path = os.environ['FIREBASE_INIT_PATH']
-        code = '#import "AppDelegate.h"\n'
-        code += '@import Firebase;\n\n'
-        code += '@implementation AppDelegate (FirebaseInit)\n\n'
-        code += '+ (void)load {\n'
-        code += '    [[NSNotificationCenter defaultCenter] addObserver:self\n'
-        code += '                                             selector:@selector(firebaseInit:)\n'
-        code += '                                                 name:UIApplicationDidFinishLaunchingNotification\n'
-        code += '                                               object:nil];\n'
-        code += '}\n\n'
-        code += '+ (void)firebaseInit:(NSNotification *)notification {\n'
-        code += '    if (![FIRApp defaultApp]) {\n'
-        code += '        [FIRApp configure];\n'
-        code += '        NSLog(@"Firebase configured via AppDelegate+FirebaseInit");\n'
-        code += '    }\n'
-        code += '}\n\n'
-        code += '@end\n'
-        with open(path, 'w') as f:
-            f.write(code)
-        print(f'Created {path}')
-        PYEOF2
-        echo "✅ Created AppDelegate+FirebaseInit.m"
-        
-        # CRITICAL: Add AppDelegate+FirebaseInit.m to Xcode project.pbxproj
-        # Without this, Xcode won't compile the file!
-        PBXPROJ=$(find platforms/ios -name "project.pbxproj" | head -1)
-        if [ -n "$PBXPROJ" ] && ! grep -q "AppDelegate+FirebaseInit.m" "$PBXPROJ"; then
-          echo "📝 Adding AppDelegate+FirebaseInit.m to Xcode project..."
-          export FIREBASE_INIT_DIR="$APP_DIR"
+          
+          # Inject [FIRApp configure] at the beginning of didFinishLaunchingWithOptions
+          # Cordova's AppDelegate.m has: - (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:...
+          # We inject right after the opening brace of that method
+          export APPDELEGATE_FILE="$APPDELEGATE"
           python3 << 'PYEOF'
         import re, os
         
-        pbxproj = None
-        for root, dirs, files in os.walk('platforms/ios'):
-            for f in files:
-                if f == 'project.pbxproj':
-                    pbxproj = os.path.join(root, f)
-                    break
-            if pbxproj:
-                break
-        
-        if not pbxproj:
-            print('project.pbxproj not found')
-            exit(0)
-        
-        with open(pbxproj, 'r') as f:
+        filepath = os.environ['APPDELEGATE_FILE']
+        with open(filepath, 'r') as f:
             content = f.read()
         
-        if 'AppDelegate+FirebaseInit.m' in content:
-            print('Already in project')
-            exit(0)
+        # Find didFinishLaunchingWithOptions method and inject after its opening {
+        pattern = r'(didFinishLaunchingWithOptions[^{]*\{)'
+        firebase_code = r'''\1
+            // Firebase early init - before any plugin loads
+            if (![FIRApp defaultApp]) {
+                [FIRApp configure];
+                NSLog(@"Firebase configured in AppDelegate.didFinishLaunching");
+            }
+        '''
         
-        # Determine relative path from project root (platforms/ios/)
-        # The file is at APP_DIR/AppDelegate+FirebaseInit.m
-        # APP_DIR is like platforms/ios/Access Network
-        # project.pbxproj is in platforms/ios/Access Network.xcodeproj/
-        # For sourceTree=SOURCE_ROOT paths are relative to platforms/ios/
-        firebase_dir = os.environ.get('FIREBASE_INIT_DIR', '')
-        # Get the part after platforms/ios/
-        if 'platforms/ios/' in firebase_dir:
-            rel_dir = firebase_dir.split('platforms/ios/')[1]
+        new_content = re.sub(pattern, firebase_code, content, count=1)
+        
+        if new_content != content:
+            with open(filepath, 'w') as f:
+                f.write(new_content)
+            print('Injected [FIRApp configure] into didFinishLaunchingWithOptions')
         else:
-            rel_dir = 'Access Network'
-        rel_path = rel_dir + '/AppDelegate+FirebaseInit.m'
-        print(f'Using path: {rel_path}')
-        
-        file_ref_id = 'FBINIT0001000000000001'
-        build_file_id = 'FBINIT0002000000000001'
-        
-        # Add PBXFileReference with sourceTree=SOURCE_ROOT so path is from platforms/ios/
-        content = content.replace(
-            '/* End PBXFileReference section */',
-            f'\t\t{file_ref_id} /* AppDelegate+FirebaseInit.m */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "AppDelegate+FirebaseInit.m"; sourceTree = "<group>"; }};\n/* End PBXFileReference section */'
-        )
-        
-        # Add PBXBuildFile (Sources phase)
-        content = content.replace(
-            '/* End PBXBuildFile section */',
-            f'\t\t{build_file_id} /* AppDelegate+FirebaseInit.m in Sources */ = {{isa = PBXBuildFile; fileRef = {file_ref_id} /* AppDelegate+FirebaseInit.m */; }};\n/* End PBXBuildFile section */'
-        )
-        
-        # Add to Sources build phase (compile it!)
-        sources_pattern = r'(/\* Sources \*/ = \{[^}]*files = \(\s*\n)'
-        match = re.search(sources_pattern, content)
-        if match:
-            insertion_point = match.end()
-            content = content[:insertion_point] + f'\t\t\t\t{build_file_id} /* AppDelegate+FirebaseInit.m in Sources */,\n' + content[insertion_point:]
-            print('Added to Sources build phase')
-        else:
-            print('WARNING: Could not find Sources build phase')
-        
-        # Add file ref to the group that contains AppDelegate.m
-        # Look for any children group that has AppDelegate.m in it
-        main_group_pattern = r'(children = \([^)]*AppDelegate\.m[^)]*?)(\);)'
-        match = re.search(main_group_pattern, content)
-        if match:
-            content = content[:match.start(2)] + f'\n\t\t\t\t{file_ref_id} /* AppDelegate+FirebaseInit.m */,\n\t\t\t' + content[match.start(2):]
-            print('Added to same group as AppDelegate.m')
-        
-        with open(pbxproj, 'w') as f:
-            f.write(content)
-        print('AppDelegate+FirebaseInit.m added to Xcode project (Sources phase)')
+            print('WARNING: Could not find didFinishLaunchingWithOptions pattern')
+            # Fallback: try simpler pattern
+            pattern2 = r'(- \(BOOL\)application:.*didFinishLaunching.*\n\{)'
+            new_content2 = re.sub(pattern2, firebase_code, content, count=1)
+            if new_content2 != content:
+                with open(filepath, 'w') as f:
+                    f.write(new_content2)
+                print('Injected via fallback pattern')
+            else:
+                print('FAILED: No matching pattern found')
+                print('--- File contents ---')
+                print(content[:2000])
         PYEOF
-        else
-          echo "ℹ️ AppDelegate+FirebaseInit.m already in project"
+          
+          echo "📋 AppDelegate.m after patch:"
+          grep -n -A 5 "didFinishLaunching\|FIRApp" "$APPDELEGATE" | head -20
         fi
         
-        echo "✅ Firebase init setup complete (reliable +load pattern)"
+        # Remove any conflicting AppDelegate+FirebaseInit.m category files
+        find platforms/ios -name "AppDelegate+FirebaseInit.m" -delete 2>/dev/null || true
+        echo "✅ Firebase init complete (direct injection into AppDelegate.m)"
 
     - name: Fix InAppBrowser crash on close
       working-directory: cordova-app

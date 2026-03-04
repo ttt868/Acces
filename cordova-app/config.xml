@@ -63,6 +63,12 @@
         
         <!-- Allow mixed content for API calls -->
         <preference name="AllowBackForwardNavigationGestures" value="false" />
+        
+        <!-- Prevent new windows / popups that crash WKWebView -->
+        <preference name="AllowNewWindows" value="false" />
+        
+        <!-- Don't limit navigations to app-bound domains (API calls need external access) -->
+        <preference name="LimitsNavigationsToAppBoundDomains" value="false" />
 
         <!-- iOS Permissions - displayed in permission dialogs -->
         <config-file parent="NSCameraUsageDescription" target="*-Info.plist">
