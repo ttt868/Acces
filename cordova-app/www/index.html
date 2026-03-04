@@ -202,23 +202,35 @@
       });
     })();
   </script>
+  
+  <!-- Ultra-early safety: force app visible after 3s even if scripts are slow -->
+  <script>
+    setTimeout(function() {
+      if (document.body && !document.body.classList.contains('app-ready')) {
+        console.warn('⚠️ Force app-ready after 3s safety timeout');
+        document.body.classList.add('app-ready');
+        document.documentElement.classList.add('app-ready');
+        document.body.style.opacity = '1';
+      }
+    }, 3000);
+  </script>
 
   
   <!-- Google Identity Services - DISABLED FOR CORDOVA, using native plugin instead -->
   <!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
 
-  <!-- Enhanced headers for Google Identity Services with proper FedCM handling -->
-  <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
-  <meta http-equiv="Cross-Origin-Embedder-Policy" content="credentialless">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Permissions-Policy" content="identity-credentials-get=(), otp-credentials=(), publickey-credentials=get()">
-  <meta http-equiv="Feature-Policy" content="identity-credentials-get 'none'; otp-credentials 'none'">
+  <!-- COEP/COOP/Feature-Policy REMOVED - crash WKWebView on app:// scheme -->
   <!-- Google Client ID will be loaded dynamically from server -->
-  <!-- تحميل الخطوط مع fallback -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Google Fonts - non-blocking load to prevent web process crash -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <!-- Google Fonts - loaded only on web, skip in Cordova to prevent web process crash -->
+  <script>
+    if (!window.IS_CORDOVA_APP) {
+      // Preconnect
+      var pc1 = document.createElement('link'); pc1.rel='preconnect'; pc1.href='https://fonts.googleapis.com'; document.head.appendChild(pc1);
+      var pc2 = document.createElement('link'); pc2.rel='preconnect'; pc2.href='https://fonts.gstatic.com'; pc2.crossOrigin=''; document.head.appendChild(pc2);
+      // Google Fonts
+      var gf = document.createElement('link'); gf.rel='stylesheet'; gf.href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&family=Noto+Sans+Arabic:wght@400;700&display=swap'; document.head.appendChild(gf);
+    }
+  </script>
   <!-- Language Selection Modal -->
   <!-- Language Selection Modal -->
   <div id="languageModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
@@ -754,7 +766,7 @@ document.addEventListener('balanceUpdated', function(event) {
     // No direct initialization needed here - loadGoogleOAuthConfig() handles it
   </script>
   <!-- Font Awesome - single version, non-blocking -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" referrerpolicy="no-referrer" media="print" onload="this.media='all'" />
   
   <!-- External scripts - ALL deferred to prevent web process crash -->
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js" defer></script>
