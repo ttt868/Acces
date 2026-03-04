@@ -190,32 +190,37 @@ document.addEventListener('deviceready', function() {
     // }
 }, false);
 
-// ✅ App Lifecycle - Kill app after long background (native app behavior)
-// Real native apps get killed by the OS after being in background too long.
-// When user opens them again, they start fresh with splash screen.
-// We replicate this by exiting the app after 5 minutes in background.
-// Next time user taps the icon = fresh start, no white flash, just native splash.
+// ✅ App Lifecycle - Native app behavior
+// 1. Back button = close app (not web history navigation)
+// 2. Resume from background = always fresh start (like Twitter, Instagram)
 (function() {
-    var _appPausedAt = 0;
-    var APP_KILL_THRESHOLD = 300000; // 5 minutes
-    var _killTimer = null;
+    // ── BACK BUTTON: Close app completely ──
+    // Real native apps close on back press from main screen.
+    // This is a web app, so any back press should close it.
+    document.addEventListener('backbutton', function(e) {
+        e.preventDefault();
+        if (navigator.app && navigator.app.exitApp) {
+            navigator.app.exitApp();
+        }
+    }, false);
+
+    // ── BACKGROUND → FOREGROUND: Always reload fresh ──
+    // Native apps like Twitter don't resume on the exact same pixel.
+    // They reload their content. We reload the entire page so user
+    // always sees the fresh app state (dashboard, latest data).
+    var _appPaused = false;
 
     document.addEventListener('pause', function() {
-        _appPausedAt = Date.now();
-        // Set a timer to exit the app while in background
-        // This way, when user comes back, it's a fresh start
-        _killTimer = setTimeout(function() {
-            if (navigator.app && navigator.app.exitApp) {
-                navigator.app.exitApp(); // Android: kills the process
-            }
-        }, APP_KILL_THRESHOLD);
+        _appPaused = true;
     }, false);
 
     document.addEventListener('resume', function() {
-        // User came back before 5min, cancel the kill timer
-        if (_killTimer) {
-            clearTimeout(_killTimer);
-            _killTimer = null;
+        if (_appPaused) {
+            _appPaused = false;
+            // Small delay to let the webview fully resume before reload
+            setTimeout(function() {
+                window.location.reload();
+            }, 300);
         }
     }, false);
 })();

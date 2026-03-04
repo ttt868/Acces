@@ -190,24 +190,37 @@ document.addEventListener('deviceready', function() {
     // }
 }, false);
 
-// ✅ App Lifecycle - Fresh restart after long background (native app behavior)
+// ✅ App Lifecycle - Native app behavior
+// 1. Back button = close app (not web history navigation)
+// 2. Resume from background = always fresh start (like Twitter, Instagram)
 (function() {
-    var _appPausedAt = 0;
-    var APP_RESTART_THRESHOLD = 300000; // 5 minutes
+    // ── BACK BUTTON: Close app completely ──
+    // Real native apps close on back press from main screen.
+    // This is a web app, so any back press should close it.
+    document.addEventListener('backbutton', function(e) {
+        e.preventDefault();
+        if (navigator.app && navigator.app.exitApp) {
+            navigator.app.exitApp();
+        }
+    }, false);
+
+    // ── BACKGROUND → FOREGROUND: Always reload fresh ──
+    // Native apps like Twitter don't resume on the exact same pixel.
+    // They reload their content. We reload the entire page so user
+    // always sees the fresh app state (dashboard, latest data).
+    var _appPaused = false;
 
     document.addEventListener('pause', function() {
-        _appPausedAt = Date.now();
+        _appPaused = true;
     }, false);
 
     document.addEventListener('resume', function() {
-        if (!_appPausedAt) return;
-        var elapsed = Date.now() - _appPausedAt;
-        if (elapsed >= APP_RESTART_THRESHOLD) {
-            console.log('[APP] Background ' + Math.round(elapsed/1000) + 's - fresh restart');
-            // Show native splash for seamless native feel
-            if (navigator.splashscreen) navigator.splashscreen.show();
-            // Full restart - app loads fresh like first launch
-            window.location.replace(window.location.pathname);
+        if (_appPaused) {
+            _appPaused = false;
+            // Small delay to let the webview fully resume before reload
+            setTimeout(function() {
+                window.location.reload();
+            }, 300);
         }
     }, false);
 })();
