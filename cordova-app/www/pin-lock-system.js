@@ -5,41 +5,6 @@
 (function() {
   'use strict';
 
-  // ===== EARLY LOCK: Show lock screen IMMEDIATELY if PIN was previously enabled =====
-  // Prevents content from being visible before API check completes (app update, fresh start)
-  // Uses userId from stored session so lock only applies to the correct user on this device
-  var _pinCachedEnabled = false;
-  var _cachedUserId = null;
-  try {
-    var _sessionStr = localStorage.getItem('accessoireUser');
-    if (_sessionStr) {
-      var _sessionUser = JSON.parse(_sessionStr);
-      if (_sessionUser && _sessionUser.id) {
-        _cachedUserId = _sessionUser.id;
-        _pinCachedEnabled = localStorage.getItem('_pinLockEnabled_' + _cachedUserId) === 'true';
-      }
-    }
-  } catch(e) {}
-
-  if (_pinCachedEnabled) {
-    var _earlyLockApplied = false;
-    function _applyEarlyLock() {
-      if (_earlyLockApplied) return;
-      var lockEl = document.getElementById('pin-lock-screen');
-      if (lockEl) {
-        _earlyLockApplied = true;
-        lockEl.style.display = 'flex';
-        lockEl.style.opacity = '1';
-        lockEl.classList.add('active');
-        console.log('[PIN] Early lock applied from cache for user', _cachedUserId);
-      }
-    }
-    if (document.readyState !== 'loading') {
-      _applyEarlyLock();
-    }
-    document.addEventListener('DOMContentLoaded', _applyEarlyLock);
-  }
-
   // ===== STATE =====
   let pinInput = '';
   let setupPin = '';
@@ -49,7 +14,6 @@
   let biometricAvailable = false;
   let isLocked = false;
   let pinSetupCallback = null;
-  let _internalUnlocked = false; // Internal unlock flag (NOT on window - can't be bypassed from console)
 
   // ===== API HELPERS =====
   function getApiBase() {
@@ -76,28 +40,11 @@
         const data = await response.json();
         pinEnabled = data.pinEnabled;
         biometricEnabled = data.biometricEnabled;
-
-        // Cache PIN enabled state for instant lock on next app start (per-user)
-        try {
-          if (pinEnabled) {
-            localStorage.setItem('_pinLockEnabled_' + userId, 'true');
-          } else {
-            localStorage.removeItem('_pinLockEnabled_' + userId);
-          }
-        } catch(e) {}
-
         updateSettingsUI();
 
         // If PIN is enabled and app just opened, show lock screen
-        if (pinEnabled && !isLocked && !_internalUnlocked) {
+        if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
-        } else if (!pinEnabled && _pinCachedEnabled) {
-          // PIN was disabled (e.g. from another device) - hide early lock if showing
-          var lockEl = document.getElementById('pin-lock-screen');
-          if (lockEl) {
-            lockEl.style.display = 'none';
-            lockEl.classList.remove('active');
-          }
         }
       }
     } catch (error) {
@@ -307,20 +254,6 @@
 
     modal.style.display = 'flex';
     setTimeout(() => modal.classList.add('active'), 10);
-
-    // Show biometric button only in disable mode when biometric is enabled
-    const setupBioBtn = document.getElementById('pin-setup-biometric-btn');
-    if (setupBioBtn) {
-      if (step === 'disable' && biometricEnabled && biometricAvailable) {
-        setupBioBtn.style.visibility = 'visible';
-        // Auto-trigger biometric after a short delay
-        setTimeout(() => {
-          if (setupStep === 'disable') triggerSetupBiometricAuth();
-        }, 400);
-      } else {
-        setupBioBtn.style.visibility = 'hidden';
-      }
-    }
   }
 
   window.closePinModal = function() {
@@ -453,7 +386,6 @@
       const data = await response.json();
       if (data.success) {
         pinEnabled = true;
-        try { var _uid = getUserId(); if (_uid) localStorage.setItem('_pinLockEnabled_' + _uid, 'true'); } catch(e) {}
         window.closePinModal();
         updateSettingsUI();
         if (window.showNotification) {
@@ -507,7 +439,6 @@
       if (data.success) {
         pinEnabled = false;
         biometricEnabled = false;
-        try { var _uid = getUserId(); if (_uid) localStorage.removeItem('_pinLockEnabled_' + _uid); } catch(e) {}
         window.closePinModal();
         updateSettingsUI();
         if (window.showNotification) {
@@ -541,17 +472,12 @@
     clearLockDots();
     hideLockError();
 
-    // Check if already visible from early lock (avoid flicker)
-    var alreadyVisible = lockScreen.style.display === 'flex' && lockScreen.classList.contains('active');
-    
-    if (!alreadyVisible) {
-      lockScreen.style.display = 'flex';
-      lockScreen.style.opacity = '0';
-      requestAnimationFrame(() => {
-        lockScreen.classList.add('active');
-        lockScreen.style.opacity = '1';
-      });
-    }
+    lockScreen.style.display = 'flex';
+    lockScreen.style.opacity = '0';
+    requestAnimationFrame(() => {
+      lockScreen.classList.add('active');
+      lockScreen.style.opacity = '1';
+    });
 
     // Show biometric button if enabled
     const bioBtn = document.getElementById('pin-biometric-btn');
@@ -570,7 +496,7 @@
   function hideLockScreen() {
     if (!isLocked) return;
     isLocked = false;
-    _internalUnlocked = true;
+    window._pinUnlocked = true;
     window._biometricInProgress = false;
     
     // Cooldown: prevent re-locking for 2 seconds after unlock
@@ -716,94 +642,6 @@
     triggerBiometricAuth();
   };
 
-  // ===== BIOMETRIC AUTH FOR DISABLE PIN =====
-  function triggerSetupBiometricAuth() {
-    if (!window.Fingerprint || !biometricAvailable || !biometricEnabled) return;
-    if (window._biometricInProgress) return;
-    window._biometricInProgress = true;
-
-    const t = (key) => window.translator ? window.translator.translate(key) : key;
-
-    window.Fingerprint.show(
-      {
-        title: t('Disable PIN'),
-        disableBackup: true
-      },
-      function() {
-        // Success - animate dots then disable PIN
-        window._biometricInProgress = false;
-        animateSetupDotsAndDisable();
-      },
-      function(error) {
-        window._biometricInProgress = false;
-        console.log('[PIN] Biometric for disable cancelled/failed:', error);
-      }
-    );
-  }
-
-  // Animate setup modal dots filling, then disable PIN via biometric endpoint
-  function animateSetupDotsAndDisable() {
-    const dots = document.querySelectorAll('#pin-setup-dots .pin-dot');
-    if (!dots.length) {
-      disablePinViaBiometric();
-      return;
-    }
-
-    let i = 0;
-    const fillInterval = setInterval(() => {
-      if (i < dots.length) {
-        dots[i].classList.add('filled');
-        if (navigator.vibrate) navigator.vibrate(15);
-        i++;
-      } else {
-        clearInterval(fillInterval);
-        setTimeout(() => {
-          disablePinViaBiometric();
-        }, 200);
-      }
-    }, 80);
-  }
-
-  async function disablePinViaBiometric() {
-    const t = (key) => window.translator ? window.translator.translate(key) : key;
-    try {
-      const userId = getUserId();
-      if (!userId) return;
-
-      const response = await fetch(getApiBase() + '/api/pin/disable-biometric', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        pinEnabled = false;
-        biometricEnabled = false;
-        try { var _uid = getUserId(); if (_uid) localStorage.removeItem('_pinLockEnabled_' + _uid); } catch(e) {}
-        window.closePinModal();
-        updateSettingsUI();
-        if (window.showNotification) {
-          window.showNotification(t('PIN disabled'), 'success');
-        }
-      } else {
-        showSetupError(data.error || t('Failed to disable PIN'));
-        pinInput = '';
-        clearSetupDots();
-      }
-    } catch (error) {
-      console.error('[PIN] Error disabling via biometric:', error);
-      showSetupError(t('Network error'));
-      pinInput = '';
-      clearSetupDots();
-    }
-  }
-
-  // Expose for button tap
-  window.pinSetupBiometricAuth = function() {
-    triggerSetupBiometricAuth();
-  };
-
   // ===== APP LIFECYCLE =====
   // Track when app goes to background
   var _pausedAt = 0;
@@ -833,8 +671,8 @@
       return;
     }
     
-    if (pinEnabled && _internalUnlocked) {
-      _internalUnlocked = false;
+    if (pinEnabled && window._pinUnlocked) {
+      window._pinUnlocked = false;
       showLockScreen();
     }
   }

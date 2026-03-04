@@ -645,7 +645,8 @@
   // ===== APP LIFECYCLE =====
   // Track when app goes to background
   var _pausedAt = 0;
-  var PIN_BACKGROUND_THRESHOLD = 30000; // Only show PIN if app was in background > 30 seconds
+  var PIN_BACKGROUND_THRESHOLD = 30000; // Show PIN if app was in background > 30 seconds
+  var APP_RELOAD_THRESHOLD = 300000; // Full reload if in background > 5 minutes
 
   document.addEventListener('pause', function() {
     _pausedAt = Date.now();
@@ -657,7 +658,13 @@
     var backgroundDuration = Date.now() - _pausedAt;
     console.log('[PIN] App resumed, background duration:', backgroundDuration, 'ms');
 
-    // Only show PIN lock if app was in background for more than 5 seconds
+    // Very long background (5+ minutes) = full app reload for fresh state
+    if (backgroundDuration >= APP_RELOAD_THRESHOLD) {
+      console.log('[PIN] Long background (' + backgroundDuration + 'ms), reloading app...');
+      window.location.reload();
+      return;
+    }
+
     // Short pauses = camera, gallery, share dialog, modals, ads, etc.
     if (backgroundDuration < PIN_BACKGROUND_THRESHOLD) {
       console.log('[PIN] Short pause (' + backgroundDuration + 'ms < ' + PIN_BACKGROUND_THRESHOLD + 'ms), skipping PIN');
