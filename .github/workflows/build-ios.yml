@@ -145,6 +145,7 @@ jobs:
         echo '✅ cordova-plugin-googleplus removed from config.xml'
         grep -n 'googleplus\|GoogleSignIn' config.xml || echo '   (confirmed: no GoogleSignIn references)'
 
+
     - name: Add iOS platform (allow pod install to fail, we fix it later)
       working-directory: cordova-app
       run: |
@@ -203,13 +204,12 @@ jobs:
         sed -i '' "s|use_frameworks!|use_frameworks! :linkage => :static|g" Podfile
         echo '✅ Changed to static linkage - no dyld framework loading needed'
         
-        # ✅ Add post_install hook to exclude arm64 from simulator builds
-        # macOS-14 runners are Apple Silicon, but Appetize.io needs x86_64
+        # Add post_install: EXCLUDED_ARCHS + DEBUG=1 (fixes GULResetLogger ifdef mismatch)
         if ! grep -q "EXCLUDED_ARCHS" Podfile; then
-          printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n    end\n  end\nend\n' >> Podfile
-          echo '✅ Added post_install hook (EXCLUDED_ARCHS for simulator)'
+          echo 'CnBvc3RfaW5zdGFsbCBkbyB8aW5zdGFsbGVyfAogIGluc3RhbGxlci5wb2RzX3Byb2plY3QudGFyZ2V0cy5lYWNoIGRvIHx0YXJnZXR8CiAgICB0YXJnZXQuYnVpbGRfY29uZmlndXJhdGlvbnMuZWFjaCBkbyB8Y29uZmlnfAogICAgICBjb25maWcuYnVpbGRfc2V0dGluZ3NbJ0VYQ0xVREVEX0FSQ0hTW3Nkaz1pcGhvbmVzaW11bGF0b3IqXSddID0gJ2FybTY0JwogICAgICBpZiBjb25maWcubmFtZSA9PSAnRGVidWcnCiAgICAgICAgZGVmcyA9IGNvbmZpZy5idWlsZF9zZXR0aW5nc1snR0NDX1BSRVBST0NFU1NPUl9ERUZJTklUSU9OUyddIHx8IFsnJChpbmhlcml0ZWQpJ10KICAgICAgICBkZWZzID0gW2RlZnNdIGlmIGRlZnMuaXNfYT8oU3RyaW5nKQogICAgICAgIGRlZnMgPDwgJ0RFQlVHPTEnIHVubGVzcyBkZWZzLmluY2x1ZGU/KCdERUJVRz0xJykKICAgICAgICBjb25maWcuYnVpbGRfc2V0dGluZ3NbJ0dDQ19QUkVQUk9DRVNTT1JfREVGSU5JVElPTlMnXSA9IGRlZnMKICAgICAgZW5kCiAgICBlbmQKICBlbmQKZW5kCg==' | base64 -d >> Podfile
+          echo 'Added post_install hook (EXCLUDED_ARCHS + DEBUG=1 for all pods)'
         else
-          echo '✅ post_install already in Podfile'
+          echo 'post_install already in Podfile'
         fi
         
         echo '📋 Fixed Podfile:'
