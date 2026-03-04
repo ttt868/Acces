@@ -28,24 +28,30 @@
     
     <!-- ==================== iOS Platform ==================== -->
     <platform name="ios">
-        <!-- iOS Icons - will be generated from 512px source in CI -->
-        <icon src="www/access-store-512.png" width="1024" height="1024" />
-        <icon src="www/access-store-192.png" width="180" height="180" />
-        <icon src="www/access-store-152.png" width="152" height="152" />
-        <icon src="www/access-store-144.png" width="144" height="144" />
-        <icon src="www/access-store-128.png" width="120" height="120" />
-        <icon src="www/access-store-96.png" width="87" height="87" />
-        <icon src="www/access-store-96.png" width="80" height="80" />
-        <icon src="www/access-store-72.png" width="76" height="76" />
-        <icon src="www/access-store-72.png" width="60" height="60" />
-        <icon src="www/access-store-48.png" width="58" height="58" />
-        <icon src="www/access-store-48.png" width="40" height="40" />
-        <icon src="www/access-store-48.png" width="29" height="29" />
-        <icon src="www/access-store-48.png" width="20" height="20" />
+        <!-- iOS Icons - generated from 512px source in CI to exact required sizes -->
+        <icon src="res/ios-icons/icon-1024.png" width="1024" height="1024" />
+        <icon src="res/ios-icons/icon-180.png" width="180" height="180" />
+        <icon src="res/ios-icons/icon-167.png" width="167" height="167" />
+        <icon src="res/ios-icons/icon-152.png" width="152" height="152" />
+        <icon src="res/ios-icons/icon-120.png" width="120" height="120" />
+        <icon src="res/ios-icons/icon-87.png" width="87" height="87" />
+        <icon src="res/ios-icons/icon-80.png" width="80" height="80" />
+        <icon src="res/ios-icons/icon-76.png" width="76" height="76" />
+        <icon src="res/ios-icons/icon-60.png" width="60" height="60" />
+        <icon src="res/ios-icons/icon-58.png" width="58" height="58" />
+        <icon src="res/ios-icons/icon-40.png" width="40" height="40" />
+        <icon src="res/ios-icons/icon-29.png" width="29" height="29" />
+        <icon src="res/ios-icons/icon-20.png" width="20" height="20" />
 
         <!-- Deployment Target -->
         <preference name="deployment-target" value="14.0" />
         <preference name="SwiftVersion" value="5.0" />
+
+        <!-- ✅ CRITICAL: iOS must use 'app' scheme (not 'http') -->
+        <!-- cordova-ios 7.x removed GCDWebServer, so http://localhost won't work -->
+        <!-- 'app://localhost' uses WKURLSchemeHandler to serve local files -->
+        <preference name="scheme" value="app" />
+        <preference name="hostname" value="localhost" />
 
         <!-- WKWebView Settings -->
         <preference name="WKWebViewOnly" value="true" />

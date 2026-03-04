@@ -39,8 +39,8 @@ window.getApiOrigin = function() {
             else if (url.startsWith('null/api') || url.startsWith('null/rpc')) {
                 finalUrl = window.API_BASE_URL + url.substring(4);
             }
-            // Case 4: https://localhost with API (Cordova WebView)
-            else if (url.includes('localhost') && (url.includes('/api') || url.includes('/rpc'))) {
+            // Case 4: app://localhost or http://localhost with API (Cordova iOS/Android WebView)
+            else if ((url.includes('localhost') || url.includes('app://')) && (url.includes('/api') || url.includes('/rpc'))) {
                 const idx = url.includes('/api') ? url.indexOf('/api') : url.indexOf('/rpc');
                 finalUrl = window.API_BASE_URL + url.substring(idx);
             }
@@ -72,7 +72,7 @@ window.getApiOrigin = function() {
                 const idx = url.includes('/api') ? url.indexOf('/api') : url.indexOf('/rpc');
                 finalUrl = window.API_BASE_URL + url.substring(idx);
             }
-            else if (url.includes('localhost') && (url.includes('/api') || url.includes('/rpc'))) {
+            else if ((url.includes('localhost') || url.includes('app://')) && (url.includes('/api') || url.includes('/rpc'))) {
                 const idx = url.includes('/api') ? url.indexOf('/api') : url.indexOf('/rpc');
                 finalUrl = window.API_BASE_URL + url.substring(idx);
             }

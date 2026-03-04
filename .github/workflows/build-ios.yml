@@ -224,20 +224,37 @@ jobs:
           find platforms/ios -maxdepth 3 -type d
         fi
     
-    - name: Copy generated iOS icons to platform
+    - name: Verify iOS icons in platform
       working-directory: cordova-app
       run: |
-        echo '🖼️ Updating iOS icons with correctly sized versions...'
+        echo '🖼️ Verifying iOS icons were correctly placed by Cordova...'
         IOS_ICONS_DIR=$(find platforms/ios -path "*/Assets.xcassets/AppIcon.appiconset" -type d | head -1)
         
         if [ -n "$IOS_ICONS_DIR" ]; then
-          echo "Found icons directory: $IOS_ICONS_DIR"
-          for SIZE in 20 29 40 58 60 76 80 87 120 152 167 180 1024; do
-            if [ -f "res/ios-icons/icon-${SIZE}.png" ]; then
-              cp "res/ios-icons/icon-${SIZE}.png" "$IOS_ICONS_DIR/" 2>/dev/null || true
-            fi
-          done
-          echo '✅ iOS icons updated'
+          echo "Icons directory: $IOS_ICONS_DIR"
+          ls -la "$IOS_ICONS_DIR/" | head -20
+          
+          # Check Contents.json references the icons
+          if [ -f "$IOS_ICONS_DIR/Contents.json" ]; then
+            echo '📋 Contents.json icon entries:'
+            grep -o '"filename"[^,]*' "$IOS_ICONS_DIR/Contents.json" | head -15
+          fi
+          
+          # Fallback: if Cordova didn't copy icons properly, copy manually and update Contents.json
+          ICON_COUNT=$(find "$IOS_ICONS_DIR" -name "*.png" | wc -l)
+          if [ "$ICON_COUNT" -lt 5 ]; then
+            echo "⚠️ Only $ICON_COUNT icons found, copying manually..."
+            for SIZE in 20 29 40 58 60 76 80 87 120 152 167 180 1024; do
+              if [ -f "res/ios-icons/icon-${SIZE}.png" ]; then
+                cp "res/ios-icons/icon-${SIZE}.png" "$IOS_ICONS_DIR/icon-${SIZE}.png"
+              fi
+            done
+            # Generate proper Contents.json for Xcode
+            printf '%s\n' '{"images":[' '{"filename":"icon-1024.png","idiom":"universal","platform":"ios","size":"1024x1024"},' '{"filename":"icon-20.png","idiom":"iphone","scale":"2x","size":"20x20"},' '{"filename":"icon-60.png","idiom":"iphone","scale":"3x","size":"20x20"},' '{"filename":"icon-58.png","idiom":"iphone","scale":"2x","size":"29x29"},' '{"filename":"icon-87.png","idiom":"iphone","scale":"3x","size":"29x29"},' '{"filename":"icon-80.png","idiom":"iphone","scale":"2x","size":"40x40"},' '{"filename":"icon-120.png","idiom":"iphone","scale":"3x","size":"40x40"},' '{"filename":"icon-120.png","idiom":"iphone","scale":"2x","size":"60x60"},' '{"filename":"icon-180.png","idiom":"iphone","scale":"3x","size":"60x60"},' '{"filename":"icon-40.png","idiom":"ipad","scale":"1x","size":"20x20"},' '{"filename":"icon-40.png","idiom":"ipad","scale":"2x","size":"20x20"},' '{"filename":"icon-29.png","idiom":"ipad","scale":"1x","size":"29x29"},' '{"filename":"icon-58.png","idiom":"ipad","scale":"2x","size":"29x29"},' '{"filename":"icon-40.png","idiom":"ipad","scale":"1x","size":"40x40"},' '{"filename":"icon-80.png","idiom":"ipad","scale":"2x","size":"40x40"},' '{"filename":"icon-76.png","idiom":"ipad","scale":"1x","size":"76x76"},' '{"filename":"icon-152.png","idiom":"ipad","scale":"2x","size":"76x76"},' '{"filename":"icon-167.png","idiom":"ipad","scale":"2x","size":"83.5x83.5"},' '{"filename":"icon-1024.png","idiom":"ios-marketing","scale":"1x","size":"1024x1024"}' '],"info":{"author":"xcode","version":1}}' > "$IOS_ICONS_DIR/Contents.json"
+            echo '✅ Contents.json regenerated with correct icon references'
+          else
+            echo "✅ $ICON_COUNT icons found - looks good"
+          fi
         else
           echo '⚠️ Could not find AppIcon.appiconset directory'
           find platforms/ios -name "*.appiconset" -type d 2>/dev/null || true
