@@ -290,6 +290,7 @@ jobs:
             -configuration Debug \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
@@ -314,14 +315,25 @@ jobs:
           exit 1
         fi
     
-    - name: List build output
+    - name: Find and package build output
+      working-directory: cordova-app
       run: |
-        echo '📱 iOS build output:'
-        find cordova-app/platforms/ios/build -name "*.app" -type d 2>/dev/null | head -20 || echo "No .app found"
-        find cordova-app/platforms/ios/build -name "*.ipa" 2>/dev/null | head -20 || echo "No .ipa found"
-        echo ''
-        echo '📁 Build directory structure:'
-        find cordova-app/platforms/ios/build -maxdepth 4 -type d 2>/dev/null || echo "No build directory"
+        echo '📱 Searching for .app in all possible locations...'
+        
+        # Search in derivedDataPath (build/) and default DerivedData
+        APP_PATH=$(find build platforms/ios/build ~/Library/Developer/Xcode/DerivedData -name "Access Network.app" -type d 2>/dev/null | head -1)
+        
+        if [ -n "$APP_PATH" ]; then
+          echo "✅ Found .app at: $APP_PATH"
+          mkdir -p output
+          cp -R "$APP_PATH" output/
+          echo '📦 Copied to output/'
+          ls -la output/
+        else
+          echo '⚠️ No .app found, listing all build dirs:'
+          find build platforms/ios/build ~/Library/Developer/Xcode/DerivedData -maxdepth 6 -name "*.app" -type d 2>/dev/null || echo 'Nothing found'
+          find build -maxdepth 5 -type d 2>/dev/null | head -30 || true
+        fi
     
     # ============================================================
     # SIGNED BUILD (uncomment when Apple Developer account is ready)
@@ -366,12 +378,10 @@ jobs:
     #     path: cordova-app/platforms/ios/build/device/*.ipa
     #     retention-days: 30
 
-    - name: Upload iOS Simulator Build
+    - name: Upload iOS Build
       uses: actions/upload-artifact@v4
       with:
-        name: access-network-ios-simulator
-        path: |
-          cordova-app/platforms/ios/build/**/*.app
-          cordova-app/platforms/ios/build/**/*.ipa
+        name: access-network-ios-app
+        path: cordova-app/output/
         if-no-files-found: warn
         retention-days: 30
