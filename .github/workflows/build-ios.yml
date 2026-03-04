@@ -272,11 +272,28 @@ jobs:
       working-directory: cordova-app
       run: |
         echo '🔧 Fixing AdMob App ID for iOS...'
-        find platforms/ios -name "Info.plist" -exec grep -l "GADApplicationIdentifier" {} \; 2>/dev/null | while read plist; do
-          echo "Found plist with AdMob: $plist"
-          /usr/libexec/PlistBuddy -c "Set :GADApplicationIdentifier ca-app-pub-3940256099942544~1458002511" "$plist" 2>/dev/null || true
-        done
-        echo '✅ AdMob App ID fixed'
+        # Find the main app Info.plist
+        APP_PLIST=$(find platforms/ios -maxdepth 3 -name "Info.plist" ! -path "*/Pods/*" ! -path "*/Frameworks/*" | head -1)
+        if [ -n "$APP_PLIST" ]; then
+          echo "Main app Info.plist: $APP_PLIST"
+          # Set GADApplicationIdentifier (try Set first, then Add if key doesn't exist)
+          /usr/libexec/PlistBuddy -c "Set :GADApplicationIdentifier ca-app-pub-3940256099942544~1458002511" "$APP_PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Add :GADApplicationIdentifier string ca-app-pub-3940256099942544~1458002511" "$APP_PLIST" 2>/dev/null || true
+          # Delay AdMob measurement init to prevent early crash
+          /usr/libexec/PlistBuddy -c "Set :GADDelayAppMeasurementInit bool true" "$APP_PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Add :GADDelayAppMeasurementInit bool true" "$APP_PLIST" 2>/dev/null || true
+          # Disable Firebase AppDelegate proxy (prevents swizzling conflicts with cordova-ios 7.x)
+          /usr/libexec/PlistBuddy -c "Set :FirebaseAppDelegateProxyEnabled bool false" "$APP_PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy -c "Add :FirebaseAppDelegateProxyEnabled bool false" "$APP_PLIST" 2>/dev/null || true
+          echo "✅ AdMob, Firebase plist entries fixed"
+          echo "Verifying..."
+          /usr/libexec/PlistBuddy -c "Print :GADApplicationIdentifier" "$APP_PLIST" 2>/dev/null || echo "⚠️ GADApplicationIdentifier not set"
+          /usr/libexec/PlistBuddy -c "Print :GADDelayAppMeasurementInit" "$APP_PLIST" 2>/dev/null || echo "⚠️ GADDelayAppMeasurementInit not set"
+          /usr/libexec/PlistBuddy -c "Print :FirebaseAppDelegateProxyEnabled" "$APP_PLIST" 2>/dev/null || echo "⚠️ FirebaseAppDelegateProxyEnabled not set"
+        else
+          echo "⚠️ Could not find main Info.plist"
+          find platforms/ios -name "Info.plist" -type f | head -10
+        fi
 
     - name: Build iOS (No Code Signing - Unsigned)
       working-directory: cordova-app

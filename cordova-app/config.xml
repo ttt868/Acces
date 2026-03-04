@@ -89,11 +89,25 @@
 
         <!-- Status bar -->
         <preference name="StatusBarStyle" value="lightcontent" />
+
+        <!-- ✅ Prevent Firebase AppDelegate swizzling (conflicts with cordova-ios 7.x WKURLSchemeHandler) -->
+        <config-file parent="FirebaseAppDelegateProxyEnabled" target="*-Info.plist">
+            <false/>
+        </config-file>
+
+        <!-- ✅ Delay AdMob initialization to prevent crash before app is ready -->
+        <config-file parent="GADDelayAppMeasurementInit" target="*-Info.plist">
+            <true/>
+        </config-file>
     </platform>
 
     <!-- ==================== Android Platform ==================== -->
     <!-- Android specific -->
     <platform name="android">
+        <!-- ✅ CRITICAL: Android uses HTTP scheme to allow mixed content -->
+        <preference name="scheme" value="http" />
+        <preference name="hostname" value="localhost" />
+        
         <icon src="www/access-store-192.png" density="xxxhdpi" />
         <icon src="www/access-store-144.png" density="xxhdpi" />
         <icon src="www/access-store-96.png" density="xhdpi" />
@@ -142,9 +156,7 @@
     <preference name="Fullscreen" value="false" />
     <preference name="KeepRunning" value="true" />
     
-    <!-- ✅ CRITICAL: Use HTTP scheme to allow mixed content -->
-    <preference name="scheme" value="http" />
-    <preference name="hostname" value="localhost" />
+    <!-- MixedContentMode and AllowInsecureLocalhost are Android-only -->
     <preference name="MixedContentMode" value="0" />
     <preference name="AllowInsecureLocalhost" value="true" />
     
@@ -183,7 +195,9 @@
     </plugin>
     
     <!-- ✅ AdMob Rewarded Ads (cordova-plugin-ads - survives background) -->
-    <plugin name="cordova-plugin-ads" spec="2.0.5" />
+    <plugin name="cordova-plugin-ads" spec="2.0.5">
+        <variable name="ADMOB_IOS_APP_ID" value="ca-app-pub-3940256099942544~1458002511" />
+    </plugin>
     
     <!-- ✅ Biometric / Fingerprint Authentication for PIN Lock -->
     <plugin name="cordova-plugin-fingerprint-aio" spec="^5.0.1" />
