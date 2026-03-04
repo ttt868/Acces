@@ -129,6 +129,22 @@ jobs:
         
         echo '✅ Pod version fixes applied (no GoogleSignIn in iOS build)'
     
+
+    - name: Remove GoogleSignIn from config.xml for iOS
+      working-directory: cordova-app
+      run: |
+        echo '🔧 Removing cordova-plugin-googleplus from config.xml for iOS build...'
+        echo '   GoogleSignIn 5.x ships pre-compiled STATIC GoogleUtilities -> dyld crash.'
+        echo '   Google Sign-In still works on Android via build-android.yml.'
+        perl -0777 -i -pe 's|\s*<!-- Google Sign-In.*?-->\s*<plugin name="cordova-plugin-googleplus".*?</plugin>||s' config.xml
+        if grep -q 'cordova-plugin-googleplus' config.xml; then
+          echo 'Plugin still in config.xml, trying sed fallback...'
+          sed -i '' '/<plugin name="cordova-plugin-googleplus"/,/<\/plugin>/d' config.xml
+          sed -i '' '/Google Sign-In Plugin/d' config.xml
+        fi
+        echo '✅ cordova-plugin-googleplus removed from config.xml'
+        grep -n 'googleplus\|GoogleSignIn' config.xml || echo '   (confirmed: no GoogleSignIn references)'
+
     - name: Add iOS platform (allow pod install to fail, we fix it later)
       working-directory: cordova-app
       run: |
@@ -178,20 +194,17 @@ jobs:
         # Fix GoogleUtilities version (must be ~> 7.7 to work with Firebase 8.15)
         sed -i '' "s|pod 'GoogleUtilities', '~> 7.2.2'|pod 'GoogleUtilities', '~> 7.7'|g" Podfile
         
-        # ✅ CRITICAL: Force ALL pods to static linkage
-        # Problem: use_frameworks! means dynamic. But GoogleUtilities & nanopb have
-        # static_framework=true in their podspecs -> they build as static archives.
-        # Dynamic pods (FirebaseCore etc.) reference them via @rpath, but dyld can't
-        # load static archives -> instant crash.
-        # Solution: use_frameworks! :linkage => :static makes ALL pods static.
-        # All code links into main binary, no dyld framework loading needed.
-        sed -i '' "s|use_frameworks!|use_frameworks! :linkage => :static|g" Podfile
-        echo '✅ Changed to use_frameworks! :linkage => :static (all pods static)'
+        # ✅ No need to change use_frameworks! linkage
+        # GoogleSignIn has been removed from iOS build, so no more
+        # pre-compiled static GoogleUtilities.framework conflict.
+        # All remaining pods (Firebase, AppAuth, etc.) build as real dynamic frameworks.
+        echo '✅ Keeping default use_frameworks! (dynamic) - no GoogleSignIn conflict'
         
-        # ✅ Add post_install hook to exclude arm64 AND add -ObjC linker flag
+        # ✅ Add post_install hook to exclude arm64 from simulator builds
+        # macOS-14 runners are Apple Silicon, but Appetize.io needs x86_64
         if ! grep -q "EXCLUDED_ARCHS" Podfile; then
-          printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n    end\n  end\n  \n  # Add -ObjC flag to main target for static framework symbol resolution\n  installer.aggregate_targets.each do |target|\n    target.xcconfigs.each do |config_name, config|\n      config.attributes['"'"'OTHER_LDFLAGS'"'"'] ||= '"'"'$(inherited)'"'"'\n      config.attributes['"'"'OTHER_LDFLAGS'"'"'] += '"'"' -ObjC'"'"'\n      xcconfig_path = target.xcconfig_path(config_name)\n      config.save_as(xcconfig_path)\n    end\n  end\nend\n' >> Podfile
-          echo '✅ Added post_install hook (EXCLUDED_ARCHS + -ObjC for static linking)'
+          printf '\npost_install do |installer|\n  installer.pods_project.targets.each do |target|\n    target.build_configurations.each do |config|\n      config.build_settings['"'"'EXCLUDED_ARCHS[sdk=iphonesimulator*]'"'"'] = '"'"'arm64'"'"'\n    end\n  end\nend\n' >> Podfile
+          echo '✅ Added post_install hook (EXCLUDED_ARCHS for simulator)'
         else
           echo '✅ post_install already in Podfile'
         fi
