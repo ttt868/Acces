@@ -25,30 +25,76 @@
     return user ? user.id : null;
   }
 
+  // ===== LOCAL PIN CACHE (per-user) =====
+  // Store PIN state locally so it works immediately + offline
+  // Key format: pin_state_{userId} to not mix between users
+  function getLocalPinKey() {
+    var userId = getUserId();
+    return userId ? 'pin_state_' + userId : null;
+  }
+
+  function saveLocalPinState() {
+    var key = getLocalPinKey();
+    if (!key) return;
+    try {
+      localStorage.setItem(key, JSON.stringify({
+        pinEnabled: pinEnabled,
+        biometricEnabled: biometricEnabled,
+        ts: Date.now()
+      }));
+    } catch(e) {}
+  }
+
+  function loadLocalPinState() {
+    var key = getLocalPinKey();
+    if (!key) return false;
+    try {
+      var data = JSON.parse(localStorage.getItem(key));
+      if (data && typeof data.pinEnabled === 'boolean') {
+        pinEnabled = data.pinEnabled;
+        biometricEnabled = data.biometricEnabled || false;
+        return true;
+      }
+    } catch(e) {}
+    return false;
+  }
+
   // ===== PIN STATUS =====
   async function loadPinStatus() {
     try {
       const userId = getUserId();
       if (!userId) return;
 
-      // Check biometric availability early (before lock screen might show)
+      // Check biometric availability early
       await checkBiometricAvailabilityAsync();
 
+      // Load local cache FIRST (instant, works offline)
+      var hadLocal = loadLocalPinState();
+      if (hadLocal) {
+        updateSettingsUI();
+        if (pinEnabled && !isLocked && !window._pinUnlocked) {
+          showLockScreen();
+        }
+      }
+
+      // Then sync from server (update cache)
       const response = await fetch(getApiBase() + '/api/pin/status/' + userId);
 
       if (response.ok) {
         const data = await response.json();
         pinEnabled = data.pinEnabled;
         biometricEnabled = data.biometricEnabled;
+        saveLocalPinState(); // cache for next time
         updateSettingsUI();
 
-        // If PIN is enabled and app just opened, show lock screen
+        // Show lock screen if PIN enabled and not already locked
         if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
         }
       }
     } catch (error) {
       console.error('[PIN] Error loading status:', error);
+      // Offline: local cache already applied above
     }
   }
 
@@ -386,6 +432,7 @@
       const data = await response.json();
       if (data.success) {
         pinEnabled = true;
+        saveLocalPinState();
         window.closePinModal();
         updateSettingsUI();
         if (window.showNotification) {
@@ -439,6 +486,7 @@
       if (data.success) {
         pinEnabled = false;
         biometricEnabled = false;
+        saveLocalPinState();
         window.closePinModal();
         updateSettingsUI();
         if (window.showNotification) {

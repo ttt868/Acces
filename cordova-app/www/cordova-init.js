@@ -190,24 +190,32 @@ document.addEventListener('deviceready', function() {
     // }
 }, false);
 
-// ✅ App Lifecycle - Fresh restart after long background (native app behavior)
+// ✅ App Lifecycle - Kill app after long background (native app behavior)
+// Real native apps get killed by the OS after being in background too long.
+// When user opens them again, they start fresh with splash screen.
+// We replicate this by exiting the app after 5 minutes in background.
+// Next time user taps the icon = fresh start, no white flash, just native splash.
 (function() {
     var _appPausedAt = 0;
-    var APP_RESTART_THRESHOLD = 300000; // 5 minutes
+    var APP_KILL_THRESHOLD = 300000; // 5 minutes
+    var _killTimer = null;
 
     document.addEventListener('pause', function() {
         _appPausedAt = Date.now();
+        // Set a timer to exit the app while in background
+        // This way, when user comes back, it's a fresh start
+        _killTimer = setTimeout(function() {
+            if (navigator.app && navigator.app.exitApp) {
+                navigator.app.exitApp(); // Android: kills the process
+            }
+        }, APP_KILL_THRESHOLD);
     }, false);
 
     document.addEventListener('resume', function() {
-        if (!_appPausedAt) return;
-        var elapsed = Date.now() - _appPausedAt;
-        if (elapsed >= APP_RESTART_THRESHOLD) {
-            console.log('[APP] Background ' + Math.round(elapsed/1000) + 's - fresh restart');
-            // Show native splash for seamless native feel
-            if (navigator.splashscreen) navigator.splashscreen.show();
-            // Full restart - app loads fresh like first launch
-            window.location.replace(window.location.pathname);
+        // User came back before 5min, cancel the kill timer
+        if (_killTimer) {
+            clearTimeout(_killTimer);
+            _killTimer = null;
         }
     }, false);
 })();
