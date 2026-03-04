@@ -372,41 +372,59 @@ jobs:
           [ ! -f "$FILE" ] && continue
           echo "  Patching: $FILE"
           
-          # 1. Remove COEP header (crashes WKWebView on app:// scheme)
+          # ===== REMOVE HEADERS THAT CRASH WKWebView on app:// =====
           sed -i '' '/<meta http-equiv="Cross-Origin-Embedder-Policy"/d' "$FILE"
-          
-          # 2. Remove COOP header (not needed in Cordova)
           sed -i '' '/<meta http-equiv="Cross-Origin-Opener-Policy"/d' "$FILE"
-          
-          # 3. Remove Feature-Policy and Permissions-Policy (not needed in Cordova)
           sed -i '' '/<meta http-equiv="Feature-Policy"/d' "$FILE"
           sed -i '' '/<meta http-equiv="Permissions-Policy"/d' "$FILE"
           
-          # 4. Remove crossorigin from Font Awesome (can fail on app:// scheme)
-          sed -i '' 's/crossorigin="anonymous" referrerpolicy/referrerpolicy/g' "$FILE"
+          # ===== REMOVE ALL crossorigin AND integrity ATTRIBUTES =====
+          # crossorigin on app:// scheme causes CORS failures that crash web process
+          sed -i '' 's/ crossorigin="anonymous"//g' "$FILE"
+          sed -i '' 's/ crossorigin//g' "$FILE"
+          sed -i '' 's/ integrity="[^"]*"//g' "$FILE"
           
-          # 5. Remove manifest.json link (app:// scheme can't load it)
+          # ===== REMOVE ALL preconnect links (crash on app:// scheme) =====
+          sed -i '' '/<link rel="preconnect"/d' "$FILE"
+          
+          # ===== REMOVE Google Fonts entirely (use system fonts on iOS) =====
+          sed -i '' '/fonts\.googleapis\.com\/css2/d' "$FILE"
+          
+          # ===== REMOVE duplicate Font Awesome 6.5.1 =====
+          sed -i '' '/font-awesome\/6\.5\./d' "$FILE"
+          
+          # ===== REMOVE manifest.json link (app:// can't load it) =====
           sed -i '' 's|<link rel="manifest"[^>]*>|<!-- manifest removed for iOS -->|g' "$FILE"
           
-          # 6. Remove monetag meta tag
+          # ===== REMOVE monetag meta tag =====
           sed -i '' '/<meta name="monetag"/d' "$FILE"
           
-          # 7. Skip Service Worker registration in Cordova
+          # ===== Skip Service Worker on Cordova =====
           sed -i '' "s/if ('serviceWorker' in navigator)/if ('serviceWorker' in navigator \&\& !window.IS_CORDOVA_APP \&\& window.location.protocol.startsWith('http'))/g" "$FILE"
           
-          # 8. Make CDN scripts deferred (prevent blocking web process)
-          sed -i '' 's|<script src="https://cdn.socket.io/\([^"]*\)"></script>|<script src="https://cdn.socket.io/\1" defer></script>|g' "$FILE"
-          sed -i '' 's|<script src="https://cdn.jsdelivr.net/\([^"]*\)"></script>|<script src="https://cdn.jsdelivr.net/\1" defer></script>|g' "$FILE"
-          sed -i '' 's|<script src="https://cdnjs.cloudflare.com/\([^"]*\)"></script>|<script src="https://cdnjs.cloudflare.com/\1" defer></script>|g' "$FILE"
-          sed -i '' 's|<script src="https://unpkg.com/\([^"]*\)"></script>|<script src="https://unpkg.com/\1" defer></script>|g' "$FILE"
+          # ===== Make ALL external CDN scripts deferred =====
+          sed -i '' 's|<script src="https://cdn\.socket\.io/[^"]*"></script>|<!-- socket.io removed for iOS -->|g' "$FILE"
+          sed -i '' 's|<script src="https://cdn\.jsdelivr\.net/[^"]*"></script>|<!-- cdn script removed for iOS -->|g' "$FILE"
+          sed -i '' 's|<script src="https://cdnjs\.cloudflare\.com/ajax/libs/qrcodejs[^"]*"></script>|<!-- qrcodejs removed for iOS -->|g' "$FILE"
+          sed -i '' 's|<script src="https://unpkg\.com/qr-scanner[^"]*"></script>|<!-- qr-scanner removed for iOS -->|g' "$FILE"
+          sed -i '' 's|<script src="https://unpkg\.com/html5-qrcode[^"]*"></script>|<!-- html5-qrcode removed for iOS -->|g' "$FILE"
           
-          # 9. Add 3s safety timeout for app-ready (in case scripts fail)
+          # ===== Add safety timeout to force visibility =====
           sed -i '' '/<\/head>/i\
-          <script>setTimeout(function(){if(document.body&&!document.body.classList.contains("app-ready")){console.warn("Force app-ready");document.body.classList.add("app-ready");document.documentElement.classList.add("app-ready");document.body.style.opacity="1";}},3000);</script>' "$FILE"
+          <script>setTimeout(function(){if(!document.body)return;document.body.classList.add("app-ready");document.documentElement.classList.add("app-ready");document.body.style.opacity="1";document.body.style.visibility="visible";},2000);</script>' "$FILE"
           
           echo "  ✅ Patched: $FILE"
+          echo "  Lines after patching: $(wc -l < "$FILE")"
         done
         
+        # Verify patches applied correctly
+        echo '--- Verification ---'
+        echo "crossorigin count: $(grep -c 'crossorigin' www/index.html || echo 0)"
+        echo "integrity count: $(grep -c 'integrity=' www/index.html || echo 0)"
+        echo "preconnect count: $(grep -c 'preconnect' www/index.html || echo 0)"
+        echo "googleapis count: $(grep -c 'googleapis' www/index.html || echo 0)"
+        echo "COEP count: $(grep -c 'Embedder-Policy' www/index.html || echo 0)"
+        echo "monetag count: $(grep -c 'monetag' www/index.html || echo 0)"
         echo '✅ iOS index.html patches applied'
 
     - name: Build iOS (No Code Signing - Unsigned)
