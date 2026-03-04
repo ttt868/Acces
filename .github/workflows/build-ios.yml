@@ -97,6 +97,9 @@ jobs:
         # AdMob will work on Android. iOS AdMob can be added later via CocoaPods directly.
         echo '⏭️ Skipping cordova-plugin-ads for iOS (pre-compiled framework conflicts)'
         
+        # InAppBrowser (needed for external links)
+        cordova plugin add cordova-plugin-inappbrowser --save 2>/dev/null || true
+        
         # Biometric (Face ID / Touch ID)
         cordova plugin add cordova-plugin-fingerprint-aio@5.0.1 --save \
           --variable FACEID_USAGE_DESCRIPTION="Access Network uses Face ID to unlock the app securely" \
@@ -477,83 +480,132 @@ jobs:
       run: |
         echo '🔥 Ensuring Firebase is configured in AppDelegate...'
         
-        # The cordova-plugin-firebase-messaging already has:
-        # 1. AppDelegate+FirebaseMessagingPlugin.m - swizzles didFinishLaunchingWithOptions
-        # 2. FirebaseMessagingPlugin.m - calls [FIRApp configure] in pluginInitialize
-        #
-        # BUT pluginInitialize runs LATE (after webview loads).
-        # We need [FIRApp configure] in didFinishLaunchingWithOptions BEFORE webview.
-        #
-        # Fix: Patch the swizzled method to call [FIRApp configure] directly.
+        # STRATEGY: Always create AppDelegate+FirebaseInit.m using +load pattern
+        # This is the MOST RELIABLE approach:
+        # - +load runs before main(), before any plugin init
+        # - NSNotificationCenter fires on didFinishLaunching
+        # - Safe even if Firebase plugin also calls [FIRApp configure] (guarded by defaultApp check)
+        # - No fragile sed patterns to match specific plugin code
         
-        FCM_APPDELEGATE="platforms/ios/Access Network/Plugins/cordova-plugin-firebase-messaging/AppDelegate+FirebaseMessagingPlugin.m"
-        
-        if [ ! -f "$FCM_APPDELEGATE" ]; then
-          # Try finding it
-          FCM_APPDELEGATE=$(find platforms/ios -name "AppDelegate+FirebaseMessagingPlugin.m" ! -path "*/Pods/*" | head -1)
-        fi
-        
+        # Also try to patch the FCM plugin file as a bonus (sed approach)
+        FCM_APPDELEGATE=$(find platforms/ios -name "AppDelegate+FirebaseMessagingPlugin.m" ! -path "*/Pods/*" 2>/dev/null | head -1)
         if [ -n "$FCM_APPDELEGATE" ] && [ -f "$FCM_APPDELEGATE" ]; then
-          echo "Found: $FCM_APPDELEGATE"
-          
-          # Check if [FIRApp configure] is already in the swizzled method
-          if grep -q "FIRApp configure" "$FCM_APPDELEGATE"; then
-            echo "ℹ️ [FIRApp configure] already exists in AppDelegate category"
-          else
-            echo "📝 Adding [FIRApp configure] to swizzled didFinishLaunchingWithOptions..."
-            
-            # First ensure @import Firebase is in the .m file (not just .h)
+          echo "Found FCM plugin: $FCM_APPDELEGATE"
+          if ! grep -q "FIRApp configure" "$FCM_APPDELEGATE"; then
             if ! grep -q "@import Firebase" "$FCM_APPDELEGATE"; then
-              sed -i '' '1s/^/@import Firebase;\n/' "$FCM_APPDELEGATE"
-              echo "  Added @import Firebase to .m file"
+              sed -i '' '1s/^/@import Firebase;\n/' "$FCM_APPDELEGATE" 2>/dev/null || true
             fi
-            
-            # Insert [FIRApp configure] right after the original method call
-            sed -i '' '/BOOL handled = \[self identity_application/a\
+            # Try sed injection (may fail silently - that's OK, fallback below handles it)
+            sed -i '' '/identity_application/a\
         \
-            // Configure Firebase EARLY - before webview loads\
-            if (![FIRApp defaultApp]) {\
-                [FIRApp configure];\
-                NSLog(@"Firebase configured in AppDelegate (early init)");\
-            }' "$FCM_APPDELEGATE"
-            
-            echo "✅ [FIRApp configure] injected into AppDelegate"
-          fi
-          
-          echo "📋 Current swizzled method:"
-          grep -A 15 "identity_application" "$FCM_APPDELEGATE" | head -20
-        else
-          echo "⚠️ AppDelegate+FirebaseMessagingPlugin.m not found, creating manual Firebase init..."
-          
-          # Create a separate AppDelegate category for Firebase init
-          PLUGINS_DIR=$(find platforms/ios -path "*/Plugins" -type d ! -path "*/Pods/*" | head -1)
-          if [ -n "$PLUGINS_DIR" ]; then
-            cat > "$PLUGINS_DIR/AppDelegate+FirebaseInit.m" << 'OBJCEOF'
-        #import "AppDelegate.h"
-        @import Firebase;
-
-        @implementation AppDelegate (FirebaseInit)
-
-        + (void)load {
-            // Register for notification when app finishes launching
-            [[NSNotificationCenter defaultCenter] addObserver:self
-                                                     selector:@selector(firebaseInit:)
-                                                         name:UIApplicationDidFinishLaunchingNotification
-                                                       object:nil];
-        }
-
-        + (void)firebaseInit:(NSNotification *)notification {
-            if (![FIRApp defaultApp]) {
-                [FIRApp configure];
-                NSLog(@"🔥 Firebase configured via AppDelegate+FirebaseInit");
-            }
-        }
-
-        @end
-        OBJCEOF
-            echo "✅ Created AppDelegate+FirebaseInit.m"
+            if (![FIRApp defaultApp]) { [FIRApp configure]; }' "$FCM_APPDELEGATE" 2>/dev/null || true
+            echo "  Attempted sed injection into FCM plugin (bonus)"
           fi
         fi
+        
+        # ALWAYS create the reliable fallback: AppDelegate+FirebaseInit.m
+        APP_DIR=$(find platforms/ios -maxdepth 2 -name "Access Network" -type d ! -path "*.xcworkspace*" ! -path "*.xcodeproj*" | head -1)
+        if [ -z "$APP_DIR" ]; then
+          APP_DIR=$(find platforms/ios -maxdepth 2 -type d -name "Plugins" ! -path "*/Pods/*" | head -1)
+          APP_DIR=$(dirname "$APP_DIR")
+        fi
+        
+        FIREBASE_INIT_FILE="$APP_DIR/AppDelegate+FirebaseInit.m"
+        echo "Creating: $FIREBASE_INIT_FILE"
+        
+        cat > "$FIREBASE_INIT_FILE" << 'OBJCEOF'
+#import "AppDelegate.h"
+@import Firebase;
+
+@implementation AppDelegate (FirebaseInit)
+
++ (void)load {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(firebaseInit:)
+                                                 name:UIApplicationDidFinishLaunchingNotification
+                                               object:nil];
+}
+
++ (void)firebaseInit:(NSNotification *)notification {
+    if (![FIRApp defaultApp]) {
+        [FIRApp configure];
+        NSLog(@"Firebase configured via AppDelegate+FirebaseInit");
+    }
+}
+
+@end
+OBJCEOF
+        echo "✅ Created AppDelegate+FirebaseInit.m"
+        
+        # CRITICAL: Add AppDelegate+FirebaseInit.m to Xcode project.pbxproj
+        # Without this, Xcode won't compile the file!
+        PBXPROJ=$(find platforms/ios -name "project.pbxproj" | head -1)
+        if [ -n "$PBXPROJ" ] && ! grep -q "AppDelegate+FirebaseInit.m" "$PBXPROJ"; then
+          echo "📝 Adding AppDelegate+FirebaseInit.m to Xcode project..."
+          python3 << 'PYEOF'
+import re, os
+
+pbxproj = None
+for root, dirs, files in os.walk('platforms/ios'):
+    for f in files:
+        if f == 'project.pbxproj':
+            pbxproj = os.path.join(root, f)
+            break
+    if pbxproj:
+        break
+
+if not pbxproj:
+    print('project.pbxproj not found')
+    exit(0)
+
+with open(pbxproj, 'r') as f:
+    content = f.read()
+
+if 'AppDelegate+FirebaseInit.m' in content:
+    print('Already in project')
+    exit(0)
+
+file_ref_id = 'FBINIT0001000000000001'
+build_file_id = 'FBINIT0002000000000001'
+
+# Add PBXFileReference
+content = content.replace(
+    '/* End PBXFileReference section */',
+    f'\t\t{file_ref_id} /* AppDelegate+FirebaseInit.m */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = "AppDelegate+FirebaseInit.m"; path = "Access Network/AppDelegate+FirebaseInit.m"; sourceTree = "<group>"; }};\n/* End PBXFileReference section */'
+)
+
+# Add PBXBuildFile (Sources phase, not Resources)
+content = content.replace(
+    '/* End PBXBuildFile section */',
+    f'\t\t{build_file_id} /* AppDelegate+FirebaseInit.m in Sources */ = {{isa = PBXBuildFile; fileRef = {file_ref_id} /* AppDelegate+FirebaseInit.m */; }};\n/* End PBXBuildFile section */'
+)
+
+# Add to Sources build phase (compile it!)
+sources_pattern = r'(/\* Sources \*/ = \{[^}]*files = \(\s*\n)'
+match = re.search(sources_pattern, content)
+if match:
+    insertion_point = match.end()
+    content = content[:insertion_point] + f'\t\t\t\t{build_file_id} /* AppDelegate+FirebaseInit.m in Sources */,\n' + content[insertion_point:]
+    print('Added to Sources build phase')
+else:
+    print('WARNING: Could not find Sources build phase')
+
+# Add file ref to main group
+main_group_pattern = r'(children = \([^)]*AppDelegate\.m[^)]*?)(\);)'
+match = re.search(main_group_pattern, content)
+if match:
+    content = content[:match.start(2)] + f'\n\t\t\t\t{file_ref_id} /* AppDelegate+FirebaseInit.m */,\n\t\t\t' + content[match.start(2):]
+    print('Added to main group')
+
+with open(pbxproj, 'w') as f:
+    f.write(content)
+print('✅ AppDelegate+FirebaseInit.m added to Xcode project (Sources phase)')
+PYEOF
+        else
+          echo "ℹ️ AppDelegate+FirebaseInit.m already in project"
+        fi
+        
+        echo "✅ Firebase init setup complete (reliable +load pattern)"
 
     - name: Fix InAppBrowser crash on close
       working-directory: cordova-app
@@ -751,7 +803,44 @@ jobs:
             )
             
             # ============================================
-            # PHASE 8: Inject iOS safety script after <body>
+            # PHASE 8: Fix HTML structure - move languageModal from <head> to <body>
+            # A <div> inside <head> is INVALID HTML. WKWebView creates an implicit
+            # <body> when it encounters it, breaking the entire DOM tree.
+            # ============================================
+            modal_start = content.find('<div id="languageModal"')
+            if modal_start == -1:
+                modal_start = content.find("<div id='languageModal'")
+            if modal_start != -1:
+                # Find matching closing </div> by counting open/close tags
+                depth = 0
+                i = modal_start
+                modal_end = -1
+                while i < len(content):
+                    if content[i:i+4] == '<div':
+                        depth += 1
+                    elif content[i:i+6] == '</div>':
+                        depth -= 1
+                        if depth == 0:
+                            modal_end = i + 6
+                            break
+                    i += 1
+                if modal_end != -1:
+                    # Check if it's inside <head> (before <body>)
+                    body_pos = content.find('<body')
+                    if body_pos == -1 or modal_start < body_pos:
+                        modal_html = content[modal_start:modal_end]
+                        content = content[:modal_start] + content[modal_end:]
+                        # Recalculate body position after removal
+                        body_match = re.search(r'(<body[^>]*>)', content)
+                        if body_match:
+                            insert_pos = body_match.end()
+                            content = content[:insert_pos] + '\n' + modal_html + '\n' + content[insert_pos:]
+                            print('    Moved languageModal from <head> to <body>')
+                    else:
+                        print('    languageModal already after <body>, skipping move')
+            
+            # ============================================
+            # PHASE 9: Inject iOS safety script after <body>
             # This is a BACKUP - CSS changes above should make content visible
             # even without this script running
             # ============================================
