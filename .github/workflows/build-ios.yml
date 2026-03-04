@@ -785,6 +785,24 @@ jobs:
             if 'Pods' not in pf:
                 patch_file(pf)
         
+        # ====== PATCH CSS FILES - Remove render-blocking @import ======
+        print('\n--- Phase: CSS @import cleanup ---')
+        css_files = glob.glob('www/*.css') + glob.glob('platforms/ios/**/www/*.css', recursive=True)
+        for css_file in css_files:
+            if 'Pods' in css_file:
+                continue
+            try:
+                with open(css_file, 'r', encoding='utf-8') as f:
+                    css = f.read()
+                original = len(css)
+                css = re.sub(r"@import\s+url\(['\"]?https?://[^)]*\)['\"]?\s*;?\s*\n?", '', css)
+                if len(css) != original:
+                    with open(css_file, 'w', encoding='utf-8') as f:
+                        f.write(css)
+                    print(f"  ✅ Removed @import from {css_file} ({original - len(css)} bytes)")
+            except Exception as e:
+                print(f"  ⚠️ {css_file}: {e}")
+        
         # ====== VERIFICATION ======
         print('\n' + '='*50)
         print('VERIFICATION')

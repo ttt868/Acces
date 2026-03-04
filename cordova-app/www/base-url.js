@@ -10,8 +10,11 @@
     const isCordova = typeof cordova !== 'undefined' || 
                       typeof window.cordova !== 'undefined' ||
                       document.URL.indexOf('http://localhost') === 0 ||
+                      document.URL.indexOf('app://localhost') === 0 ||
                       document.URL.indexOf('file://') === 0 ||
-                      window.location.protocol === 'file:';
+                      window.location.protocol === 'file:' ||
+                      window.location.protocol === 'app:' ||
+                      window.IS_CORDOVA_APP === true;
     
     // Set the base URL based on environment
     if (isCordova) {
