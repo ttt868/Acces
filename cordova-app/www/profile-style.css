@@ -1937,6 +1937,10 @@ body.dark-theme #profile-page .copy-btn:hover {
   position: relative;
 }
 
+.pin-modal-container .pin-keypad {
+  margin-top: 21px;
+}
+
 .pin-modal-close {
   position: absolute;
   top: -40px;
