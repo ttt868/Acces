@@ -13909,17 +13909,29 @@ window.cancelProfileChanges = cancelProfileChanges;
            if (menu.classList.contains('show')) {
              menu.classList.remove('show');
            } else {
-             // Calculate position relative to avatar container
+             // Calculate position relative to avatar container - always show ABOVE
              const rect = avatarContainer.getBoundingClientRect();
-             menu.style.top = (rect.bottom + 8) + 'px';
-             menu.style.left = (rect.right - 200) + 'px';
+             menu.style.visibility = 'hidden';
+             menu.style.display = 'block';
+             const menuHeight = menu.offsetHeight || 200;
+             menu.style.display = '';
+             menu.style.visibility = '';
+             menu.style.top = (rect.top - menuHeight - 8) + 'px';
+             menu.style.left = (rect.left + rect.width / 2 - 100) + 'px';
 
+             // Ensure menu doesn't go off-screen horizontally
              const menuWidth = 200;
-             if (rect.right - menuWidth < 0) {
+             const screenWidth = window.innerWidth;
+             const menuLeft = parseFloat(menu.style.left);
+             if (menuLeft < 8) {
                menu.style.left = '8px';
              }
-             if (rect.bottom + 200 > window.innerHeight) {
-               menu.style.top = (rect.top - 200 - 8) + 'px';
+             if (menuLeft + menuWidth > screenWidth) {
+               menu.style.left = (screenWidth - menuWidth - 8) + 'px';
+             }
+             // If not enough space above, show below as fallback
+             if (rect.top - menuHeight - 8 < 0) {
+               menu.style.top = (rect.bottom + 8) + 'px';
              }
 
              menu.classList.add('show');

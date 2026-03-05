@@ -13545,19 +13545,29 @@ window.cancelProfileChanges = cancelProfileChanges;
            if (menu.classList.contains('show')) {
              hidePhotoMenu();
            } else {
-             // Calculate position relative to avatar container
+             // Calculate position relative to avatar container - always show ABOVE
              const rect = avatarContainer.getBoundingClientRect();
-             menu.style.top = (rect.bottom + 8) + 'px';
-             menu.style.left = (rect.right - 200) + 'px'; // 200px is menu width
+             menu.style.visibility = 'hidden';
+             menu.style.display = 'block';
+             const menuHeight = menu.offsetHeight || 200;
+             menu.style.display = '';
+             menu.style.visibility = '';
+             menu.style.top = (rect.top - menuHeight - 8) + 'px';
+             menu.style.left = (rect.left + rect.width / 2 - 100) + 'px';
 
              // Ensure menu doesn't go off-screen
              const menuWidth = 200;
              const screenWidth = window.innerWidth;
-             if (rect.right - menuWidth < 0) {
+             const menuLeft = parseFloat(menu.style.left);
+             if (menuLeft < 8) {
                menu.style.left = '8px';
              }
-             if (rect.bottom + 200 > window.innerHeight) {
-               menu.style.top = (rect.top - 200 - 8) + 'px';
+             if (menuLeft + menuWidth > screenWidth) {
+               menu.style.left = (screenWidth - menuWidth - 8) + 'px';
+             }
+             // If not enough space above, show below as fallback
+             if (rect.top - menuHeight - 8 < 0) {
+               menu.style.top = (rect.bottom + 8) + 'px';
              }
 
              showPhotoMenu();
@@ -14155,19 +14165,29 @@ window.cancelProfileChanges = cancelProfileChanges;
               if (menu.classList.contains('show')) {
                 menu.classList.remove('show');
               } else {
-                // ط­ط³ط§ط¨ ظ…ظˆط¶ط¹ ط§ظ„ظ‚ط§ط¦ظ…ط©
+                // Position menu ABOVE the avatar
                 const rect = avatarContainer.getBoundingClientRect();
-                menu.style.top = (rect.bottom + 8) + 'px';
-                menu.style.left = (rect.right - 200) + 'px';
+                menu.style.visibility = 'hidden';
+                menu.style.display = 'block';
+                const menuHeight = menu.offsetHeight || 200;
+                menu.style.display = '';
+                menu.style.visibility = '';
+                menu.style.top = (rect.top - menuHeight - 8) + 'px';
+                menu.style.left = (rect.left + rect.width / 2 - 100) + 'px';
 
-                // ط§ظ„طھط£ظƒط¯ ظ…ظ† ط¹ط¯ظ… ط®ط±ظˆط¬ ط§ظ„ظ‚ط§ط¦ظ…ط© ظ…ظ† ط§ظ„ط´ط§ط´ط©
+                // Ensure menu doesn't go off-screen horizontally
                 const menuWidth = 200;
                 const screenWidth = window.innerWidth;
-                if (rect.right - menuWidth < 0) {
+                const menuLeft = parseFloat(menu.style.left);
+                if (menuLeft < 8) {
                   menu.style.left = '8px';
                 }
-                if (rect.bottom + 200 > window.innerHeight) {
-                  menu.style.top = (rect.top - 200 - 8) + 'px';
+                if (menuLeft + menuWidth > screenWidth) {
+                  menu.style.left = (screenWidth - menuWidth - 8) + 'px';
+                }
+                // If not enough space above, show below as fallback
+                if (rect.top - menuHeight - 8 < 0) {
+                  menu.style.top = (rect.bottom + 8) + 'px';
                 }
 
                 menu.classList.add('show');
