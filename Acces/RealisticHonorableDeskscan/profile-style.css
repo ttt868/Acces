@@ -1669,6 +1669,7 @@ body.dark-theme #profile-page .copy-btn:hover {
   justify-content: center;
   opacity: 0;
   transition: opacity 0.3s ease;
+  touch-action: manipulation;
 }
 
 .pin-lock-overlay.active {
@@ -1777,6 +1778,7 @@ body.dark-theme #profile-page .copy-btn:hover {
   transition: all 0.15s ease;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  touch-action: manipulation;
 }
 
 .pin-key:hover {
@@ -1827,6 +1829,7 @@ body.dark-theme #profile-page .copy-btn:hover {
   justify-content: center;
   opacity: 0;
   transition: opacity 0.3s ease;
+  touch-action: manipulation;
 }
 
 .pin-modal-overlay.active {
