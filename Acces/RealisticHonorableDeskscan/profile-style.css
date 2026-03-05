@@ -217,7 +217,7 @@
   margin-top: 8px;
   background: var(--card-background);
   border-radius: 12px;
-  width: 200px;
+  width: 215px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
   opacity: 0;
   visibility: hidden;
@@ -254,6 +254,7 @@
   background: transparent;
   min-height: 48px;
   touch-action: manipulation;
+  white-space: nowrap;
 }
 
 .photo-option:last-child {
