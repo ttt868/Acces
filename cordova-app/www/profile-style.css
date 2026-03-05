@@ -89,7 +89,7 @@
   margin-bottom: 15px;
   transform: none !important;
   cursor: default !important;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .profile-name-container::before {
@@ -211,19 +211,22 @@
 }
 
 .photo-options-menu {
-  position: fixed;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.9) translateY(-5px);
   background: var(--card-background);
   border-radius: 12px;
   min-width: 200px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
   opacity: 0;
   visibility: hidden;
-  transform: scale(0.9) translateY(-5px);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 99999;
   overflow: hidden;
   border: 1px solid var(--border-color);
   backdrop-filter: blur(10px);
+  margin-top: 8px;
 }
 
 
@@ -231,7 +234,7 @@
 .photo-options-menu.show {
   opacity: 1;
   visibility: visible;
-  transform: scale(1) translateY(0);
+  transform: translateX(-50%) scale(1) translateY(0);
 }
 
 .photo-option {
