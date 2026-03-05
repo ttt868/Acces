@@ -13452,18 +13452,12 @@ window.cancelProfileChanges = cancelProfileChanges;
 
      // Show photo options menu
      function showPhotoMenu() {
-       const menu = document.querySelector('.photo-options-menu');
-       if (menu) {
-         menu.classList.add('show');
-       }
+       window.showPhotoMenu();
      }
 
      // Hide photo options menu
      function hidePhotoMenu() {
-       const menu = document.querySelector('.photo-options-menu');
-       if (menu) {
-         menu.classList.remove('show');
-       }
+       window.hidePhotoMenu();
      }
 
      // Delete profile photo - Fix duplicate message issue
@@ -13532,7 +13526,7 @@ window.cancelProfileChanges = cancelProfileChanges;
        // Handle click on camera icon specifically to show menu
        function handleCameraClick(e) {
          e.stopPropagation();
-         const menu = avatarContainer.querySelector('.photo-options-menu');
+         const menu = document.querySelector('.photo-options-menu');
 
          // Don't trigger if clicking on menu itself
          if (menu && menu.contains(e.target)) {
@@ -13543,7 +13537,7 @@ window.cancelProfileChanges = cancelProfileChanges;
          if (menu) {
            // Hide menu if already showing
            if (menu.classList.contains('show')) {
-             hidePhotoMenu();
+             window.hidePhotoMenu();
            } else {
              // Calculate position relative to avatar container
              const rect = avatarContainer.getBoundingClientRect();
@@ -13560,7 +13554,7 @@ window.cancelProfileChanges = cancelProfileChanges;
                menu.style.top = (rect.top - 200 - 8) + 'px';
              }
 
-             showPhotoMenu();
+             window.showPhotoMenu();
            }
          }
        }
@@ -14010,10 +14004,15 @@ window.cancelProfileChanges = cancelProfileChanges;
     initializeProfileEditing();
   }
 
-  // Global functions for profile photo menu
+  // Global functions for profile photo menu - iOS fix: move to body for proper z-index
   window.showPhotoMenu = function() {
     const menu = document.querySelector('.photo-options-menu');
     if (menu) {
+      // Move menu to body to escape stacking context (iOS Safari fix)
+      if (menu.parentElement && menu.parentElement !== document.body) {
+        menu._originalParent = menu.parentElement;
+        document.body.appendChild(menu);
+      }
       menu.classList.add('show');
     }
   };
@@ -14022,6 +14021,10 @@ window.cancelProfileChanges = cancelProfileChanges;
     const menu = document.querySelector('.photo-options-menu');
     if (menu) {
       menu.classList.remove('show');
+      // Return menu to original parent
+      if (menu._originalParent && menu.parentElement === document.body) {
+        menu._originalParent.appendChild(menu);
+      }
     }
   };
 
@@ -14068,9 +14071,9 @@ window.cancelProfileChanges = cancelProfileChanges;
         const menu = document.querySelector('.photo-options-menu');
         if (menu) {
           if (menu.classList.contains('show')) {
-            menu.classList.remove('show');
+            window.hidePhotoMenu();
           } else {
-            menu.classList.add('show');
+            window.showPhotoMenu();
           }
         }
       }
@@ -14096,7 +14099,7 @@ window.cancelProfileChanges = cancelProfileChanges;
             profileImageUpload.setAttribute('accept', 'image/*');
             profileImageUpload.click();
           }
-          document.querySelector('.photo-options-menu').classList.remove('show');
+          window.hidePhotoMenu();
         };
       }
 
@@ -14110,7 +14113,7 @@ window.cancelProfileChanges = cancelProfileChanges;
             profileImageUpload.setAttribute('accept', 'image/*');
             profileImageUpload.click();
           }
-          document.querySelector('.photo-options-menu').classList.remove('show');
+          window.hidePhotoMenu();
         };
       }
 
@@ -14120,15 +14123,15 @@ window.cancelProfileChanges = cancelProfileChanges;
           if (typeof window.deleteProfilePhoto === 'function') {
             window.deleteProfilePhoto();
           }
-          document.querySelector('.photo-options-menu').classList.remove('show');
+          window.hidePhotoMenu();
         };
       }
 
       // Close menu when clicking outside
       document.onclick = function(e) {
         const menu = document.querySelector('.photo-options-menu');
-        if (menu && !avatarContainer.contains(e.target)) {
-          menu.classList.remove('show');
+        if (menu && menu.classList.contains('show') && !menu.contains(e.target) && !avatarContainer.contains(e.target)) {
+          window.hidePhotoMenu();
         }
       };
     }
@@ -14153,7 +14156,7 @@ window.cancelProfileChanges = cancelProfileChanges;
             const menu = document.querySelector('.photo-options-menu');
             if (menu) {
               if (menu.classList.contains('show')) {
-                menu.classList.remove('show');
+                window.hidePhotoMenu();
               } else {
                 // حساب موضع القائمة
                 const rect = avatarContainer.getBoundingClientRect();
@@ -14170,7 +14173,7 @@ window.cancelProfileChanges = cancelProfileChanges;
                   menu.style.top = (rect.top - 200 - 8) + 'px';
                 }
 
-                menu.classList.add('show');
+                window.showPhotoMenu();
               }
             }
           });
@@ -14186,15 +14189,26 @@ window.cancelProfileChanges = cancelProfileChanges;
     }, 10000);
   }
 
-  // Simple global functions
+  // Simple global functions - iOS fix: move to body for proper z-index
   window.showPhotoMenu = function() {
     const menu = document.querySelector('.photo-options-menu');
-    if (menu) menu.classList.add('show');
+    if (menu) {
+      if (menu.parentElement && menu.parentElement !== document.body) {
+        menu._originalParent = menu.parentElement;
+        document.body.appendChild(menu);
+      }
+      menu.classList.add('show');
+    }
   };
 
   window.hidePhotoMenu = function() {
     const menu = document.querySelector('.photo-options-menu');
-    if (menu) menu.classList.remove('show');
+    if (menu) {
+      menu.classList.remove('show');
+      if (menu._originalParent && menu.parentElement === document.body) {
+        menu._originalParent.appendChild(menu);
+      }
+    }
   };
 
   // Initialize simple system

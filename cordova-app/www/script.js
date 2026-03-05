@@ -13792,18 +13792,12 @@ window.cancelProfileChanges = cancelProfileChanges;
 
      // Show photo options menu
      function showPhotoMenu() {
-       const menu = document.querySelector('.photo-options-menu');
-       if (menu) {
-         menu.classList.add('show');
-       }
+       window.showPhotoMenu();
      }
 
      // Hide photo options menu
      function hidePhotoMenu() {
-       const menu = document.querySelector('.photo-options-menu');
-       if (menu) {
-         menu.classList.remove('show');
-       }
+       window.hidePhotoMenu();
      }
 
      // Delete profile photo - Fix duplicate message issue
@@ -13898,7 +13892,7 @@ window.cancelProfileChanges = cancelProfileChanges;
        function handleCameraClick(e) {
          e.stopPropagation();
          e.preventDefault();
-         const menu = avatarContainer.querySelector('.photo-options-menu');
+         const menu = document.querySelector('.photo-options-menu');
 
          // Don't trigger if clicking on menu itself
          if (menu && menu.contains(e.target)) {
@@ -13907,7 +13901,7 @@ window.cancelProfileChanges = cancelProfileChanges;
 
          if (menu) {
            if (menu.classList.contains('show')) {
-             menu.classList.remove('show');
+             window.hidePhotoMenu();
            } else {
              // Calculate position relative to avatar container
              const rect = avatarContainer.getBoundingClientRect();
@@ -13922,7 +13916,7 @@ window.cancelProfileChanges = cancelProfileChanges;
                menu.style.top = (rect.top - 200 - 8) + 'px';
              }
 
-             menu.classList.add('show');
+             window.showPhotoMenu();
            }
          }
        }
@@ -13948,9 +13942,9 @@ window.cancelProfileChanges = cancelProfileChanges;
          window._photoMenuOutsideClickAdded = true;
          document.addEventListener('click', function(e) {
            const container = document.getElementById('avatar-container');
-           if (container && !container.contains(e.target)) {
-             const menu = document.querySelector('.photo-options-menu');
-             if (menu) menu.classList.remove('show');
+           const menu = document.querySelector('.photo-options-menu');
+           if (menu && menu.classList.contains('show') && !menu.contains(e.target) && container && !container.contains(e.target)) {
+             window.hidePhotoMenu();
            }
          });
        }
@@ -14016,7 +14010,7 @@ window.cancelProfileChanges = cancelProfileChanges;
              // ط¥ط®ظپط§ط، ظ‚ط§ط¦ظ…ط© ط§ظ„طµظˆط±
              const photoMenu = document.querySelector('.photo-options-menu');
              if (photoMenu) {
-               photoMenu.classList.remove('show');
+               window.hidePhotoMenu();
                console.log('Photo menu hidden');
              }
 
@@ -14369,10 +14363,14 @@ window.cancelProfileChanges = cancelProfileChanges;
     initializeProfileEditing();
   }
 
-  // Global functions for profile photo menu
+  // Global functions for profile photo menu - iOS fix: move to body for proper z-index
   window.showPhotoMenu = function() {
     const menu = document.querySelector('.photo-options-menu');
     if (menu) {
+      if (menu.parentElement && menu.parentElement !== document.body) {
+        menu._originalParent = menu.parentElement;
+        document.body.appendChild(menu);
+      }
       menu.classList.add('show');
     }
   };
@@ -14381,6 +14379,9 @@ window.cancelProfileChanges = cancelProfileChanges;
     const menu = document.querySelector('.photo-options-menu');
     if (menu) {
       menu.classList.remove('show');
+      if (menu._originalParent && menu.parentElement === document.body) {
+        menu._originalParent.appendChild(menu);
+      }
     }
   };
 
@@ -14467,15 +14468,26 @@ window.cancelProfileChanges = cancelProfileChanges;
     }
   }, false);
 
-  // Simple global functions
+  // Simple global functions - iOS fix: move to body for proper z-index
   window.showPhotoMenu = function() {
     const menu = document.querySelector('.photo-options-menu');
-    if (menu) menu.classList.add('show');
+    if (menu) {
+      if (menu.parentElement && menu.parentElement !== document.body) {
+        menu._originalParent = menu.parentElement;
+        document.body.appendChild(menu);
+      }
+      menu.classList.add('show');
+    }
   };
 
   window.hidePhotoMenu = function() {
     const menu = document.querySelector('.photo-options-menu');
-    if (menu) menu.classList.remove('show');
+    if (menu) {
+      menu.classList.remove('show');
+      if (menu._originalParent && menu.parentElement === document.body) {
+        menu._originalParent.appendChild(menu);
+      }
+    }
   };
 
   // Initialize simple system
