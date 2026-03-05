@@ -362,7 +362,7 @@
                   window.showNotification(t('PIN disabled'), 'success');
                 }
               } else {
-                showSetupError(data.error || t('Failed to disable PIN'));
+                showSetupError(t(data.error || 'Failed to disable PIN'));
                 clearSetupDots();
               }
             } catch (error) {
@@ -517,7 +517,7 @@
           window.showNotification(t('PIN enabled successfully'), 'success');
         }
       } else {
-        showSetupError(data.error || t('Failed to set PIN'));
+        showSetupError(t(data.error || 'Failed to set PIN'));
         pinInput = '';
         clearSetupDots();
       }
@@ -571,7 +571,7 @@
           window.showNotification(t('PIN disabled'), 'success');
         }
       } else {
-        showSetupError(data.error || t('Incorrect PIN'));
+        showSetupError(t(data.error || 'Incorrect PIN'));
         pinInput = '';
         clearSetupDots();
       }
