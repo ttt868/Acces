@@ -309,7 +309,13 @@
     }
 
     modal.style.display = 'flex';
-    setTimeout(() => modal.classList.add('active'), 10);
+    setTimeout(() => {
+      modal.classList.add('active');
+      // Auto-trigger biometric when disabling PIN
+      if (step === 'disable' && biometricEnabled && biometricAvailable && window.Fingerprint) {
+        setTimeout(() => window.pinSetupBiometricAuth(), 300);
+      }
+    }, 10);
   }
 
   // Biometric auth for setup/disable modal
