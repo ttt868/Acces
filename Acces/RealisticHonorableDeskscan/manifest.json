@@ -10,16 +10,16 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "test-icon-192.jpg",
+      "src": "test-icon-192.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "test-icon-512.jpg",
+      "src": "test-icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
   "scope": "/",
