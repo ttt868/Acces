@@ -2038,9 +2038,13 @@ body.dark-theme #profile-page .copy-btn:hover {
   }
   .pin-keypad {
     gap: 8px;
+    margin-top: 25px;
   }
   .pin-dots-container {
     margin-bottom: 12px;
+  }
+  .pin-lock-subtitle {
+    margin-bottom: 20px;
   }
 }
 
@@ -2053,5 +2057,26 @@ body.dark-theme #profile-page .copy-btn:hover {
   .pin-keypad {
     gap: 8px;
     max-width: 240px;
+  }
+}
+
+@media (max-height: 500px) {
+  .pin-lock-overlay {
+    overflow-y: auto;
+    align-items: flex-start;
+  }
+  .pin-lock-container {
+    padding: 10px 20px;
+  }
+  .pin-keypad {
+    margin-top: 15px;
+  }
+  .pin-key {
+    width: 52px;
+    height: 52px;
+    font-size: 22px;
+  }
+  .pin-lock-subtitle {
+    margin-bottom: 12px;
   }
 }
