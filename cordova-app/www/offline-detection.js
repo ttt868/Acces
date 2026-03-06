@@ -1,12 +1,14 @@
-// Professional Offline Detection System - Real ping + smart retry
+// Professional Offline Detection System for Cordova
+// Robust multi-cycle support — works reliably on repeated on/off
 // All CSS is injected inline — does NOT touch style.css
 class OfflineDetector {
   constructor() {
     this.isOnline = true;
-    this.offlinePage = null;
     this.isChecking = false;
     this.retryInterval = null;
     this.retryCount = 0;
+    this._bgLocked = false;
+    this._handlers = null;
     this.translator = window.translator || { translate: (key) => key };
     this.PING_TIMEOUT = 6000;
     this.AUTO_RETRY_MS = 8000;
@@ -16,7 +18,6 @@ class OfflineDetector {
     this.initialize();
   }
 
-  // Inject all offline-page CSS into a <style> tag — keeps style.css untouched
   _injectStyles() {
     if (document.getElementById('offline-detection-styles')) return;
     const style = document.createElement('style');
@@ -83,7 +84,6 @@ class OfflineDetector {
   }
 
   _getPingUrl() {
-    // Use the app's own healthcheck or a lightweight endpoint
     if (typeof window.API_BASE_URL !== 'undefined') {
       return window.API_BASE_URL + '/api/health';
     }
@@ -91,32 +91,33 @@ class OfflineDetector {
   }
 
   initialize() {
-    console.log('[OfflineDetector] Initializing professional offline detection');
+    console.log('[OfflineDetector] Initializing');
 
-    // Listen for browser connectivity events
     window.addEventListener('online', () => this._onBrowserOnline());
     window.addEventListener('offline', () => this._onBrowserOffline());
 
-    // Make retry globally available
+    // Cordova network events
+    document.addEventListener('online', () => this._onBrowserOnline(), false);
+    document.addEventListener('offline', () => this._onBrowserOffline(), false);
+
     window.checkConnection = () => this.manualRetry();
 
-    // Initial check — if browser says offline, show immediately; otherwise verify with real ping
+    // Initial check
     if (!navigator.onLine) {
       this._goOffline();
     } else {
-      // Even if browser says online, verify with a real ping (important for Cordova cold-start)
       this._ping().then(online => {
         if (!online) this._goOffline();
       });
     }
   }
 
-  // ── Real connection test via fetch ping ──
+  // ── Real connection test ──
   async _ping() {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), this.PING_TIMEOUT);
-      const res = await fetch(this.pingUrl, {
+      await fetch(this.pingUrl, {
         method: 'HEAD',
         mode: 'no-cors',
         cache: 'no-store',
@@ -129,9 +130,8 @@ class OfflineDetector {
     }
   }
 
-  // ── Browser events ──
+  // ── Browser/Cordova events ──
   _onBrowserOnline() {
-    // Browser says online — verify with real ping
     this._verifyAndRestore();
   }
 
@@ -151,13 +151,17 @@ class OfflineDetector {
 
     if (online) {
       this._setButtonState('success');
-      setTimeout(() => this._goOnline(), 600);
+      setTimeout(() => {
+        this.isChecking = false;
+        this._goOnline();
+      }, 600);
     } else {
       this._setButtonState('failed');
-      // Reset button after showing failure
-      setTimeout(() => this._setButtonState('idle'), 2000);
+      setTimeout(() => {
+        this._setButtonState('idle');
+        this.isChecking = false;
+      }, 2000);
     }
-    this.isChecking = false;
   }
 
   // ── Auto-verify when browser fires 'online' ──
@@ -170,11 +174,24 @@ class OfflineDetector {
 
   // ── State transitions ──
   _goOffline() {
-    if (!this.isOnline && document.getElementById('connection-offline-page')) return;
+    // Always allow showing offline page — remove stale page first if needed
+    const existingPage = document.getElementById('connection-offline-page');
+    if (!this.isOnline && existingPage && existingPage.classList.contains('is-visible')) {
+      return; // Already showing
+    }
+
     console.log('[OfflineDetector] Connection lost');
     this.isOnline = false;
+    this.isChecking = false;
     this.retryCount = 0;
-    this.showOfflinePage();
+
+    // Clean up any leftover hidden page from previous cycle
+    if (existingPage) {
+      existingPage.remove();
+    }
+    this._unlockBackground();
+
+    this._showOfflinePage();
     this._startAutoRetry();
   }
 
@@ -182,8 +199,9 @@ class OfflineDetector {
     if (this.isOnline && !document.getElementById('connection-offline-page')) return;
     console.log('[OfflineDetector] Connection restored');
     this.isOnline = true;
+    this.isChecking = false;
     this._stopAutoRetry();
-    this.hideOfflinePage();
+    this._hideOfflinePage();
 
     if (typeof showNotification === 'function') {
       showNotification(this.translator.translate('Connection restored'), 'success');
@@ -199,7 +217,6 @@ class OfflineDetector {
       if (online) {
         this._goOnline();
       } else {
-        // Update status text with attempt count
         this._updateStatusText();
       }
     }, this.AUTO_RETRY_MS);
@@ -216,7 +233,6 @@ class OfflineDetector {
   _setButtonState(state) {
     const btn = document.querySelector('.connection-retry-btn');
     if (!btn) return;
-
     const iconEl = btn.querySelector('.retry-btn-icon');
     const textEl = btn.querySelector('.retry-btn-text');
     if (!iconEl || !textEl) return;
@@ -256,23 +272,15 @@ class OfflineDetector {
     }
   }
 
-  // ── Build offline page DOM ──
-  showOfflinePage() {
-    let page = document.getElementById('connection-offline-page');
-    if (page) {
-      page.style.display = 'flex';
-      this.preventBackgroundInteraction();
-      return;
-    }
-
-    page = document.createElement('div');
+  // ── Create offline page (always fresh) ──
+  _showOfflinePage() {
+    const page = document.createElement('div');
     page.id = 'connection-offline-page';
     page.className = 'connection-offline-page';
 
     page.innerHTML = `
       <div class="connection-offline-container">
         <div class="connection-offline-hero">
-          <!-- Animated WiFi icon -->
           <div class="connection-offline-icon-container">
             <div class="connection-offline-icon">
               <svg viewBox="0 0 24 24" class="connection-wifi-offline-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -291,29 +299,21 @@ class OfflineDetector {
               <div class="connection-wave connection-wave-3"></div>
             </div>
           </div>
-
-          <!-- Content -->
           <div class="connection-offline-content">
             <h1 class="connection-offline-title">${this.translator.translate('No Internet Connection')}</h1>
             <p class="connection-offline-subtitle">${this.translator.translate('Please check your Wi-Fi or mobile data and try again')}</p>
-
-            <!-- Status indicator -->
             <div class="connection-offline-status">
               <div class="connection-status-indicator">
                 <span class="connection-status-dot"></span>
                 <span class="connection-status-text">${this.translator.translate('Searching for connection...')}</span>
               </div>
             </div>
-
-            <!-- Retry button -->
             <div class="connection-offline-actions">
               <button class="connection-retry-btn" onclick="checkConnection()">
                 <i class="retry-btn-icon fas fa-rotate-right"></i>
                 <span class="retry-btn-text">${this.translator.translate('Try Again')}</span>
               </button>
             </div>
-
-            <!-- Tips -->
             <div class="connection-offline-tips">
               <p class="connection-tip"><i class="fas fa-wifi"></i> ${this.translator.translate('Check your Wi-Fi connection')}</p>
               <p class="connection-tip"><i class="fas fa-signal"></i> ${this.translator.translate('Enable mobile data')}</p>
@@ -325,33 +325,48 @@ class OfflineDetector {
     `;
 
     document.body.appendChild(page);
-    this.offlinePage = page;
-    this.applyCurrentTheme();
-    this.preventBackgroundInteraction();
-    // Animate entrance
-    requestAnimationFrame(() => page.classList.add('is-visible'));
+    this._applyTheme(page);
+    this._lockBackground();
+    // Animate entrance on next frame
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        page.classList.add('is-visible');
+      });
+    });
   }
 
-  hideOfflinePage() {
+  _hideOfflinePage() {
     const page = document.getElementById('connection-offline-page');
-    if (!page) return;
+    if (!page) {
+      this._unlockBackground();
+      return;
+    }
+
     page.classList.remove('is-visible');
     page.classList.add('is-exiting');
+
     setTimeout(() => {
-      page.style.display = 'none';
-      page.classList.remove('is-exiting');
-      this.restoreBackgroundInteraction();
+      // Completely remove from DOM — ensures clean state for next cycle
+      page.remove();
+      this._unlockBackground();
     }, 400);
   }
 
-  preventBackgroundInteraction() {
-    this.originalBodyStyle = {
+  // ── Background lock/unlock (simple, no stacking) ──
+  _lockBackground() {
+    if (this._bgLocked) return;
+    this._bgLocked = true;
+
+    this._savedBody = {
       overflow: document.body.style.overflow,
       position: document.body.style.position,
+      width: document.body.style.width,
+      height: document.body.style.height,
       touchAction: document.body.style.touchAction,
       userSelect: document.body.style.userSelect,
       overscrollBehavior: document.body.style.overscrollBehavior
     };
+
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
@@ -363,41 +378,48 @@ class OfflineDetector {
     document.documentElement.style.touchAction = 'none';
     document.documentElement.style.overscrollBehavior = 'none';
 
-    this.touchStartHandler = (e) => {
-      const page = document.getElementById('connection-offline-page');
-      if (page && !page.contains(e.target)) { e.preventDefault(); e.stopPropagation(); }
+    const blockOutside = (e) => {
+      const pg = document.getElementById('connection-offline-page');
+      if (pg && !pg.contains(e.target)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     };
-    this.touchMoveHandler = (e) => {
-      const page = document.getElementById('connection-offline-page');
-      if (page && !page.contains(e.target)) { e.preventDefault(); e.stopPropagation(); }
-    };
-    document.addEventListener('touchstart', this.touchStartHandler, { passive: false });
-    document.addEventListener('touchmove', this.touchMoveHandler, { passive: false });
-    document.addEventListener('wheel', this.touchMoveHandler, { passive: false });
+    this._handlers = { blockOutside };
+
+    document.addEventListener('touchstart', blockOutside, { passive: false, capture: true });
+    document.addEventListener('touchmove', blockOutside, { passive: false, capture: true });
+    document.addEventListener('wheel', blockOutside, { passive: false, capture: true });
   }
 
-  restoreBackgroundInteraction() {
-    if (this.originalBodyStyle) {
-      document.body.style.overflow = this.originalBodyStyle.overflow;
-      document.body.style.position = this.originalBodyStyle.position;
-      document.body.style.width = '';
-      document.body.style.height = '';
-      document.body.style.touchAction = this.originalBodyStyle.touchAction;
-      document.body.style.userSelect = this.originalBodyStyle.userSelect;
-      document.body.style.overscrollBehavior = this.originalBodyStyle.overscrollBehavior;
+  _unlockBackground() {
+    if (!this._bgLocked) return;
+    this._bgLocked = false;
+
+    if (this._savedBody) {
+      document.body.style.overflow = this._savedBody.overflow;
+      document.body.style.position = this._savedBody.position;
+      document.body.style.width = this._savedBody.width;
+      document.body.style.height = this._savedBody.height;
+      document.body.style.touchAction = this._savedBody.touchAction;
+      document.body.style.userSelect = this._savedBody.userSelect;
+      document.body.style.overscrollBehavior = this._savedBody.overscrollBehavior;
+      this._savedBody = null;
     }
+
     document.documentElement.style.overflow = '';
     document.documentElement.style.touchAction = '';
     document.documentElement.style.overscrollBehavior = '';
-    if (this.touchStartHandler) {
-      document.removeEventListener('touchstart', this.touchStartHandler);
-      document.removeEventListener('touchmove', this.touchMoveHandler);
-      document.removeEventListener('wheel', this.touchMoveHandler);
+
+    if (this._handlers) {
+      document.removeEventListener('touchstart', this._handlers.blockOutside, { capture: true });
+      document.removeEventListener('touchmove', this._handlers.blockOutside, { capture: true });
+      document.removeEventListener('wheel', this._handlers.blockOutside, { capture: true });
+      this._handlers = null;
     }
   }
 
-  applyCurrentTheme() {
-    const page = document.getElementById('connection-offline-page');
+  _applyTheme(page) {
     if (!page) return;
     const isDark = document.documentElement.classList.contains('dark-theme') ||
                    document.body.classList.contains('dark-theme');
@@ -407,7 +429,7 @@ class OfflineDetector {
   updateTranslations(translator) {
     this.translator = translator;
     const page = document.getElementById('connection-offline-page');
-    if (!page || page.style.display === 'none') return;
+    if (!page) return;
     const t = (k) => translator.translate(k);
     const q = (s) => page.querySelector(s);
     if (q('.connection-offline-title')) q('.connection-offline-title').textContent = t('No Internet Connection');
@@ -424,9 +446,7 @@ class OfflineDetector {
 
   destroy() {
     this._stopAutoRetry();
-    window.removeEventListener('online', this._onBrowserOnline);
-    window.removeEventListener('offline', this._onBrowserOffline);
-    this.restoreBackgroundInteraction();
+    this._unlockBackground();
     const page = document.getElementById('connection-offline-page');
     if (page) page.remove();
   }
@@ -443,12 +463,10 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(_initOfflineDetector, 800);
 });
 
-// Cordova deviceready — re-init if DOMContentLoaded missed it
 document.addEventListener('deviceready', function() {
   setTimeout(_initOfflineDetector, 500);
 }, false);
 
-// Update translations on language change
 document.addEventListener('languageChanged', function(event) {
   if (window.offlineDetector && event.detail && event.detail.translator) {
     window.offlineDetector.updateTranslations(event.detail.translator);
