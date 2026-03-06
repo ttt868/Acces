@@ -262,6 +262,14 @@ function createInstallButton() {
 
 // إظهار زر التثبيت
 function showInstallButton(immediate = false) {
+  // لا تظهر على أجهزة Apple (iOS/iPadOS) لأنها لا تدعم التثبيت عبر prompt
+  const isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isApple) {
+    console.log('iOS device - install prompt not supported');
+    return;
+  }
+
   // لا تظهر إذا مثبت مسبقاً
   if (window.matchMedia('(display-mode: standalone)').matches) {
     console.log('App already installed');

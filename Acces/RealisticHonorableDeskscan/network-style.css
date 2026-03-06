@@ -85,8 +85,7 @@
     position: relative;
     text-align: center;
     width: 100%;
-    padding: 10px 0;
-    margin-right: 15px;
+    padding: 10px 0 10px 25px;
   }
 
   .account-balance .balance-privacy-toggle {
