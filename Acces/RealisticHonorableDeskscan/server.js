@@ -10407,9 +10407,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // /project → access-project.html
+  // /project → redirect to access-project.html
   if (pathname === '/project') {
-    pathname = '/access-project.html';
+    res.writeHead(301, { 'Location': '/access-project.html' });
+    res.end();
+    return;
   }
 
   let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
