@@ -10407,6 +10407,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // /project → access-project.html
+  if (pathname === '/project') {
+    pathname = '/access-project.html';
+  }
+
   let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
 
   // ✅ SECURITY: Block access to server-side files
