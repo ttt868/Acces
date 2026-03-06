@@ -100,6 +100,9 @@ class OfflineDetector {
     document.addEventListener('online', () => this._onBrowserOnline(), false);
     document.addEventListener('offline', () => this._onBrowserOffline(), false);
 
+    // Re-check connection on app resume (back from background)
+    document.addEventListener('resume', () => this._onAppResume(), false);
+
     window.checkConnection = () => this.manualRetry();
 
     // Initial check
@@ -137,6 +140,26 @@ class OfflineDetector {
 
   _onBrowserOffline() {
     this._goOffline();
+  }
+
+  // ── App resume: re-check connectivity silently ──
+  _onAppResume() {
+    console.log('[OfflineDetector] App resumed from background');
+    // Small delay to let network stack settle after resume
+    setTimeout(async () => {
+      if (!navigator.onLine) {
+        // Definitely offline
+        if (this.isOnline) this._goOffline();
+        return;
+      }
+      // Browser says online — verify with real ping
+      const online = await this._ping();
+      if (online) {
+        if (!this.isOnline) this._goOnline();
+      } else {
+        if (this.isOnline) this._goOffline();
+      }
+    }, 300);
   }
 
   // ── Manual retry (button click) ──
@@ -191,6 +214,8 @@ class OfflineDetector {
     }
     this._unlockBackground();
 
+    // If PIN lock screen is active, wait for it to resolve first
+    // Offline page works behind PIN (lower z-index) - show it anyway
     this._showOfflinePage();
     this._startAutoRetry();
   }
@@ -206,13 +231,35 @@ class OfflineDetector {
     if (typeof showNotification === 'function') {
       showNotification(this.translator.translate('Connection restored'), 'success');
     }
+
+    // Silently refresh user data after reconnection
+    this._refreshAfterReconnect();
+  }
+
+  // ── Refresh session/data after coming back online ──
+  _refreshAfterReconnect() {
+    try {
+      // Re-fetch user data if logged in
+      if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
+        console.log('[OfflineDetector] Refreshing user data after reconnect');
+        window.loadUserData(window.currentUser.email);
+      }
+      // Refresh dashboard/UI if available
+      if (typeof window.updateDashboard === 'function') {
+        window.updateDashboard();
+      }
+    } catch (e) {
+      console.warn('[OfflineDetector] Post-reconnect refresh error:', e);
+    }
   }
 
   // ── Auto retry in background ──
   _startAutoRetry() {
     this._stopAutoRetry();
+    this._autoRetryCount = 0;
     this.retryInterval = setInterval(async () => {
       if (this.isChecking) return;
+      this._autoRetryCount++;
       const online = await this._ping();
       if (online) {
         this._goOnline();
@@ -342,14 +389,36 @@ class OfflineDetector {
       return;
     }
 
-    page.classList.remove('is-visible');
-    page.classList.add('is-exiting');
+    // Show success state briefly before hiding
+    const icon = page.querySelector('.connection-offline-icon');
+    const title = page.querySelector('.connection-offline-title');
+    const subtitle = page.querySelector('.connection-offline-subtitle');
+    const statusDot = page.querySelector('.connection-status-dot');
+    const statusText = page.querySelector('.connection-status-text');
 
+    if (icon) icon.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+    if (icon) icon.style.boxShadow = '0 8px 28px rgba(34, 197, 94, .35)';
+    if (title) title.textContent = this.translator.translate('Connection restored');
+    if (subtitle) subtitle.textContent = '';
+    if (statusDot) { statusDot.style.background = '#22c55e'; statusDot.style.animation = 'none'; }
+    if (statusText) statusText.textContent = this.translator.translate('Connected!');
+
+    // Hide actions & tips
+    const actions = page.querySelector('.connection-offline-actions');
+    const tips = page.querySelector('.connection-offline-tips');
+    if (actions) actions.style.display = 'none';
+    if (tips) tips.style.display = 'none';
+
+    // Brief green state, then fade out
     setTimeout(() => {
-      // Completely remove from DOM — ensures clean state for next cycle
-      page.remove();
-      this._unlockBackground();
-    }, 400);
+      page.classList.remove('is-visible');
+      page.classList.add('is-exiting');
+
+      setTimeout(() => {
+        page.remove();
+        this._unlockBackground();
+      }, 400);
+    }, 800);
   }
 
   // ── Background lock/unlock (simple, no stacking) ──
