@@ -10407,27 +10407,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // ============================================================
-  // *** ROOT REDIRECT - Landing Page ***
-  // accesschain.org → access-project.html
-  // This makes the domain show the landing page
-  // ============================================================
-  if (pathname === '/') {
-    res.writeHead(301, { 'Location': '/access-project.html', 'Cache-Control': 'public, max-age=86400' });
-    res.end();
-    return;
-  }
-  // *** END ROOT REDIRECT ***
-
-  // *** CLEAR CACHED 301 - Force browsers to forget old redirect ***
-  if (pathname === "/about.html") {
-    res.setHeader("Clear-Site-Data", '"cache"');
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  }
-
-  // ORIGINAL LINE (uncomment after removing redirect above):
-  // let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
-  let filePath = path.join(__dirname, pathname);
+  let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
 
   // ✅ SECURITY: Block access to server-side files
   const requestedFile = path.basename(pathname).toLowerCase();
