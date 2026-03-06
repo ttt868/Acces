@@ -188,8 +188,6 @@ class OfflineDetector {
     if (typeof showNotification === 'function') {
       showNotification(this.translator.translate('Connection restored'), 'success');
     }
-    // Reload for a clean state
-    setTimeout(() => window.location.reload(), 700);
   }
 
   // ── Auto retry in background ──
