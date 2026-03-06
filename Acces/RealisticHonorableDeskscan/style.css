@@ -634,6 +634,43 @@ body.french .processing-info p {
   100% { transform: rotate(360deg); }
 }
 
+/* Button states for offline retry */
+.connection-retry-btn.is-loading {
+  background: linear-gradient(135deg, #94a3b8, #64748b) !important;
+  box-shadow: 0 4px 14px rgba(100, 116, 139, 0.3) !important;
+  pointer-events: none;
+}
+
+.connection-retry-btn.is-loading i {
+  animation: retryRotate 0.8s linear infinite !important;
+}
+
+.connection-retry-btn.is-success {
+  background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4) !important;
+  pointer-events: none;
+}
+
+.connection-retry-btn.is-success i {
+  animation: none !important;
+}
+
+.connection-retry-btn.is-failed {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35) !important;
+  animation: offShakeBtn 0.4s ease;
+}
+
+.connection-retry-btn.is-failed i {
+  animation: none !important;
+}
+
+@keyframes offShakeBtn {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
 /* Simplified offline page - no info cards needed */
 
 .info-card {
