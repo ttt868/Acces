@@ -100,9 +100,14 @@ class OfflineDetector {
     // Make retry globally available
     window.checkConnection = () => this.manualRetry();
 
-    // Initial check — if browser says offline, show immediately
+    // Initial check — if browser says offline, show immediately; otherwise verify with real ping
     if (!navigator.onLine) {
       this._goOffline();
+    } else {
+      // Even if browser says online, verify with a real ping (important for Cordova cold-start)
+      this._ping().then(online => {
+        if (!online) this._goOffline();
+      });
     }
   }
 
@@ -364,7 +369,10 @@ class OfflineDetector {
       const page = document.getElementById('connection-offline-page');
       if (page && !page.contains(e.target)) { e.preventDefault(); e.stopPropagation(); }
     };
-    this.touchMoveHandler = (e) => { e.preventDefault(); e.stopPropagation(); };
+    this.touchMoveHandler = (e) => {
+      const page = document.getElementById('connection-offline-page');
+      if (page && !page.contains(e.target)) { e.preventDefault(); e.stopPropagation(); }
+    };
     document.addEventListener('touchstart', this.touchStartHandler, { passive: false });
     document.addEventListener('touchmove', this.touchMoveHandler, { passive: false });
     document.addEventListener('wheel', this.touchMoveHandler, { passive: false });
@@ -426,13 +434,21 @@ class OfflineDetector {
   }
 }
 
-// Initialize when DOM is ready
+// Initialize when DOM is ready (also listen for Cordova deviceready)
+function _initOfflineDetector() {
+  if (window.offlineDetector) return;
+  window.offlineDetector = new OfflineDetector();
+  console.log('[OfflineDetector] Professional system initialized');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(() => {
-    window.offlineDetector = new OfflineDetector();
-    console.log('[OfflineDetector] Professional system initialized');
-  }, 1000);
+  setTimeout(_initOfflineDetector, 800);
 });
+
+// Cordova deviceready — re-init if DOMContentLoaded missed it
+document.addEventListener('deviceready', function() {
+  setTimeout(_initOfflineDetector, 500);
+}, false);
 
 // Update translations on language change
 document.addEventListener('languageChanged', function(event) {

@@ -954,45 +954,7 @@ document.addEventListener('balanceUpdated', function(event) {
 <body>
   
 
-<!-- Offline Detection Page -->
-  <div id="connection-offline-page" class="connection-offline-page" style="display: none;">
-    <div class="connection-offline-container">
-      <div class="connection-offline-container">
-          <div class="connection-offline-hero">
-            <div class="connection-offline-icon-container">
-              <div class="connection-offline-icon">
-                <svg viewBox="0 0 100 100" class="connection-wifi-offline-icon">
-                  <!-- WiFi symbol -->
-                  <path d="M50 75 C52 75 54 77 54 79 C54 81 52 83 50 83 C48 83 46 81 46 79 C46 77 48 75 50 75 Z" fill="currentColor"/>
-                  <path d="M50 65 C55 65 59 67 62 71 L67 66 C62 61 56 58 50 58 C44 58 38 61 33 66 L38 71 C41 67 45 65 50 65 Z" fill="currentColor"/>
-                  <path d="M50 48 C59 48 67 52 73 58 L78 53 C70 45 60 40 50 40 C40 40 30 45 22 53 L27 58 C33 52 41 48 50 48 Z" fill="currentColor"/>
-                  <path d="M50 31 C63 31 75 37 83 46 L88 41 C78 31 65 25 50 25 C35 25 22 31 12 41 L17 46 C25 37 37 31 50 31 Z" fill="currentColor"/>
-                  <!-- Diagonal line to indicate "no connection" -->
-                  <line x1="15" y1="15" x2="85" y2="85" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                </svg>
-              </div>
-              <div class="connection-signal-waves">
-                <div class="connection-wave connection-wave-1"></div>
-                <div class="connection-wave connection-wave-2"></div>
-                <div class="connection-wave connection-wave-3"></div>
-              </div>
-            </div>
-
-            <div class="connection-offline-content">
-              <h1 class="connection-offline-title" data-translate="No Internet Connection">No Internet Connection</h1>
-              <p class="connection-offline-subtitle" data-translate="Please check your internet connection and try again">Please check your internet connection and try again</p>
-
-              <div class="connection-offline-actions">
-                <button class="connection-retry-btn" onclick="checkConnection()" data-translate="Try again">
-                  <i class="fas fa-sync-alt"></i>
-                  <span>Try again</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-    </div>
-  </div>
+<!-- Offline page is created dynamically by offline-detection.js -->
 
   <!-- Login Screen -->
   <div id="login-container" class="login-container">
