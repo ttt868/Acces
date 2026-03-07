@@ -601,8 +601,8 @@
     if (isLocked || _unlockCooldown) return;
 
     // PIN always shows regardless of connection status
-    // PIN z-index (2000000) > offline page z-index (1500000)
-    // If offline, user sees PIN on top; offline page waits behind
+    // Offline page is NOT created while PIN is active (see _goOffline)
+    // so there is zero conflict between the two systems
     
     isLocked = true;
     pinInput = '';
@@ -657,6 +657,15 @@
         // Show any notifications that were queued during lock screen
         if (typeof window._flushNotificationQueue === 'function') {
           window._flushNotificationQueue();
+        }
+
+        // If device is offline and no offline page showing, show it now
+        // (was skipped during _goOffline because PIN was active)
+        if (!navigator.onLine && !document.getElementById('connection-offline-page')) {
+          if (window.offlineDetector && typeof window.offlineDetector._showOfflinePage === 'function') {
+            console.log('[PIN] Offline detected after unlock — showing offline page');
+            window.offlineDetector._showOfflinePage();
+          }
         }
       }, 250);
     }
