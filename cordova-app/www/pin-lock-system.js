@@ -601,8 +601,16 @@
     if (isLocked || _unlockCooldown) return;
 
     // PIN always shows regardless of connection status
-    // Offline page is NOT created while PIN is active (see _goOffline)
-    // so there is zero conflict between the two systems
+    // If offline page exists (race condition: offline detector ran before PIN),
+    // remove it — _lockBackground blocks ALL touches including PIN keypad
+    const offlinePage = document.getElementById('connection-offline-page');
+    if (offlinePage) {
+      offlinePage.remove();
+      if (window.offlineDetector && typeof window.offlineDetector._unlockBackground === 'function') {
+        window.offlineDetector._unlockBackground();
+      }
+      console.log('[PIN] Removed offline page — PIN takes priority');
+    }
     
     isLocked = true;
     pinInput = '';
