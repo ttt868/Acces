@@ -1663,7 +1663,7 @@ body.dark-theme #profile-page .copy-btn:hover {
   right: 0;
   bottom: 0;
   background: linear-gradient(180deg, #0f0f1e 0%, #1a1a3e 50%, #0d0d2b 100%);
-  z-index: 999999;
+  z-index: 2000000;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -521,18 +521,6 @@
   function showLockScreen() {
     // Prevent showing lock screen if already locked or in cooldown after unlock
     if (isLocked || _unlockCooldown) return;
-
-    // PIN always shows regardless of connection status
-    // If offline page exists (race condition: offline detector ran before PIN),
-    // remove it — _lockBackground blocks ALL touches including PIN keypad
-    const offlinePage = document.getElementById('connection-offline-page');
-    if (offlinePage) {
-      offlinePage.remove();
-      if (window.offlineDetector && typeof window.offlineDetector._unlockBackground === 'function') {
-        window.offlineDetector._unlockBackground();
-      }
-      console.log('[PIN] Removed offline page — PIN takes priority');
-    }
     
     isLocked = true;
     pinInput = '';
@@ -587,15 +575,6 @@
         // Show any notifications that were queued during lock screen
         if (typeof window._flushNotificationQueue === 'function') {
           window._flushNotificationQueue();
-        }
-
-        // If device is offline and no offline page showing, show it now
-        // (was skipped during _goOffline because PIN was active)
-        if (!navigator.onLine && !document.getElementById('connection-offline-page')) {
-          if (window.offlineDetector && typeof window.offlineDetector._showOfflinePage === 'function') {
-            console.log('[PIN] Offline detected after unlock — showing offline page');
-            window.offlineDetector._showOfflinePage();
-          }
         }
       }, 250);
     }

@@ -213,39 +213,16 @@ class OfflineDetector {
     }
     this._unlockBackground();
 
-    // If PIN lock screen is active, DON'T show offline page
-    // _lockBackground blocks ALL touches outside offline page (capture phase)
-    // which kills PIN keypad + biometric callbacks
-    // Offline page will be shown after PIN unlock via hideLockScreen()
-    if (typeof window.isPinLocked === 'function' && window.isPinLocked()) {
-      console.log('[OfflineDetector] PIN lock active — skipping offline page until PIN unlocked');
-      this._startAutoRetry();
-      return;
-    }
-
     this._showOfflinePage();
     this._startAutoRetry();
   }
 
   _goOnline() {
-    if (this.isOnline && !document.getElementById('connection-offline-page')) {
-      // Already online and no offline page — but still refresh data
-      this._refreshAfterReconnect();
-      return;
-    }
+    if (this.isOnline && !document.getElementById('connection-offline-page')) return;
     console.log('[OfflineDetector] Connection restored');
     this.isOnline = true;
     this.isChecking = false;
     this._stopAutoRetry();
-
-    // If no offline page (was skipped because PIN was active), just refresh
-    if (!document.getElementById('connection-offline-page')) {
-      this._refreshAfterReconnect();
-      if (typeof showNotification === 'function') {
-        showNotification(this.translator.translate('Connection restored'), 'success');
-      }
-      return;
-    }
     this._hideOfflinePage();
 
     if (typeof showNotification === 'function') {
@@ -474,7 +451,8 @@ class OfflineDetector {
 
     const blockOutside = (e) => {
       const pg = document.getElementById('connection-offline-page');
-      if (pg && !pg.contains(e.target)) {
+      const pinLock = document.getElementById('pin-lock-screen');
+      if (pg && !pg.contains(e.target) && (!pinLock || !pinLock.contains(e.target))) {
         e.preventDefault();
         e.stopPropagation();
       }
