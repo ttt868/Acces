@@ -14,6 +14,7 @@
   let biometricAvailable = false;
   let isLocked = false;
   let pinSetupCallback = null;
+  let _pinFrozen = false; // true = PIN visible but non-functional (no internet)
 
   // ===== API HELPERS =====
   function getApiBase() {
@@ -590,12 +591,19 @@
     // Prevent showing lock screen if already locked or in cooldown after unlock
     if (isLocked || _unlockCooldown) return;
 
-    // If device is offline OR offline page exists, defer PIN until online + offline page gone
-    const offlinePage = document.getElementById('connection-offline-page');
-    if (offlinePage || !navigator.onLine) {
-      console.log('[PIN] Device offline or offline page present — deferring PIN lock');
-      window._pinPendingAfterOffline = true;
-      return;
+    // If offline page exists, PIN takes priority — remove offline page and freeze
+    var offlinePage = document.getElementById('connection-offline-page');
+    if (offlinePage) {
+      offlinePage.remove();
+      if (window.offlineDetector && typeof window.offlineDetector._unlockBackground === 'function') {
+        window.offlineDetector._unlockBackground();
+      }
+      if (!navigator.onLine) {
+        _pinFrozen = true;
+      }
+    } else if (!navigator.onLine) {
+      // No offline page but still offline — freeze PIN
+      _pinFrozen = true;
     }
     
     isLocked = true;
@@ -610,7 +618,7 @@
     lockScreen.style.opacity = '0';
     requestAnimationFrame(() => {
       lockScreen.classList.add('active');
-      lockScreen.style.opacity = '1';
+      lockScreen.style.opacity = _pinFrozen ? '0.6' : '1';
     });
 
     // Show biometric button if enabled
@@ -619,10 +627,10 @@
       bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
     }
 
-    // Auto-trigger biometric immediately if enabled (once only)
-    if (biometricEnabled && biometricAvailable && window.Fingerprint) {
+    // Auto-trigger biometric immediately if enabled (once only) — skip if frozen
+    if (biometricEnabled && biometricAvailable && window.Fingerprint && !_pinFrozen) {
       setTimeout(() => {
-        if (isLocked) triggerBiometricAuth();
+        if (isLocked && !_pinFrozen) triggerBiometricAuth();
       }, 400);
     }
   }
@@ -672,6 +680,7 @@
 
   // ===== LOCK KEYPAD =====
   window.pinKeyPress = function(digit) {
+    if (_pinFrozen) return; // No input when frozen (offline)
     if (pinInput.length >= 6) return;
     pinInput += digit;
     updateLockDots(pinInput.length);
@@ -686,6 +695,7 @@
   };
 
   window.pinKeyDelete = function() {
+    if (_pinFrozen) return; // No input when frozen (offline)
     if (pinInput.length > 0) {
       pinInput = pinInput.slice(0, -1);
       updateLockDots(pinInput.length);
@@ -741,6 +751,7 @@
 
   // ===== BIOMETRIC AUTH =====
   function triggerBiometricAuth() {
+    if (_pinFrozen) return; // No biometric when frozen (offline)
     if (!window.Fingerprint || !biometricAvailable || !biometricEnabled) return;
     // Prevent multiple popups
     if (window._biometricInProgress) return;
@@ -792,6 +803,7 @@
 
   // Expose for button tap (manual trigger)
   window.pinBiometricAuth = function() {
+    if (_pinFrozen) return;
     triggerBiometricAuth();
   };
 
@@ -849,6 +861,28 @@
   // Expose loadPinStatus for when user logs in
   window.loadPinStatus = loadPinStatus;
   window.isPinLocked = function() { return isLocked; };
+  window.isPinEnabled = function() { return pinEnabled; };
+
+  // Freeze/unfreeze PIN (used by offline detector)
+  window.freezePin = function() {
+    _pinFrozen = true;
+    var lockScreen = document.getElementById('pin-lock-screen');
+    if (lockScreen) lockScreen.style.opacity = '0.6';
+    console.log('[PIN] Frozen — waiting for internet');
+  };
+  window.unfreezePin = function() {
+    if (!_pinFrozen) return;
+    _pinFrozen = false;
+    var lockScreen = document.getElementById('pin-lock-screen');
+    if (lockScreen) lockScreen.style.opacity = '1';
+    console.log('[PIN] Unfrozen — internet available');
+    // Auto-trigger biometric after unfreeze
+    if (isLocked && biometricEnabled && biometricAvailable && window.Fingerprint) {
+      setTimeout(function() {
+        if (isLocked && !_pinFrozen) triggerBiometricAuth();
+      }, 500);
+    }
+  };
 
   // Start when DOM is ready
   if (document.readyState === 'loading') {
