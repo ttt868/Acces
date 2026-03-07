@@ -214,10 +214,11 @@ class OfflineDetector {
     }
     this._unlockBackground();
 
-    // If PIN is enabled, show frozen PIN screen instead of offline page
-    // PIN will be visible but completely non-functional until internet returns
-    if (typeof window.isPinEnabled === 'function' && window.isPinEnabled()) {
-      console.log('[OfflineDetector] PIN enabled — showing frozen PIN instead of offline page');
+    // If PIN is enabled AND user hasn't unlocked yet (cold start / app resume),
+    // show frozen PIN screen instead of offline page.
+    // If user already unlocked PIN (_pinUnlocked = true), show normal offline page.
+    if (typeof window.isPinEnabled === 'function' && window.isPinEnabled() && !window._pinUnlocked) {
+      console.log('[OfflineDetector] PIN enabled + not unlocked — showing frozen PIN instead of offline page');
       // Freeze FIRST so when loadPinStatus triggers showLockScreen, biometric won't fire
       if (typeof window.freezePin === 'function') {
         window.freezePin();
