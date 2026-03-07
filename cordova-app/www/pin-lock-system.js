@@ -600,13 +600,18 @@
     // Prevent showing lock screen if already locked or in cooldown after unlock
     if (isLocked || _unlockCooldown) return;
 
-    // If device is offline OR offline page exists, defer PIN until online + offline page gone
+    // If called by offline-detection during _hideOfflinePage transition,
+    // allow showing (offline page is about to fade out, PIN appears behind it).
+    // Only defer if device is truly offline AND not in a transition.
     const offlinePage = document.getElementById('connection-offline-page');
-    if (offlinePage || !navigator.onLine) {
-      console.log('[PIN] Device offline or offline page present — deferring PIN lock');
+    if (!navigator.onLine && !offlinePage) {
+      // Device offline but no offline page yet — defer until online
+      console.log('[PIN] Device offline — deferring PIN lock');
       window._pinPendingAfterOffline = true;
       return;
     }
+    // If offline page exists: PIN will appear BEHIND it (lower z-index)
+    // When offline page fades out, PIN is seamlessly revealed
     
     isLocked = true;
     pinInput = '';
@@ -629,11 +634,12 @@
       bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
     }
 
-    // Auto-trigger biometric immediately if enabled (once only)
+    // Auto-trigger biometric when enabled — but wait for offline page to clear
     if (biometricEnabled && biometricAvailable && window.Fingerprint) {
+      const biometricDelay = document.getElementById('connection-offline-page') ? 1800 : 400;
       setTimeout(() => {
         if (isLocked) triggerBiometricAuth();
-      }, 400);
+      }, biometricDelay);
     }
   }
 

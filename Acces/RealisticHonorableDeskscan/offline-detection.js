@@ -412,41 +412,52 @@ class OfflineDetector {
     if (actions) actions.style.display = 'none';
     if (tips) tips.style.display = 'none';
 
-    // Brief green state, then fade out
+    // ── Prepare PIN lock screen BEHIND the offline page during green state ──
+    // Offline z-index (1500000) > PIN z-index (999999)
+    // PIN shows underneath — invisible until offline page fades out = zero flash
+    let pinActivated = false;
+    if (window._pinPendingAfterOffline) {
+      window._pinPendingAfterOffline = false;
+
+      // Ensure user session is available from localStorage cache
+      // On cold start, script.js may have set currentUser already,
+      // but as a safety net, load it ourselves if missing
+      if (!window.currentUser && typeof window.loadUserSession === 'function') {
+        const cached = window.loadUserSession();
+        if (cached && cached.id) {
+          window.currentUser = cached;
+          console.log('[OfflineDetector] Restored currentUser from localStorage');
+        }
+      }
+
+      // Show PIN lock screen behind offline page (sync from local cache)
+      if (window.currentUser && typeof window.loadPinStatus === 'function') {
+        window.loadPinStatus(); // Sync part: loads cache → showLockScreen()
+      }
+      pinActivated = typeof window.isPinLocked === 'function' && window.isPinLocked();
+
+      if (pinActivated) {
+        window._pendingOfflineRefresh = true;
+        console.log('[OfflineDetector] PIN lock ready behind offline page — seamless transition');
+      } else {
+        console.log('[OfflineDetector] PIN not needed — will refresh data directly');
+      }
+    }
+
+    // Brief green state, then fade out — PIN is already prepared underneath
     setTimeout(() => {
       page.classList.remove('is-visible');
       page.classList.add('is-exiting');
 
       setTimeout(() => {
         page.remove();
+        this._unlockBackground();
 
-        // Handle PIN BEFORE unlocking background for seamless transition
-        // This prevents any flash of app content between offline page and PIN
-        if (window._pinPendingAfterOffline) {
-          window._pinPendingAfterOffline = false;
-          console.log('[OfflineDetector] Checking PIN requirement after offline');
-          // Show PIN lock immediately (from local cache) before unlocking
-          if (typeof window.loadPinStatus === 'function') {
-            window.loadPinStatus();
-          }
-          this._unlockBackground();
-
-          // Check if PIN system actually showed the lock screen
-          // If not (PIN disabled, no user, etc.), refresh data directly
-          if (typeof window.isPinLocked === 'function' && window.isPinLocked()) {
-            // PIN is showing — data refresh will happen after PIN unlock (hideLockScreen)
-            window._pendingOfflineRefresh = true;
-            console.log('[OfflineDetector] PIN lock active — data refresh deferred to after unlock');
-          } else {
-            // PIN not needed — refresh data directly
-            console.log('[OfflineDetector] No PIN lock needed — refreshing data now');
-            this._refreshAfterReconnect();
-          }
-        } else {
-          this._unlockBackground();
-          console.log('[OfflineDetector] No PIN pending — refreshing data now');
+        // Data refresh: deferred to after PIN unlock, or immediate
+        if (!pinActivated) {
           this._refreshAfterReconnect();
         }
+        // If pinActivated, data refresh happens in hideLockScreen()
       }, 400);
     }, 800);
   }
