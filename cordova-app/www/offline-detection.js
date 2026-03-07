@@ -217,20 +217,21 @@ class OfflineDetector {
     // If PIN is enabled AND user hasn't unlocked yet (cold start / app resume),
     // show frozen PIN screen instead of offline page.
     // If user already unlocked PIN (_pinUnlocked = true), show normal offline page.
-    // Use isPinEnabledFromCache as fallback for cold start when currentUser isn't loaded yet
-    var pinActive = (typeof window.isPinEnabled === 'function' && window.isPinEnabled()) ||
-                    (typeof window.isPinEnabledFromCache === 'function' && window.isPinEnabledFromCache());
+    // Read directly from localStorage — pin-lock-system.js may not be loaded yet on cold start
+    var pinActive = this._isPinEnabledFromStorage();
     if (pinActive && !window._pinUnlocked) {
-      console.log('[OfflineDetector] PIN enabled + not unlocked — showing frozen PIN instead of offline page');
-      // Use showFrozenPinFromCache which works without currentUser (cold start)
+      console.log('[OfflineDetector] PIN enabled + not unlocked — showing frozen PIN');
+      // Try direct frozen PIN (pin-lock-system.js should be loaded by now)
       if (typeof window.showFrozenPinFromCache === 'function') {
         window.showFrozenPinFromCache();
-      } else {
-        // Fallback: try normal flow
-        if (typeof window.freezePin === 'function') window.freezePin();
-        if (typeof window.loadPinStatus === 'function') window.loadPinStatus();
+        this._startAutoRetry();
+        return;
       }
+      // Fallback: show offline page temporarily, wait for PIN system
+      console.log('[OfflineDetector] PIN system not yet loaded — showing offline page temporarily');
+      this._showOfflinePage();
       this._startAutoRetry();
+      this._waitForPinSystem();
       return;
     }
 
@@ -249,6 +250,7 @@ class OfflineDetector {
     this.isOnline = true;
     this.isChecking = false;
     this._stopAutoRetry();
+    if (this._pinWaitInterval) { clearInterval(this._pinWaitInterval); this._pinWaitInterval = null; }
 
     // Unfreeze PIN if it was frozen (no offline page to hide)
     if (typeof window.unfreezePin === 'function') window.unfreezePin();
@@ -456,6 +458,46 @@ class OfflineDetector {
     }, 800);
   }
 
+  // ── Check PIN enabled directly from localStorage (no dependency on pin-lock-system.js) ──
+  _isPinEnabledFromStorage() {
+    try {
+      var saved = localStorage.getItem('accessoireUser');
+      if (!saved) return false;
+      var user = JSON.parse(saved);
+      if (!user || !user.id) return false;
+      var pinData = localStorage.getItem('pin_state_' + user.id);
+      if (!pinData) return false;
+      var data = JSON.parse(pinData);
+      return !!(data && data.pinEnabled);
+    } catch(e) { return false; }
+  }
+
+  // ── Wait for PIN system to load, then switch from offline page to frozen PIN ──
+  _waitForPinSystem() {
+    if (this._pinWaitInterval) clearInterval(this._pinWaitInterval);
+    var attempts = 0;
+    this._pinWaitInterval = setInterval(() => {
+      attempts++;
+      // PIN system loaded?
+      if (typeof window.showFrozenPinFromCache === 'function') {
+        clearInterval(this._pinWaitInterval);
+        this._pinWaitInterval = null;
+        console.log('[OfflineDetector] PIN system loaded — switching to frozen PIN');
+        // Remove offline page, show frozen PIN
+        var page = document.getElementById('connection-offline-page');
+        if (page) page.remove();
+        this._unlockBackground();
+        window.showFrozenPinFromCache();
+        return;
+      }
+      // Give up after 10 seconds — offline page stays
+      if (attempts > 50) {
+        clearInterval(this._pinWaitInterval);
+        this._pinWaitInterval = null;
+      }
+    }, 200);
+  }
+
   // ── Background lock/unlock (simple, no stacking) ──
   _lockBackground() {
     if (this._bgLocked) return;
@@ -550,6 +592,7 @@ class OfflineDetector {
 
   destroy() {
     this._stopAutoRetry();
+    if (this._pinWaitInterval) { clearInterval(this._pinWaitInterval); this._pinWaitInterval = null; }
     this._unlockBackground();
     const page = document.getElementById('connection-offline-page');
     if (page) page.remove();
