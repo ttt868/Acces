@@ -217,14 +217,18 @@ class OfflineDetector {
     // If PIN is enabled AND user hasn't unlocked yet (cold start / app resume),
     // show frozen PIN screen instead of offline page.
     // If user already unlocked PIN (_pinUnlocked = true), show normal offline page.
-    if (typeof window.isPinEnabled === 'function' && window.isPinEnabled() && !window._pinUnlocked) {
+    // Use isPinEnabledFromCache as fallback for cold start when currentUser isn't loaded yet
+    var pinActive = (typeof window.isPinEnabled === 'function' && window.isPinEnabled()) ||
+                    (typeof window.isPinEnabledFromCache === 'function' && window.isPinEnabledFromCache());
+    if (pinActive && !window._pinUnlocked) {
       console.log('[OfflineDetector] PIN enabled + not unlocked — showing frozen PIN instead of offline page');
-      // Freeze FIRST so when loadPinStatus triggers showLockScreen, biometric won't fire
-      if (typeof window.freezePin === 'function') {
-        window.freezePin();
-      }
-      if (typeof window.loadPinStatus === 'function') {
-        window.loadPinStatus();
+      // Use showFrozenPinFromCache which works without currentUser (cold start)
+      if (typeof window.showFrozenPinFromCache === 'function') {
+        window.showFrozenPinFromCache();
+      } else {
+        // Fallback: try normal flow
+        if (typeof window.freezePin === 'function') window.freezePin();
+        if (typeof window.loadPinStatus === 'function') window.loadPinStatus();
       }
       this._startAutoRetry();
       return;

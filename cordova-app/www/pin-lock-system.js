@@ -34,6 +34,30 @@
     return userId ? 'pin_state_' + userId : null;
   }
 
+  // Check PIN state from cache WITHOUT needing currentUser
+  // Used by offline detector on cold start when currentUser isn't loaded yet
+  function isPinEnabledFromCache() {
+    try {
+      // First try with currentUser
+      var key = getLocalPinKey();
+      if (key) {
+        var data = JSON.parse(localStorage.getItem(key));
+        if (data && data.pinEnabled) return true;
+      }
+      // Fallback: read userId from saved session (accessoireUser)
+      var saved = localStorage.getItem('accessoireUser');
+      if (saved) {
+        var user = JSON.parse(saved);
+        if (user && user.id) {
+          var fallbackKey = 'pin_state_' + user.id;
+          var data2 = JSON.parse(localStorage.getItem(fallbackKey));
+          if (data2 && data2.pinEnabled) return true;
+        }
+      }
+    } catch(e) {}
+    return false;
+  }
+
   function saveLocalPinState() {
     var key = getLocalPinKey();
     if (!key) return;
@@ -48,6 +72,16 @@
 
   function loadLocalPinState() {
     var key = getLocalPinKey();
+    // Fallback: try from saved session if currentUser not loaded yet
+    if (!key) {
+      try {
+        var saved = localStorage.getItem('accessoireUser');
+        if (saved) {
+          var user = JSON.parse(saved);
+          if (user && user.id) key = 'pin_state_' + user.id;
+        }
+      } catch(e) {}
+    }
     if (!key) return false;
     try {
       var data = JSON.parse(localStorage.getItem(key));
@@ -648,38 +682,56 @@
     // Cooldown: prevent re-locking for 2 seconds after unlock
     _unlockCooldown = true;
     setTimeout(() => { _unlockCooldown = false; }, 2000);
-    
+
+    // Start loading data BEFORE hiding PIN screen
+    // So data starts arriving while PIN is still visible
+    _loadDataAfterUnlock();
+
     const lockScreen = document.getElementById('pin-lock-screen');
     if (lockScreen) {
-      // Smooth fade out
-      lockScreen.style.transition = 'opacity 0.25s ease-out';
-      lockScreen.style.opacity = '0';
+      // Keep PIN visible briefly while data loads in background
+      // Then smooth fade out after a short delay
       setTimeout(() => {
-        lockScreen.classList.remove('active');
-        lockScreen.style.display = 'none';
-        lockScreen.style.opacity = '';
-        lockScreen.style.transition = '';
+        lockScreen.style.transition = 'opacity 0.35s ease-out';
+        lockScreen.style.opacity = '0';
+        setTimeout(() => {
+          lockScreen.classList.remove('active');
+          lockScreen.style.display = 'none';
+          lockScreen.style.opacity = '';
+          lockScreen.style.transition = '';
 
-        // Show any notifications that were queued during lock screen
-        if (typeof window._flushNotificationQueue === 'function') {
-          window._flushNotificationQueue();
-        }
-      }, 250);
+          // Show any notifications that were queued during lock screen
+          if (typeof window._flushNotificationQueue === 'function') {
+            window._flushNotificationQueue();
+          }
+        }, 350);
+      }, 400); // 400ms head-start for data to begin loading
     }
+  }
 
-    // Always load fresh data after PIN unlock
-    // Ensures app is not empty after cold start or reconnection
-    setTimeout(function() {
-      try {
-        if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
-          console.log('[PIN] Loading user data after unlock');
-          window.loadUserData(window.currentUser.email);
-        }
-        if (typeof window.updateDashboard === 'function') {
-          window.updateDashboard();
-        }
-      } catch (e) { console.warn('[PIN] Post-unlock data load error:', e); }
-    }, 300);
+  function _loadDataAfterUnlock() {
+    try {
+      // Restore currentUser from session if not loaded yet (cold start)
+      if (!window.currentUser) {
+        try {
+          var saved = localStorage.getItem('accessoireUser');
+          if (saved) {
+            var userData = JSON.parse(saved);
+            if (userData && userData.email) {
+              window.currentUser = userData;
+              console.log('[PIN] Restored currentUser from session cache');
+            }
+          }
+        } catch(e) {}
+      }
+      if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
+        console.log('[PIN] Loading user data after unlock');
+        window.loadUserData(window.currentUser.email);
+      }
+      if (typeof window.updateDashboard === 'function') {
+        window.updateDashboard();
+      }
+    } catch (e) { console.warn('[PIN] Post-unlock data load error:', e); }
   }
 
   // ===== LOCK KEYPAD =====
@@ -866,6 +918,7 @@
   window.loadPinStatus = loadPinStatus;
   window.isPinLocked = function() { return isLocked; };
   window.isPinEnabled = function() { return pinEnabled; };
+  window.isPinEnabledFromCache = isPinEnabledFromCache;
 
   // Show/hide "waiting for connection" indicator on PIN screen
   function _showFrozenIndicator() {
@@ -901,6 +954,19 @@
       setTimeout(function() {
         if (isLocked && !_pinFrozen) triggerBiometricAuth();
       }, 500);
+    }
+  };
+
+  // Show frozen PIN directly from cache (for cold start without internet)
+  // Works even when currentUser isn't loaded yet
+  window.showFrozenPinFromCache = function() {
+    // Load PIN state from cache (with fallback to accessoireUser)
+    var hadLocal = loadLocalPinState();
+    if (hadLocal && pinEnabled) {
+      checkBiometricAvailabilityAsync().then(function() {
+        _pinFrozen = true;
+        showLockScreen();
+      });
     }
   };
 
