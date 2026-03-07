@@ -65,15 +65,25 @@
       const userId = getUserId();
       if (!userId) return;
 
-      // Check biometric availability early
-      await checkBiometricAvailabilityAsync();
-
-      // Load local cache FIRST (instant, works offline)
+      // Load local cache FIRST (instant, sync) — show PIN IMMEDIATELY
+      // This MUST happen before any await to prevent app being visible without PIN
       var hadLocal = loadLocalPinState();
       if (hadLocal) {
         updateSettingsUI();
         if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
+        }
+      }
+
+      // Check biometric availability (async) — PIN is already showing if enabled
+      await checkBiometricAvailabilityAsync();
+
+      // If biometric became available while lock screen is active, update UI + trigger
+      if (isLocked && biometricAvailable && biometricEnabled) {
+        const bioBtn = document.getElementById('pin-biometric-btn');
+        if (bioBtn) bioBtn.style.visibility = 'visible';
+        if (!window._biometricInProgress) {
+          triggerBiometricAuth();
         }
       }
 
