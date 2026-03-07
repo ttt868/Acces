@@ -23,7 +23,7 @@ class OfflineDetector {
     const style = document.createElement('style');
     style.id = 'offline-detection-styles';
     style.textContent = `
-      .connection-offline-page{position:fixed;inset:0;display:flex;justify-content:center;align-items:center;z-index:15000;background:#f0f4ff;opacity:0;transform:scale(1.02);transition:opacity .35s ease,transform .35s ease;touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+      .connection-offline-page{position:fixed;inset:0;display:flex;justify-content:center;align-items:center;z-index:1500000;background:#f0f4ff;opacity:0;transform:scale(1.02);transition:opacity .35s ease,transform .35s ease;touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
       .connection-offline-page.is-visible{opacity:1;transform:scale(1)}
       .connection-offline-page.is-exiting{opacity:0;transform:scale(.98)}
       .connection-offline-page::before,.connection-offline-page::after{content:'';position:absolute;border-radius:50%;filter:blur(80px);opacity:.45;animation:offBlobFloat 12s ease-in-out infinite alternate}
@@ -231,6 +231,13 @@ class OfflineDetector {
   // ── Refresh session/data after coming back online ──
   _refreshAfterReconnect() {
     try {
+      // If PIN lock is still active, defer refresh until after unlock
+      const pinScreen = document.getElementById('pin-lock-screen');
+      if (pinScreen && pinScreen.style.display !== 'none' && !window._pinUnlocked) {
+        console.log('[OfflineDetector] PIN lock active — deferring data refresh');
+        window._pendingOfflineRefresh = true;
+        return;
+      }
       if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
         console.log('[OfflineDetector] Refreshing user data after reconnect');
         window.loadUserData(window.currentUser.email);

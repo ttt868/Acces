@@ -563,6 +563,20 @@
         lockScreen.style.transition = '';
       }, 250);
     }
+
+    // If offline system deferred a data refresh, do it now
+    if (window._pendingOfflineRefresh) {
+      window._pendingOfflineRefresh = false;
+      console.log('[PIN] Running deferred post-offline data refresh');
+      try {
+        if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
+          window.loadUserData(window.currentUser.email);
+        }
+        if (typeof window.updateDashboard === 'function') {
+          window.updateDashboard();
+        }
+      } catch (e) { console.warn('[PIN] Deferred refresh error:', e); }
+    }
   }
 
   // ===== LOCK KEYPAD =====
