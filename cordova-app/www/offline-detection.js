@@ -316,7 +316,7 @@ class OfflineDetector {
       default: // idle
         btn.disabled = false;
         iconEl.className = 'retry-btn-icon fas fa-rotate-right';
-        textEl.textContent = this.translator.translate('Try Again');
+        textEl.textContent = this.translator.translate('Try again');
     }
   }
 
@@ -366,7 +366,7 @@ class OfflineDetector {
             <div class="connection-offline-actions">
               <button class="connection-retry-btn" onclick="checkConnection()">
                 <i class="retry-btn-icon fas fa-rotate-right"></i>
-                <span class="retry-btn-text">${this.translator.translate('Try Again')}</span>
+                <span class="retry-btn-text">${this.translator.translate('Try again')}</span>
               </button>
             </div>
             <div class="connection-offline-tips">
