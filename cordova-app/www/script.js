@@ -14470,8 +14470,41 @@ window.cancelProfileChanges = cancelProfileChanges;
 
 
 
+  // Queue for notifications deferred while PIN lock screen is active
+  var _notificationQueue = [];
+
+  // Flush queued notifications after PIN unlock
+  window._flushNotificationQueue = function() {
+    var queued = _notificationQueue.splice(0);
+    queued.forEach(function(n) { showNotification(n.message, n.type); });
+  };
+
   // Function to show notification
   function showNotification(message, type = 'info') {
+    // Block notifications while PIN lock screen is active (except connection restored)
+    var pinScreen = document.getElementById('pin-lock-screen');
+    if (pinScreen && pinScreen.style.display !== 'none' && pinScreen.classList.contains('active')) {
+      // Allow only "Connection restored" through
+      if (message && message.toLowerCase().indexOf('connection restored') === -1 &&
+          message.indexOf('تم استعادة الاتصال') === -1 &&
+          message.indexOf('Connexion rétablie') === -1 &&
+          message.indexOf('Conexión restaurada') === -1 &&
+          message.indexOf('Connessione ripristinata') === -1 &&
+          message.indexOf('Bağlantı yeniden') === -1 &&
+          message.indexOf('कनेक्शन बहाल') === -1 &&
+          message.indexOf('连接已恢复') === -1 &&
+          message.indexOf('接続が復旧') === -1 &&
+          message.indexOf('연결이 복구') === -1 &&
+          message.indexOf('Conexão restaurada') === -1 &&
+          message.indexOf('Соединение восстановлено') === -1 &&
+          message.indexOf('Verbindung wiederhergestellt') === -1 &&
+          message.indexOf('Koneksi dipulihkan') === -1 &&
+          message.indexOf('Połączenie przywrócone') === -1) {
+        _notificationQueue.push({ message: message, type: type });
+        return;
+      }
+    }
+
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     

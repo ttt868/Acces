@@ -647,6 +647,11 @@
         lockScreen.style.display = 'none';
         lockScreen.style.opacity = '';
         lockScreen.style.transition = '';
+
+        // Show any notifications that were queued during lock screen
+        if (typeof window._flushNotificationQueue === 'function') {
+          window._flushNotificationQueue();
+        }
       }, 250);
     }
 
