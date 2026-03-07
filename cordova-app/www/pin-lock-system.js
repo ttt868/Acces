@@ -65,25 +65,15 @@
       const userId = getUserId();
       if (!userId) return;
 
-      // Load local cache FIRST (instant, sync) — show PIN IMMEDIATELY
-      // This MUST happen before any await to prevent app being visible without PIN
+      // Check biometric availability early
+      await checkBiometricAvailabilityAsync();
+
+      // Load local cache FIRST (instant, works offline)
       var hadLocal = loadLocalPinState();
       if (hadLocal) {
         updateSettingsUI();
         if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
-        }
-      }
-
-      // Check biometric availability (async) — PIN is already showing if enabled
-      await checkBiometricAvailabilityAsync();
-
-      // If biometric became available while lock screen is active, update UI + trigger
-      if (isLocked && biometricAvailable && biometricEnabled) {
-        const bioBtn = document.getElementById('pin-biometric-btn');
-        if (bioBtn) bioBtn.style.visibility = 'visible';
-        if (!window._biometricInProgress) {
-          triggerBiometricAuth();
         }
       }
 
@@ -599,6 +589,14 @@
   function showLockScreen() {
     // Prevent showing lock screen if already locked or in cooldown after unlock
     if (isLocked || _unlockCooldown) return;
+
+    // If device is offline OR offline page exists, defer PIN until online + offline page gone
+    const offlinePage = document.getElementById('connection-offline-page');
+    if (offlinePage || !navigator.onLine) {
+      console.log('[PIN] Device offline or offline page present — deferring PIN lock');
+      window._pinPendingAfterOffline = true;
+      return;
+    }
     
     isLocked = true;
     pinInput = '';
@@ -657,6 +655,19 @@
       }, 250);
     }
 
+    // If offline system deferred a data refresh, do it now
+    if (window._pendingOfflineRefresh) {
+      window._pendingOfflineRefresh = false;
+      console.log('[PIN] Running deferred post-offline data refresh');
+      try {
+        if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
+          window.loadUserData(window.currentUser.email);
+        }
+        if (typeof window.updateDashboard === 'function') {
+          window.updateDashboard();
+        }
+      } catch (e) { console.warn('[PIN] Deferred refresh error:', e); }
+    }
   }
 
   // ===== LOCK KEYPAD =====

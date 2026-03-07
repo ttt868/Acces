@@ -197,6 +197,7 @@ class OfflineDetector {
 
   // ── State transitions ──
   _goOffline() {
+    // Always allow showing offline page — remove stale page first if needed
     const existingPage = document.getElementById('connection-offline-page');
     if (!this.isOnline && existingPage && existingPage.classList.contains('is-visible')) {
       return; // Already showing
@@ -207,12 +208,21 @@ class OfflineDetector {
     this.isChecking = false;
     this.retryCount = 0;
 
+    // If PIN system exists and was unlocked, require PIN again after reconnection
+    if (window._pinUnlocked) {
+      window._pinUnlocked = false;
+      window._pinPendingAfterOffline = true;
+      console.log('[OfflineDetector] PIN will be required after reconnection');
+    }
+
     // Clean up any leftover hidden page from previous cycle
     if (existingPage) {
       existingPage.remove();
     }
     this._unlockBackground();
 
+    // Offline page z-index (1500000) > PIN z-index (999999)
+    // Offline always shows on top; when it hides, PIN is revealed underneath
     this._showOfflinePage();
     this._startAutoRetry();
   }
@@ -306,7 +316,7 @@ class OfflineDetector {
       default: // idle
         btn.disabled = false;
         iconEl.className = 'retry-btn-icon fas fa-rotate-right';
-        textEl.textContent = this.translator.translate('Try again');
+        textEl.textContent = this.translator.translate('Try Again');
     }
   }
 
@@ -356,7 +366,7 @@ class OfflineDetector {
             <div class="connection-offline-actions">
               <button class="connection-retry-btn" onclick="checkConnection()">
                 <i class="retry-btn-icon fas fa-rotate-right"></i>
-                <span class="retry-btn-text">${this.translator.translate('Try again')}</span>
+                <span class="retry-btn-text">${this.translator.translate('Try Again')}</span>
               </button>
             </div>
             <div class="connection-offline-tips">
@@ -413,12 +423,25 @@ class OfflineDetector {
       page.classList.add('is-exiting');
 
       setTimeout(() => {
-        // Remove offline page from DOM
         page.remove();
         this._unlockBackground();
 
-        // Refresh data after reconnection
-        this._refreshAfterReconnect();
+        // Now that offline page is fully gone and background unlocked,
+        // handle PIN + data refresh properly
+        if (window._pinPendingAfterOffline) {
+          // PIN was deferred while offline → show PIN now
+          // Data will be loaded after PIN unlock (in hideLockScreen)
+          window._pinPendingAfterOffline = false;
+          window._pendingOfflineRefresh = true;
+          console.log('[OfflineDetector] Showing deferred PIN lock screen');
+          if (typeof window.loadPinStatus === 'function') {
+            window.loadPinStatus();
+          }
+        } else {
+          // No PIN pending → refresh data directly now
+          console.log('[OfflineDetector] No PIN pending — refreshing data now');
+          this._refreshAfterReconnect();
+        }
       }, 400);
     }, 800);
   }
@@ -451,8 +474,7 @@ class OfflineDetector {
 
     const blockOutside = (e) => {
       const pg = document.getElementById('connection-offline-page');
-      const pinLock = document.getElementById('pin-lock-screen');
-      if (pg && !pg.contains(e.target) && (!pinLock || !pinLock.contains(e.target))) {
+      if (pg && !pg.contains(e.target)) {
         e.preventDefault();
         e.stopPropagation();
       }
@@ -507,7 +529,7 @@ class OfflineDetector {
     if (q('.connection-offline-title')) q('.connection-offline-title').textContent = t('No Internet Connection');
     if (q('.connection-offline-subtitle')) q('.connection-offline-subtitle').textContent = t('Please check your Wi-Fi or mobile data and try again');
     if (q('.connection-status-text')) q('.connection-status-text').textContent = t('Searching for connection...');
-    if (q('.retry-btn-text')) q('.retry-btn-text').textContent = t('Try again');
+    if (q('.retry-btn-text')) q('.retry-btn-text').textContent = t('Try Again');
     const tips = page.querySelectorAll('.connection-tip');
     const tipTexts = ['Check your Wi-Fi connection', 'Enable mobile data', 'Disable airplane mode'];
     tips.forEach((tip, i) => {
