@@ -420,8 +420,7 @@ class OfflineDetector {
     if (actions) actions.style.display = 'none';
     if (tips) tips.style.display = 'none';
 
-    // ── PIN is deferred while offline page is visible ──
-    // Save the flag now; we'll act on it after removing the page
+    // Save PIN flag before timeout
     const needsPinAfterOffline = !!window._pinPendingAfterOffline;
     if (needsPinAfterOffline) {
       window._pinPendingAfterOffline = false;
@@ -433,13 +432,13 @@ class OfflineDetector {
       page.classList.add('is-exiting');
 
       setTimeout(() => {
-        // 1. Remove offline page from DOM first
+        // Remove offline page from DOM
         page.remove();
         this._unlockBackground();
 
-        // 2. Now handle PIN (offline page is gone, showLockScreen won't defer)
+        // Now handle PIN (offline page is gone, showLockScreen will work)
         if (needsPinAfterOffline) {
-          // Ensure currentUser is available from localStorage
+          // Ensure currentUser exists from localStorage
           if (!window.currentUser && typeof window.loadUserSession === 'function') {
             const cached = window.loadUserSession();
             if (cached && cached.id) {
@@ -448,21 +447,12 @@ class OfflineDetector {
             }
           }
 
-          // Signal PIN to show instantly (no fade animation = zero flash)
-          window._pinInstantShow = true;
-
-          // Load PIN state → showLockScreen() will now work (offline page gone)
           if (window.currentUser && typeof window.loadPinStatus === 'function') {
-            window.loadPinStatus();
-          }
-
-          // Check if PIN actually showed
-          if (typeof window.isPinLocked === 'function' && window.isPinLocked()) {
             window._pendingOfflineRefresh = true;
-            console.log('[OfflineDetector] PIN lock shown — data refresh after unlock');
+            console.log('[OfflineDetector] Showing PIN after offline');
+            window.loadPinStatus();
           } else {
-            console.log('[OfflineDetector] PIN not needed — refreshing data now');
-            window._pinInstantShow = false;
+            // No user or no PIN system — just refresh
             this._refreshAfterReconnect();
           }
         } else {
