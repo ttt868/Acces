@@ -202,12 +202,15 @@ class OfflineDetector {
     this.isChecking = false;
     this.retryCount = 0;
 
-    // If PIN system exists and was unlocked, require PIN again after reconnection
+    // Always require PIN verification after any offline→online transition
+    // Cold start: _pinUnlocked is undefined — PIN hasn't been verified yet
+    // Active session: reset unlock state to require re-verification
+    // This ensures PIN is NEVER bypassed after an offline period
     if (window._pinUnlocked) {
       window._pinUnlocked = false;
-      window._pinPendingAfterOffline = true;
-      console.log('[OfflineDetector] PIN will be required after reconnection');
     }
+    window._pinPendingAfterOffline = true;
+    console.log('[OfflineDetector] PIN will be required after reconnection');
 
     // Clean up any leftover hidden page from previous cycle
     if (existingPage) {
@@ -416,21 +419,31 @@ class OfflineDetector {
 
       setTimeout(() => {
         page.remove();
-        this._unlockBackground();
 
-        // Now that offline page is fully gone and background unlocked,
-        // handle PIN + data refresh properly
+        // Handle PIN BEFORE unlocking background for seamless transition
+        // This prevents any flash of app content between offline page and PIN
         if (window._pinPendingAfterOffline) {
-          // PIN was deferred while offline → show PIN now
-          // Data will be loaded after PIN unlock (in hideLockScreen)
           window._pinPendingAfterOffline = false;
-          window._pendingOfflineRefresh = true;
-          console.log('[OfflineDetector] Showing deferred PIN lock screen');
+          console.log('[OfflineDetector] Checking PIN requirement after offline');
+          // Show PIN lock immediately (from local cache) before unlocking
           if (typeof window.loadPinStatus === 'function') {
             window.loadPinStatus();
           }
+          this._unlockBackground();
+
+          // Check if PIN system actually showed the lock screen
+          // If not (PIN disabled, no user, etc.), refresh data directly
+          if (typeof window.isPinLocked === 'function' && window.isPinLocked()) {
+            // PIN is showing — data refresh will happen after PIN unlock (hideLockScreen)
+            window._pendingOfflineRefresh = true;
+            console.log('[OfflineDetector] PIN lock active — data refresh deferred to after unlock');
+          } else {
+            // PIN not needed — refresh data directly
+            console.log('[OfflineDetector] No PIN lock needed — refreshing data now');
+            this._refreshAfterReconnect();
+          }
         } else {
-          // No PIN pending → refresh data directly now
+          this._unlockBackground();
           console.log('[OfflineDetector] No PIN pending — refreshing data now');
           this._refreshAfterReconnect();
         }
@@ -521,7 +534,7 @@ class OfflineDetector {
     if (q('.connection-offline-title')) q('.connection-offline-title').textContent = t('No Internet Connection');
     if (q('.connection-offline-subtitle')) q('.connection-offline-subtitle').textContent = t('Please check your Wi-Fi or mobile data and try again');
     if (q('.connection-status-text')) q('.connection-status-text').textContent = t('Searching for connection...');
-    if (q('.retry-btn-text')) q('.retry-btn-text').textContent = t('Try Again');
+    if (q('.retry-btn-text')) q('.retry-btn-text').textContent = t('Try again');
     const tips = page.querySelectorAll('.connection-tip');
     const tipTexts = ['Check your Wi-Fi connection', 'Enable mobile data', 'Disable airplane mode'];
     tips.forEach((tip, i) => {

@@ -825,6 +825,13 @@
 
     // Short pauses = camera, gallery, share dialog, modals, ads, etc.
     if (backgroundDuration < PIN_BACKGROUND_THRESHOLD) {
+      // Even within grace period, if device is offline reset PIN state
+      // Offline page will cover the screen; PIN required after reconnection
+      if (!navigator.onLine && pinEnabled && window._pinUnlocked) {
+        window._pinUnlocked = false;
+        window._pinPendingAfterOffline = true;
+        console.log('[PIN] Device offline during grace period — PIN required after reconnection');
+      }
       return;
     }
     
