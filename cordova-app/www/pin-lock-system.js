@@ -79,7 +79,8 @@
       await checkBiometricAvailabilityAsync();
 
       // If biometric became available while lock screen is active, update UI + trigger
-      if (isLocked && biometricAvailable && biometricEnabled) {
+      // But NOT if offline page is showing — biometric will fire after offline clears
+      if (isLocked && biometricAvailable && biometricEnabled && !document.getElementById('connection-offline-page')) {
         const bioBtn = document.getElementById('pin-biometric-btn');
         if (bioBtn) bioBtn.style.visibility = 'visible';
         if (!window._biometricInProgress) {
@@ -600,18 +601,14 @@
     // Prevent showing lock screen if already locked or in cooldown after unlock
     if (isLocked || _unlockCooldown) return;
 
-    // If called by offline-detection during _hideOfflinePage transition,
-    // allow showing (offline page is about to fade out, PIN appears behind it).
-    // Only defer if device is truly offline AND not in a transition.
+    // ALWAYS defer when offline page exists or device truly offline
+    // This prevents biometric from firing while offline page covers the screen
+    // _hideOfflinePage will call us again AFTER removing the offline page
     const offlinePage = document.getElementById('connection-offline-page');
-    if (!navigator.onLine && !offlinePage) {
-      // Device offline but no offline page yet — defer until online
-      console.log('[PIN] Device offline — deferring PIN lock');
-      window._pinPendingAfterOffline = true;
+    if (offlinePage || !navigator.onLine) {
+      console.log('[PIN] Offline state — deferring PIN lock');
       return;
     }
-    // If offline page exists: PIN will appear BEHIND it (lower z-index)
-    // When offline page fades out, PIN is seamlessly revealed
     
     isLocked = true;
     pinInput = '';
@@ -621,12 +618,20 @@
     clearLockDots();
     hideLockError();
 
+    // After offline transition: show instantly (no fade) to prevent any content flash
+    // Normal: fade in smoothly
     lockScreen.style.display = 'flex';
-    lockScreen.style.opacity = '0';
-    requestAnimationFrame(() => {
+    if (window._pinInstantShow) {
+      window._pinInstantShow = false;
       lockScreen.classList.add('active');
       lockScreen.style.opacity = '1';
-    });
+    } else {
+      lockScreen.style.opacity = '0';
+      requestAnimationFrame(() => {
+        lockScreen.classList.add('active');
+        lockScreen.style.opacity = '1';
+      });
+    }
 
     // Show biometric button if enabled
     const bioBtn = document.getElementById('pin-biometric-btn');
@@ -634,12 +639,11 @@
       bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
     }
 
-    // Auto-trigger biometric when enabled — but wait for offline page to clear
+    // Auto-trigger biometric after PIN is visible (400ms)
     if (biometricEnabled && biometricAvailable && window.Fingerprint) {
-      const biometricDelay = document.getElementById('connection-offline-page') ? 1800 : 400;
       setTimeout(() => {
         if (isLocked) triggerBiometricAuth();
-      }, biometricDelay);
+      }, 400);
     }
   }
 
