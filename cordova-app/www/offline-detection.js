@@ -208,6 +208,13 @@ class OfflineDetector {
     this.isChecking = false;
     this.retryCount = 0;
 
+    // If PIN system exists and was unlocked, require PIN again after reconnection
+    if (window._pinUnlocked) {
+      window._pinUnlocked = false;
+      window._pinPendingAfterOffline = true;
+      console.log('[OfflineDetector] PIN will be required after reconnection');
+    }
+
     // Clean up any leftover hidden page from previous cycle
     if (existingPage) {
       existingPage.remove();
@@ -232,31 +239,26 @@ class OfflineDetector {
       showNotification(this.translator.translate('Connection restored'), 'success');
     }
 
-    // Silently refresh user data after reconnection
-    this._refreshAfterReconnect();
+    // Data refresh is handled AFTER offline page is fully removed
+    // See _hideOfflinePage() → page.remove() callback
   }
 
   // ── Refresh session/data after coming back online ──
   _refreshAfterReconnect() {
-    try {
-      // If PIN lock is active or pending, defer refresh until after unlock
-      const pinScreen = document.getElementById('pin-lock-screen');
-      const pinVisible = pinScreen && pinScreen.style.display !== 'none' && !window._pinUnlocked;
-      if (pinVisible || window._pinPendingAfterOffline) {
-        console.log('[OfflineDetector] PIN lock active/pending — deferring data refresh');
-        window._pendingOfflineRefresh = true;
-        return;
+    // Small delay to ensure DOM/background is fully restored
+    setTimeout(() => {
+      try {
+        if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
+          console.log('[OfflineDetector] Refreshing user data after reconnect');
+          window.loadUserData(window.currentUser.email);
+        }
+        if (typeof window.updateDashboard === 'function') {
+          window.updateDashboard();
+        }
+      } catch (e) {
+        console.warn('[OfflineDetector] Post-reconnect refresh error:', e);
       }
-      if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
-        console.log('[OfflineDetector] Refreshing user data after reconnect');
-        window.loadUserData(window.currentUser.email);
-      }
-      if (typeof window.updateDashboard === 'function') {
-        window.updateDashboard();
-      }
-    } catch (e) {
-      console.warn('[OfflineDetector] Post-reconnect refresh error:', e);
-    }
+    }, 300);
   }
 
   // ── Auto retry in background ──
@@ -424,13 +426,21 @@ class OfflineDetector {
         page.remove();
         this._unlockBackground();
 
-        // If PIN was deferred while offline, show it now
+        // Now that offline page is fully gone and background unlocked,
+        // handle PIN + data refresh properly
         if (window._pinPendingAfterOffline) {
+          // PIN was deferred while offline → show PIN now
+          // Data will be loaded after PIN unlock (in hideLockScreen)
           window._pinPendingAfterOffline = false;
+          window._pendingOfflineRefresh = true;
           console.log('[OfflineDetector] Showing deferred PIN lock screen');
           if (typeof window.loadPinStatus === 'function') {
             window.loadPinStatus();
           }
+        } else {
+          // No PIN pending → refresh data directly now
+          console.log('[OfflineDetector] No PIN pending — refreshing data now');
+          this._refreshAfterReconnect();
         }
       }, 400);
     }, 800);
