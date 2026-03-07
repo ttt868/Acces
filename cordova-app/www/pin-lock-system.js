@@ -618,8 +618,12 @@
     lockScreen.style.opacity = '0';
     requestAnimationFrame(() => {
       lockScreen.classList.add('active');
-      lockScreen.style.opacity = _pinFrozen ? '0.6' : '1';
+      lockScreen.style.opacity = '1';
     });
+
+    // Show frozen indicator if offline
+    if (_pinFrozen) _showFrozenIndicator();
+    else _hideFrozenIndicator();
 
     // Show biometric button if enabled
     const bioBtn = document.getElementById('pin-biometric-btn');
@@ -663,19 +667,19 @@
       }, 250);
     }
 
-    // If offline system deferred a data refresh, do it now
-    if (window._pendingOfflineRefresh) {
-      window._pendingOfflineRefresh = false;
-      console.log('[PIN] Running deferred post-offline data refresh');
+    // Always load fresh data after PIN unlock
+    // Ensures app is not empty after cold start or reconnection
+    setTimeout(function() {
       try {
         if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
+          console.log('[PIN] Loading user data after unlock');
           window.loadUserData(window.currentUser.email);
         }
         if (typeof window.updateDashboard === 'function') {
           window.updateDashboard();
         }
-      } catch (e) { console.warn('[PIN] Deferred refresh error:', e); }
-    }
+      } catch (e) { console.warn('[PIN] Post-unlock data load error:', e); }
+    }, 300);
   }
 
   // ===== LOCK KEYPAD =====
@@ -863,18 +867,34 @@
   window.isPinLocked = function() { return isLocked; };
   window.isPinEnabled = function() { return pinEnabled; };
 
+  // Show/hide "waiting for connection" indicator on PIN screen
+  function _showFrozenIndicator() {
+    var existing = document.getElementById('pin-frozen-indicator');
+    if (existing) { existing.style.display = 'flex'; return; }
+    var lockScreen = document.getElementById('pin-lock-screen');
+    if (!lockScreen) return;
+    var ind = document.createElement('div');
+    ind.id = 'pin-frozen-indicator';
+    ind.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:50px;padding:8px 20px;z-index:10;white-space:nowrap;';
+    var t = (typeof window.translator !== 'undefined' && window.translator) ? window.translator.translate('Waiting for connection...') : 'Waiting for connection...';
+    ind.innerHTML = '<span style="width:8px;height:8px;background:#ef4444;border-radius:50%;animation:offDotBlink 1.4s ease-in-out infinite"></span><span style="font-size:0.82rem;font-weight:600;color:#ef4444">' + t + '</span>';
+    lockScreen.appendChild(ind);
+  }
+  function _hideFrozenIndicator() {
+    var ind = document.getElementById('pin-frozen-indicator');
+    if (ind) ind.style.display = 'none';
+  }
+
   // Freeze/unfreeze PIN (used by offline detector)
   window.freezePin = function() {
     _pinFrozen = true;
-    var lockScreen = document.getElementById('pin-lock-screen');
-    if (lockScreen) lockScreen.style.opacity = '0.6';
+    _showFrozenIndicator();
     console.log('[PIN] Frozen — waiting for internet');
   };
   window.unfreezePin = function() {
     if (!_pinFrozen) return;
     _pinFrozen = false;
-    var lockScreen = document.getElementById('pin-lock-screen');
-    if (lockScreen) lockScreen.style.opacity = '1';
+    _hideFrozenIndicator();
     console.log('[PIN] Unfrozen — internet available');
     // Auto-trigger biometric after unfreeze
     if (isLocked && biometricEnabled && biometricAvailable && window.Fingerprint) {
