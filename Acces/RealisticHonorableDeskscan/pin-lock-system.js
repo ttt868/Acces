@@ -511,6 +511,14 @@
   function showLockScreen() {
     // Prevent showing lock screen if already locked or in cooldown after unlock
     if (isLocked || _unlockCooldown) return;
+
+    // If offline page is currently visible, defer PIN until offline hides
+    const offlinePage = document.getElementById('connection-offline-page');
+    if (offlinePage && offlinePage.classList.contains('is-visible')) {
+      console.log('[PIN] Offline page active — deferring PIN lock');
+      window._pinPendingAfterOffline = true;
+      return;
+    }
     
     isLocked = true;
     pinInput = '';

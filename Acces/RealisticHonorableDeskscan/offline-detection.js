@@ -231,10 +231,11 @@ class OfflineDetector {
   // ── Refresh session/data after coming back online ──
   _refreshAfterReconnect() {
     try {
-      // If PIN lock is still active, defer refresh until after unlock
+      // If PIN lock is active or pending, defer refresh until after unlock
       const pinScreen = document.getElementById('pin-lock-screen');
-      if (pinScreen && pinScreen.style.display !== 'none' && !window._pinUnlocked) {
-        console.log('[OfflineDetector] PIN lock active — deferring data refresh');
+      const pinVisible = pinScreen && pinScreen.style.display !== 'none' && !window._pinUnlocked;
+      if (pinVisible || window._pinPendingAfterOffline) {
+        console.log('[OfflineDetector] PIN lock active/pending — deferring data refresh');
         window._pendingOfflineRefresh = true;
         return;
       }
@@ -414,6 +415,15 @@ class OfflineDetector {
       setTimeout(() => {
         page.remove();
         this._unlockBackground();
+
+        // If PIN was deferred while offline, show it now
+        if (window._pinPendingAfterOffline) {
+          window._pinPendingAfterOffline = false;
+          console.log('[OfflineDetector] Showing deferred PIN lock screen');
+          if (typeof window.loadPinStatus === 'function') {
+            window.loadPinStatus();
+          }
+        }
       }, 400);
     }, 800);
   }
