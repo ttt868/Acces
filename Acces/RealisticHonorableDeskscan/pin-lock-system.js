@@ -512,10 +512,10 @@
     // Prevent showing lock screen if already locked or in cooldown after unlock
     if (isLocked || _unlockCooldown) return;
 
-    // If offline page is currently visible, defer PIN until offline hides
+    // If device is offline OR offline page exists, defer PIN until online + offline page gone
     const offlinePage = document.getElementById('connection-offline-page');
-    if (offlinePage && offlinePage.classList.contains('is-visible')) {
-      console.log('[PIN] Offline page active — deferring PIN lock');
+    if (offlinePage || !navigator.onLine) {
+      console.log('[PIN] Device offline or offline page present — deferring PIN lock');
       window._pinPendingAfterOffline = true;
       return;
     }
