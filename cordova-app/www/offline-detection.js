@@ -236,7 +236,7 @@ class OfflineDetector {
     this._hideOfflinePage();
 
     if (typeof showNotification === 'function') {
-      showNotification(this.translator.translate('Connection restored - refreshing...'), 'success');
+      showNotification(this.translator.translate('Connection restored'), 'success');
     }
 
     // Data refresh is handled AFTER offline page is fully removed
@@ -406,7 +406,7 @@ class OfflineDetector {
 
     if (icon) icon.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
     if (icon) icon.style.boxShadow = '0 8px 28px rgba(34, 197, 94, .35)';
-    if (title) title.textContent = this.translator.translate('Connection restored - refreshing...');
+    if (title) title.textContent = this.translator.translate('Connection restored');
     if (subtitle) subtitle.textContent = '';
     if (statusDot) { statusDot.style.background = '#22c55e'; statusDot.style.animation = 'none'; }
     if (statusText) statusText.textContent = this.translator.translate('Connected!');
