@@ -208,24 +208,14 @@ class OfflineDetector {
     this.isChecking = false;
     this.retryCount = 0;
 
-    // Always require PIN verification after any offline→online transition
-    // Cold start: _pinUnlocked is undefined — PIN hasn't been verified yet
-    // Active session: reset unlock state to require re-verification
-    // This ensures PIN is NEVER bypassed after an offline period
-    if (window._pinUnlocked) {
-      window._pinUnlocked = false;
-    }
-    window._pinPendingAfterOffline = true;
-    console.log('[OfflineDetector] PIN will be required after reconnection');
-
     // Clean up any leftover hidden page from previous cycle
     if (existingPage) {
       existingPage.remove();
     }
     this._unlockBackground();
 
-    // Offline page z-index (1500000) > PIN z-index (999999)
-    // Offline always shows on top; when it hides, PIN is revealed underneath
+    // Offline page z-index (1500000) < PIN z-index (2000000)
+    // If PIN is showing, user sees PIN on top; offline page waits behind
     this._showOfflinePage();
     this._startAutoRetry();
   }
@@ -420,12 +410,6 @@ class OfflineDetector {
     if (actions) actions.style.display = 'none';
     if (tips) tips.style.display = 'none';
 
-    // Save PIN flag before timeout
-    const needsPinAfterOffline = !!window._pinPendingAfterOffline;
-    if (needsPinAfterOffline) {
-      window._pinPendingAfterOffline = false;
-    }
-
     // Brief green state, then fade out
     setTimeout(() => {
       page.classList.remove('is-visible');
@@ -436,28 +420,8 @@ class OfflineDetector {
         page.remove();
         this._unlockBackground();
 
-        // Now handle PIN (offline page is gone, showLockScreen will work)
-        if (needsPinAfterOffline) {
-          // Ensure currentUser exists from localStorage
-          if (!window.currentUser && typeof window.loadUserSession === 'function') {
-            const cached = window.loadUserSession();
-            if (cached && cached.id) {
-              window.currentUser = cached;
-              console.log('[OfflineDetector] Restored currentUser from localStorage');
-            }
-          }
-
-          if (window.currentUser && typeof window.loadPinStatus === 'function') {
-            window._pendingOfflineRefresh = true;
-            console.log('[OfflineDetector] Showing PIN after offline');
-            window.loadPinStatus();
-          } else {
-            // No user or no PIN system — just refresh
-            this._refreshAfterReconnect();
-          }
-        } else {
-          this._refreshAfterReconnect();
-        }
+        // Refresh data after reconnection
+        this._refreshAfterReconnect();
       }, 400);
     }, 800);
   }

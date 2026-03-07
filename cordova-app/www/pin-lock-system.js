@@ -600,13 +600,9 @@
     // Prevent showing lock screen if already locked or in cooldown after unlock
     if (isLocked || _unlockCooldown) return;
 
-    // If device is offline OR offline page exists, defer PIN until online + offline page gone
-    const offlinePage = document.getElementById('connection-offline-page');
-    if (offlinePage || !navigator.onLine) {
-      console.log('[PIN] Device offline or offline page present — deferring PIN lock');
-      window._pinPendingAfterOffline = true;
-      return;
-    }
+    // PIN always shows regardless of connection status
+    // PIN z-index (2000000) > offline page z-index (1500000)
+    // If offline, user sees PIN on top; offline page waits behind
     
     isLocked = true;
     pinInput = '';
@@ -665,19 +661,6 @@
       }, 250);
     }
 
-    // If offline system deferred a data refresh, do it now
-    if (window._pendingOfflineRefresh) {
-      window._pendingOfflineRefresh = false;
-      console.log('[PIN] Running deferred post-offline data refresh');
-      try {
-        if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
-          window.loadUserData(window.currentUser.email);
-        }
-        if (typeof window.updateDashboard === 'function') {
-          window.updateDashboard();
-        }
-      } catch (e) { console.warn('[PIN] Deferred refresh error:', e); }
-    }
   }
 
   // ===== LOCK KEYPAD =====
@@ -825,13 +808,6 @@
 
     // Short pauses = camera, gallery, share dialog, modals, ads, etc.
     if (backgroundDuration < PIN_BACKGROUND_THRESHOLD) {
-      // Even within grace period, if device is offline reset PIN state
-      // Offline page will cover the screen; PIN required after reconnection
-      if (!navigator.onLine && pinEnabled && window._pinUnlocked) {
-        window._pinUnlocked = false;
-        window._pinPendingAfterOffline = true;
-        console.log('[PIN] Device offline during grace period — PIN required after reconnection');
-      }
       return;
     }
     
