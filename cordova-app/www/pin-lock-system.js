@@ -660,9 +660,16 @@
     else _hideFrozenIndicator();
 
     // Show biometric button if enabled
+    // When frozen (cold start offline): show button even if biometricAvailable=false
+    // (Cordova plugin may not be loaded yet — button will work after unfreeze)
     const bioBtn = document.getElementById('pin-biometric-btn');
     if (bioBtn) {
-      bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
+      if (_pinFrozen) {
+        // Frozen: show button if biometric is enabled in settings (regardless of plugin state)
+        bioBtn.style.visibility = biometricEnabled ? 'visible' : 'hidden';
+      } else {
+        bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
+      }
     }
 
     // Auto-trigger biometric immediately if enabled (once only) — skip if frozen
@@ -958,7 +965,9 @@
     _hideFrozenIndicator();
     console.log('[PIN] Unfrozen — internet available');
 
-    // Update biometric button visibility
+    // CRITICAL: Reset biometric flag — may be stuck from a previous failed attempt
+    window._biometricInProgress = false;
+
     var bioBtn = document.getElementById('pin-biometric-btn');
 
     // Re-check biometric availability (plugin may not have been ready on cold start)
@@ -969,9 +978,9 @@
           bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
         }
         if (available && isLocked && !_pinFrozen) {
-          setTimeout(function() {
-            if (isLocked && !_pinFrozen) triggerBiometricAuth();
-          }, 600);
+          // Reset again right before triggering — be absolutely sure
+          window._biometricInProgress = false;
+          triggerBiometricAuth();
         }
       });
     } else if (bioBtn) {
