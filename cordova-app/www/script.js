@@ -8312,6 +8312,9 @@ window.addEventListener('load', applyArabicCssIfNeeded);
   window.getCurrentUser = function() {
     return currentUser;
   };
+  // Expose key functions globally so offline-detection.js and pin-lock-system.js can call them
+  window.loadUserData = loadUserData;
+  window.updateUserInfo = updateUserInfo;
 
   // Function to use fallback user data when database retrieval fails
   function useFallbackUserData() {

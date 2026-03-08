@@ -712,7 +712,7 @@
   function _loadDataAfterUnlock() {
     try {
       // Restore currentUser from session if not loaded yet (cold start)
-      if (!window.currentUser) {
+      if (!window.currentUser || !window.currentUser.email) {
         try {
           var saved = localStorage.getItem('accessoireUser');
           if (saved) {
@@ -724,14 +724,22 @@
           }
         } catch(e) {}
       }
-      if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
-        console.log('[PIN] Loading user data after unlock');
-        window.loadUserData(window.currentUser.email);
+      if (window.currentUser && window.currentUser.email) {
+        if (typeof window.loadUserData === 'function') {
+          console.log('[PIN] Loading user data after unlock for:', window.currentUser.email);
+          window.loadUserData(window.currentUser.email);
+        } else {
+          console.warn('[PIN] loadUserData not available — reloading page');
+          window.location.reload();
+        }
+      } else {
+        console.warn('[PIN] No currentUser found — reloading page');
+        window.location.reload();
       }
-      if (typeof window.updateDashboard === 'function') {
-        window.updateDashboard();
-      }
-    } catch (e) { console.warn('[PIN] Post-unlock data load error:', e); }
+    } catch (e) {
+      console.warn('[PIN] Post-unlock data load error:', e);
+      window.location.reload();
+    }
   }
 
   // ===== LOCK KEYPAD =====

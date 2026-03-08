@@ -294,15 +294,21 @@ class OfflineDetector {
             }
           } catch(e2) {}
         }
-        if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
-          console.log('[OfflineDetector] Refreshing user data after reconnect');
-          window.loadUserData(window.currentUser.email);
-        }
-        if (typeof window.updateDashboard === 'function') {
-          window.updateDashboard();
+        if (window.currentUser && window.currentUser.email) {
+          console.log('[OfflineDetector] Refreshing user data after reconnect for:', window.currentUser.email);
+          if (typeof window.loadUserData === 'function') {
+            window.loadUserData(window.currentUser.email);
+          } else {
+            console.warn('[OfflineDetector] loadUserData not available — reloading page');
+            window.location.reload();
+          }
+        } else {
+          console.warn('[OfflineDetector] No currentUser found — reloading page');
+          window.location.reload();
         }
       } catch (e) {
         console.warn('[OfflineDetector] Post-reconnect refresh error:', e);
+        window.location.reload();
       }
     }, 500);
   }
