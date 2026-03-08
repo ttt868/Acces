@@ -263,8 +263,9 @@ class OfflineDetector {
     // If offline page exists, hide it with animation
     if (document.getElementById('connection-offline-page')) {
       this._hideOfflinePage();
-    } else {
-      // No offline page (PIN was frozen) — just refresh data
+    } else if (!window._pinLockVisible || !window._pinLockVisible()) {
+      // No offline page AND no PIN lock visible — refresh data
+      // Do NOT refresh if PIN is still showing (biometric in progress)
       this._refreshAfterReconnect();
     }
 
@@ -281,6 +282,12 @@ class OfflineDetector {
     // Small delay to ensure DOM/background is fully restored
     setTimeout(() => {
       try {
+        // Do NOT reload if PIN lock is still visible (biometric auth in progress)
+        var pinScreen = document.getElementById('pin-lock-screen');
+        if (pinScreen && pinScreen.style.display !== 'none' && !window._pinUnlocked) {
+          console.log('[OfflineDetector] PIN still locked — skipping refresh, will refresh after unlock');
+          return;
+        }
         // Restore currentUser from localStorage if it's missing
         if (!window.currentUser || !window.currentUser.email) {
           try {

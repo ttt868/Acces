@@ -828,6 +828,12 @@
     if (window._biometricInProgress) return;
     window._biometricInProgress = true;
 
+    // Safety timeout: if plugin never calls back, reset flag after 30s
+    var _bioSafetyTimer = setTimeout(function() {
+      console.warn('[PIN] Biometric safety timeout — resetting flag');
+      window._biometricInProgress = false;
+    }, 30000);
+
     const t = (key) => window.translator ? window.translator.translate(key) : key;
 
     window.Fingerprint.show(
@@ -837,11 +843,13 @@
       },
       function() {
         // Success - animate dots filling up then unlock
+        clearTimeout(_bioSafetyTimer);
         window._biometricInProgress = false;
         animateDotsAndUnlock();
       },
       function(error) {
         // Failed or cancelled - just reset flag, user can use PIN or tap bio button
+        clearTimeout(_bioSafetyTimer);
         window._biometricInProgress = false;
         console.log('[PIN] Biometric cancelled/failed:', error);
       }
@@ -875,6 +883,8 @@
   // Expose for button tap (manual trigger)
   window.pinBiometricAuth = function() {
     if (_pinFrozen) return;
+    // Force reset biometric flag on manual button press — user explicitly wants biometric
+    window._biometricInProgress = false;
     triggerBiometricAuth();
   };
 
@@ -932,7 +942,9 @@
   // Expose loadPinStatus for when user logs in
   window.loadPinStatus = loadPinStatus;
   window.isPinLocked = function() { return isLocked; };
+  // Expose PIN lock state for other systems
   window.isPinEnabled = function() { return pinEnabled; };
+  window._pinLockVisible = function() { return isLocked; };
   window.isPinEnabledFromCache = isPinEnabledFromCache;
 
   // Show/hide "waiting for connection" indicator on PIN screen
@@ -971,16 +983,20 @@
     var bioBtn = document.getElementById('pin-biometric-btn');
 
     // Re-check biometric availability (plugin may not have been ready on cold start)
-    // Then auto-trigger biometric prompt
+    // Then auto-trigger biometric prompt AFTER a delay (let system stabilize)
     if (isLocked && biometricEnabled) {
       checkBiometricAvailabilityAsync().then(function(available) {
         if (bioBtn) {
           bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
         }
         if (available && isLocked && !_pinFrozen) {
-          // Reset again right before triggering — be absolutely sure
-          window._biometricInProgress = false;
-          triggerBiometricAuth();
+          // Delay biometric trigger — give system time to fully stabilize after reconnect
+          setTimeout(function() {
+            if (isLocked && !_pinFrozen) {
+              window._biometricInProgress = false;
+              triggerBiometricAuth();
+            }
+          }, 1200);
         }
       });
     } else if (bioBtn) {
