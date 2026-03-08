@@ -880,7 +880,19 @@
     if (_pinFrozen) return;
     // Force reset biometric flag on manual button press — user explicitly wants biometric
     window._biometricInProgress = false;
-    triggerBiometricAuth();
+    
+    // On cold start, biometricAvailable may still be false (async check pending)
+    // If user pressed the button, check availability first then trigger
+    if (!biometricAvailable && window.Fingerprint) {
+      checkBiometricAvailabilityAsync().then(function(available) {
+        if (available) {
+          window._biometricInProgress = false;
+          triggerBiometricAuth();
+        }
+      });
+    } else {
+      triggerBiometricAuth();
+    }
   };
 
   // Expose pinSetupBiometricAuth if not already defined (fallback)
