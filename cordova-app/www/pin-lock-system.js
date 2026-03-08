@@ -680,6 +680,7 @@
     if (!isLocked) return;
     isLocked = false;
     window._pinUnlocked = true;
+    window._pinRequiredOnStart = false; // PIN unlocked — offline detector can work normally
     window._biometricInProgress = false;
     
     // Cooldown: prevent re-locking for 2 seconds after unlock
@@ -1059,6 +1060,9 @@
       console.log('[PIN] Cold start + PIN enabled — showing lock screen immediately');
       pinEnabled = true;
       biometricEnabled = data.biometricEnabled || false;
+      // Global flag: tells OfflineDetector to NEVER show offline page
+      // PIN lock screen takes priority on cold start
+      window._pinRequiredOnStart = true;
       
       // If offline, freeze the PIN
       if (!navigator.onLine) {

@@ -214,6 +214,15 @@ class OfflineDetector {
     }
     this._unlockBackground();
 
+    // CHECK 0: PIN cold start flag — pin-lock-system.js set this flag, PIN takes absolute priority
+    if (window._pinRequiredOnStart && !window._pinUnlocked) {
+      console.log('[OfflineDetector] PIN required on start — skipping offline page entirely');
+      // Freeze PIN if it's already showing
+      if (typeof window.freezePin === 'function') window.freezePin();
+      this._startAutoRetry();
+      return;
+    }
+
     // CHECK 1: Is PIN lock screen already visible in DOM?
     // (pin-lock-system.js may have already shown it via immediate cold start check)
     var pinScreen = document.getElementById('pin-lock-screen');
@@ -232,9 +241,9 @@ class OfflineDetector {
         this._startAutoRetry();
         return;
       }
-      // Fallback: show offline page temporarily, wait for PIN system
-      console.log('[OfflineDetector] PIN system not yet loaded — showing offline page temporarily');
-      this._showOfflinePage();
+      // PIN system not yet loaded — wait silently, do NOT show offline page
+      // PIN system's _immediateColdStartCheck will show frozen PIN when it loads
+      console.log('[OfflineDetector] PIN enabled but system not loaded — waiting silently (no offline page)');
       this._startAutoRetry();
       this._waitForPinSystem();
       return;
@@ -642,7 +651,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.addEventListener('deviceready', function() {
-  setTimeout(_initOfflineDetector, 500);
+  setTimeout(_initOfflineDetector, 1500);
 }, false);
 
 document.addEventListener('languageChanged', function(event) {
