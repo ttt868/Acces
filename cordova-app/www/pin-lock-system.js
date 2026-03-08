@@ -957,11 +957,25 @@
     _pinFrozen = false;
     _hideFrozenIndicator();
     console.log('[PIN] Unfrozen — internet available');
-    // Auto-trigger biometric after unfreeze
-    if (isLocked && biometricEnabled && biometricAvailable && window.Fingerprint) {
-      setTimeout(function() {
-        if (isLocked && !_pinFrozen) triggerBiometricAuth();
-      }, 500);
+
+    // Update biometric button visibility
+    var bioBtn = document.getElementById('pin-biometric-btn');
+
+    // Re-check biometric availability (plugin may not have been ready on cold start)
+    // Then auto-trigger biometric prompt
+    if (isLocked && biometricEnabled) {
+      checkBiometricAvailabilityAsync().then(function(available) {
+        if (bioBtn) {
+          bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
+        }
+        if (available && isLocked && !_pinFrozen) {
+          setTimeout(function() {
+            if (isLocked && !_pinFrozen) triggerBiometricAuth();
+          }, 600);
+        }
+      });
+    } else if (bioBtn) {
+      bioBtn.style.visibility = 'hidden';
     }
   };
 
