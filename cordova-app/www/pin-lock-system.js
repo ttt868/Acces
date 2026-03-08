@@ -1020,11 +1020,10 @@
   };
 
   // ===== IMMEDIATE COLD START CHECK =====
-  // This runs SYNCHRONOUSLY when the script loads (before DOMContentLoaded+800ms)
-  // If device is offline and PIN is enabled, show frozen PIN RIGHT NOW
-  // This ensures PIN appears BEFORE offline-detection.js runs
+  // This runs SYNCHRONOUSLY when the script loads
+  // Shows PIN lock screen IMMEDIATELY from localStorage cache
+  // BEFORE script.js can show the dashboard — prevents PIN bypass
   (function _immediateColdStartCheck() {
-    if (navigator.onLine) return; // Online — let normal flow handle it
     if (window._pinUnlocked) return; // Already unlocked
     // Check PIN from localStorage directly
     try {
@@ -1036,22 +1035,51 @@
       if (!pinData) return;
       var data = JSON.parse(pinData);
       if (!data || !data.pinEnabled) return;
-      // PIN is enabled + device is offline → show frozen PIN immediately
-      console.log('[PIN] Cold start offline + PIN enabled — showing frozen PIN immediately');
+      
+      // PIN is enabled → show lock screen IMMEDIATELY
+      console.log('[PIN] Cold start + PIN enabled — showing lock screen immediately');
       pinEnabled = true;
       biometricEnabled = data.biometricEnabled || false;
-      _pinFrozen = true;
+      
+      // If offline, freeze the PIN
+      if (!navigator.onLine) {
+        _pinFrozen = true;
+      }
+      
       // We need DOM ready for PIN screen element
       var lockEl = document.getElementById('pin-lock-screen');
       if (lockEl) {
         showLockScreen();
-        checkBiometricAvailabilityAsync();
+        // Check biometric in background
+        checkBiometricAvailabilityAsync().then(function(available) {
+          // If online and biometric available, auto-trigger
+          if (available && navigator.onLine && isLocked && !_pinFrozen) {
+            setTimeout(function() {
+              if (isLocked && !_pinFrozen) triggerBiometricAuth();
+            }, 500);
+          }
+          // Update biometric button visibility
+          var bioBtn = document.getElementById('pin-biometric-btn');
+          if (bioBtn) {
+            bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
+          }
+        });
       } else {
         // DOM not ready yet — wait for it
         document.addEventListener('DOMContentLoaded', function() {
           if (!isLocked && !window._pinUnlocked) {
             showLockScreen();
-            checkBiometricAvailabilityAsync();
+            checkBiometricAvailabilityAsync().then(function(available) {
+              if (available && navigator.onLine && isLocked && !_pinFrozen) {
+                setTimeout(function() {
+                  if (isLocked && !_pinFrozen) triggerBiometricAuth();
+                }, 500);
+              }
+              var bioBtn = document.getElementById('pin-biometric-btn');
+              if (bioBtn) {
+                bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
+              }
+            });
           }
         });
       }
