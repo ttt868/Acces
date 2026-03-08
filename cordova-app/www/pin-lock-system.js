@@ -960,15 +960,56 @@
   // Show frozen PIN directly from cache (for cold start without internet)
   // Works even when currentUser isn't loaded yet
   window.showFrozenPinFromCache = function() {
+    if (isLocked) return; // Already showing
     // Load PIN state from cache (with fallback to accessoireUser)
     var hadLocal = loadLocalPinState();
     if (hadLocal && pinEnabled) {
-      checkBiometricAvailabilityAsync().then(function() {
-        _pinFrozen = true;
-        showLockScreen();
-      });
+      // Don't wait for biometric check — show PIN immediately, check biometric later
+      _pinFrozen = true;
+      showLockScreen();
+      // Check biometric in background for when PIN unfreezes
+      checkBiometricAvailabilityAsync();
     }
   };
+
+  // ===== IMMEDIATE COLD START CHECK =====
+  // This runs SYNCHRONOUSLY when the script loads (before DOMContentLoaded+800ms)
+  // If device is offline and PIN is enabled, show frozen PIN RIGHT NOW
+  // This ensures PIN appears BEFORE offline-detection.js runs
+  (function _immediateColdStartCheck() {
+    if (navigator.onLine) return; // Online — let normal flow handle it
+    if (window._pinUnlocked) return; // Already unlocked
+    // Check PIN from localStorage directly
+    try {
+      var saved = localStorage.getItem('accessoireUser');
+      if (!saved) return;
+      var user = JSON.parse(saved);
+      if (!user || !user.id) return;
+      var pinData = localStorage.getItem('pin_state_' + user.id);
+      if (!pinData) return;
+      var data = JSON.parse(pinData);
+      if (!data || !data.pinEnabled) return;
+      // PIN is enabled + device is offline → show frozen PIN immediately
+      console.log('[PIN] Cold start offline + PIN enabled — showing frozen PIN immediately');
+      pinEnabled = true;
+      biometricEnabled = data.biometricEnabled || false;
+      _pinFrozen = true;
+      // We need DOM ready for PIN screen element
+      var lockEl = document.getElementById('pin-lock-screen');
+      if (lockEl) {
+        showLockScreen();
+        checkBiometricAvailabilityAsync();
+      } else {
+        // DOM not ready yet — wait for it
+        document.addEventListener('DOMContentLoaded', function() {
+          if (!isLocked && !window._pinUnlocked) {
+            showLockScreen();
+            checkBiometricAvailabilityAsync();
+          }
+        });
+      }
+    } catch(e) { console.warn('[PIN] Cold start check error:', e); }
+  })();
 
   // Start when DOM is ready
   if (document.readyState === 'loading') {

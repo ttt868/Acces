@@ -214,14 +214,19 @@ class OfflineDetector {
     }
     this._unlockBackground();
 
-    // If PIN is enabled AND user hasn't unlocked yet (cold start / app resume),
-    // show frozen PIN screen instead of offline page.
-    // If user already unlocked PIN (_pinUnlocked = true), show normal offline page.
-    // Read directly from localStorage — pin-lock-system.js may not be loaded yet on cold start
+    // CHECK 1: Is PIN lock screen already visible in DOM?
+    // (pin-lock-system.js may have already shown it via immediate cold start check)
+    var pinScreen = document.getElementById('pin-lock-screen');
+    if (pinScreen && pinScreen.style.display !== 'none' && !window._pinUnlocked) {
+      console.log('[OfflineDetector] PIN screen already visible — skipping offline page');
+      this._startAutoRetry();
+      return;
+    }
+
+    // CHECK 2: PIN enabled + not unlocked → try to show frozen PIN
     var pinActive = this._isPinEnabledFromStorage();
     if (pinActive && !window._pinUnlocked) {
       console.log('[OfflineDetector] PIN enabled + not unlocked — showing frozen PIN');
-      // Try direct frozen PIN (pin-lock-system.js should be loaded by now)
       if (typeof window.showFrozenPinFromCache === 'function') {
         window.showFrozenPinFromCache();
         this._startAutoRetry();
@@ -276,6 +281,19 @@ class OfflineDetector {
     // Small delay to ensure DOM/background is fully restored
     setTimeout(() => {
       try {
+        // Restore currentUser from localStorage if it's missing
+        if (!window.currentUser || !window.currentUser.email) {
+          try {
+            var saved = localStorage.getItem('accessoireUser');
+            if (saved) {
+              var u = JSON.parse(saved);
+              if (u && u.email) {
+                window.currentUser = u;
+                console.log('[OfflineDetector] Restored currentUser from cache:', u.email);
+              }
+            }
+          } catch(e2) {}
+        }
         if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
           console.log('[OfflineDetector] Refreshing user data after reconnect');
           window.loadUserData(window.currentUser.email);
@@ -286,7 +304,7 @@ class OfflineDetector {
       } catch (e) {
         console.warn('[OfflineDetector] Post-reconnect refresh error:', e);
       }
-    }, 300);
+    }, 500);
   }
 
   // ── Auto retry in background ──
