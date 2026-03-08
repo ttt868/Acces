@@ -956,7 +956,18 @@
     var ind = document.createElement('div');
     ind.id = 'pin-frozen-indicator';
     ind.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:50px;padding:8px 20px;z-index:10;white-space:nowrap;';
-    var t = (typeof window.translator !== 'undefined' && window.translator) ? window.translator.translate('Waiting for connection...') : 'Waiting for connection...';
+    // Direct lookup: window.translator may not exist yet on cold start
+    // (Translator class is in script.js which loads later)
+    var t = 'Waiting for connection...';
+    try {
+      if (window.translator && typeof window.translator.translate === 'function') {
+        t = window.translator.translate('Waiting for connection...');
+      } else if (window.translations) {
+        var lang = window.__preloadedLang || localStorage.getItem('preferredLanguage') || 'en';
+        var tr = window.translations[lang];
+        if (tr && tr['Waiting for connection...']) t = tr['Waiting for connection...'];
+      }
+    } catch(e) {}
     ind.innerHTML = '<span style="width:8px;height:8px;background:#ef4444;border-radius:50%;animation:offDotBlink 1.4s ease-in-out infinite"></span><span style="font-size:0.82rem;font-weight:600;color:#ef4444">' + t + '</span>';
     lockScreen.appendChild(ind);
   }
