@@ -667,11 +667,12 @@
       bioBtn.style.visibility = biometricEnabled ? 'visible' : 'hidden';
     }
 
-    // Auto-trigger biometric immediately if enabled (once only) — skip if frozen
+    // Auto-trigger biometric if enabled (once only) — skip if frozen
+    // Wait 1s to ensure PIN screen is fully rendered before showing biometric dialog
     if (biometricEnabled && biometricAvailable && window.Fingerprint && !_pinFrozen) {
       setTimeout(() => {
         if (isLocked && !_pinFrozen) triggerBiometricAuth();
-      }, 400);
+      }, 1000);
     }
   }
 
@@ -1077,14 +1078,15 @@
             bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
           }
           // Auto-trigger biometric if available and online
+          // IMPORTANT: Wait long enough for PIN screen to be fully visible (1s)
+          // Otherwise biometric dialog appears before PIN screen = confusing + fails
           if (available && navigator.onLine && isLocked && !_pinFrozen) {
-            // Short delay — let the UI settle
             setTimeout(function() {
               if (isLocked && !_pinFrozen) {
-                window._biometricInProgress = false; // Ensure flag is clean
+                window._biometricInProgress = false;
                 triggerBiometricAuth();
               }
-            }, 300);
+            }, 1000);
           }
         });
       } else {
@@ -1103,7 +1105,7 @@
                     window._biometricInProgress = false;
                     triggerBiometricAuth();
                   }
-                }, 300);
+                }, 1000);
               }
             });
           }
