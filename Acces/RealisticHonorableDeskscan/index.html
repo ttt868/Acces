@@ -2,6 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- 🔒 Production console protection - must be FIRST script -->
+  <script>
+    (function() {
+      var d = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      if (!d) {
+        var n = function() {};
+        console.log = n;
+        console.debug = n;
+        console.info = n;
+      }
+    })();
+  </script>
   <!-- 🔒 منع وميض الرصيد - تغيير النص فوراً -->
   <script>
     window.balanceHiddenOnLoad = localStorage.getItem('balanceHidden') === 'true';
