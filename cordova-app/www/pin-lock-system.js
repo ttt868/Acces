@@ -959,6 +959,10 @@
     if (pinEnabled && window._pinUnlocked) {
       window._pinUnlocked = false;
       showLockScreen();
+      // Auto-trigger biometric after PIN screen shows (same delay as cold start)
+      if (biometricEnabled) {
+        _waitForDeviceReadyThenBiometric();
+      }
     }
   }
 
