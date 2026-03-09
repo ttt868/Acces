@@ -85,11 +85,17 @@ jobs:
         cp cordova-app/keystores/debug.keystore ~/.android/debug.keystore
         # Copy release keystore to cordova-app directory
         echo '=================================================='
-        echo 'Release Keystore SHA-1 (register this in Google Cloud Console):'
-        keytool -list -v -keystore cordova-app/access-network.keystore -alias access-network -storepass Access2026Secure 2>/dev/null | grep SHA1 || true
-        echo '=================================================='
         echo 'Package name: io.accessnetwork.app'
         echo '=================================================='
+
+    - name: Generate build.json for signing
+      working-directory: cordova-app
+      env:
+        KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+      run: |
+        PASS="${KS_PASS:-Access2026Secure}"
+        echo "{\"android\":{\"debug\":{\"keystore\":\"access-network.keystore\",\"storePassword\":\"${PASS}\",\"alias\":\"access-network\",\"password\":\"${PASS}\",\"keystoreType\":\"jks\"},\"release\":{\"keystore\":\"access-network.keystore\",\"storePassword\":\"${PASS}\",\"alias\":\"access-network\",\"password\":\"${PASS}\",\"keystoreType\":\"jks\"}}}" > build.json
+        echo '✅ build.json generated'
 
     - name: Add Android platform (cordova-android 12.0.1)
       working-directory: cordova-app
