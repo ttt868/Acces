@@ -563,12 +563,14 @@
     const t = (key) => window.translator ? window.translator.translate(key) : key;
     try {
       const userId = getUserId();
+      const user = window.currentUser || {};
+      const session_token = user.sessionToken || user.session_token || '';
       const response = await fetch(getApiBase() + '/api/pin/setup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ userId, pin })
+        body: JSON.stringify({ userId, pin, session_token })
       });
 
       const data = await response.json();
