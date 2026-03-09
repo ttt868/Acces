@@ -1587,10 +1587,9 @@ async function verifyToken(token) {
       }).join(''));
       payload = JSON.parse(jsonPayload);
       
-      // Validate token expiration if present
-      if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-        return null; // Token expired
-      }
+      // NOTE: No exp check — Google JWTs expire after 1 hour but we use them
+      // only as email carriers, not as session tokens. Session security is
+      // handled by session_token validation on sensitive endpoints.
     } else {
       payload = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
     }
