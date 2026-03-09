@@ -678,7 +678,11 @@
     hideLockError();
 
     lockScreen.style.display = 'flex';
-    lockScreen.style.opacity = '0';
+    // If already visible from CSS (pin-required on cold start), don't flash opacity
+    var alreadyVisible = document.documentElement.classList.contains('pin-required');
+    if (!alreadyVisible) {
+      lockScreen.style.opacity = '0';
+    }
     requestAnimationFrame(() => {
       lockScreen.classList.add('active');
       lockScreen.style.opacity = '1';
@@ -697,11 +701,11 @@
     }
 
     // Auto-trigger biometric if enabled (once only) — skip if frozen
-    // Wait 1s to ensure PIN screen is fully rendered before showing biometric dialog
+    // Wait 1.5s to ensure PIN screen is clearly visible before showing biometric dialog
     if (biometricEnabled && biometricAvailable && window.Fingerprint && !_pinFrozen) {
       setTimeout(() => {
         if (isLocked && !_pinFrozen) triggerBiometricAuth();
-      }, 1000);
+      }, 1500);
     }
   }
 
@@ -709,7 +713,9 @@
     if (!isLocked) return;
     isLocked = false;
     window._pinUnlocked = true;
-    window._pinRequiredOnStart = false; // PIN unlocked — offline detector can work normally
+    window._pinRequiredOnStart = false;
+    // Remove CSS-level PIN guard so dashboard becomes visible
+    document.documentElement.classList.remove('pin-required'); // PIN unlocked — offline detector can work normally
     window._biometricInProgress = false;
     
     // Cooldown: prevent re-locking for 2 seconds after unlock
@@ -1144,7 +1150,7 @@
             bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
           }
           // Auto-trigger biometric if available and online
-          // IMPORTANT: Wait long enough for PIN screen to be fully visible (1s)
+          // IMPORTANT: Wait long enough for PIN screen to be clearly visible (1.5s)
           // Otherwise biometric dialog appears before PIN screen = confusing + fails
           if (available && navigator.onLine && isLocked && !_pinFrozen) {
             setTimeout(function() {
@@ -1152,7 +1158,7 @@
                 window._biometricInProgress = false;
                 triggerBiometricAuth();
               }
-            }, 1000);
+            }, 1500);
           }
         });
       } else {
@@ -1171,7 +1177,7 @@
                     window._biometricInProgress = false;
                     triggerBiometricAuth();
                   }
-                }, 1000);
+                }, 1500);
               }
             });
           }
