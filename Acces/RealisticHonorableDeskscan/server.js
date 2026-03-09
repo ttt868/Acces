@@ -8650,11 +8650,18 @@ const server = http.createServer(async (req, res) => {
         const userId = parseInt(pathname.split('/')[4]);
         const nowSec = Math.floor(Date.now() / 1000);
         
+        // � SESSION CHECK: validate session_token if provided (piggyback on frequent call)
+        const clientSessionToken = parsedUrl.searchParams.get('st');
+        let sessionValid = true; // default true if no token sent
+        if (clientSessionToken) {
+          sessionValid = await validateSessionToken(userId, clientSessionToken);
+        }
+        
         // 🚀 تحقق من الـ cache أولاً
         const cachedData = getCachedAccumulatedData(userId);
         if (cachedData) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(cachedData));
+          res.end(JSON.stringify({ ...cachedData, sessionValid }));
           return;
         }
         
@@ -8796,7 +8803,8 @@ const server = http.createServer(async (req, res) => {
           adBoostActive: isAdBoostActive, // ONLY from validated status
           processingActive: processingActive === 1,
           serverCalculated: true, // Flag to indicate this is server-calculated
-          lastServerUpdate: nowSec
+          lastServerUpdate: nowSec,
+          sessionValid // 🔒 Single-device enforcement
         };
         
         // 🚀 حفظ في الـ cache
@@ -10486,6 +10494,52 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ========== END PIN LOCK SYSTEM API ==========
+
+    // ========== SESSION MANAGEMENT (Single-Device Enforcement) ==========
+
+    // GET /api/session/check - Lightweight session validity check (polled by client every 30s)
+    if (pathname === '/api/session/check' && req.method === 'POST') {
+      try {
+        const { userId, session_token } = await parseRequestBody(req);
+        if (!userId || !session_token) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ valid: false }));
+          return;
+        }
+        const valid = await validateSessionToken(userId, session_token);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ valid }));
+      } catch (error) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ valid: false }));
+      }
+      return;
+    }
+
+    // POST /api/session/logout - Invalidate session token on server (clean logout)
+    if (pathname === '/api/session/logout' && req.method === 'POST') {
+      try {
+        const { userId, session_token } = await parseRequestBody(req);
+        if (!userId || !session_token) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false }));
+          return;
+        }
+        // Only invalidate if the token matches (prevent others from invalidating)
+        const valid = await validateSessionToken(userId, session_token);
+        if (valid) {
+          await pool.query('UPDATE users SET session_token = NULL WHERE id = $1', [userId]);
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+      } catch (error) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+      }
+      return;
+    }
+
+    // ========== END SESSION MANAGEMENT ==========
 
     // POST /api/user/qrcode/save - DEPRECATED: QR codes are now generated dynamically
     // This endpoint is kept for backward compatibility but does nothing

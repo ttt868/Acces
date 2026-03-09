@@ -5600,10 +5600,16 @@ function startGradualAccumulation() {
     try {
       if (!currentUser || !currentUser.id) return null;
 
-      const response = await fetch(`/api/processing/accumulated/${currentUser.id}`);
+      const st = currentUser.sessionToken || currentUser.session_token || '';
+      const response = await fetch(`/api/processing/accumulated/${currentUser.id}?st=${encodeURIComponent(st)}`);
       if (!response.ok) return null;
 
       const data = await response.json();
+      // 🔒 Session invalidated = another device logged in → force logout
+      if (data.sessionValid === false) {
+        if (typeof forceLogout === 'function') forceLogout();
+        return null;
+      }
       if (data.success) {
         localBoostData.activeReferrals = data.activeReferrals || 0;
         localBoostData.adBoostActive = data.adBoostActive || false;
@@ -7758,6 +7764,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         if (currentUser.id) {
           // ⚡ PRELOAD: تحميل بيانات Activity مسبقاً عند استعادة الجلسة
           preloadActivityData(currentUser.id);
+          // 🔒 Start single-device session guard
+          startSessionGuard();
           
           // 
           console.log('Checking processing status immediately after session restore');
@@ -8226,6 +8234,78 @@ window.addEventListener('load', applyArabicCssIfNeeded);
   // Expose key functions globally so offline-detection.js and pin-lock-system.js can call them
   window.loadUserData = loadUserData;
   window.updateUserInfo = updateUserInfo;
+
+  // ========== SINGLE-DEVICE SESSION GUARD ==========
+  // Like Sweatcoin: only ONE device can be logged in at a time.
+  // When you log in on Device B, Device A is automatically forced to the login screen.
+  // NO polling — piggybacks on fetchBoostData (every 5s) + visibility change.
+  let _sessionGuardActive = false;
+
+  function startSessionGuard() {
+    if (_sessionGuardActive) return;
+    _sessionGuardActive = true;
+    // Check session on visibility change (tab/app goes foreground)
+    document.addEventListener('visibilitychange', _onVisibilitySessionCheck);
+  }
+
+  function stopSessionGuard() {
+    _sessionGuardActive = false;
+    document.removeEventListener('visibilitychange', _onVisibilitySessionCheck);
+  }
+
+  async function _onVisibilitySessionCheck() {
+    if (document.hidden) return;
+    if (!currentUser || !currentUser.id) return;
+    const token = currentUser.sessionToken || currentUser.session_token;
+    if (!token) return;
+    try {
+      const resp = await fetch(getApiBase() + '/api/session/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, session_token: token })
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (data.valid === false) forceLogout();
+    } catch (e) { /* offline — skip */ }
+  }
+
+  function forceLogout() {
+    stopSessionGuard();
+    // Clear processing intervals
+    if (activityInterval) { clearInterval(activityInterval); activityInterval = null; }
+    currentUser = null;
+    window.currentUser = null;
+    // Preserve settings
+    const language = localStorage.getItem('preferredLanguage');
+    const themeMode = localStorage.getItem('themeMode');
+    const themeBrightness = localStorage.getItem('themeBrightness');
+    const arabicCss = localStorage.getItem('arabic-css-enabled');
+    // Clear user data
+    localStorage.removeItem('accessoireUser');
+    localStorage.removeItem('accessoireUserData');
+    localStorage.removeItem('_pin_active');
+    // Restore settings
+    if (language) localStorage.setItem('preferredLanguage', language);
+    if (themeMode) localStorage.setItem('themeMode', themeMode);
+    if (themeBrightness) localStorage.setItem('themeBrightness', themeBrightness);
+    if (arabicCss) localStorage.setItem('arabic-css-enabled', arabicCss);
+    // Switch to login screen
+    document.documentElement.classList.remove('user-logged-in');
+    document.documentElement.classList.add('user-not-logged-in');
+    document.documentElement.classList.add('app-ready');
+    // Show notification then reload
+    const t = (key) => window.translator ? window.translator.translate(key) : key;
+    if (window.showNotification) {
+      window.showNotification(t('Your account was logged in on another device'), 'warning');
+    }
+    setTimeout(() => { window.location.reload(); }, 1500);
+  }
+
+  window.startSessionGuard = startSessionGuard;
+  window.stopSessionGuard = stopSessionGuard;
+  window.forceLogout = forceLogout;
+  // ========== END SESSION GUARD ==========
 
   // Function to use fallback user data when database retrieval fails
   function useFallbackUserData() {
@@ -12584,6 +12664,8 @@ if (totalCost > (currentBalance + precision)) {
         
         // ⚡ PRELOAD: تحميل بيانات صفحة Activity مسبقاً
         preloadActivityData(currentUser.id);
+        // 🔒 Start single-device session guard
+        startSessionGuard();
         
         // 🔔 طلب إذن الإشعارات للتطبيق (TWA/PWA) - نافذة النظام العادية
         if ('Notification' in window) {
