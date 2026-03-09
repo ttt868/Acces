@@ -105,6 +105,24 @@ class OfflineDetector {
 
     window.checkConnection = () => this.manualRetry();
 
+    // SAFETY NET: Periodically check if offline page exists while PIN is active — remove it
+    this._pinGuardInterval = setInterval(() => {
+      if (!window._pinUnlocked && this._isPinEnabledFromStorage()) {
+        var offPage = document.getElementById('connection-offline-page');
+        if (offPage) {
+          console.log('[OfflineDetector] PIN guard removed stale offline page');
+          offPage.remove();
+          this._unlockBackground();
+          if (typeof window.freezePin === 'function') window.freezePin();
+          else if (typeof window.showFrozenPinFromCache === 'function') window.showFrozenPinFromCache();
+        }
+      } else if (window._pinUnlocked && this._pinGuardInterval) {
+        // PIN unlocked — stop the guard
+        clearInterval(this._pinGuardInterval);
+        this._pinGuardInterval = null;
+      }
+    }, 500);
+
     // Initial check
     if (!navigator.onLine) {
       this._goOffline();
@@ -393,6 +411,13 @@ class OfflineDetector {
 
   // ── Create offline page (always fresh) ──
   _showOfflinePage() {
+    // LAST LINE OF DEFENSE: never create offline page if PIN is active
+    if (!window._pinUnlocked && this._isPinEnabledFromStorage()) {
+      console.log('[OfflineDetector] _showOfflinePage BLOCKED — PIN is active');
+      if (typeof window.freezePin === 'function') window.freezePin();
+      else if (typeof window.showFrozenPinFromCache === 'function') window.showFrozenPinFromCache();
+      return;
+    }
     const page = document.createElement('div');
     page.id = 'connection-offline-page';
     page.className = 'connection-offline-page';
@@ -629,6 +654,7 @@ class OfflineDetector {
   destroy() {
     this._stopAutoRetry();
     if (this._pinWaitInterval) { clearInterval(this._pinWaitInterval); this._pinWaitInterval = null; }
+    if (this._pinGuardInterval) { clearInterval(this._pinGuardInterval); this._pinGuardInterval = null; }
     this._unlockBackground();
     const page = document.getElementById('connection-offline-page');
     if (page) page.remove();

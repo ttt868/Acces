@@ -1,4 +1,4 @@
-// Professional Offline Detection System for Web
+// Professional Offline Detection System for Cordova
 // Robust multi-cycle support — works reliably on repeated on/off
 // All CSS is injected inline — does NOT touch style.css
 class OfflineDetector {
@@ -96,12 +96,32 @@ class OfflineDetector {
     window.addEventListener('online', () => this._onBrowserOnline());
     window.addEventListener('offline', () => this._onBrowserOffline());
 
-    // Re-check connection when tab becomes visible again
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') this._onTabVisible();
-    });
+    // Cordova network events
+    document.addEventListener('online', () => this._onBrowserOnline(), false);
+    document.addEventListener('offline', () => this._onBrowserOffline(), false);
+
+    // Re-check connection on app resume (back from background)
+    document.addEventListener('resume', () => this._onAppResume(), false);
 
     window.checkConnection = () => this.manualRetry();
+
+    // SAFETY NET: Periodically check if offline page exists while PIN is active — remove it
+    this._pinGuardInterval = setInterval(() => {
+      if (!window._pinUnlocked && this._isPinEnabledFromStorage()) {
+        var offPage = document.getElementById('connection-offline-page');
+        if (offPage) {
+          console.log('[OfflineDetector] PIN guard removed stale offline page');
+          offPage.remove();
+          this._unlockBackground();
+          if (typeof window.freezePin === 'function') window.freezePin();
+          else if (typeof window.showFrozenPinFromCache === 'function') window.showFrozenPinFromCache();
+        }
+      } else if (window._pinUnlocked && this._pinGuardInterval) {
+        // PIN unlocked — stop the guard
+        clearInterval(this._pinGuardInterval);
+        this._pinGuardInterval = null;
+      }
+    }, 500);
 
     // Initial check
     if (!navigator.onLine) {
@@ -131,7 +151,7 @@ class OfflineDetector {
     }
   }
 
-  // ── Browser events ──
+  // ── Browser/Cordova events ──
   _onBrowserOnline() {
     this._verifyAndRestore();
   }
@@ -140,14 +160,17 @@ class OfflineDetector {
     this._goOffline();
   }
 
-  // ── Tab visible: re-check connectivity silently ──
-  _onTabVisible() {
-    console.log('[OfflineDetector] Tab became visible');
+  // ── App resume: re-check connectivity silently ──
+  _onAppResume() {
+    console.log('[OfflineDetector] App resumed from background');
+    // Small delay to let network stack settle after resume
     setTimeout(async () => {
       if (!navigator.onLine) {
+        // Definitely offline
         if (this.isOnline) this._goOffline();
         return;
       }
+      // Browser says online — verify with real ping
       const online = await this._ping();
       if (online) {
         if (!this.isOnline) this._goOnline();
@@ -192,17 +215,50 @@ class OfflineDetector {
 
   // ── State transitions ──
   _goOffline() {
+    // ──────────────────────────────────────────────────────────────
+    // ABSOLUTE PRIORITY: If PIN is enabled and not yet unlocked,
+    // NEVER show offline page. Read from localStorage directly —
+    // this works regardless of timing, flags, or script load order.
+    // ──────────────────────────────────────────────────────────────
+    if (!window._pinUnlocked && this._isPinEnabledFromStorage()) {
+      console.log('[OfflineDetector] PIN enabled + not unlocked — offline page blocked');
+      this.isOnline = false;
+
+      // Remove any stale offline page that might exist
+      var stalePage = document.getElementById('connection-offline-page');
+      if (stalePage) { stalePage.remove(); this._unlockBackground(); }
+
+      // Freeze PIN if it's already showing
+      if (typeof window.freezePin === 'function') {
+        window.freezePin();
+      }
+
+      // If PIN screen isn't visible yet, try to show it
+      var pinScreen = document.getElementById('pin-lock-screen');
+      if (!pinScreen || pinScreen.style.display === 'none') {
+        if (typeof window.showFrozenPinFromCache === 'function') {
+          window.showFrozenPinFromCache();
+        } else {
+          // PIN system not loaded yet — wait for it silently
+          this._waitForPinSystem();
+        }
+      }
+
+      this._startAutoRetry();
+      return;
+    }
+
+    // ── Non-PIN path: normal offline page ──
     const existingPage = document.getElementById('connection-offline-page');
     if (!this.isOnline && existingPage && existingPage.classList.contains('is-visible')) {
       return; // Already showing
     }
 
-    console.log('[OfflineDetector] Connection lost');
+    console.log('[OfflineDetector] Connection lost (no PIN)');
     this.isOnline = false;
     this.isChecking = false;
     this.retryCount = 0;
 
-    // Clean up any leftover hidden page from previous cycle
     if (existingPage) {
       existingPage.remove();
     }
@@ -213,12 +269,28 @@ class OfflineDetector {
   }
 
   _goOnline() {
-    if (this.isOnline && !document.getElementById('connection-offline-page')) return;
+    if (this.isOnline && !document.getElementById('connection-offline-page')) {
+      // Already online — but unfreeze PIN if it was frozen
+      if (typeof window.unfreezePin === 'function') window.unfreezePin();
+      return;
+    }
     console.log('[OfflineDetector] Connection restored');
     this.isOnline = true;
     this.isChecking = false;
     this._stopAutoRetry();
-    this._hideOfflinePage();
+    if (this._pinWaitInterval) { clearInterval(this._pinWaitInterval); this._pinWaitInterval = null; }
+
+    // Unfreeze PIN if it was frozen (no offline page to hide)
+    if (typeof window.unfreezePin === 'function') window.unfreezePin();
+
+    // If offline page exists, hide it with animation
+    if (document.getElementById('connection-offline-page')) {
+      this._hideOfflinePage();
+    } else if (!window._pinLockVisible || !window._pinLockVisible()) {
+      // No offline page AND no PIN lock visible — refresh data
+      // Do NOT refresh if PIN is still showing (biometric in progress)
+      this._refreshAfterReconnect();
+    }
 
     if (typeof showNotification === 'function') {
       showNotification(this.translator.translate('Connection restored'), 'success');
@@ -233,17 +305,42 @@ class OfflineDetector {
     // Small delay to ensure DOM/background is fully restored
     setTimeout(() => {
       try {
-        if (window.currentUser && window.currentUser.email && typeof window.loadUserData === 'function') {
-          console.log('[OfflineDetector] Refreshing user data after reconnect');
-          window.loadUserData(window.currentUser.email);
+        // Do NOT reload if PIN lock is still visible (biometric auth in progress)
+        var pinScreen = document.getElementById('pin-lock-screen');
+        if (pinScreen && pinScreen.style.display !== 'none' && !window._pinUnlocked) {
+          console.log('[OfflineDetector] PIN still locked — skipping refresh, will refresh after unlock');
+          return;
         }
-        if (typeof window.updateDashboard === 'function') {
-          window.updateDashboard();
+        // Restore currentUser from localStorage if it's missing
+        if (!window.currentUser || !window.currentUser.email) {
+          try {
+            var saved = localStorage.getItem('accessoireUser');
+            if (saved) {
+              var u = JSON.parse(saved);
+              if (u && u.email) {
+                window.currentUser = u;
+                console.log('[OfflineDetector] Restored currentUser from cache:', u.email);
+              }
+            }
+          } catch(e2) {}
+        }
+        if (window.currentUser && window.currentUser.email) {
+          console.log('[OfflineDetector] Refreshing user data after reconnect for:', window.currentUser.email);
+          if (typeof window.loadUserData === 'function') {
+            window.loadUserData(window.currentUser.email);
+          } else {
+            console.warn('[OfflineDetector] loadUserData not available — reloading page');
+            window.location.reload();
+          }
+        } else {
+          console.warn('[OfflineDetector] No currentUser found — reloading page');
+          window.location.reload();
         }
       } catch (e) {
         console.warn('[OfflineDetector] Post-reconnect refresh error:', e);
+        window.location.reload();
       }
-    }, 300);
+    }, 500);
   }
 
   // ── Auto retry in background ──
@@ -314,6 +411,13 @@ class OfflineDetector {
 
   // ── Create offline page (always fresh) ──
   _showOfflinePage() {
+    // LAST LINE OF DEFENSE: never create offline page if PIN is active
+    if (!window._pinUnlocked && this._isPinEnabledFromStorage()) {
+      console.log('[OfflineDetector] _showOfflinePage BLOCKED — PIN is active');
+      if (typeof window.freezePin === 'function') window.freezePin();
+      else if (typeof window.showFrozenPinFromCache === 'function') window.showFrozenPinFromCache();
+      return;
+    }
     const page = document.createElement('div');
     page.id = 'connection-offline-page';
     page.className = 'connection-offline-page';
@@ -408,14 +512,51 @@ class OfflineDetector {
       page.classList.add('is-exiting');
 
       setTimeout(() => {
-        // Remove offline page from DOM
         page.remove();
         this._unlockBackground();
-
-        // Refresh data after reconnection
         this._refreshAfterReconnect();
       }, 400);
     }, 800);
+  }
+
+  // ── Check PIN enabled directly from localStorage (no dependency on pin-lock-system.js) ──
+  _isPinEnabledFromStorage() {
+    try {
+      var saved = localStorage.getItem('accessoireUser');
+      if (!saved) return false;
+      var user = JSON.parse(saved);
+      if (!user || !user.id) return false;
+      var pinData = localStorage.getItem('pin_state_' + user.id);
+      if (!pinData) return false;
+      var data = JSON.parse(pinData);
+      return !!(data && data.pinEnabled);
+    } catch(e) { return false; }
+  }
+
+  // ── Wait for PIN system to load, then switch from offline page to frozen PIN ──
+  _waitForPinSystem() {
+    if (this._pinWaitInterval) clearInterval(this._pinWaitInterval);
+    var attempts = 0;
+    this._pinWaitInterval = setInterval(() => {
+      attempts++;
+      // PIN system loaded?
+      if (typeof window.showFrozenPinFromCache === 'function') {
+        clearInterval(this._pinWaitInterval);
+        this._pinWaitInterval = null;
+        console.log('[OfflineDetector] PIN system loaded — switching to frozen PIN');
+        // Remove offline page, show frozen PIN
+        var page = document.getElementById('connection-offline-page');
+        if (page) page.remove();
+        this._unlockBackground();
+        window.showFrozenPinFromCache();
+        return;
+      }
+      // Give up after 10 seconds — offline page stays
+      if (attempts > 50) {
+        clearInterval(this._pinWaitInterval);
+        this._pinWaitInterval = null;
+      }
+    }, 200);
   }
 
   // ── Background lock/unlock (simple, no stacking) ──
@@ -446,8 +587,7 @@ class OfflineDetector {
 
     const blockOutside = (e) => {
       const pg = document.getElementById('connection-offline-page');
-      const pinLock = document.getElementById('pin-lock-screen');
-      if (pg && !pg.contains(e.target) && (!pinLock || !pinLock.contains(e.target))) {
+      if (pg && !pg.contains(e.target)) {
         e.preventDefault();
         e.stopPropagation();
       }
@@ -506,20 +646,22 @@ class OfflineDetector {
     const tips = page.querySelectorAll('.connection-tip');
     const tipTexts = ['Check your Wi-Fi connection', 'Enable mobile data', 'Disable airplane mode'];
     tips.forEach((tip, i) => {
-      const ico = tip.querySelector('i');
-      if (ico && tipTexts[i]) tip.innerHTML = ico.outerHTML + ' ' + t(tipTexts[i]);
+      const icon = tip.querySelector('i');
+      if (icon && tipTexts[i]) tip.innerHTML = icon.outerHTML + ' ' + t(tipTexts[i]);
     });
   }
 
   destroy() {
     this._stopAutoRetry();
+    if (this._pinWaitInterval) { clearInterval(this._pinWaitInterval); this._pinWaitInterval = null; }
+    if (this._pinGuardInterval) { clearInterval(this._pinGuardInterval); this._pinGuardInterval = null; }
     this._unlockBackground();
     const page = document.getElementById('connection-offline-page');
     if (page) page.remove();
   }
 }
 
-// Initialize when DOM is ready
+// Initialize when DOM is ready (also listen for Cordova deviceready)
 function _initOfflineDetector() {
   if (window.offlineDetector) return;
   window.offlineDetector = new OfflineDetector();
@@ -529,6 +671,10 @@ function _initOfflineDetector() {
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(_initOfflineDetector, 800);
 });
+
+document.addEventListener('deviceready', function() {
+  setTimeout(_initOfflineDetector, 1500);
+}, false);
 
 document.addEventListener('languageChanged', function(event) {
   if (window.offlineDetector && event.detail && event.detail.translator) {
