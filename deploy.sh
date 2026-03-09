@@ -1,7 +1,12 @@
 #!/bin/bash
 # 🚀 سكربت التحديث الآمن لـ Hetzner - لا يحذف node_modules
+# الأسرار تُقرأ من متغيرات البيئة أو يطلبها السكربت
 
-export SSHPASS='Midouyaya1@$.'
+if [ -z "$SSHPASS" ]; then
+  echo "⚠️ SSHPASS غير مضبوط. أدخل كلمة سر SSH للسيرفر:"
+  read -rs SSHPASS
+  export SSHPASS
+fi
 
 echo "📦 جاري ضغط المشروع..."
 cd /workspaces/Acces
@@ -32,21 +37,27 @@ fi
 # استعادة .env
 cp /tmp/.env.backup /var/www/Acces/RealisticHonorableDeskscan/.env 2>/dev/null || true
 
-# إذا لم يوجد .env، أنشئ واحد جديد
+# إذا لم يوجد .env، أنشئ واحد جديد (يجب تعبئة القيم يدوياً)
 if [ ! -f /var/www/Acces/RealisticHonorableDeskscan/.env ]; then
 cat > /var/www/Acces/RealisticHonorableDeskscan/.env << ENVEOF
-DATABASE_URL=postgresql://access_user:AccessDB2026Secure@localhost:5432/access_db
+DATABASE_URL=CHANGE_ME
 DEPLOYMENT_ENV=production
 NODE_ENV=production
 PORT=3000
 BLOCKCHAIN_PORT=5000
-GOOGLE_CLIENT_ID=586936149662-ja0tlfjfinl2sl17j9ntp3m1avnf3dhn.apps.googleusercontent.com
-VAPID_PUBLIC_KEY=BFw1vQWhw4Whdjfvb0vsdgwUf1ZNZLcJ212nkYk_frPBNKZuzS0JXsgOQZCyQVBFzxpi72sLbMNL6KkbIKmZWA0
-VAPID_PRIVATE_KEY=4X5gioNCIvoO6f_DQTyEXoVeRoSHvgJoeIy-URNk1oQ
+GOOGLE_CLIENT_ID=CHANGE_ME
+VAPID_PUBLIC_KEY=CHANGE_ME
+VAPID_PRIVATE_KEY=CHANGE_ME
 VAPID_SUBJECT=mailto:admin@access-network.com
 CHAIN_ID=22888
-SESSION_SECRET=AccessNetwork2026SecretKey
+SESSION_SECRET=CHANGE_ME
+ENCRYPTION_KEY=CHANGE_ME
+SMTP_HOST=mail.privateemail.com
+SMTP_PORT=587
+SMTP_USER=CHANGE_ME
+SMTP_PASS=CHANGE_ME
 ENVEOF
+echo "⚠️ تم إنشاء .env جديد - يجب تعبئة القيم الحقيقية يدوياً على السيرفر!"
 fi
 
 # نسخ database-config.js

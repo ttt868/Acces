@@ -7,8 +7,11 @@ import crypto from 'crypto';
 export const MAX_WALLETS_PER_USER = 5;
 export const WALLET_COOLDOWN_MINUTES = 5;
 
-// Encryption settings
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'defaultEncryptionKey123456789012345678901234'; // 32 bytes
+// Encryption settings - ENCRYPTION_KEY must be set in .env (32 bytes / 32 chars)
+if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length < 32) {
+  console.error('⚠️ ENCRYPTION_KEY missing or too short in .env! Must be at least 32 characters.');
+}
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex').substring(0, 32);
 const ENCRYPTION_IV_LENGTH = 16; // For AES, this is always 16 bytes
 const ENCRYPTION_ALGORITHM = 'aes-256-cbc';
 
@@ -192,13 +195,14 @@ export async function generateWalletForNewUser(userId, email) {
     // Use the full hash to create a proper 40-character address (no padding with zeros)
     const walletAddress = '0x' + addressSeed.substring(0, 40);
     
-    // Save directly to database - NO ENCRYPTION - using safeQuery with timeout/retry
+    // Encrypt private key before saving to database
+    const encryptedKey = encryptPrivateKey(privateKey);
     const timestamp = Date.now();
     await safeQuery(
       `UPDATE users 
-       SET wallet_address = $1, wallet_private_key = $2, wallet_created_at = $3
+       SET wallet_address = $1, wallet_private_key = $2, wallet_created_at = $3, wallet_key_encrypted = true
        WHERE id = $4`,
-      [walletAddress, privateKey, timestamp, userId]
+      [walletAddress, encryptedKey, timestamp, userId]
     );
     
     console.log(`✅ Auto-created wallet for user ${userId}: ${walletAddress}`);

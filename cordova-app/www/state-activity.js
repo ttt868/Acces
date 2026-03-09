@@ -136,7 +136,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Static functions only - no server consumption
 window.getProcessingStats = function() {
-  return { currentProcessors: 10000, currentMined: 250000, totalSupply: 100000000, processingRate: +0.24 };
+  return { currentProcessors: 10000, currentMined: 250000, totalSupply: 100000000, processingRate: +0.25 };
 };
 
 // Disabled functions - no server requests

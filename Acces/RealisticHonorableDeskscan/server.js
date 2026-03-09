@@ -3888,10 +3888,14 @@ const server = http.createServer(async (req, res) => {
 
         const currentTime = Date.now();
 
-        // Update user's wallet information with private key
+        // Encrypt private key before saving
+        const { encryptPrivateKey } = await import('./wallet-manager.js');
+        const encryptedKey = encryptPrivateKey(privateKey);
+
+        // Update user's wallet information with encrypted private key
         await pool.query(
-          'UPDATE users SET wallet_address = $1, wallet_private_key = $2, wallet_created_at = $3 WHERE id = $4',
-          [walletAddress, privateKey, currentTime, userId]
+          'UPDATE users SET wallet_address = $1, wallet_private_key = $2, wallet_created_at = $3, wallet_key_encrypted = true WHERE id = $4',
+          [walletAddress, encryptedKey, currentTime, userId]
         );
 
         // ✅ Removed verbose logging for performance
@@ -3942,11 +3946,15 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        // Decrypt private key before sending to client
+        const { decryptPrivateKey } = await import('./wallet-manager.js');
+        const decryptedKey = decryptPrivateKey(walletData.wallet_private_key);
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
           walletAddress: walletData.wallet_address,
-          privateKey: walletData.wallet_private_key,
+          privateKey: decryptedKey,
           createdAt: walletData.wallet_created_at
         }));
         return;
