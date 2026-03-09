@@ -302,7 +302,7 @@
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ userId, enabled: checked })
+        body: JSON.stringify({ userId, enabled: checked, session_token: (window.currentUser || {}).sessionToken || (window.currentUser || {}).session_token || '' })
       });
 
       if (response.ok) {
@@ -413,7 +413,7 @@
               const response = await fetch(getApiBase() + '/api/pin/disable-biometric', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId })
+                body: JSON.stringify({ userId, session_token: (window.currentUser || {}).sessionToken || (window.currentUser || {}).session_token || '' })
               });
               const data = await response.json();
               if (data.success) {
@@ -582,6 +582,14 @@
         if (window.showNotification) {
           window.showNotification(t('PIN enabled successfully'), 'success');
         }
+      } else if (data.alreadySet) {
+        // PIN already set from another device — sync local state
+        pinEnabled = true;
+        saveLocalPinState();
+        updateSettingsUI();
+        showSetupError(t('PIN already set from another device'));
+        pinInput = '';
+        clearSetupDots();
       } else {
         showSetupError(t(data.error || 'Failed to set PIN'));
         pinInput = '';

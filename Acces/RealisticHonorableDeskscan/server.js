@@ -10221,7 +10221,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // POST /api/pin/setup - Set up new PIN
+    // POST /api/pin/setup - Set up new PIN (with race condition protection)
     if (pathname === '/api/pin/setup' && req.method === 'POST') {
       try {
         // 🛡️ Rate limit
@@ -10243,21 +10243,47 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ error: 'Invalid session' }));
           return;
         }
-        // Hash PIN with scrypt + salt
-        const crypto = await import('crypto');
-        const salt = crypto.randomBytes(16).toString('hex');
-        const pinHash = await new Promise((resolve, reject) => {
-          crypto.scrypt(pin, salt, 64, (err, derived) => {
-            if (err) reject(err);
-            else resolve(salt + ':' + derived.toString('hex'));
+
+        // 🔒 ATOMIC: Transaction + row lock to prevent race condition
+        await pool.query('BEGIN');
+        try {
+          const check = await pool.query(
+            'SELECT pin_enabled FROM users WHERE id = $1 FOR UPDATE',
+            [userId]
+          );
+          if (check.rows.length === 0) {
+            await pool.query('ROLLBACK');
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'User not found' }));
+            return;
+          }
+          // 🛡️ If PIN already set, reject — must disable old PIN first
+          if (check.rows[0].pin_enabled) {
+            await pool.query('ROLLBACK');
+            res.writeHead(409, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'PIN already set. Disable current PIN first.', alreadySet: true }));
+            return;
+          }
+          // Hash PIN with scrypt + salt
+          const crypto = await import('crypto');
+          const salt = crypto.randomBytes(16).toString('hex');
+          const pinHash = await new Promise((resolve, reject) => {
+            crypto.scrypt(pin, salt, 64, (err, derived) => {
+              if (err) reject(err);
+              else resolve(salt + ':' + derived.toString('hex'));
+            });
           });
-        });
-        await pool.query(
-          'UPDATE users SET pin_hash = $1, pin_enabled = true WHERE id = $2',
-          [pinHash, userId]
-        );
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true }));
+          await pool.query(
+            'UPDATE users SET pin_hash = $1, pin_enabled = true WHERE id = $2',
+            [pinHash, userId]
+          );
+          await pool.query('COMMIT');
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true }));
+        } catch (txError) {
+          await pool.query('ROLLBACK');
+          throw txError;
+        }
       } catch (error) {
         console.error('[PIN] Error setting up:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -10393,10 +10419,16 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/api/pin/disable-biometric" && req.method === "POST") {
       try {
         const data = await parseRequestBody(req);
-        const { userId } = data;
+        const { userId, session_token } = data;
         if (!userId) {
           res.writeHead(400, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ success: false, error: "Missing userId" }));
+          return;
+        }
+        // 🔒 Verify session token
+        if (!session_token || !(await validateSessionToken(userId, session_token))) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
           return;
         }
         // Verify user has biometric enabled (device already authenticated)
@@ -10427,10 +10459,16 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/pin/biometric' && req.method === 'POST') {
       try {
         const data = await parseRequestBody(req);
-        const { userId, enabled } = data;
+        const { userId, enabled, session_token } = data;
         if (!userId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Missing userId' }));
+          return;
+        }
+        // 🔒 Verify session token
+        if (!session_token || !(await validateSessionToken(userId, session_token))) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid session' }));
           return;
         }
         await pool.query(

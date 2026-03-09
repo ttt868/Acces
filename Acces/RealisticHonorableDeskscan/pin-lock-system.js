@@ -288,7 +288,7 @@
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ userId, enabled: checked })
+        body: JSON.stringify({ userId, enabled: checked, session_token: (window.currentUser || {}).sessionToken || (window.currentUser || {}).session_token || '' })
       });
 
       if (response.ok) {
@@ -490,6 +490,14 @@
         if (window.showNotification) {
           window.showNotification(t('PIN enabled successfully'), 'success');
         }
+      } else if (data.alreadySet) {
+        // PIN already set from another device — sync local state
+        pinEnabled = true;
+        saveLocalPinState();
+        updateSettingsUI();
+        showSetupError(t('PIN already set from another device'));
+        pinInput = '';
+        clearSetupDots();
       } else {
         showSetupError(t(data.error || 'Failed to set PIN'));
         pinInput = '';
