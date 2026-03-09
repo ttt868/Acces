@@ -10497,6 +10497,26 @@ const server = http.createServer(async (req, res) => {
 
     // ========== SESSION MANAGEMENT (Single-Device Enforcement) ==========
 
+    // POST /api/session/refresh - Generate new session token on login (invalidates other devices)
+    if (pathname === '/api/session/refresh' && req.method === 'POST') {
+      try {
+        const { userId } = await parseRequestBody(req);
+        if (!userId) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false }));
+          return;
+        }
+        const newToken = await updateSessionToken(userId);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, session_token: newToken }));
+      } catch (error) {
+        console.error('Error refreshing session:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false }));
+      }
+      return;
+    }
+
     // GET /api/session/check - Lightweight session validity check (polled by client every 30s)
     if (pathname === '/api/session/check' && req.method === 'POST') {
       try {

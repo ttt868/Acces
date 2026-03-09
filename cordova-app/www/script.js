@@ -8487,6 +8487,25 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           console.log('📷 Preserved original avatar from Google');
         }
 
+        // 🔒 SINGLE-DEVICE: refresh session token on every login (invalidates other devices)
+        if (currentUser.id) {
+          try {
+            const refreshRes = await fetch(getApiBase() + '/api/session/refresh', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: currentUser.id })
+            });
+            if (refreshRes.ok) {
+              const refreshData = await refreshRes.json();
+              if (refreshData.session_token) {
+                currentUser.sessionToken = refreshData.session_token;
+                currentUser.session_token = refreshData.session_token;
+                console.log('🔒 Session token refreshed — other devices will be logged out');
+              }
+            }
+          } catch (e) { console.warn('Session refresh failed:', e); }
+        }
+
         // Explicitly update UI with the fresh data immediately
         updateUserInfo(currentUser);
 
