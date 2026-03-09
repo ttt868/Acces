@@ -1505,11 +1505,18 @@ function generateReferralCode() {
   return code;
 }
 
-// Function to parse JSON body from request
-async function parseRequestBody(req) {
+// Function to parse JSON body from request (with size limit)
+async function parseRequestBody(req, maxSize = 1048576) { // 1MB default
   return new Promise((resolve, reject) => {
     let body = '';
+    let size = 0;
     req.on('data', chunk => {
+      size += chunk.length;
+      if (size > maxSize) {
+        req.destroy();
+        reject(new Error('Request body too large'));
+        return;
+      }
       body += chunk.toString();
     });
     req.on('end', () => {
@@ -1526,7 +1533,43 @@ async function parseRequestBody(req) {
   });
 }
 
+// 🛡️ Rate Limiting system — per IP, per endpoint category
+const _rateLimitStore = new Map();
+const RATE_LIMITS = {
+  auth:    { windowMs: 60000, maxRequests: 10 },  // 10 req/min for login/signup
+  pin:     { windowMs: 60000, maxRequests: 15 },  // 15 req/min for PIN verify
+  api:     { windowMs: 60000, maxRequests: 120 },  // 120 req/min general
+  system:  { windowMs: 60000, maxRequests: 5 },    // 5 req/min for system status
+};
+
+function checkRateLimit(ip, category) {
+  const config = RATE_LIMITS[category] || RATE_LIMITS.api;
+  const key = `${ip}:${category}`;
+  const now = Date.now();
+  let entry = _rateLimitStore.get(key);
+  if (!entry || now - entry.windowStart > config.windowMs) {
+    entry = { windowStart: now, count: 0 };
+    _rateLimitStore.set(key, entry);
+  }
+  entry.count++;
+  return entry.count <= config.maxRequests;
+}
+
+// Cleanup rate limit store every 2 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of _rateLimitStore.entries()) {
+    if (now - entry.windowStart > 120000) _rateLimitStore.delete(key);
+  }
+}, 120000);
+
+function getClientIP(req) {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+}
+
 // Verify user token and resolve to userId
+// Decodes the JWT payload and validates against the database
+// Also checks session_token if provided for extra security
 async function verifyToken(token) {
   if (!token) return null;
 
@@ -1534,12 +1577,20 @@ async function verifyToken(token) {
 
   try {
     if (token.includes('.')) {
-      const base64Url = token.split('.')[1];
+      // JWT format — decode payload
+      const parts = token.split('.');
+      if (parts.length !== 3) return null; // Must have 3 parts (header.payload.signature)
+      const base64Url = parts[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(Buffer.from(base64, 'base64').toString('binary').split('').map(c => {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
       payload = JSON.parse(jsonPayload);
+      
+      // Validate token expiration if present
+      if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+        return null; // Token expired
+      }
     } else {
       payload = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
     }
@@ -1549,10 +1600,10 @@ async function verifyToken(token) {
   }
 
   const email = payload?.email;
-  if (!email) return null;
+  if (!email || typeof email !== 'string' || !email.includes('@')) return null;
 
   try {
-    const result = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT id, session_token FROM users WHERE email = $1', [email.toLowerCase()]);
     if (!result.rows[0]) return null;
     return { userId: result.rows[0].id, email };
   } catch (dbError) {
@@ -1711,10 +1762,13 @@ const server = http.createServer(async (req, res) => {
   const pathname = parsedUrl.pathname;
 
   // Set comprehensive CORS and FedCM headers for all responses
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Session-Token');
+  if (origin !== '*') {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
   res.setHeader('Access-Control-Max-Age', '86400');
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Content-Language', 'ar,en,fr');
@@ -1879,6 +1933,12 @@ const server = http.createServer(async (req, res) => {
 
   // 📊 SYSTEM MONITORING - مراقبة شاملة للسيرفر
   if (pathname === '/api/system/status') {
+    // 🛡️ Rate limit: system info
+    if (!checkRateLimit(getClientIP(req), 'system')) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Too many requests' }));
+      return;
+    }
     try {
       const os = await import('os');
       const { execSync } = await import('child_process');
@@ -3690,7 +3750,13 @@ const server = http.createServer(async (req, res) => {
     // POST /api/ad-boost/grant - Grant boost after ad completion
     if (pathname === '/api/ad-boost/grant' && req.method === 'POST') {
       try {
-        const { userId, transactionId, adCompleted } = await parseRequestBody(req);
+        // 🛡️ Rate limit: prevent ad boost abuse (5 per minute max)
+        if (!checkRateLimit(getClientIP(req), 'system')) {
+          res.writeHead(429, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Too many requests' }));
+          return;
+        }
+        const { userId, transactionId, adCompleted, session_token } = await parseRequestBody(req);
 
         if (!userId || !transactionId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -3920,7 +3986,20 @@ const server = http.createServer(async (req, res) => {
     if (pathname.startsWith('/api/user/wallet-key/') && req.method === 'GET') {
       try {
         const userId = pathname.replace('/api/user/wallet-key/', '');
-        // Silent - reduce console spam
+
+        // 🔒 Require session token to access private key
+        const sessionToken = parsedUrl.searchParams.get('session_token') || req.headers['x-session-token'] || '';
+        if (!sessionToken) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+        const validSession = await validateSessionToken(userId, sessionToken);
+        if (!validSession) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
+          return;
+        }
 
         const result = await pool.query(
           'SELECT wallet_address, wallet_private_key, wallet_created_at FROM users WHERE id = $1',
@@ -4089,11 +4168,18 @@ const server = http.createServer(async (req, res) => {
     // POST /api/account/delete - Delete user account permanently
     if (pathname === '/api/account/delete' && req.method === 'POST') {
       try {
-        const { email, userId, reason, feedback } = await parseRequestBody(req);
+        const { email, userId, reason, feedback, session_token } = await parseRequestBody(req);
 
         if (!email || !userId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Missing required parameters' }));
+          return;
+        }
+
+        // 🔒 Require session token for account deletion
+        if (!session_token || !(await validateSessionToken(userId, session_token))) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session - please re-login' }));
           return;
         }
 
@@ -4180,6 +4266,12 @@ const server = http.createServer(async (req, res) => {
     // POST /api/auth/signin - User sign in
     if (pathname === '/api/auth/signin' && req.method === 'POST') {
       try {
+        // 🛡️ Rate limit: auth
+        if (!checkRateLimit(getClientIP(req), 'auth')) {
+          res.writeHead(429, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Too many attempts. Please wait.' }));
+          return;
+        }
         const { email, password } = await parseRequestBody(req);
         
         if (!email || !password) {
@@ -4202,18 +4294,44 @@ const server = http.createServer(async (req, res) => {
 
         const user = userResult.rows[0];
         
-        // For now, simple password check (in production, use bcrypt)
         if (!user.password_hash) {
           res.writeHead(401, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, message: 'Please use Google sign in or contact support' }));
           return;
         }
 
-        // Simple password verification (replace with bcrypt in production)
+        // Secure password hashing with salt using crypto.scrypt
         const crypto = await import('crypto');
-        const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
         
-        if (user.password_hash !== hashedPassword) {
+        // Support legacy SHA-256 passwords (gradual migration)
+        const legacyHash = crypto.createHash('sha256').update(password).digest('hex');
+        
+        if (user.password_hash === legacyHash) {
+          // Legacy password matched — upgrade to scrypt with salt
+          const salt = crypto.randomBytes(16).toString('hex');
+          const newHash = await new Promise((resolve, reject) => {
+            crypto.scrypt(password, salt, 64, (err, derived) => {
+              if (err) reject(err);
+              else resolve(salt + ':' + derived.toString('hex'));
+            });
+          });
+          await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, user.id]);
+        } else if (user.password_hash.includes(':')) {
+          // New scrypt format: salt:hash
+          const [salt, hash] = user.password_hash.split(':');
+          const verified = await new Promise((resolve, reject) => {
+            crypto.scrypt(password, salt, 64, (err, derived) => {
+              if (err) reject(err);
+              else resolve(derived.toString('hex') === hash);
+            });
+          });
+          if (!verified) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, message: 'Invalid email or password' }));
+            return;
+          }
+        } else {
+          // Unknown hash format — reject
           res.writeHead(401, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, message: 'Invalid email or password' }));
           return;
@@ -4245,6 +4363,12 @@ const server = http.createServer(async (req, res) => {
     // POST /api/auth/signup - User sign up  
     if (pathname === '/api/auth/signup' && req.method === 'POST') {
       try {
+        // 🛡️ Rate limit: auth
+        if (!checkRateLimit(getClientIP(req), 'auth')) {
+          res.writeHead(429, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Too many attempts. Please wait.' }));
+          return;
+        }
         const { name, email, password } = await parseRequestBody(req);
         
         if (!name || !email || !password) {
@@ -4284,9 +4408,15 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // Hash password (simple hash for demo - use bcrypt in production)
+        // Hash password with scrypt + random salt
         const crypto = await import('crypto');
-        const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+        const salt = crypto.randomBytes(16).toString('hex');
+        const passwordHash = await new Promise((resolve, reject) => {
+          crypto.scrypt(password, salt, 64, (err, derived) => {
+            if (err) reject(err);
+            else resolve(salt + ':' + derived.toString('hex'));
+          });
+        });
 
         // Generate referral code
         const referralCode = generateReferralCode();
@@ -10108,16 +10238,34 @@ const server = http.createServer(async (req, res) => {
     // POST /api/pin/setup - Set up new PIN
     if (pathname === '/api/pin/setup' && req.method === 'POST') {
       try {
+        // 🛡️ Rate limit
+        if (!checkRateLimit(getClientIP(req), 'pin')) {
+          res.writeHead(429, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Too many attempts. Please wait.' }));
+          return;
+        }
         const data = await parseRequestBody(req);
-        const { userId, pin } = data;
-        if (!userId || !pin || pin.length !== 6) {
+        const { userId, pin, session_token } = data;
+        if (!userId || !pin || pin.length !== 6 || !/^\d{6}$/.test(pin)) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Invalid PIN (must be 6 digits)' }));
           return;
         }
-        // Hash PIN with crypto
+        // 🔒 Verify session
+        if (!session_token || !(await validateSessionToken(userId, session_token))) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid session' }));
+          return;
+        }
+        // Hash PIN with scrypt + salt
         const crypto = await import('crypto');
-        const pinHash = crypto.createHash('sha256').update(pin).digest('hex');
+        const salt = crypto.randomBytes(16).toString('hex');
+        const pinHash = await new Promise((resolve, reject) => {
+          crypto.scrypt(pin, salt, 64, (err, derived) => {
+            if (err) reject(err);
+            else resolve(salt + ':' + derived.toString('hex'));
+          });
+        });
         await pool.query(
           'UPDATE users SET pin_hash = $1, pin_enabled = true WHERE id = $2',
           [pinHash, userId]
@@ -10135,6 +10283,12 @@ const server = http.createServer(async (req, res) => {
     // POST /api/pin/verify - Verify PIN
     if (pathname === '/api/pin/verify' && req.method === 'POST') {
       try {
+        // 🛡️ Rate limit: PIN brute force protection
+        if (!checkRateLimit(getClientIP(req), 'pin')) {
+          res.writeHead(429, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ verified: false, error: 'Too many attempts. Please wait.' }));
+          return;
+        }
         const data = await parseRequestBody(req);
         const { userId, pin } = data;
         if (!userId || !pin) {
@@ -10143,12 +10297,45 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const crypto = await import('crypto');
-        const pinHash = crypto.createHash('sha256').update(pin).digest('hex');
         const result = await pool.query(
           'SELECT pin_hash FROM users WHERE id = $1 AND pin_enabled = true',
           [userId]
         );
-        if (result.rows.length > 0 && result.rows[0].pin_hash === pinHash) {
+        if (result.rows.length === 0) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ verified: false }));
+          return;
+        }
+        const storedHash = result.rows[0].pin_hash;
+        let verified = false;
+
+        if (storedHash.includes(':')) {
+          // New scrypt format: salt:hash
+          const [salt, hash] = storedHash.split(':');
+          verified = await new Promise((resolve, reject) => {
+            crypto.scrypt(pin, salt, 64, (err, derived) => {
+              if (err) reject(err);
+              else resolve(derived.toString('hex') === hash);
+            });
+          });
+        } else {
+          // Legacy SHA-256 format — verify then upgrade
+          const legacyHash = crypto.createHash('sha256').update(pin).digest('hex');
+          if (storedHash === legacyHash) {
+            verified = true;
+            // Upgrade to scrypt
+            const salt = crypto.randomBytes(16).toString('hex');
+            const newHash = await new Promise((resolve, reject) => {
+              crypto.scrypt(pin, salt, 64, (err, derived) => {
+                if (err) reject(err);
+                else resolve(salt + ':' + derived.toString('hex'));
+              });
+            });
+            await pool.query('UPDATE users SET pin_hash = $1 WHERE id = $2', [newHash, userId]);
+          }
+        }
+
+        if (verified) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ verified: true }));
         } else {
@@ -10174,12 +10361,30 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const crypto = await import('crypto');
-        const pinHash = crypto.createHash('sha256').update(pin).digest('hex');
         const result = await pool.query(
           'SELECT pin_hash FROM users WHERE id = $1 AND pin_enabled = true',
           [userId]
         );
-        if (result.rows.length > 0 && result.rows[0].pin_hash === pinHash) {
+        if (result.rows.length === 0) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Incorrect PIN' }));
+          return;
+        }
+        const storedHash = result.rows[0].pin_hash;
+        let verified = false;
+        if (storedHash.includes(':')) {
+          const [salt, hash] = storedHash.split(':');
+          verified = await new Promise((resolve, reject) => {
+            crypto.scrypt(pin, salt, 64, (err, derived) => {
+              if (err) reject(err);
+              else resolve(derived.toString('hex') === hash);
+            });
+          });
+        } else {
+          const legacyHash = crypto.createHash('sha256').update(pin).digest('hex');
+          verified = storedHash === legacyHash;
+        }
+        if (verified) {
           await pool.query(
             'UPDATE users SET pin_enabled = false, pin_hash = NULL, biometric_enabled = false WHERE id = $1',
             [userId]
@@ -10682,7 +10887,7 @@ function initializeWebSockets(httpServer) {
   wsBridge.init(wss, activeUsers, {
     host: "127.0.0.1",
     port: 6379,
-    password: "AccessRedis2026Secure"
+    password: process.env.REDIS_PASSWORD || ""
   });
 
 

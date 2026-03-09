@@ -103,7 +103,7 @@ function getSystemMetrics() {
   let pgConnections = 0;
   try {
     const pg = execSync(
-      `PGPASSWORD=AccessDB2026Secure psql -h 127.0.0.1 -U access_user -d access_db -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';" 2>/dev/null`,
+      `PGPASSWORD=${process.env.DB_PASSWORD || ''} psql -h 127.0.0.1 -U access_user -d access_db -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';" 2>/dev/null`,
       { encoding: 'utf8' }
     );
     pgConnections = parseInt(pg.trim()) || 0;

@@ -18,7 +18,7 @@ class UltraCacheSystem {
     this.redis = new Redis({
       host: process.env.REDIS_HOST || "127.0.0.1",
       port: parseInt(process.env.REDIS_PORT || "6379"),
-      password: process.env.REDIS_PASSWORD || "AccessRedis2026Secure",
+      password: process.env.REDIS_PASSWORD || "",
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => Math.min(times * 200, 3000),
       lazyConnect: true,
