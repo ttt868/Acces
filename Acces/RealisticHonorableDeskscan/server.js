@@ -4104,11 +4104,8 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
-        // 🔒 Generate new session token on login
-        const newSessionToken = await updateSessionToken(user.id);
-        if (newSessionToken) {
-          user.session_token = newSessionToken;
-        }
+        // 🔒 Return existing session token (don't regenerate on data fetch)
+        // Token is only generated on actual login (signin/signup/google)
 
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ user: user, success: true }));
@@ -4489,13 +4486,9 @@ const server = http.createServer(async (req, res) => {
         );
 
         // ✅ EXISTING USER: موجود بالفعل - إرجاع البيانات مباشرة (رمز الإحالة من DB)
+        // 🔒 Don't regenerate session_token here — this is a data fetch, not a login
         if (existingUser.rows.length > 0) {
           const existingUserData = existingUser.rows[0];
-          // 🔒 Generate new session token on login
-          const newSessionToken = await updateSessionToken(existingUserData.id);
-          if (newSessionToken) {
-            existingUserData.session_token = newSessionToken;
-          }
           
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
           res.end(JSON.stringify({ user: existingUserData, success: true }));
