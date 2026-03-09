@@ -8,6 +8,31 @@ function fetchWithTimeout(url, options = {}, timeout = 15000) {
   ]);
 }
 
+// ✅ Universal Share Function - Works on Web & Cordova
+window.universalShare = async function(options) {
+  const { title, text, url } = options;
+  
+  // 1. Try Cordova Social Sharing Plugin first
+  if (window.plugins && window.plugins.socialsharing) {
+    return new Promise((resolve, reject) => {
+      window.plugins.socialsharing.shareWithOptions({
+        message: text,
+        subject: title,
+        url: url
+      }, resolve, reject);
+    });
+  }
+  
+  // 2. Try Web Share API
+  if (navigator.share) {
+    return navigator.share({ title, text, url });
+  }
+  
+  // 3. Fallback - copy to clipboard
+  await navigator.clipboard.writeText(url);
+  throw new Error('COPIED'); // Signal that we copied instead of shared
+};
+
 // Global formatNumberSmart function (must be before DOMContentLoaded)
 // 1000 → 1,000.00 | 1 → 1.00 | 0 → 0.00 | 0.5 → 0.50 | 2.1 → 2.10
 window.formatNumberSmart = function(number) {
@@ -93,22 +118,11 @@ async function registerPushNotifications(userId) {
     const registration = await navigator.serviceWorker.ready;
     console.log('🔔 Service worker ready');
 
-    // 🔑 Get fresh VAPID key from server FIRST
-    console.log('🔔 Fetching VAPID key from server...');
-    const keyRes = await fetch('/api/push/public-key');
-    const keyJson = await keyRes.json();
-    if (!keyJson.success || !keyJson.publicKey) {
-      console.error('❌ Failed to get VAPID key');
-      return;
-    }
-    const vapidPublicKey = keyJson.publicKey;
-    console.log('🔔 Got VAPID key:', vapidPublicKey.substring(0, 20) + '...');
-
     // Check if already subscribed
     let subscription = await registration.pushManager.getSubscription();
     console.log('🔔 Current subscription:', subscription ? 'exists' : 'none');
     
-    // ✅ ALWAYS unsubscribe old subscription to fix VAPID mismatch errors
+    // ✅ Force unsubscribe old subscription and create new one to fix 410 errors
     if (subscription) {
       try {
         await subscription.unsubscribe();
@@ -119,17 +133,23 @@ async function registerPushNotifications(userId) {
       }
     }
     
-    // Create new subscription with fresh VAPID key
-    console.log('🔔 Creating new subscription with VAPID key...');
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-    });
-    console.log('✅ Subscribed to push notifications:', subscription.endpoint.substring(0, 50) + '...');
+    if (!subscription) {
+      // Subscribe to push notifications with current VAPID key (Updated Jan 2026)
+      const vapidPublicKey = 'BM_rReowAfVGz12iV2a-p3J8_pkQJLXUty6ZP56PBxdIjDdh6IEG1Awk36Hgxv2opxDz2zwzVjjSOKiydFWAEKI';
+      console.log('🔔 Subscribing with VAPID key...');
+      
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+      });
+
+      console.log('✅ Subscribed to push notifications:', subscription.endpoint.substring(0, 50) + '...');
+    }
 
     // Send subscription to server
     console.log('🔔 Sending subscription to server...');
-    const response = await fetch('/api/push/subscribe', {
+    const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+    const response = await fetch(_apiBase + '/api/push/subscribe', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -197,9 +217,7 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-// 🔔 طلب إذن الإشعارات - تم نقله إلى notification-system.js
-// ⚠️ DISABLED: This conflicts with notification-system.js which handles permission via modal
-// The modal approach is required because modern browsers need user gesture (click) for permission
+// 🔔 طلب إذن الإشعارات فوراً عند تحميل الصفحة
 (function autoRequestNotificationPermission() {
   // انتظر 5 ثواني للتأكد من تسجيل الدخول
   setTimeout(async () => {
@@ -219,11 +237,11 @@ function urlBase64ToUint8Array(base64String) {
       
       console.log('🔔 [AUTO] Current permission:', Notification.permission);
       
-      // ⚠️ لا نطلب الإذن تلقائياً - notification-system.js يعرض Modal بدلاً من ذلك
-      // المتصفحات الحديثة تحتاج نقرة من المستخدم لطلب الإذن
+      // إذا لم يُسأل من قبل، اطلب الإذن
       if (Notification.permission === 'default') {
-        console.log('🔔 [AUTO] Permission is default - waiting for user to click Modal in notification-system.js');
-        return; // ✅ لا نفعل شيء - Modal سيظهر من notification-system.js
+        console.log('🔔 [AUTO] Requesting notification permission...');
+        const permission = await Notification.requestPermission();
+        console.log('🔔 [AUTO] Permission result:', permission);
       }
       
       // إذا تم منح الإذن، سجل الاشتراك
@@ -257,7 +275,6 @@ function urlBase64ToUint8Array(base64String) {
     }
   }, 5000); // انتظر 5 ثواني
 })();
-
 
 // AccessRewards main script
 document.addEventListener('DOMContentLoaded', function() {
@@ -997,8 +1014,35 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('User has already viewed privacy policy from login page');
   }
 
-  // Initialize with saved language preference or use preloaded language from head script
-  const savedLanguage = window.__preloadedLang || localStorage.getItem('preferredLanguage') || 'en';
+  // 🌐 Auto-detect device language on first visit
+  const SUPPORTED_LANGUAGES = ['en', 'fr', 'es', 'it', 'tr', 'hi', 'zh', 'ja', 'ko', 'pt', 'ru', 'de', 'ar', 'id', 'pl'];
+  
+  function getInitialLanguage() {
+    // 1. Check if user already has a saved preference
+    const saved = window.__preloadedLang || localStorage.getItem('preferredLanguage');
+    if (saved && SUPPORTED_LANGUAGES.includes(saved)) {
+      return saved;
+    }
+    
+    // 2. First time visit - detect device language
+    const deviceLang = (navigator.language || navigator.userLanguage || 'en').substring(0, 2).toLowerCase();
+    console.log('🌐 First visit - Device language detected:', deviceLang);
+    
+    // 3. Check if device language is supported
+    if (SUPPORTED_LANGUAGES.includes(deviceLang)) {
+      console.log('🌐 Using device language:', deviceLang);
+      localStorage.setItem('preferredLanguage', deviceLang);
+      return deviceLang;
+    }
+    
+    // 4. Fallback to English
+    console.log('🌐 Device language not supported, using English');
+    localStorage.setItem('preferredLanguage', 'en');
+    return 'en';
+  }
+
+  // Initialize with auto-detected or saved language
+  const savedLanguage = getInitialLanguage();
   translator.setLanguage(savedLanguage);
 
   // Store the language in document for immediate access during page load
@@ -1182,12 +1226,12 @@ AccessRewards is a revolutionary fitness platform designed for the future of wel
 - Reserve Fund: 5%
 
 4. Activity System
-Users can process once every 24 hours to collect 0.25 Points.
+Users can process once every 24 hours to collect Points (reward halves based on circulation).
 
 5. Security
 Enterprise-grade security with encrypted user accounts and secure benefit processing.
 
-For more information, visit our platform at: ${window.location.origin}
+For more information, visit our platform at: ${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}
       `.trim();
 
       // Create and download the file
@@ -1320,7 +1364,8 @@ For more information, visit our platform at: ${window.location.origin}
 
     try {
       // إرسال طلب الحذف للسيرفر وانتظار النتيجة
-      fetch('/api/account/delete', {
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      fetch(_apiBase + '/api/account/delete', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1527,7 +1572,8 @@ For more information, visit our platform at: ${window.location.origin}
     }
     
     try {
-      const response = await fetch('/api/users/update-profile', {
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(_apiBase + '/api/users/update-profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -2025,7 +2071,7 @@ ${translator.translate('Your Referral Code:')} ${referralCode}
 ${translator.translate('This code has been preserved with ULTRA-ENHANCED system from')} ${source.toUpperCase()}
         `;
         
-        alert(manualInstructions);
+        showNotification(manualInstructions, 'info');
       }
     });
 
@@ -2368,7 +2414,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     }
 
     const modal = document.getElementById('invite-modal-overlay');
-    const baseUrl = window.location.origin;
+    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -2384,91 +2430,52 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     const inviteLink = document.getElementById('invite-link-input').value;
 
     try {
-      // Try native sharing on mobile first
-      if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        await navigator.share({
-          title: 'Join AccessoireDigital',
-          text: 'Join me on AccessoireDigital and start processing digital assets!',
-          url: inviteLink
-        });
-        console.log('Link shared successfully');
+      // ✅ Use universal share (Cordova plugin + Web Share API + fallback)
+      await window.universalShare({
+        title: 'Join Access Network',
+        text: 'Join me on Access Network and start earning ACCESS coins!',
+        url: inviteLink
+      });
+      console.log('Link shared successfully');
+      return;
+    } catch (e) {
+      // If COPIED, show copy feedback
+      if (e.message === 'COPIED' || e.name === 'AbortError') {
+        // Show success feedback
+        const copyBtn = document.querySelector('.dashboard-copy-invite-btn, .copy-invite-btn');
+        if (copyBtn) {
+          const originalContent = Array.from(copyBtn.childNodes).map(node => node.cloneNode(true));
+          copyBtn.textContent = '';
+          const checkIcon = document.createElement('i');
+          checkIcon.className = 'fas fa-check';
+          const textSpan = document.createElement('span');
+          textSpan.textContent = 'Copied';
+          copyBtn.appendChild(checkIcon);
+          copyBtn.appendChild(document.createTextNode(' '));
+          copyBtn.appendChild(textSpan);
+          copyBtn.style.background = '#4CAF50';
+
+          setTimeout(() => {
+            copyBtn.textContent = '';
+            originalContent.forEach(node => copyBtn.appendChild(node));
+            copyBtn.style.background = '';
+          }, 2000);
+        }
+        if (typeof showNotification === 'function') {
+          showNotification('Invite link copied successfully!', 'success');
+        }
         return;
       }
-
-      // Fallback to clipboard
-      await navigator.clipboard.writeText(inviteLink);
-
-      // Show success feedback ط¨ط§ط³طھط®ط¯ط§ظ… ظƒظ„ط§ط³ Dashboard ط§ظ„طµط­ظٹط­
-      const copyBtn = document.querySelector('.dashboard-copy-invite-btn, .copy-invite-btn');
-      if (copyBtn) {
-        // Store original content safely
-        const originalContent = Array.from(copyBtn.childNodes).map(node => node.cloneNode(true));
-
-        // Secure: Update button with safe DOM methods
-        copyBtn.textContent = '';
-        const checkIcon = document.createElement('i');
-        checkIcon.className = 'fas fa-check';
-        const textSpan = document.createElement('span');
-        textSpan.textContent = 'Copied';
-        copyBtn.appendChild(checkIcon);
-        copyBtn.appendChild(document.createTextNode(' '));
-        copyBtn.appendChild(textSpan);
-        copyBtn.style.background = '#4CAF50';
-
-        setTimeout(() => {
-          copyBtn.textContent = '';
-          originalContent.forEach(node => copyBtn.appendChild(node));
-          copyBtn.style.background = '';
-        }, 2000);
-      }
-
-      // Show notification
-      if (typeof showNotification === 'function') {
-        showNotification('Invite link copied successfully!', 'success');
-      }
-
-    } catch (error) {
-      console.error('Error copying/sharing link:', error);
-
-      // Alternative copy method
-      const textArea = document.createElement('textarea');
-      textArea.value = inviteLink;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-
-      // Show success message
-      const copyBtn = document.querySelector('.dashboard-copy-invite-btn, .copy-invite-btn');
-      if (copyBtn) {
-        // Store original content safely
-        const originalContent = Array.from(copyBtn.childNodes).map(node => node.cloneNode(true));
-        
-        // Secure: Update button with safe DOM methods
-        copyBtn.textContent = '';
-        const checkIcon = document.createElement('i');
-        checkIcon.className = 'fas fa-check';
-        const textSpan = document.createElement('span');
-        textSpan.textContent = 'Copied';
-        copyBtn.appendChild(checkIcon);
-        copyBtn.appendChild(document.createTextNode(' '));
-        copyBtn.appendChild(textSpan);
-        copyBtn.style.background = '#4CAF50';
-
-        setTimeout(() => {
-          copyBtn.textContent = '';
-          originalContent.forEach(node => copyBtn.appendChild(node));
-          copyBtn.style.background = '';
-        }, 2000);
-      }
-
-      if (typeof showNotification === 'function') {
-        showNotification('Link copied successfully!', 'success');
-      }
+      console.error('Share error:', e);
     }
   };
 
-
+  window.closeInviteModal = function() {
+    const modal = document.getElementById('invite-modal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  };
 
   // Referral Invitation System - Complete Implementation
   class ReferralInvitationSystem {
@@ -2554,7 +2561,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
     generateInviteLink() {
       // Use current site domain (adapts to any domain)
-      const baseUrl = window.location.origin;
+      const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
       const referralCode = currentUser.referral_code;
       return `${baseUrl}?invite=${referralCode}`;
     }
@@ -2794,7 +2801,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = window.location.origin;
+    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -2939,7 +2946,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
           console.error('Copy failed:', copyError);
 
           // Show manual copy instructions
-          alert(`${translator.translate('Please copy this link manually:')}\n\n${inviteLink}`);
+          showNotification(`${translator.translate('Please copy this link manually:')} ${inviteLink}`, 'info');
         }
       });
 
@@ -2966,12 +2973,50 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     };
 
     try {
+      // ✅ CORDOVA: Try Social Sharing Plugin first (handles cancel properly)
+      if (window.plugins && window.plugins.socialsharing) {
+        let shareCompleted = false;
+        
+        await new Promise((resolve) => {
+          window.plugins.socialsharing.shareWithOptions({
+            message: 'Join me on Access Network and start earning ACCESS coins!',
+            subject: 'Join Access Network',
+            url: inviteLink
+          }, function(result) {
+            // Success callback - check if actually shared
+            console.log('Social sharing result:', result);
+            if (result && result.completed) {
+              shareCompleted = true;
+              if (typeof showNotification === 'function') {
+                showNotification(translator.translate('Invite link shared successfully!'), 'success');
+              }
+            }
+            resolve();
+          }, function(error) {
+            // Error/cancel callback
+            console.log('Social sharing cancelled or failed:', error);
+            resolve();
+          });
+        });
+        
+        // If share was completed, we're done
+        if (shareCompleted) {
+          console.log('Link shared successfully via Cordova Social Sharing');
+          return;
+        }
+        
+        // If cancelled, show the modal as fallback
+        console.log('Share cancelled - showing modal as fallback');
+        showInviteLinkModal();
+        return;
+      }
+      
       // Try native sharing first (only on mobile and with proper user gesture)
       if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         try {
           await navigator.share({
-            title: 'Join AccessoireDigital',
-            text: 'Join me on AccessoireDigital and start processing digital assets!',
+            title: 'Join Access Network',
+            text: 'Join me on Access Network and start earning ACCESS coins!',
             url: inviteLink
           });
 
@@ -2983,7 +3028,9 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
           return;
         } catch (shareError) {
           console.log('Native sharing cancelled or failed:', shareError.message);
-          // Continue to other methods
+          // Show modal as fallback
+          showInviteLinkModal();
+          return;
         }
       }
 
@@ -3024,12 +3071,18 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
 
   // ظˆط¸ظٹظپط© ظ†ط³ط® ط§ظ„ط±ط§ط¨ط· ط§ظ„ظ…طھظˆط§ظپظ‚ط© ظ…ط¹ Dashboard
   window.copyInviteLink = async function() {
-    // ط§ط³طھط®ط¯ط§ظ… ظ†ظپط³ ظ…ظ†ط·ظ‚ showInviteModal ط§ظ„ظ…ط­ط³ظ†
+    // استخدام نفس منطق showInviteModal المحسن
     return window.showInviteModal();
   };
 
   // Enhanced Referral Copy Modal Functions - ULTRA-ADVANCED preservation system
   window.showReferralCopyModal = async function() {
+    // استخدام نفس منطق showInviteModal
+    return window.showInviteModal();
+  };
+
+  // Legacy function - redirects to showInviteModal
+  window.showReferralCopyModalLegacy = async function() {
     if (!currentUser || !currentUser.referral_code) {
       console.error('No user or referral code available');
       if (typeof showNotification === 'function') {
@@ -3038,7 +3091,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = window.location.origin;
+    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
@@ -3183,7 +3236,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
           console.error('Copy failed:', copyError);
           
           // Show manual copy instructions
-          alert(`${translator.translate('Please copy this link manually:')}\n\n${inviteLink}`);
+          showNotification(`${translator.translate('Please copy this link manually:')} ${inviteLink}`, 'info');
         }
       });
 
@@ -3360,13 +3413,47 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = window.location.origin;
+    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
     console.log('ULTRA-ENHANCED copyReferralCodeOnly - SUPERIOR preservation system:', inviteLink);
 
-    // طھط·ط¨ظٹظ‚ ظ†ط¸ط§ظ… ط­ظپط¸ ظ…طھط·ظˆط± ط¬ط¯ط§ظ‹ - ظٹظپظˆظ‚ Dashboard ط¨ظ…ط±ط§ط­ظ„
+    // ✅ Try Cordova Social Sharing Plugin first
+    if (window.plugins && window.plugins.socialsharing) {
+      try {
+        await new Promise((resolve, reject) => {
+          window.plugins.socialsharing.shareWithOptions({
+            message: 'Join me on Access Network and start earning ACCESS coins!',
+            subject: 'Join Access Network',
+            url: inviteLink
+          }, resolve, reject);
+        });
+        console.log('copyReferralCodeOnly: Shared via Cordova plugin');
+        return;
+      } catch (e) {
+        console.log('copyReferralCodeOnly: Cordova share cancelled or failed:', e);
+      }
+    }
+
+    // ✅ Try Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join Access Network',
+          text: 'Join me on Access Network and start earning ACCESS coins!',
+          url: inviteLink
+        });
+        if (typeof showNotification === 'function') {
+          showNotification('Invite link shared successfully!', 'success');
+        }
+        return;
+      } catch (e) {
+        console.log('copyReferralCodeOnly: Web share cancelled or failed:', e);
+      }
+    }
+
+    // Fallback: Copy to clipboard
     try {
       // QUAD-REDUNDANT storage system - ط£ظ‚ظˆظ‰ ط¨ظƒط«ظٹط± ظ…ظ† Dashboard
       localStorage.setItem('pendingReferralCode', referralCode);
@@ -3574,13 +3661,49 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = window.location.origin;
+    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
     console.log('ULTRA-ENHANCED shareReferralLink - MAXIMUM preservation power:', inviteLink);
 
-    // ظ†ط¸ط§ظ… ط­ظپط¸ ظ…طھط·ظˆط± ظ„ظ„ط؛ط§ظٹط© - ظٹظپظˆظ‚ Dashboard ط¨ظ‚ظˆط© ظ‡ط§ط¦ظ„ط©
+    // ✅ Try Cordova Social Sharing Plugin first
+    if (window.plugins && window.plugins.socialsharing) {
+      try {
+        await new Promise((resolve, reject) => {
+          window.plugins.socialsharing.shareWithOptions({
+            message: 'Join me on Access Network and start earning ACCESS coins!',
+            subject: 'Join Access Network',
+            url: inviteLink
+          }, resolve, reject);
+        });
+        console.log('shareReferralLink: Shared via Cordova plugin');
+        if (typeof closeReferralCopyModal === 'function') closeReferralCopyModal();
+        return;
+      } catch (e) {
+        console.log('shareReferralLink: Cordova share cancelled or failed:', e);
+      }
+    }
+
+    // ✅ Try Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join Access Network',
+          text: 'Join me on Access Network and start earning ACCESS coins!',
+          url: inviteLink
+        });
+        if (typeof showNotification === 'function') {
+          showNotification('Invite link shared successfully!', 'success');
+        }
+        if (typeof closeReferralCopyModal === 'function') closeReferralCopyModal();
+        return;
+      } catch (e) {
+        console.log('shareReferralLink: Web share cancelled or failed:', e);
+      }
+    }
+
+    // Fallback: Copy to clipboard and show modal
     try {
       // PENTA-REDUNDANT storage system - ط£ظ‚ظˆظ‰ ظ†ط¸ط§ظ… ط­ظپط¸ ظ…ظ…ظƒظ†
       localStorage.setItem('pendingReferralCode', referralCode);
@@ -3772,13 +3895,47 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       return;
     }
 
-    const baseUrl = window.location.origin;
+    const baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
     const referralCode = currentUser.referral_code;
     const inviteLink = `${baseUrl}?invite=${referralCode}`;
 
     console.log('ULTRA-ENHANCED Profile invite - SUPREME preservation system:', inviteLink);
 
-    // ظ†ط¸ط§ظ… ط­ظپط¸ ط®ط§ط±ظ‚ - ط£ظ‚ظˆظ‰ ظ…ظ† ط£ظٹ ط´ظٹط، ظ…ظˆط¬ظˆط¯
+    // ✅ Try Cordova Social Sharing Plugin first
+    if (window.plugins && window.plugins.socialsharing) {
+      try {
+        await new Promise((resolve, reject) => {
+          window.plugins.socialsharing.shareWithOptions({
+            message: 'Join me on Access Network and start earning ACCESS coins!',
+            subject: 'Join Access Network',
+            url: inviteLink
+          }, resolve, reject);
+        });
+        console.log('Profile: Shared via Cordova plugin');
+        return;
+      } catch (e) {
+        console.log('Profile: Cordova share cancelled or failed:', e);
+      }
+    }
+
+    // ✅ Try Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join Access Network',
+          text: 'Join me on Access Network and start earning ACCESS coins!',
+          url: inviteLink
+        });
+        if (typeof showNotification === 'function') {
+          showNotification('Invite link shared successfully!', 'success');
+        }
+        return;
+      } catch (e) {
+        console.log('Profile: Web share cancelled or failed:', e);
+      }
+    }
+
+    // Fallback: Storage and modal
     try {
       // HEXA-REDUNDANT storage system - ظ†ط¸ط§ظ… ط³ط§ط¯ط³ ط§ظ„ط§ط­طھظٹط§ط·ظٹ
       localStorage.setItem('pendingReferralCode', referralCode);
@@ -4120,7 +4277,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
         console.error('Enhanced modal copy failed:', copyError);
 
         // Show manual copy instructions
-        alert(`${translator.translate('Please copy this link manually:')}\n\n${inviteLink}`);
+        showNotification(`${translator.translate('Please copy this link manually:')} ${inviteLink}`, 'info');
       }
     });
 
@@ -4431,12 +4588,11 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
     if (window.balancePrivacy && window.balancePrivacy.originalValues) {
       window.balancePrivacy.originalValues.set('#user-coins', smartFormatted);
       window.balancePrivacy.originalValues.set('#profile-coins', smartFormatted);
-      window.balancePrivacy.originalValues.set('#network-coins', smartFormatted);
     }
     
     // تحديث فقط إذا لم يكن مخفياً
     if (!isBalanceHidden) {
-      const coinElements = document.querySelectorAll('#user-coins, #profile-coins, #network-coins, .balance-display, .user-balance');
+      const coinElements = document.querySelectorAll('#user-coins, #profile-coins, .wallet-balance, .balance-display, .user-balance');
       coinElements.forEach(element => {
         if (element) {
           element.textContent = smartFormatted;
@@ -4578,13 +4734,6 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
         currentUser.processing_completed = wasCompleted;
         currentUser.processing_remaining_seconds = data.remaining_seconds;
         currentUser.processing_start_time = data.processing_start_time;
-
-        // 🔄 HALVING: تحديث المكافأة الأساسية من السيرفر
-        if (data.base_reward) {
-          window.serverBaseReward = parseFloat(data.base_reward);
-          console.log(`🔄 HALVING: Base reward updated from server: ${window.serverBaseReward}`);
-          updateRewardText();
-        }
         
         saveUserSession(currentUser);
         
@@ -4606,10 +4755,6 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
   // ⚡ PRELOAD: تحميل بيانات صفحة Activity مسبقاً عند تسجيل الدخول
   // هذا يجعل الصفحة جاهزة فوراً عند دخولها
   window.activityPreloadData = null;
-
-  // 🔄 HALVING SYSTEM: المكافأة الأساسية من السيرفر (تتغير حسب العرض المتداول)
-  // القيمة الافتراضية 0.25 — يتم تحديثها تلقائياً من استجابة السيرفر
-  window.serverBaseReward = 0.25;
   
   async function preloadActivityData(userId) {
     if (!userId) return;
@@ -4644,13 +4789,6 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       if (accumulatedData && accumulatedData.success) {
         currentUser.processing_accumulated = accumulatedData.accumulatedReward || 0;
         currentUser.accumulatedReward = accumulatedData.accumulatedReward || 0;
-      }
-
-      // 🔄 HALVING: تحديث المكافأة الأساسية من السيرفر
-      if (statusData && statusData.base_reward) {
-        window.serverBaseReward = parseFloat(statusData.base_reward);
-        console.log(`🔄 HALVING: Base reward updated from server: ${window.serverBaseReward}`);
-        updateRewardText();
       }
       
       console.log('⚡ PRELOAD: تم تحميل بيانات Activity بنجاح:', {
@@ -4693,7 +4831,8 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
         // ✅ دالة بدء النشاط الفعلية
         async function startActivityNow() {
           try {
-            const resp = await fetch('/api/processing/countdown/start', {
+            const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+            const resp = await fetch(_apiBase + '/api/processing/countdown/start', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ userId: currentUser.id, sessionToken: currentUser.sessionToken || currentUser.session_token || '' })
@@ -4739,6 +4878,12 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
             }
 
             if (resp.ok && data.success) {
+              // 🔄 HALVING: تحديث المكافأة الديناميكية من السيرفر
+              if (data.base_reward !== undefined && data.base_reward > 0) {
+                window.serverBaseReward = parseFloat(data.base_reward);
+                console.log('🔄 Updated serverBaseReward from start:', window.serverBaseReward);
+                updateRewardText();
+              }
               // يتحقق من كلا الاسمين: reward_transferred (server.js) و previous_reward_transferred (simplifier)
               const transferredReward = data.reward_transferred || data.previous_reward_transferred || 0;
               
@@ -5265,7 +5410,6 @@ processingButton.addEventListener('click', async function(e) {
     // 🔒 SECURITY: Handle 401 - session mismatch (ذكي - يعيد المحاولة بدون توكن)
     if (response.status === 401) {
       try {
-        const authData = await response.json();
         console.log('🔒 Session mismatch detected - retrying without token');
         const retryResp = await fetch('/api/processing/countdown/start', {
           method: 'POST',
@@ -5565,6 +5709,11 @@ function startGradualAccumulation() {
   const initialReferrals = parseInt(currentUser.session_active_referrals) || 0;
   const initialMultiplier = initialReferrals > 0 ? (1.0 + initialReferrals * 0.04) : 1.0;
   
+  // 🔄 HALVING: المكافأة الأساسية الديناميكية من السيرفر
+  if (window.serverBaseReward === undefined) {
+    window.serverBaseReward = null; // سيتم تحديثها من أي استجابة API تحتوي على base_reward
+  }
+
   window.localBoostData = {
     startTimeSec: Math.floor(currentUser.processing_start_time_seconds || Date.now() / 1000),
     multiplier: initialMultiplier, // Use referrals-based multiplier from start
@@ -5594,6 +5743,11 @@ function startGradualAccumulation() {
 
       const data = await response.json();
       if (data.success) {
+        // 🔄 HALVING: تحديث المكافأة الديناميكية من fetchBoostData
+        if (data.base_reward !== undefined && data.base_reward > 0) {
+          window.serverBaseReward = parseFloat(data.base_reward);
+          updateRewardText();
+        }
         localBoostData.activeReferrals = data.activeReferrals || 0;
         localBoostData.adBoostActive = data.adBoostActive || false;
         
@@ -5647,7 +5801,7 @@ function startGradualAccumulation() {
     const safeElapsedSec = Math.max(elapsedSec, lastElapsedSec);
     lastElapsedSec = safeElapsedSec;
     
-    // حساب المكافأة الأساسية مع الـ boost — القيمة من السيرفر (نظام Halving)
+    // حساب المكافأة الأساسية مع الـ boost - 🔄 HALVING: ديناميكية من السيرفر
     const baseReward = window.serverBaseReward || 0.25;
     const boostedReward = baseReward * localBoostData.multiplier;
     
@@ -5749,7 +5903,8 @@ function startGradualAccumulation() {
     const accumulatedValue = currentUser?.processing_accumulated || currentUser?.accumulatedReward || 0;
     if (accumulatedValue > 0 && currentUser?.id) {
       try {
-        await fetch('/api/activity/sync-accumulated', {
+        const _syncApiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+        await fetch(_syncApiBase + '/api/activity/sync-accumulated', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -5800,6 +5955,12 @@ function startGradualAccumulation() {
       if (response.ok) {
         const serverData = await response.json();
         if (serverData.success) {
+          // 🔄 HALVING: تحديث المكافأة الديناميكية من استجابة accumulated
+          if (serverData.base_reward !== undefined && serverData.base_reward > 0) {
+            window.serverBaseReward = parseFloat(serverData.base_reward);
+            console.log('🔄 Updated serverBaseReward from accumulated:', window.serverBaseReward);
+            updateRewardText();
+          }
           console.log('Successfully retrieved server accumulated amount');
           const serverAmount = parseFloat(serverData.accumulatedReward || 0);
           console.log(`Server accumulated amount: ${serverAmount.toFixed(8)}`);
@@ -5840,7 +6001,8 @@ function startGradualAccumulation() {
       const preciseBalance = parseFloat(parseFloat(newBalance).toFixed(8));
       
       // Update balance in database
-      const response = await fetch('/api/user/update-coins', {
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(_apiBase + '/api/user/update-coins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -5895,7 +6057,7 @@ function startGradualAccumulation() {
       '#user-coins', '#user-balance', '#profile-coins',
       '.wallet-balance', '.account-balance', '.user-balance', '.balance-display', '.coin-balance',
       '[data-balance]', '#dashboard-balance', '#main-balance', '.current-balance',
-      '#activity-page .balance-display', '#network-page #network-coins',
+      '#activity-page .balance-display', '#network-page .balance-amount',
       '.sidebar-balance', '.header-balance', '.nav-balance', '.account-balance'
     ];
 
@@ -5986,66 +6148,6 @@ function startGradualAccumulation() {
 
     console.log(`Balance sync complete: ${updatedCount} elements updated across all pages`);
   }
-
-  // ⚡ نظام تحديث الرصيد الذكي - يتحقق من السيرفر فقط عند الحاجة
-  // WebSocket يعمل ~50% من الوقت بسبب PM2 cluster (2 workers)
-  // الـ polling يضمن تحديث الرصيد حتى لو WebSocket لم يصل
-  let _lastKnownBalance = null;
-  let _balancePollingInterval = null;
-  let _lastWsUpdate = 0; // آخر مرة حدّث WebSocket الرصيد
-  
-  // تُستدعى من WebSocket عند وصول تحديث
-  window._markWsBalanceUpdate = function() {
-    _lastWsUpdate = Date.now();
-  };
-  
-  function startBalancePolling() {
-    if (_balancePollingInterval) return;
-    
-    _balancePollingInterval = setInterval(async () => {
-      if (!currentUser || !currentUser.email) return;
-      
-      // إذا WebSocket حدّث الرصيد خلال آخر 8 ثوانٍ، لا حاجة للـ polling
-      if (Date.now() - _lastWsUpdate < 8000) return;
-      
-      try {
-        const response = await fetch(`/api/user/${encodeURIComponent(currentUser.email)}`);
-        if (!response.ok) return;
-        const userData = await response.json();
-        if (!userData.user || userData.user.coins === undefined) return;
-        
-        const serverBalance = parseFloat(userData.user.coins);
-        const localBalance = parseFloat(currentUser.coins || 0);
-        
-        if (Math.abs(serverBalance - localBalance) > 0.000001) {
-          console.log(`⚡ Polling: balance changed ${localBalance} → ${serverBalance}`);
-          currentUser.coins = serverBalance;
-          if (currentUser.wallet) currentUser.wallet.balance = serverBalance;
-          saveUserSession(currentUser);
-          updateUserCoins(serverBalance);
-          syncBalanceAcrossPages(serverBalance);
-          
-          // إشعار المستخدم
-          if (serverBalance > localBalance) {
-            const diff = serverBalance - localBalance;
-            if (typeof showNotification === 'function' && diff > 0.000001) {
-              showNotification(`${translator.translate('Received')} ${formatNumberSmart(diff)} Points`, 'success');
-            }
-          }
-        }
-        
-        _lastKnownBalance = serverBalance;
-      } catch (e) {
-        // Silent
-      }
-    }, 8000); // كل 8 ثوانٍ
-  }
-  
-  // بدء عند تسجيل الدخول
-  document.addEventListener('userLoggedIn', () => startBalancePolling());
-  setTimeout(() => {
-    if (currentUser && currentUser.email) startBalancePolling();
-  }, 5000);
   // Helper function to refresh user data
   async function refreshUserData() {
     try {
@@ -6128,14 +6230,15 @@ function startGradualAccumulation() {
 
         // Get final reward from server
         const serverData = await getServerAccumulatedAmount();
-        const finalReward = (serverData && serverData.success) ? serverData.serverAmount : 0.25;
+        const finalReward = (serverData && serverData.success) ? serverData.serverAmount : (window.serverBaseReward || 0.25);
 
         console.log(`✅ Processing completed - storing reward: ${finalReward.toFixed(8)}`);
         
         // ✅ Save completed reward to database WITHOUT transferring to balance
         // The reward will be transferred when user clicks "Start Activity" button
         try {
-          const saveResponse = await fetch('/api/processing/save-completed', {
+          const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+          const saveResponse = await fetch(_apiBase + '/api/processing/save-completed', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -6296,10 +6399,10 @@ function startGradualAccumulation() {
           clearInterval(window.gradualRewardInterval);
           window.gradualRewardInterval = null;
 
-          // Ensure we end up with exactly +50 coins
-          updateUserCoins(initialDisplay + 0.25);
+          // Ensure we end up with exactly the base reward
+          updateUserCoins(initialDisplay + (window.serverBaseReward || 0.25));
 
-          console.log('Gradual reward completed, added exactly 0.25 coins');        }
+          console.log('Gradual reward completed, added exactly ' + (window.serverBaseReward || 0.25) + ' coins');        }
       }, 1000);
     }
 
@@ -6437,7 +6540,7 @@ function startGradualAccumulation() {
             window.boostCheckInterval = null;
           }
 
-          // ✅ CRITICAL: حساب القيمة النهائية الكاملة — القيمة من السيرفر (نظام Halving)
+          // ✅ CRITICAL: حساب القيمة النهائية الكاملة - 🔄 HALVING: ديناميكية
           const baseReward = window.serverBaseReward || 0.25;
           const finalReward = baseReward * (window.localBoostData?.multiplier || 1.0);
           
@@ -6454,7 +6557,8 @@ function startGradualAccumulation() {
             (async () => {
               try {
                 console.log(`✅ Saving completed reward to server: ${finalReward}`);
-                const saveResponse = await fetch('/api/processing/save-completed', {
+                const _apiBase2 = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+                const saveResponse = await fetch(_apiBase2 + '/api/processing/save-completed', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ 
@@ -6782,7 +6886,8 @@ function startGradualAccumulation() {
 
     try {
       //  processing page 
-      const response = await fetch('/api/processing/status', {
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(_apiBase + '/api/processing/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.id })
@@ -7049,7 +7154,8 @@ function startGradualAccumulation() {
             
             // ✅ Also cleanup from database
             try {
-              await fetch('/api/processing/history/cleanup-collecting', {
+              const _cleanupApiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+              await fetch(_cleanupApiBase + '/api/processing/history/cleanup-collecting', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: currentUser.id })
@@ -7192,7 +7298,7 @@ function updateProcessingStatus(message, type) {
 
       const progressBar = document.getElementById('processing-progress');
       const accumulatedCoinsElement = document.getElementById('accumulated-coins');
-      const totalReward = window.serverBaseReward || 0.25; // 🔄 HALVING: القيمة من السيرفر
+      const totalReward = window.serverBaseReward || 0.25; // 🔄 HALVING: ديناميكية
 
       // Initialize with server-loaded value if available
       let accumulated = currentUser.processing_accumulated || 0;
@@ -7923,7 +8029,6 @@ window.addEventListener('load', applyArabicCssIfNeeded);
                 currentUser.coins = serverBalance;
                 saveUserSession(currentUser);
                 updateUserCoins(serverBalance);
-                if (window._markWsBalanceUpdate) window._markWsBalanceUpdate();
                 console.log(`Balance updated instantly: ${serverBalance}`);
               } else {
                 // Fetch fresh balance from server
@@ -8164,27 +8269,18 @@ window.addEventListener('load', applyArabicCssIfNeeded);
  // Save minimal user session data - only what's needed to keep user logged in
   function saveUserSession(user) {
     if (user) {
-      // Save only essential authentication data
+      // Save essential authentication data INCLUDING avatar
+      // ✅ FIXED: Now includes name and avatar for proper session restoration
       const minimalUserData = {
         id: user.id,
         email: user.email,
         token: user.token,
-        sessionToken: user.session_token || user.sessionToken || ''
-        // Don't store name or avatar in localStorage to ensure fresh data on login
+        sessionToken: user.session_token || user.sessionToken || '',
+        name: user.name || 'User',
+        avatar: user.avatar || ''
       };
       localStorage.setItem('accessoireUser', JSON.stringify(minimalUserData));
-      console.log('Saved minimal user session for:', minimalUserData.email);
-      
-      // ✅ Dispatch custom event for notification system (same-tab)
-      // This allows notification-system.js to save pending subscriptions
-      try {
-        window.dispatchEvent(new CustomEvent('userLoggedIn', { 
-          detail: { userId: user.id, email: user.email }
-        }));
-        console.log('🔔 Dispatched userLoggedIn event for notification system');
-      } catch (e) {
-        console.error('Error dispatching userLoggedIn event:', e);
-      }
+      console.log('Saved user session for:', minimalUserData.email, 'with avatar:', !!minimalUserData.avatar);
     }
   }
 
@@ -8198,6 +8294,10 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         // Always force a fresh data load from server when restoring session
         userData._requiresRefresh = true;
         userData._forceUpdate = true; // Add flag to force fresh profile data
+        
+        // ✅ FIX: Old sessions without avatar - leave empty (no SVG fallback)
+        // Avatar will be loaded from server via _requiresRefresh
+        
         return userData;
       } catch (e) {
         console.error('Failed to parse saved user session:', e);
@@ -8282,8 +8382,16 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         updateUserCoins(userData.coins || 0);
         updateReferralCode(userData.referralCode);
 
-        // Set current user data directly from server
+        // ✅ FIX: Preserve avatar if server returns null/empty
+        // Keep original avatar from Google if server has no avatar
+        const preservedAvatar = currentUser.avatar;
         currentUser = {...currentUser, ...userData};
+        
+        // If server returned null/empty avatar but we had one, keep it
+        if (!currentUser.avatar && preservedAvatar) {
+          currentUser.avatar = preservedAvatar;
+          console.log('📷 Preserved original avatar from Google');
+        }
 
         // Explicitly update UI with the fresh data immediately
         updateUserInfo(currentUser);
@@ -8320,7 +8428,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           const retryData = await checkIfUserExists(email);
           if (retryData) {
             console.log('Retry successful, updating with fresh data');
+            // ✅ FIX: Preserve avatar
+            const preservedAvatar = currentUser.avatar;
             currentUser = {...currentUser, ...retryData};
+            if (!currentUser.avatar && preservedAvatar) {
+              currentUser.avatar = preservedAvatar;
+            }
             updateUserInfo(currentUser);
             updateUserCoins(retryData.coins || 0);
             updateReferralCode(retryData.referralCode);
@@ -8343,8 +8456,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         updateUserCoins(existingUser.coins || 0);
         updateReferralCode(existingUser.referralCode);
 
-        // Merge with current user data
+        // ✅ FIX: Preserve avatar when merging
+        const preservedAvatar = currentUser.avatar;
         const updatedUser = {...currentUser, ...existingUser};
+        if (!updatedUser.avatar && preservedAvatar) {
+          updatedUser.avatar = preservedAvatar;
+        }
         currentUser = updatedUser;
 
         // Update UI explicitly again
@@ -8379,7 +8496,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           if (result && result.user) {
             console.log('✅ New user created with ID:', result.user.id);
             // Update currentUser with the new ID
+            // ✅ FIX: Preserve avatar from Google
+            const preservedAvatar = currentUser.avatar;
             currentUser = {...currentUser, ...result.user, id: result.user.id};
+            if (!currentUser.avatar && preservedAvatar) {
+              currentUser.avatar = preservedAvatar;
+            }
             saveUserSession(currentUser);
           }
         } catch (createError) {
@@ -8418,12 +8540,11 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     // Update all UI elements with current user data
     if (profileName) profileName.textContent = user.name || 'User';
     if (profileEmail) profileEmail.textContent = user.email || '';
-
     // No default avatar SVG - use empty string so Google picture or server avatar is used
     const defaultAvatarSvg = '';
 
     if (profileAvatar) {
-      // Use real avatar or default SVG
+      // Add cache-busting parameter for images to prevent browser caching the old image
       const avatarUrl = user.avatar || defaultAvatarSvg;
       const cacheBuster = `?t=${Date.now()}`;
 
@@ -8439,7 +8560,6 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     // Also update user avatar on mobile header if it exists
     const mobileAvatar = document.getElementById('mobile-user-avatar');
     if (mobileAvatar) {
-      // Use real avatar or default SVG
       const avatarUrl = user.avatar || defaultAvatarSvg;
       const cacheBuster = `?t=${Date.now()}`;
 
@@ -8456,7 +8576,6 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     const dashboardUserName = document.getElementById('dashboard-user-name');
     
     if (dashboardAvatar) {
-      // Use real avatar or default SVG
       const avatarUrl = user.avatar || defaultAvatarSvg;
       const cacheBuster = `?t=${Date.now()}`;
 
@@ -8520,8 +8639,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
             dashboardUserName.textContent = userData.name;
           }
 
-          // Update current user data
+          // ✅ FIX: Preserve avatar if server returns null/empty
+          const preservedAvatar = currentUser.avatar;
           currentUser = {...currentUser, ...userData};
+          if (!currentUser.avatar && preservedAvatar) {
+            currentUser.avatar = preservedAvatar;
+          }
           // ✅ FIX: Sync session_token field name (server uses snake_case, client uses camelCase)
           if (userData.session_token) {
             currentUser.sessionToken = userData.session_token;
@@ -8529,7 +8652,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           delete currentUser._forceUpdate;
           delete currentUser._requiresRefresh;
 
-          // ✅ FIX: Persist updated user data to localStorage
+          // ✅ FIX: Persist updated user data (including session token) to localStorage
           saveUserSession(currentUser);
           console.log('User data refreshed from server with latest values');
         }
@@ -8550,7 +8673,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
   // Load Google OAuth configuration dynamically - Global function for all pages
   window.loadGoogleOAuthConfig = async function() {
     try {
-      const response = await fetch('/api/oauth-config');
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(_apiBase + '/api/oauth-config');
       const config = await response.json();
       if (config.success) {
         window.GOOGLE_CLIENT_ID = config.clientId;
@@ -8689,18 +8813,19 @@ function initializeGoogleSignIn() {
       }).join(''));
       const payload = JSON.parse(jsonPayload);
       
-      // Extract user information - use Google picture directly (no SVG fallback)
-      const avatarUrl = payload.picture || '';
+      // ✅ DEBUG: Log the picture from payload
+      console.log('📷 handleGoogleSignIn - payload.picture:', payload.picture ? payload.picture.substring(0, 80) : 'MISSING');
       
+      // Extract user information
       currentUser = {
         email: payload.email,
         name: payload.name,
-        avatar: avatarUrl,
+        avatar: payload.picture,
         token: credential
       };
 
       console.log('Google Sign-in successful:', currentUser.email);
-      console.log('📷 Avatar URL:', avatarUrl ? avatarUrl.substring(0, 60) + '...' : 'NONE');
+      console.log('📷 currentUser.avatar set to:', currentUser.avatar ? currentUser.avatar.substring(0, 80) : 'MISSING');
 
       // Check for referral code from input field
       const referralInput = document.getElementById('referral-code');
@@ -8731,7 +8856,12 @@ function initializeGoogleSignIn() {
         console.log('⚡ Fast login: User has cached session, showing app immediately');
         // دمج البيانات المخزنة مع بيانات Google
         if (cachedUserData) {
+          // ✅ FIX: Preserve avatar from Google if cache has no avatar
+          const preservedAvatar = currentUser.avatar;
           currentUser = {...currentUser, ...cachedUserData};
+          if (!currentUser.avatar && preservedAvatar) {
+            currentUser.avatar = preservedAvatar;
+          }
         }
         continueWithLogin(currentUser, referralCode);
         return;
@@ -8768,7 +8898,12 @@ function initializeGoogleSignIn() {
         } else {
           // ✅ Existing user - merge data immediately before continuing
           console.log('⚡ User exists, merging data before login');
+          // ✅ FIX: Preserve avatar from Google
+          const preservedAvatar = currentUser.avatar;
           currentUser = {...currentUser, ...result};
+          if (!currentUser.avatar && preservedAvatar) {
+            currentUser.avatar = preservedAvatar;
+          }
           continueWithLogin(currentUser, referralCode);
         }
       }).catch(error => {
@@ -8939,7 +9074,7 @@ function initializeGoogleSignIn() {
       let serverWalletData = null;
 
       try {
-        const response = await fetch(`${window.location.origin}/api/user/wallet-key/${currentUser.id}`);
+        const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/wallet-key/${currentUser.id}`);
         if (response.ok) {
           serverWalletData = await response.json();
           console.log("Retrieved wallet key from server");
@@ -9169,7 +9304,8 @@ function initializeGoogleSignIn() {
   // Update user wallet address and private key on server
   async function updateUserWalletOnServer(userId, walletAddress, privateKey) {
     try {
-      const response = await fetch('/api/user/update-wallet', {
+      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+      const response = await fetch(_apiBase + '/api/user/update-wallet', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -9473,7 +9609,7 @@ function initializeGoogleSignIn() {
       try {
         console.log(`Saving QR code to server, attempt ${4-retries}/3`);
 
-        const response = await fetch(`${window.location.origin}/api/user/qrcode/save`, {
+        const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/qrcode/save`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -9861,10 +9997,104 @@ function initQRScanner() {
 }
 
 // Open QR scanner
-window.openQRScanner = function() {
+window.openQRScanner = async function() {
   const scannerModal = document.getElementById('qr-scanner-modal');
   if (!scannerModal) return;
+  
+  // 📷 On Cordova: Use android-permissions plugin to request camera permission first
+  if (window.cordova && cordova.plugins && cordova.plugins.permissions) {
+    console.log('📷 Cordova detected, using permissions plugin...');
+    const permissions = cordova.plugins.permissions;
+    
+    // Request CAMERA permission explicitly
+    permissions.requestPermission(
+      permissions.CAMERA,
+      function(status) {
+        console.log('📷 Permission status:', status);
+        if (status.hasPermission) {
+          console.log('📷 Camera permission GRANTED');
+          startQRScanner(scannerModal);
+        } else {
+          console.log('📷 Camera permission DENIED');
+          showNotification(translator.translate('Camera permission is required to scan QR codes. Please enable it in app settings.'), 'error');
+        }
+      },
+      function(error) {
+        console.error('📷 Permission request error:', error);
+        // Try fallback to getUserMedia
+        requestCameraAndStart(scannerModal);
+      }
+    );
+  } else {
+    // Web or Cordova without permissions plugin: use getUserMedia directly
+    console.log('📷 Using web-based camera permission...');
+    await requestCameraAndStart(scannerModal);
+  }
+};
 
+// Show overlay with close button when QR scanner is active
+function showQRScannerOverlay() {
+  // Remove existing overlay if any
+  const existingOverlay = document.getElementById('qr-scanner-overlay');
+  if (existingOverlay) existingOverlay.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'qr-scanner-overlay';
+  overlay.innerHTML = `
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+      <div style="width:250px;height:250px;border:3px solid #00ff9d;border-radius:20px;position:relative;">
+        <div style="position:absolute;top:-30px;left:50%;transform:translateX(-50%);color:#fff;background:rgba(0,0,0,0.7);padding:5px 15px;border-radius:10px;font-size:14px;">
+          ${translator.translate('Scan QR Code')}
+        </div>
+      </div>
+      <button id="close-qr-scanner" style="pointer-events:auto;margin-top:30px;background:#ff4444;color:#fff;border:none;padding:15px 40px;border-radius:25px;font-size:16px;cursor:pointer;">
+        ${translator.translate('Cancel')}
+      </button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  document.getElementById('close-qr-scanner').addEventListener('click', function() {
+    closeNativeQRScanner();
+  });
+}
+
+// Close native QR scanner
+function closeNativeQRScanner() {
+  document.body.style.backgroundColor = '';
+  document.body.classList.remove('qr-scanner-active');
+  
+  const overlay = document.getElementById('qr-scanner-overlay');
+  if (overlay) overlay.remove();
+  
+  if (window.QRScanner) {
+    QRScanner.destroy();
+  }
+}
+
+// Helper function to request camera via getUserMedia and start scanner
+async function requestCameraAndStart(scannerModal) {
+  try {
+    // This will trigger the permission dialog on first use
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    // Stop the stream immediately - we just needed to request permission
+    stream.getTracks().forEach(track => track.stop());
+    console.log('📷 Camera permission granted via getUserMedia');
+    startQRScanner(scannerModal);
+  } catch (error) {
+    console.error('📷 Camera access denied:', error);
+    if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+      showNotification(translator.translate('Camera permission denied. Please enable it in app settings.'), 'error');
+    } else if (error.name === 'NotFoundError') {
+      showNotification(translator.translate('No camera found on this device'), 'error');
+    } else {
+      showNotification(translator.translate('Error accessing camera: ') + error.message, 'error');
+    }
+  }
+}
+
+// Helper function to start the QR scanner after permission is granted
+function startQRScanner(scannerModal) {
   // Show scanner modal
   scannerModal.style.display = 'flex';
   
@@ -9885,7 +10115,7 @@ window.openQRScanner = function() {
     showNotification(translator.translate('Error accessing camera. Please check camera permissions.'), 'error');
     closeQRScanner();
   });
-};
+}
 
 // Close QR scanner
 window.closeQRScanner = function() {
@@ -10647,7 +10877,7 @@ window.copyAccountAddress = function() {
   // Fetch wallet info from server
   async function fetchWalletInfoFromServer(walletAddress) {
     try {
-      const response = await fetch(`${window.location.origin}/api/wallet/${walletAddress}`);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/wallet/${walletAddress}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -10666,7 +10896,7 @@ window.copyAccountAddress = function() {
   // Sync wallet balance with server
   async function syncBalanceWithServer(userId, balance) {
     try {
-      const response = await fetch(`${window.location.origin}/api/user/sync-balance`, {
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/sync-balance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, balance })
@@ -10702,7 +10932,7 @@ window.setMaxAmount = function() {
       showNotification(translator.translate('Insufficient balance to cover gas fees'), 'error');
       amountInput.value = '0';
     } else {
-      // Set the value without toFixed to preserve the exact calculated amount
+      // Smart display - no trailing zeros
       amountInput.value = maxSendable.toString();
       showNotification(
         `${translator.translate('Max amount set')}: ${maxSendable} Points`,
@@ -11002,8 +11232,8 @@ if (totalCost > (currentBalance + precision)) {
           console.log('Transaction successfully recorded on server:', response);
 
           // Update balance from server response to prevent double deduction
-          if (response && response.sender_balance_new !== undefined) {
-            const serverBalance = parseFloat(response.sender_balance_new);
+          if (response && response.senderBalance !== undefined) {
+            const serverBalance = parseFloat(response.senderBalance);
             currentUser.coins = serverBalance;
             currentUser.wallet.balance = serverBalance;
 
@@ -11179,7 +11409,7 @@ if (totalCost > (currentBalance + precision)) {
   // Fetch recipient from server database
   async function fetchRecipientFromServer(walletAddress) {
     try {
-      const response = await fetch(`${window.location.origin}/api/user/wallet/${walletAddress}`);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/wallet/${walletAddress}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -11201,7 +11431,7 @@ if (totalCost > (currentBalance + precision)) {
   async function fetchUserById(userId) {
     try {
       // Use a request to get user data by ID
-      const response = await fetch(`${window.location.origin}/api/user/id/${userId}`);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/id/${userId}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -11220,7 +11450,7 @@ if (totalCost > (currentBalance + precision)) {
   // Update user coins on server
   async function updateUserCoinsOnServer(userId, newCoins) {
     try {
-      const response = await fetch(`${window.location.origin}/api/user/update-coins`, {
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/update-coins`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, coins: newCoins })
@@ -11248,7 +11478,7 @@ if (totalCost > (currentBalance + precision)) {
         hash: transactionData.hash?.substring(0, 10) + '...'
       });
 
-      const response = await fetch(`${window.location.origin}/api/transaction/record`, {
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/transaction/record`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(transactionData)
@@ -11316,7 +11546,7 @@ if (totalCost > (currentBalance + precision)) {
     try {
       // Make a request to check if the wallet address exists on any user
       console.log(`Checking server for wallet address: ${address}`);
-      const response = await fetch(`${window.location.origin}/api/user/wallet/${address}`);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/wallet/${address}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -11503,7 +11733,7 @@ if (totalCost > (currentBalance + precision)) {
 
         try {
           console.log(`Trying to fetch transactions from: ${endpoint}`);
-          const tempResponse = await fetch(`${window.location.origin}${endpoint}`);
+          const tempResponse = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}${endpoint}`);
 
           if (tempResponse.ok) {
             response = tempResponse;
@@ -11520,14 +11750,14 @@ if (totalCost > (currentBalance + precision)) {
       if (!response && currentUser.wallet && currentUser.wallet.publicAddress) {
         try {
           // Check endpoint API status
-          const apiCheckResponse = await fetch(`${window.location.origin}/api/wallet/`);
+          const apiCheckResponse = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/wallet/`);
           console.log(`API check response status:`, apiCheckResponse.status);
 
           // Try to use wallet address directly
           const walletEndpoint = `/api/wallet/${currentUser.wallet.publicAddress}`;
           console.log(`Last attempt using wallet directly: ${walletEndpoint}`);
 
-          const walletResponse = await fetch(`${window.location.origin}${walletEndpoint}`);
+          const walletResponse = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}${walletEndpoint}`);
           if (walletResponse.ok) {
             response = walletResponse;
             successEndpoint = walletEndpoint;
@@ -12185,7 +12415,7 @@ if (totalCost > (currentBalance + precision)) {
 
     try {
       console.log("Fetching transactions from server for user:", currentUser.id);
-      const response = await fetch(`${window.location.origin}/api/user/${currentUser.id}/transactions`);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/${currentUser.id}/transactions`);
 
       if (!response.ok) {
         throw new Error(`Server returned status: ${response.status}`);
@@ -12534,13 +12764,6 @@ if (totalCost > (currentBalance + precision)) {
     document.documentElement.classList.add('app-ready');
     document.body.classList.add('app-ready');
 
-    // 📲 إظهار install prompt فوراً بعد قبول الشروط والدخول
-    setTimeout(() => {
-      if (typeof showInstallButton === 'function') {
-        showInstallButton(true); // true = إظهار فوري
-      }
-    }, 2000); // انتظر 2 ثواني ثم أظهر فوراً
-
     // Force the user object to request a fresh update
     user._forceUpdate = true;
 
@@ -12613,7 +12836,12 @@ if (totalCost > (currentBalance + precision)) {
         // User exists, update UI with their data
         updateUserCoins(existingUser.coins || 0);
         updateReferralCode(existingUser.referralCode);
+        // ✅ FIX: Preserve avatar
+        const preservedAvatar = currentUser.avatar;
         currentUser = {...currentUser, ...existingUser};
+        if (!currentUser.avatar && preservedAvatar) {
+          currentUser.avatar = preservedAvatar;
+        }
 
         // Also load their referrals
         loadUserReferrals(existingUser.id);
@@ -12626,7 +12854,12 @@ if (totalCost > (currentBalance + precision)) {
           const responseData = await createUser(user, null, referralCode);
           if (responseData && responseData.user) {
             console.log('✅ Create user completed in processLogin, ID:', responseData.user.id);
+            // ✅ FIX: Preserve avatar from Google
+            const preservedAvatar = currentUser.avatar;
             currentUser = {...currentUser, ...responseData.user, id: responseData.user.id};
+            if (!currentUser.avatar && preservedAvatar) {
+              currentUser.avatar = preservedAvatar;
+            }
             saveUserSession(currentUser);
           }
         } catch (err) {
@@ -12658,7 +12891,9 @@ if (totalCost > (currentBalance + precision)) {
   }
 
   try {
-    const apiUrl = `${window.location.origin}/api/user/${encodeURIComponent(email)}`;
+    // 🔧 CORDOVA FIX: Use getApiOrigin() for API calls
+    const origin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+    const apiUrl = `${origin}/api/user/${encodeURIComponent(email)}`;
     console.log('Checking if user exists at:', apiUrl);
 
     const response = await fetch(apiUrl);
@@ -12752,8 +12987,11 @@ if (totalCost > (currentBalance + precision)) {
 
       console.log('📦 User data being sent to server:', userData);
 
+      // 🔧 CORDOVA FIX: Use getApiOrigin() for API calls
+      const origin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+      
       // Send the create request
-      const response = await fetch(`${window.location.origin}/api/users`, {
+      const response = await fetch(`${origin}/api/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -12875,7 +13113,7 @@ if (totalCost > (currentBalance + precision)) {
   // Load user referrals from database
   async function loadUserReferrals(userId) {
     try {
-      const response = await fetch(`${window.location.origin}/api/referrals/${userId}`);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/referrals/${userId}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -13274,6 +13512,7 @@ window.cancelProfileChanges = cancelProfileChanges;
      // Function to enter edit mode
      function enterEditMode() {
        isEditing = true;
+       window._profileIsEditingState = true;
        profileNameInput.classList.add('active');
        profileNameDisplay.classList.add('hidden');
        profileNameInput.value = profileNameDisplay.textContent.replace('User', '').trim();
@@ -13290,6 +13529,7 @@ window.cancelProfileChanges = cancelProfileChanges;
      // Function to cancel edit mode
      function cancelEditMode() {
        isEditing = false;
+       window._profileIsEditingState = false;
        hasChanges = false;
        newProfileImage = null;
        profileNameInput.classList.remove('active');
@@ -13354,44 +13594,54 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
      }
 
-     // Handle cancel button click
+     // Handle cancel button click - use onclick to prevent duplicate listeners on reinitialize
      if (cancelChangesBtn) {
-       cancelChangesBtn.addEventListener('click', function(e) {
+       cancelChangesBtn.onclick = function(e) {
          e.stopPropagation();
          cancelEditMode();
+       };
+     }
+
+     // Handle click outside to cancel editing (only add once)
+     if (!window._profileEditOutsideClickAdded) {
+       window._profileEditOutsideClickAdded = true;
+       document.addEventListener('click', function(e) {
+         // Use window-level editing state since closures may change
+         if (window._profileIsEditingState) {
+           const profileContainer = document.querySelector('.profile-name-container');
+           const editBtns = document.querySelector('.profile-edit-buttons');
+           const nameInput = document.getElementById('profile-name-input');
+           const editIcn = document.querySelector('.edit-icon');
+           const isClickInsideProfile = profileContainer && profileContainer.contains(e.target);
+           const isClickOnButtons = editBtns && editBtns.contains(e.target);
+           const isClickOnInput = nameInput && nameInput.contains(e.target);
+           const isClickOnEditIcon = editIcn && editIcn.contains(e.target);
+
+           if (!isClickInsideProfile || (!isClickOnButtons && !isClickOnInput && !isClickOnEditIcon)) {
+             if (typeof window._profileCancelEditMode === 'function') {
+               window._profileCancelEditMode();
+             }
+           }
+         }
        });
      }
 
-     // Handle click outside to cancel editing
-     document.addEventListener('click', function(e) {
-       if (isEditing) {
-         const profileContainer = document.querySelector('.profile-name-container');
-         const isClickInsideProfile = profileContainer && profileContainer.contains(e.target);
-         const isClickOnButtons = editButtonsContainer && editButtonsContainer.contains(e.target);
-         const isClickOnInput = profileNameInput && profileNameInput.contains(e.target);
-         const isClickOnEditIcon = editIcon && editIcon.contains(e.target); // Check if click is on the edit icon itself
+     // Expose editing state and cancel function to window for outside-click handler
+     window._profileIsEditingState = isEditing;
+     window._profileCancelEditMode = cancelEditMode;
 
-         // Cancel if click is outside the profile container or not on buttons/input/edit icon
-         if (!isClickInsideProfile || (!isClickOnButtons && !isClickOnInput && !isClickOnEditIcon)) {
-           cancelEditMode();
-         }
-       }
-     });
-
-     // Handle input blur - but don't auto-cancel if buttons are visible
+     // Handle input blur - but don't auto-cancel if buttons are visible (use onblur to prevent duplicates)
      if (profileNameInput) {
-       profileNameInput.addEventListener('blur', function(e) {
-         // Small delay to allow button clicks to register
+       profileNameInput.onblur = function(e) {
          setTimeout(() => {
            if (isEditing && !hasChanges) {
-             // Only cancel if no changes and not clicking on buttons or edit icon
              const activeElement = document.activeElement;
              if (activeElement !== saveChangesBtn && activeElement !== cancelChangesBtn && activeElement !== editIcon) {
                cancelEditMode();
              }
            }
          }, 150);
-       });
+       };
      }
 
      // Setup photo options menu event listeners
@@ -13401,23 +13651,112 @@ window.cancelProfileChanges = cancelProfileChanges;
        const deleteOption = document.getElementById('delete-option');
 
        if (cameraOption) {
-         // ط¥ط²ط§ظ„ط© ط£ظٹ ظ…ط¹ط§ظ„ط¬ط§طھ ط³ط§ط¨ظ‚ط© ظ„ظ…ظ†ط¹ ط§ظ„طھظƒط±ط§ط±
          cameraOption.onclick = null;
          cameraOption.onclick = function(e) {
            e.stopPropagation();
            e.preventDefault();
-
-           console.log('ًں“¸ Camera option clicked');
-           const profileImageUpload = document.getElementById('profile-image-upload');
-
-           if (profileImageUpload) {
-             // ط¥ط¹ط¯ط§ط¯ ط§ظ„ظƒط§ظ…ظٹط±ط§
-             profileImageUpload.setAttribute('capture', 'user');
-             profileImageUpload.setAttribute('accept', 'image/*');
-             profileImageUpload.click();
-             console.log('ًں“¸ Camera opened');
-           }
            hidePhotoMenu();
+           if (navigator.camera && navigator.camera.getPicture) {
+             // Mark pending camera action for resume handler
+             window._pendingCameraAction = true;
+             window._nativeUIActive = true;
+             navigator.camera.getPicture(
+               function(imageURI) {
+                 window._pendingCameraAction = false;
+                 window._nativeUIActive = false;
+                 console.log('[Camera] Success - FILE_URI:', imageURI ? imageURI.substring(0, 80) : 'null');
+                 // Use setTimeout to ensure WebView is fully restored after native camera
+                 setTimeout(function() {
+                   // Convert file to base64 for display AND server upload
+                   window.resolveLocalFileSystemURL(imageURI, function(fileEntry) {
+                     fileEntry.file(function(file) {
+                       var reader = new FileReader();
+                       reader.onloadend = function() {
+                         var base64Data = this.result; // data:image/jpeg;base64,...
+                         console.log('[Camera] Base64 conversion done, length:', base64Data ? base64Data.length : 0);
+                         
+                         // Display image in frame using base64
+                         var profileAvatar = document.getElementById('profile-avatar');
+                         if (profileAvatar) {
+                           profileAvatar.src = base64Data;
+                           console.log('[Camera] Avatar displayed with base64');
+                         }
+                         var dashAvatar = document.getElementById('dashboard-profile-avatar');
+                         if (dashAvatar) dashAvatar.src = base64Data;
+                         
+                         // Save for server upload
+                         newProfileImage = base64Data;
+                         hasChanges = true;
+                         isEditing = true;
+                         var btns = document.querySelector('.profile-edit-buttons');
+                         if (btns) btns.style.display = 'flex';
+                         if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
+                         if (currentUser) currentUser.avatar = base64Data;
+                         if (typeof showNotification === 'function') {
+                           showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
+                         }
+                       };
+                       reader.onerror = function(err) {
+                         console.error('[Camera] FileReader error:', err);
+                         // Fallback: use file URI directly as the image data
+                         newProfileImage = imageURI;
+                         hasChanges = true;
+                         isEditing = true;
+                         var btns2 = document.querySelector('.profile-edit-buttons');
+                         if (btns2) btns2.style.display = 'flex';
+                         if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
+                         if (typeof showNotification === 'function') {
+                           showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
+                         }
+                       };
+                       reader.readAsDataURL(file);
+                     }, function(err) {
+                       console.error('[Camera] file() error:', err);
+                     });
+                   }, function(err) {
+                     console.error('[Camera] resolveLocalFileSystemURL error:', err);
+                     // Fallback: try using the URI directly
+                     newProfileImage = imageURI;
+                     hasChanges = true;
+                     isEditing = true;
+                     var btns3 = document.querySelector('.profile-edit-buttons');
+                     if (btns3) btns3.style.display = 'flex';
+                     if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
+                     if (typeof showNotification === 'function') {
+                       showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
+                     }
+                   });
+                 }, 200);
+               },
+               function(err) {
+                 window._pendingCameraAction = false;
+                 window._nativeUIActive = false;
+                 console.error('[Camera] Error:', err);
+                 if (typeof showNotification === 'function') {
+                   const errMsg = err === 'No Image Selected' ? translator.translate('No Image Selected') : (err || translator.translate('Camera error'));
+                   showNotification(errMsg, 'error');
+                 }
+               },
+               {
+                 quality: 70,
+                 destinationType: Camera.DestinationType.FILE_URI,
+                 sourceType: Camera.PictureSourceType.CAMERA,
+                 cameraDirection: Camera.Direction.FRONT,
+                 encodingType: Camera.EncodingType.JPEG,
+                 targetWidth: 400,
+                 targetHeight: 400,
+                 correctOrientation: true
+               }
+             );
+           } else {
+             window._nativeUIActive = true;
+             var profileImageUpload = document.getElementById('profile-image-upload');
+             if (profileImageUpload) {
+               profileImageUpload.setAttribute('capture', 'user');
+               profileImageUpload.setAttribute('accept', 'image/*');
+               profileImageUpload.click();
+             }
+           }
          };
        }
 
@@ -13429,6 +13768,7 @@ window.cancelProfileChanges = cancelProfileChanges;
            e.preventDefault();
 
            console.log('Gallery option clicked');
+           window._nativeUIActive = true;
            const profileImageUpload = document.getElementById('profile-image-upload');
 
            if (profileImageUpload) {
@@ -13490,16 +13830,40 @@ window.cancelProfileChanges = cancelProfileChanges;
          if (dashboardAvatar) {
            dashboardAvatar.src = defaultAvatar;
          }
+         const mobileAvatar = document.getElementById('mobile-user-avatar');
+         if (mobileAvatar) {
+           mobileAvatar.src = defaultAvatar;
+         }
 
          // Update user data with default avatar (not null)
          if (currentUser) {
            currentUser.avatar = defaultAvatar;
+           currentUser.lastProfileUpdate = Date.now();
 
-           // Save the change immediately to server with default avatar - without additional notification
-           if (typeof saveProfileChanges === 'function') {
-             // Pass true as third parameter to prevent showing "updated successfully" notification
-             saveProfileChanges(currentUser.name, defaultAvatar, true);
-           }
+           // Send delete directly to server
+           const apiBase = (typeof getApiOrigin !== 'undefined' ? getApiOrigin() : window.location.origin);
+           fetch(apiBase + '/api/profile/delete-photo', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ userId: currentUser.id })
+           }).then(function(r) { return r.json(); }).then(function(data) {
+             if (!data.success) {
+               fetch(apiBase + '/api/users/update-profile', {
+                 method: 'PUT',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+               }).catch(function() {});
+             }
+           }).catch(function() {
+             fetch(apiBase + '/api/users/update-profile', {
+               method: 'PUT',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+             }).catch(function() {});
+           });
+
+           // Save to session immediately
+           saveUserSession(currentUser);
 
            // Show single success notification only
            if (typeof showNotification === 'function') {
@@ -13526,9 +13890,11 @@ window.cancelProfileChanges = cancelProfileChanges;
        // Setup photo options menu event listeners
        setupPhotoOptionsMenu();
 
-       // Handle click on camera icon specifically to show menu
+       // Handle click on camera icon/avatar to show menu
+       // Use onclick instead of addEventListener to prevent duplicate handlers on reinitialize
        function handleCameraClick(e) {
          e.stopPropagation();
+         e.preventDefault();
          const menu = document.querySelector('.photo-options-menu');
 
          // Don't trigger if clicking on menu itself
@@ -13536,9 +13902,7 @@ window.cancelProfileChanges = cancelProfileChanges;
            return;
          }
 
-         // Always show menu when clicking on camera icon
          if (menu) {
-           // Hide menu if already showing
            if (menu.classList.contains('show')) {
              window.hidePhotoMenu();
            } else {
@@ -13547,38 +13911,40 @@ window.cancelProfileChanges = cancelProfileChanges;
          }
        }
 
-       // Add click handler ONLY to camera icon
+       // Use onclick (not addEventListener) to avoid duplicate listeners on reinitialize
        if (cameraIcon) {
-         cameraIcon.addEventListener('click', handleCameraClick);
+         cameraIcon.onclick = handleCameraClick;
        }
 
        // Add click handler to profile avatar image for easy access
        const profileAvatar = avatarContainer.querySelector('.profile-avatar');
        if (profileAvatar) {
-         profileAvatar.addEventListener('click', function(e) {
-           // Stop propagation to prevent conflicts with other elements
+         profileAvatar.onclick = function(e) {
            e.stopPropagation();
-
-           // Only trigger if the click is specifically on the avatar image
-           if (e.target === profileAvatar) {
-             handleCameraClick(e);
-           }
-         });
-         // Add cursor pointer to indicate it's clickable
+           e.preventDefault();
+           handleCameraClick(e);
+         };
          profileAvatar.style.cursor = 'pointer';
        }
 
-       // Hide menu when clicking outside avatar container
-       document.addEventListener('click', function(e) {
-         if (!avatarContainer.contains(e.target)) {
-           hidePhotoMenu();
-         }
-       });
+       // Hide menu when clicking outside avatar container (only add once)
+       if (!window._photoMenuOutsideClickAdded) {
+         window._photoMenuOutsideClickAdded = true;
+         document.addEventListener('click', function(e) {
+           const container = document.getElementById('avatar-container');
+           const menu = document.querySelector('.photo-options-menu');
+           if (menu && menu.classList.contains('show') && !menu.contains(e.target) && container && !container.contains(e.target)) {
+             window.hidePhotoMenu();
+           }
+         });
+       }
      }
 
      // ظ…ط¹ط§ظ„ط¬ ط§ط®طھظٹط§ط± ط§ظ„طµظˆط± - ظ…ط­ط³ظ† ظ„ط¶ظ…ط§ظ† ط§ظ„ط¹ظ…ظ„ ظ…ظ† ط£ظˆظ„ ظ…ط±ط©
+     // Use onchange to prevent duplicate listeners on reinitialize
      if (profileImageUpload) {
-       profileImageUpload.addEventListener('change', function(event) {
+       profileImageUpload.onchange = function(event) {
+         window._nativeUIActive = false;
          const file = event.target.files[0];
          if (!file) return;
 
@@ -13586,22 +13952,14 @@ window.cancelProfileChanges = cancelProfileChanges;
 
          // Check file type
          if (!file.type.startsWith('image/')) {
-           if (typeof showNotification === 'function') {
              showNotification(translator.translate('Please select a valid image file'), 'error');
-           } else {
-             alert('Please select a valid image file');
-           }
            event.target.value = '';
            return;
          }
 
          // Check file size (15MB)
          if (file.size > 15 * 1024 * 1024) {
-           if (typeof showNotification === 'function') {
              showNotification('File size is too large. Maximum 15MB allowed', 'error');
-           } else {
-             alert('File size is too large. Maximum 15MB allowed');
-           }
            event.target.value = '';
            return;
          }
@@ -13642,7 +14000,7 @@ window.cancelProfileChanges = cancelProfileChanges;
              // ط¥ط®ظپط§ط، ظ‚ط§ط¦ظ…ط© ط§ظ„طµظˆط±
              const photoMenu = document.querySelector('.photo-options-menu');
              if (photoMenu) {
-               photoMenu.classList.remove('show');
+               window.hidePhotoMenu();
                console.log('Photo menu hidden');
              }
 
@@ -13675,18 +14033,19 @@ window.cancelProfileChanges = cancelProfileChanges;
          setTimeout(() => {
            event.target.value = '';
          }, 100);
-       });
+       };
      }
 
-     // Handle name input change
+     // Handle name input change - use oninput to prevent duplicate listeners on reinitialize
      if (profileNameInput) {
-       profileNameInput.addEventListener('input', function() {
+       profileNameInput.oninput = function() {
          hasChanges = true;
          if (!isEditing) {
            isEditing = true;
+           window._profileIsEditingState = true;
            showEditButtons();
          }
-       });
+       };
      }
 
      // Function to ensure edit buttons are shown when image changes
@@ -13704,9 +14063,9 @@ window.cancelProfileChanges = cancelProfileChanges;
        isEditing = true;
      }
 
-     // Save changes button
+     // Save changes button - use onclick to prevent duplicate listeners on reinitialize
      if (saveChangesBtn) {
-       saveChangesBtn.addEventListener('click', function(e) {
+       saveChangesBtn.onclick = function(e) {
          e.stopPropagation();
          // Validate name length (maximum 22 characters)
          let sanitizedName = profileNameInput.value.trim();
@@ -13717,7 +14076,7 @@ window.cancelProfileChanges = cancelProfileChanges;
            profileNameInput.value = sanitizedName;
          }
          saveProfileChanges(sanitizedName, newProfileImage);
-       });
+       };
      }
 
      // Function to reset profile edit UI
@@ -13845,7 +14204,7 @@ window.cancelProfileChanges = cancelProfileChanges;
            try {
              console.log(`Trying endpoint ${i+1}/${endpoints.length}: ${endpoint.method} ${endpoint.url}`);
 
-             const response = await fetch(`${window.location.origin}${endpoint.url}`, {
+             const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}${endpoint.url}`, {
                method: endpoint.method,
                headers: {
                  'Content-Type': 'application/json'
@@ -13939,27 +14298,30 @@ window.cancelProfileChanges = cancelProfileChanges;
          showNotification(translator.translate('Profile updated successfully'), 'success');
        }
 
-       // Force reload fresh user data after a delay to ensure server has saved
-       // Use forceRefresh=true to bypass cache, and preserve locally-set avatar
+       // FIXED: Delay server verification to allow server time to save the new image
+       // Immediate checkIfUserExists causes race condition - old image is fetched before server saves new one
        if (currentUser.email) {
-         const localAvatar = currentUser.avatar; // Preserve what we just set locally
-         const localLastUpdate = currentUser.lastProfileUpdate;
+         // Wait 2.5 seconds for server to process and save the new image
          setTimeout(function() {
+           // Force refresh to bypass cache - cache may have old SVG avatar
            checkIfUserExists(currentUser.email, true).then(userData => {
              if (userData) {
                console.log('Verified profile changes with server data after delay');
 
-               // If we just deleted/changed the avatar locally, don't let server overwrite with stale data
-               if (localLastUpdate && currentUser.lastProfileUpdate === localLastUpdate) {
-                 // Preserve local avatar if server returns something different (race condition)
-                 userData.avatar = localAvatar;
+               // Only update if server data is newer than our local lastProfileUpdate
+               // This prevents overwriting with stale cached data
+               if (!currentUser.lastProfileUpdate || 
+                   !userData.lastProfileUpdate || 
+                   userData.lastProfileUpdate >= currentUser.lastProfileUpdate) {
+                 
+                 // Make sure our UI reflects the latest server data
+                 updateUserInfo(userData);
+
+                 // Save the verified server data
+                 saveUserSession(userData);
+               } else {
+                 console.log('Skipping server data - local data is newer');
                }
-
-               // Make sure our UI reflects the latest server data
-               updateUserInfo(userData);
-
-               // Save the verified server data
-               saveUserSession(userData);
              }
            }).catch(error => {
              console.error('Error verifying profile update:', error);
@@ -13968,13 +14330,12 @@ window.cancelProfileChanges = cancelProfileChanges;
        }
      }
 
-     // Direct click handler for profile name editing - no menu needed
+     // Direct click handler for profile name editing - use onclick to prevent duplicates
      if (profileNameDisplay) {
-       profileNameDisplay.addEventListener('click', function(e) {
+       profileNameDisplay.onclick = function(e) {
          e.stopPropagation();
          enterEditMode();
-       });
-       // Make profile name visually clickable
+       };
        profileNameDisplay.style.cursor = 'pointer';
      }
 
@@ -14010,148 +14371,85 @@ window.cancelProfileChanges = cancelProfileChanges;
   window.deleteProfilePhoto = function() {
     const profileAvatar = document.getElementById('profile-avatar');
     if (profileAvatar && currentUser) {
-      const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCI`x`sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIicjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAuOHYxYzAtMS0xLTItMi0yaC0xNmMtMSAwLTIgLTEtMi03di0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
-
+      const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
       if (!currentUser.avatar || currentUser.avatar === defaultAvatar || currentUser.avatar === null) {
         if (typeof showNotification === 'function') {
-          showNotification('No profile photo to delete', 'info');
+          const msg = (typeof translator !== 'undefined' && translator.translate) ? translator.translate('No profile photo to delete') : 'No profile photo to delete';
+          showNotification(msg, 'info');
         }
         return;
       }
 
+      // Update ALL avatar elements immediately
       profileAvatar.src = defaultAvatar;
       const dashboardAvatar = document.getElementById('dashboard-profile-avatar');
-      if (dashboardAvatar) {
-        dashboardAvatar.src = defaultAvatar;
-      }
+      if (dashboardAvatar) dashboardAvatar.src = defaultAvatar;
+      const mobileAvatar = document.getElementById('mobile-user-avatar');
+      if (mobileAvatar) mobileAvatar.src = defaultAvatar;
 
-      if (currentUser) {
-        currentUser.avatar = defaultAvatar;
-        if (typeof saveProfileChanges === 'function') {
-          saveProfileChanges(currentUser.name, defaultAvatar, true);
+      // Update currentUser in memory immediately
+      currentUser.avatar = defaultAvatar;
+      currentUser.lastProfileUpdate = Date.now();
+
+      // Send delete directly to server
+      const apiBase = (typeof getApiOrigin !== 'undefined' ? getApiOrigin() : window.location.origin);
+      fetch(apiBase + '/api/profile/delete-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+          console.log('Profile photo deleted on server');
+        } else {
+          fetch(apiBase + '/api/users/update-profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+          }).catch(function() {});
         }
-        if (typeof showNotification === 'function') {
-          showNotification('Profile photo changed to default', 'success');
-        }
+      }).catch(function() {
+        fetch(apiBase + '/api/users/update-profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+        }).catch(function() {});
+      });
+
+      // Save to session immediately
+      saveUserSession(currentUser);
+
+      if (typeof showNotification === 'function') {
+        const msg = (typeof translator !== 'undefined' && translator.translate) ? translator.translate('Profile photo changed to default') : 'Profile photo changed to default';
+        showNotification(msg, 'success');
       }
     }
   };
 
-  // Simple Profile Menu System - No conflicts, no complex animations
+  // Simple Profile Menu System - Only provides global utility functions
+  // All option handlers (camera, gallery, delete) are set by initializeProfileEditing() only
   function setupSimpleProfileMenu() {
-    // Simple setup function that runs once
-    function initializePhotoMenu() {
-      const avatarContainer = document.getElementById('avatar-container');
-      if (!avatarContainer) return;
-
-      // Simple menu handler - no animations or complex positioning
-      function simpleMenuHandler(e) {
-        e.stopPropagation();
-        const menu = document.querySelector('.photo-options-menu');
-        if (menu) {
-          if (menu.classList.contains('show')) {
-            window.hidePhotoMenu();
-          } else {
-            window.showPhotoMenu();
-          }
-        }
-      }
-
-      // Setup camera icon click
-      const cameraIcon = avatarContainer.querySelector('.camera-icon-badge');
-      if (cameraIcon) {
-        cameraIcon.onclick = simpleMenuHandler;
-      }
-
-      // Setup photo options
-      const cameraOption = document.getElementById('camera-option');
-      const galleryOption = document.getElementById('gallery-option');
-      const deleteOption = document.getElementById('delete-option');
-
-      if (cameraOption) {
-        cameraOption.onclick = function(e) {
-          e.stopPropagation();
-          e.preventDefault();
-          const profileImageUpload = document.getElementById('profile-image-upload');
-          if (profileImageUpload) {
-            profileImageUpload.setAttribute('capture', 'camera');
-            profileImageUpload.setAttribute('accept', 'image/*');
-            profileImageUpload.click();
-          }
-          window.hidePhotoMenu();
-        };
-      }
-
-      if (galleryOption) {
-        galleryOption.onclick = function(e) {
-          e.stopPropagation();
-          e.preventDefault();
-          const profileImageUpload = document.getElementById('profile-image-upload');
-          if (profileImageUpload) {
-            profileImageUpload.removeAttribute('capture');
-            profileImageUpload.setAttribute('accept', 'image/*');
-            profileImageUpload.click();
-          }
-          window.hidePhotoMenu();
-        };
-      }
-
-      if (deleteOption) {
-        deleteOption.onclick = function(e) {
-          e.stopPropagation();
-          if (typeof window.deleteProfilePhoto === 'function') {
-            window.deleteProfilePhoto();
-          }
-          window.hidePhotoMenu();
-        };
-      }
-
-      // Close menu when clicking outside
-      document.onclick = function(e) {
-        const menu = document.querySelector('.photo-options-menu');
-        if (menu && menu.classList.contains('show') && !menu.contains(e.target) && !avatarContainer.contains(e.target)) {
-          window.hidePhotoMenu();
-        }
-      };
-    }
-
-    // Initialize once when profile page is loaded
-    const checkProfilePage = setInterval(() => {
-      const profilePage = document.getElementById('profile-page');
-      const avatarContainer = document.getElementById('avatar-container');
-
-      if (profilePage && avatarContainer) {
-        initializePhotoMenu();
-
-        // ط¥ط¶ط§ظپط© ظ…ط¹ط§ظ„ط¬ ط®ط§طµ ظ„ط£ظٹظ‚ظˆظ†ط© ط§ظ„ظƒط§ظ…ظٹط±ط§
-        const cameraIcon = avatarContainer.querySelector('.camera-icon-badge');
-        if (cameraIcon) {
-          // ط¥ط¶ط§ظپط© ظ…ط¹ط§ظ„ط¬ ط¨ط¯ظˆظ† ط§ظ„ط­ط§ط¬ط© ظ„ط¥ط²ط§ظ„ط© ظ…ط¹ط§ظ„ط¬ ط³ط§ط¨ظ‚
-          cameraIcon.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Camera icon clicked - showing photo menu');
-
-            const menu = document.querySelector('.photo-options-menu');
-            if (menu) {
-              if (menu.classList.contains('show')) {
-                window.hidePhotoMenu();
-              } else {
-                window.showPhotoMenu();
-              }
-            }
-          });
-        }
-
-        clearInterval(checkProfilePage);
-      }
-    }, 1000);
-
-    // Stop checking after 10 seconds
-    setTimeout(() => {
-      clearInterval(checkProfilePage);
-    }, 10000);
+    // No duplicate handler setup - initializeProfileEditing handles everything
   }
+
+  // Handle Android resume after camera - WebView may have been destroyed and recreated
+  document.addEventListener('resume', function() {
+    console.log('[Resume] App resumed, pendingCameraAction:', window._pendingCameraAction, 'nativeUIActive:', window._nativeUIActive);
+    if (window._pendingCameraAction) {
+      // Don't reset _pendingCameraAction here - let the camera callback handle it
+      // Don't call reinitializeProfileEditing() - it creates new closures that lose
+      // the camera data (newProfileImage, hasChanges) causing SVG to appear after save
+      console.log('[Resume] Camera action pending, waiting for camera callback to deliver result');
+    }
+    // Safety: clear _nativeUIActive after 5s in case user cancelled gallery without selecting
+    if (window._nativeUIActive) {
+      setTimeout(function() {
+        if (window._nativeUIActive) {
+          console.log('[Resume] Clearing stale _nativeUIActive flag');
+          window._nativeUIActive = false;
+        }
+      }, 5000);
+    }
+  }, false);
 
   // Simple global functions
   window.showPhotoMenu = function() {
@@ -14382,7 +14680,8 @@ window.cancelProfileChanges = cancelProfileChanges;
         initMissionsSystem();
       }
     } else if (pageName === 'profile') {
-      initializeProfileEditing();
+      // Always reinitialize to ensure handlers are fresh after navigation
+      reinitializeProfileEditing();
     } else if (pageName === 'kyc') {
       // Immediately apply translations when KYC page is shown
       translateKYCPage();
@@ -14627,7 +14926,12 @@ window.cancelProfileChanges = cancelProfileChanges;
     }
   });
 
-  document.getElementById('logout-confirm').addEventListener('click', function() {
+  document.getElementById('logout-confirm').addEventListener('click', async function() {
+    // 📱 Cordova: Do NOT call googleplus.disconnect() - it destroys the Google
+    // session completely and causes profile picture loss on re-login.
+    // We only clear local data. The native Google plugin stays connected.
+    console.log('📱 Logout: Clearing local session only (preserving Google connection)');
+
     // Clear processing timer if exists
     if (activityInterval) {
       clearInterval(activityInterval);
@@ -14643,9 +14947,10 @@ window.cancelProfileChanges = cancelProfileChanges;
     const themeMode = localStorage.getItem('themeMode');
     const themeBrightness = localStorage.getItem('themeBrightness');
 
-    // ط­ط°ظپ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ… ظپظ‚ط·
+    // حذف بيانات المستخدم فقط
     localStorage.removeItem('accessoireUser');
     localStorage.removeItem('accessoireUserData');
+    localStorage.removeItem('_pin_active');
     // ظ„ط§ طھظ…ط³ط­ themeMode ظˆ themeBrightness
 
     // ظ„ط§ طھط³طھط®ط¯ظ… localStorage.clear() ظ„ط£ظ†ظ‡ ظٹظ…ط³ط­ ظƒظ„ ط´ظٹط،
@@ -14672,6 +14977,7 @@ window.cancelProfileChanges = cancelProfileChanges;
     document.documentElement.classList.add('user-not-logged-in');
     document.documentElement.classList.add('app-ready');
 
+    // 📱 Reload to reset all state cleanly after logout
     setTimeout(() => {
       window.location.reload();
     }, 300);
@@ -15206,7 +15512,7 @@ window.cancelProfileChanges = cancelProfileChanges;
   // Add function to update lastPayout in the database
   async function updateLastPayout(userId) {
     try {
-      const response = await fetch(`${window.location.origin}/api/users/${userId}/lastpayout`, {
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/users/${userId}/lastpayout`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -15261,15 +15567,8 @@ window.cancelProfileChanges = cancelProfileChanges;
 // Simple translator class
 class Translator {
   constructor() {
-    // Use preloaded language from head script, or check localStorage, or auto-detect from device
-    var lang = window.__preloadedLang || localStorage.getItem('preferredLanguage');
-    if (!lang) {
-      var supportedLangs = ['en','fr','es','it','tr','hi','zh','ja','ko','pt','ru','de','ar','id','pl'];
-      var browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase().split('-')[0];
-      lang = supportedLangs.includes(browserLang) ? browserLang : 'en';
-      localStorage.setItem('preferredLanguage', lang);
-    }
-    this.currentLanguage = lang;
+    // Use preloaded language from head script, or check localStorage, fallback to 'en'
+    this.currentLanguage = window.__preloadedLang || localStorage.getItem('preferredLanguage') || 'en';
     this.translations = window.translations || {};
     this.fallbackLanguage = 'en'; // English as fallback
   }
@@ -15278,10 +15577,20 @@ class Translator {
     if (this.translations[lang]) {
       this.currentLanguage = lang;
       localStorage.setItem('preferredLanguage', lang);
+      
+      // Update FCM notification language on server
+      if (typeof window.updateFCMLanguage === 'function') {
+        window.updateFCMLanguage(lang);
+      }
     } else {
       console.warn(`Language ${lang} not found, falling back to ${this.fallbackLanguage}`);
       this.currentLanguage = this.fallbackLanguage;
       localStorage.setItem('preferredLanguage', this.fallbackLanguage);
+      
+      // Update FCM notification language on server
+      if (typeof window.updateFCMLanguage === 'function') {
+        window.updateFCMLanguage(this.fallbackLanguage);
+      }
     }
   }
 

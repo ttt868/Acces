@@ -522,14 +522,32 @@ class OfflineDetector {
   // ── Check PIN enabled directly from localStorage (no dependency on pin-lock-system.js) ──
   _isPinEnabledFromStorage() {
     try {
+      // Fast check: global PIN flag (survives even if accessoireUser is lost)
+      if (localStorage.getItem('_pin_active') === '1') return true;
+
+      // Standard check via accessoireUser → pin_state_{userId}
       var saved = localStorage.getItem('accessoireUser');
-      if (!saved) return false;
-      var user = JSON.parse(saved);
-      if (!user || !user.id) return false;
-      var pinData = localStorage.getItem('pin_state_' + user.id);
-      if (!pinData) return false;
-      var data = JSON.parse(pinData);
-      return !!(data && data.pinEnabled);
+      if (saved) {
+        var user = JSON.parse(saved);
+        if (user && user.id) {
+          var pinData = localStorage.getItem('pin_state_' + user.id);
+          if (pinData) {
+            var data = JSON.parse(pinData);
+            if (data && data.pinEnabled) return true;
+          }
+        }
+      }
+      // Last resort: scan all pin_state_* keys
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (key && key.indexOf('pin_state_') === 0) {
+          try {
+            var val = JSON.parse(localStorage.getItem(key));
+            if (val && val.pinEnabled) return true;
+          } catch(e2) {}
+        }
+      }
+      return false;
     } catch(e) { return false; }
   }
 

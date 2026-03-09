@@ -14947,9 +14947,10 @@ window.cancelProfileChanges = cancelProfileChanges;
     const themeMode = localStorage.getItem('themeMode');
     const themeBrightness = localStorage.getItem('themeBrightness');
 
-    // ط­ط°ظپ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ… ظپظ‚ط·
+    // حذف بيانات المستخدم فقط
     localStorage.removeItem('accessoireUser');
     localStorage.removeItem('accessoireUserData');
+    localStorage.removeItem('_pin_active');
     // ظ„ط§ طھظ…ط³ط­ themeMode ظˆ themeBrightness
 
     // ظ„ط§ طھط³طھط®ط¯ظ… localStorage.clear() ظ„ط£ظ†ظ‡ ظٹظ…ط³ط­ ظƒظ„ ط´ظٹط،

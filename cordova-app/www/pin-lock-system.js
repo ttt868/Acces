@@ -38,7 +38,10 @@
   // Used by offline detector on cold start when currentUser isn't loaded yet
   function isPinEnabledFromCache() {
     try {
-      // First try with currentUser
+      // Fastest: global PIN flag (survives even if accessoireUser is lost)
+      if (localStorage.getItem('_pin_active') === '1') return true;
+
+      // Try with currentUser
       var key = getLocalPinKey();
       if (key) {
         var data = JSON.parse(localStorage.getItem(key));
@@ -54,6 +57,16 @@
           if (data2 && data2.pinEnabled) return true;
         }
       }
+      // Last resort: scan all pin_state_* keys
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('pin_state_') === 0) {
+          try {
+            var val = JSON.parse(localStorage.getItem(k));
+            if (val && val.pinEnabled) return true;
+          } catch(e2) {}
+        }
+      }
     } catch(e) {}
     return false;
   }
@@ -67,6 +80,12 @@
         biometricEnabled: biometricEnabled,
         ts: Date.now()
       }));
+      // Global flag — works even if accessoireUser is lost from localStorage
+      if (pinEnabled) {
+        localStorage.setItem('_pin_active', '1');
+      } else {
+        localStorage.removeItem('_pin_active');
+      }
     } catch(e) {}
   }
 
@@ -82,12 +101,33 @@
         }
       } catch(e) {}
     }
-    if (!key) return false;
+    // Fallback 2: scan pin_state_* keys if accessoireUser is also missing
+    if (!key) {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('pin_state_') === 0) {
+          try {
+            var val = JSON.parse(localStorage.getItem(k));
+            if (val && val.pinEnabled) {
+              pinEnabled = true;
+              biometricEnabled = val.biometricEnabled || false;
+              try { localStorage.setItem('_pin_active', '1'); } catch(e3) {}
+              return true;
+            }
+          } catch(e2) {}
+        }
+      }
+      return false;
+    }
     try {
       var data = JSON.parse(localStorage.getItem(key));
       if (data && typeof data.pinEnabled === 'boolean') {
         pinEnabled = data.pinEnabled;
         biometricEnabled = data.biometricEnabled || false;
+        // Backfill _pin_active flag
+        if (pinEnabled) {
+          try { localStorage.setItem('_pin_active', '1'); } catch(e3) {}
+        }
         return true;
       }
     } catch(e) {}
@@ -1047,19 +1087,45 @@
     if (window._pinUnlocked) return; // Already unlocked
     // Check PIN from localStorage directly
     try {
+      var data = null;
+
+      // Method 1: standard path via accessoireUser
       var saved = localStorage.getItem('accessoireUser');
-      if (!saved) return;
-      var user = JSON.parse(saved);
-      if (!user || !user.id) return;
-      var pinData = localStorage.getItem('pin_state_' + user.id);
-      if (!pinData) return;
-      var data = JSON.parse(pinData);
+      if (saved) {
+        var user = JSON.parse(saved);
+        if (user && user.id) {
+          var raw = localStorage.getItem('pin_state_' + user.id);
+          if (raw) data = JSON.parse(raw);
+        }
+      }
+
+      // Method 2: if accessoireUser is missing, scan pin_state_* keys
+      if (!data) {
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf('pin_state_') === 0) {
+            try {
+              var val = JSON.parse(localStorage.getItem(k));
+              if (val && val.pinEnabled) { data = val; break; }
+            } catch(e2) {}
+          }
+        }
+      }
+
+      // Method 3: if even scan finds nothing, check _pin_active flag
+      if (!data && localStorage.getItem('_pin_active') === '1') {
+        // We know PIN was enabled but lost the state details
+        data = { pinEnabled: true, biometricEnabled: false };
+      }
+
       if (!data || !data.pinEnabled) return;
       
       // PIN is enabled → show lock screen IMMEDIATELY
       console.log('[PIN] Cold start + PIN enabled — showing lock screen immediately');
       pinEnabled = true;
       biometricEnabled = data.biometricEnabled || false;
+      // Ensure _pin_active flag exists (backfill for users who enabled PIN before this update)
+      try { localStorage.setItem('_pin_active', '1'); } catch(e3) {}
       // Global flag: tells OfflineDetector to NEVER show offline page
       // PIN lock screen takes priority on cold start
       window._pinRequiredOnStart = true;
