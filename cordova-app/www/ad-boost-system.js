@@ -56,7 +56,13 @@
         adCompleted: true
       })
     })
-    .then(function(response) { return response.json(); })
+    .then(function(response) {
+      if (response.status === 429) {
+        showMessage('Too many attempts. Please wait.', 'error');
+        throw new Error('Rate limited');
+      }
+      return response.json();
+    })
     .then(function(result) {
       if (result.success) {
         console.log('[BOOST] Server granted boost:', JSON.stringify(result));

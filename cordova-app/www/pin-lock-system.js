@@ -606,6 +606,12 @@
         body: JSON.stringify({ userId, pin })
       });
 
+      if (response.status === 429) {
+        const t = (key) => window.translator ? window.translator.translate(key) : key;
+        showSetupError(t('Too many attempts. Please wait.'));
+        return false;
+      }
+
       const data = await response.json();
       return data.verified === true;
     } catch (error) {

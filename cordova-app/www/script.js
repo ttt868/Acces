@@ -1717,7 +1717,8 @@ For more information, visit our platform at: ${(typeof getApiOrigin !== "undefin
       // If not in currentUser, fetch from server in background
       if (!walletAddress) {
         try {
-          const response = await fetch(`/api/user/wallet-key/${currentUser.id}`);
+          const _st = encodeURIComponent(currentUser.sessionToken || currentUser.session_token || '');
+          const response = await fetch(`/api/user/wallet-key/${currentUser.id}?session_token=${_st}`);
           if (response.ok) {
             const data = await response.json();
             if (data.success && data.walletAddress) {
@@ -9075,7 +9076,8 @@ function initializeGoogleSignIn() {
       let serverWalletData = null;
 
       try {
-        const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/wallet-key/${currentUser.id}`);
+        const _st = encodeURIComponent(currentUser.sessionToken || currentUser.session_token || '');
+        const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/wallet-key/${currentUser.id}?session_token=${_st}`);
         if (response.ok) {
           serverWalletData = await response.json();
           console.log("Retrieved wallet key from server");

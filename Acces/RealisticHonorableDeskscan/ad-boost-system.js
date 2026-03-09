@@ -128,6 +128,11 @@
           })
         });
 
+        if (response.status === 429) {
+          showMessage('Too many attempts. Please wait.', 'error');
+          return;
+        }
+
         const result = await response.json();
 
         if (result.success) {
