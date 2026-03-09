@@ -23,7 +23,18 @@
 
   function getUserId() {
     const user = window.currentUser;
-    return user ? user.id : null;
+    if (user && user.id) return user.id;
+    // Fallback: accessoireUser in localStorage
+    try {
+      var saved = localStorage.getItem('accessoireUser');
+      if (saved) { var u = JSON.parse(saved); if (u && u.id) return u.id; }
+    } catch(e) {}
+    // Last fallback: userId saved in _pin_active
+    try {
+      var pa = localStorage.getItem('_pin_active');
+      if (pa) { var d = JSON.parse(pa); if (d && d.u) return d.u; }
+    } catch(e) {}
+    return null;
   }
 
   // ===== LOCAL PIN CACHE (per-user) =====
@@ -38,26 +49,9 @@
   // Used by offline detector on cold start when currentUser isn't loaded yet
   function isPinEnabledFromCache() {
     try {
-      // _pin_active is the ONLY gate — cleared on logout, so no PIN on login screen
-      if (localStorage.getItem('_pin_active') !== '1') return false;
-
-      // Try with currentUser
-      var key = getLocalPinKey();
-      if (key) {
-        var data = JSON.parse(localStorage.getItem(key));
-        if (data && data.pinEnabled) return true;
-      }
-      // Fallback: read userId from saved session (accessoireUser)
-      var saved = localStorage.getItem('accessoireUser');
-      if (saved) {
-        var user = JSON.parse(saved);
-        if (user && user.id) {
-          var fallbackKey = 'pin_state_' + user.id;
-          var data2 = JSON.parse(localStorage.getItem(fallbackKey));
-          if (data2 && data2.pinEnabled) return true;
-        }
-      }
-      // _pin_active is set but can't find details — still trust it
+      // _pin_active is the ONLY gate — cleared on logout
+      var pa = localStorage.getItem('_pin_active');
+      if (!pa) return false;
       return true;
     } catch(e) {}
     return false;
@@ -72,9 +66,10 @@
         biometricEnabled: biometricEnabled,
         ts: Date.now()
       }));
-      // Global flag — works even if accessoireUser is lost from localStorage
+      // Rich flag — saves userId + biometric so PIN works even if accessoireUser is lost
       if (pinEnabled) {
-        localStorage.setItem('_pin_active', '1');
+        var uid = getUserId();
+        localStorage.setItem('_pin_active', JSON.stringify({u: uid, b: biometricEnabled}));
       } else {
         localStorage.removeItem('_pin_active');
       }
@@ -83,10 +78,11 @@
 
   function loadLocalPinState() {
     // Gate: no _pin_active = no PIN (user logged out)
-    if (localStorage.getItem('_pin_active') !== '1') return false;
+    var pa = localStorage.getItem('_pin_active');
+    if (!pa) return false;
 
+    // Try standard path: pin_state_{userId}
     var key = getLocalPinKey();
-    // Fallback: try from saved session if currentUser not loaded yet
     if (!key) {
       try {
         var saved = localStorage.getItem('accessoireUser');
@@ -96,16 +92,35 @@
         }
       } catch(e) {}
     }
-    if (!key) return false;
+    // Fallback: get userId from _pin_active itself
+    if (!key) {
+      try {
+        var pad = JSON.parse(pa);
+        if (pad && pad.u) key = 'pin_state_' + pad.u;
+      } catch(e) {}
+    }
+    if (key) {
+      try {
+        var data = JSON.parse(localStorage.getItem(key));
+        if (data && typeof data.pinEnabled === 'boolean') {
+          pinEnabled = data.pinEnabled;
+          biometricEnabled = data.biometricEnabled || false;
+          return true;
+        }
+      } catch(e) {}
+    }
+    // pin_state not found but _pin_active exists — use its data
     try {
-      var data = JSON.parse(localStorage.getItem(key));
-      if (data && typeof data.pinEnabled === 'boolean') {
-        pinEnabled = data.pinEnabled;
-        biometricEnabled = data.biometricEnabled || false;
-        return true;
-      }
-    } catch(e) {}
-    return false;
+      var pad2 = JSON.parse(pa);
+      pinEnabled = true;
+      biometricEnabled = !!(pad2 && pad2.b);
+      return true;
+    } catch(e) {
+      // Old format '1' — PIN enabled, no biometric info
+      pinEnabled = true;
+      biometricEnabled = false;
+      return true;
+    }
   }
 
   // ===== PIN STATUS =====
@@ -1061,7 +1076,12 @@
     if (window._pinUnlocked) return; // Already unlocked
 
     // Gate: _pin_active must be set — cleared on logout, so no PIN on login screen
-    if (localStorage.getItem('_pin_active') !== '1') return;
+    var pinActiveRaw = localStorage.getItem('_pin_active');
+    if (!pinActiveRaw) return;
+
+    // Parse _pin_active for saved userId and biometric state
+    var pinActiveData = null;
+    try { pinActiveData = JSON.parse(pinActiveRaw); } catch(e) {}
 
     // Check PIN from localStorage directly
     try {
@@ -1077,9 +1097,18 @@
         }
       }
 
-      // Method 2: _pin_active is set but details missing — trust the flag
+      // Method 2: use userId from _pin_active
+      if (!data && pinActiveData && pinActiveData.u) {
+        var raw2 = localStorage.getItem('pin_state_' + pinActiveData.u);
+        if (raw2) data = JSON.parse(raw2);
+      }
+
+      // Method 3: _pin_active exists but no pin_state found — use _pin_active data
       if (!data) {
-        data = { pinEnabled: true, biometricEnabled: false };
+        data = {
+          pinEnabled: true,
+          biometricEnabled: !!(pinActiveData && pinActiveData.b)
+        };
       }
 
       if (!data || !data.pinEnabled) return;
@@ -1088,8 +1117,11 @@
       console.log('[PIN] Cold start + PIN enabled — showing lock screen immediately');
       pinEnabled = true;
       biometricEnabled = data.biometricEnabled || false;
-      // Ensure _pin_active flag exists (backfill for users who enabled PIN before this update)
-      try { localStorage.setItem('_pin_active', '1'); } catch(e3) {}
+      // Ensure _pin_active is up-to-date with rich data
+      try {
+        var uid = getUserId();
+        localStorage.setItem('_pin_active', JSON.stringify({u: uid, b: biometricEnabled}));
+      } catch(e3) {}
       // Global flag: tells OfflineDetector to NEVER show offline page
       // PIN lock screen takes priority on cold start
       window._pinRequiredOnStart = true;

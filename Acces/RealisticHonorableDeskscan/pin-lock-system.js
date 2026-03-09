@@ -22,7 +22,18 @@
 
   function getUserId() {
     const user = window.currentUser;
-    return user ? user.id : null;
+    if (user && user.id) return user.id;
+    // Fallback: accessoireUser in localStorage
+    try {
+      var saved = localStorage.getItem('accessoireUser');
+      if (saved) { var u = JSON.parse(saved); if (u && u.id) return u.id; }
+    } catch(e) {}
+    // Last fallback: userId saved in _pin_active
+    try {
+      var pa = localStorage.getItem('_pin_active');
+      if (pa) { var d = JSON.parse(pa); if (d && d.u) return d.u; }
+    } catch(e) {}
+    return null;
   }
 
   // ===== LOCAL PIN CACHE (per-user) =====
@@ -42,9 +53,10 @@
         biometricEnabled: biometricEnabled,
         ts: Date.now()
       }));
-      // Global flag — works even if accessoireUser is lost from localStorage
+      // Rich flag — saves userId + biometric so PIN works even if accessoireUser is lost
       if (pinEnabled) {
-        localStorage.setItem('_pin_active', '1');
+        var uid = getUserId();
+        localStorage.setItem('_pin_active', JSON.stringify({u: uid, b: biometricEnabled}));
       } else {
         localStorage.removeItem('_pin_active');
       }
@@ -53,19 +65,38 @@
 
   function loadLocalPinState() {
     // Gate: no _pin_active = no PIN (user logged out)
-    if (localStorage.getItem('_pin_active') !== '1') return false;
+    var pa = localStorage.getItem('_pin_active');
+    if (!pa) return false;
 
     var key = getLocalPinKey();
-    if (!key) return false;
+    // Fallback: get userId from _pin_active
+    if (!key) {
+      try {
+        var pad = JSON.parse(pa);
+        if (pad && pad.u) key = 'pin_state_' + pad.u;
+      } catch(e) {}
+    }
+    if (key) {
+      try {
+        var data = JSON.parse(localStorage.getItem(key));
+        if (data && typeof data.pinEnabled === 'boolean') {
+          pinEnabled = data.pinEnabled;
+          biometricEnabled = data.biometricEnabled || false;
+          return true;
+        }
+      } catch(e) {}
+    }
+    // pin_state not found but _pin_active exists — use its data
     try {
-      var data = JSON.parse(localStorage.getItem(key));
-      if (data && typeof data.pinEnabled === 'boolean') {
-        pinEnabled = data.pinEnabled;
-        biometricEnabled = data.biometricEnabled || false;
-        return true;
-      }
-    } catch(e) {}
-    return false;
+      var pad2 = JSON.parse(pa);
+      pinEnabled = true;
+      biometricEnabled = !!(pad2 && pad2.b);
+      return true;
+    } catch(e) {
+      pinEnabled = true;
+      biometricEnabled = false;
+      return true;
+    }
   }
 
   // ===== PIN STATUS =====

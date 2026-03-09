@@ -523,8 +523,8 @@ class OfflineDetector {
   _isPinEnabledFromStorage() {
     try {
       // _pin_active is the ONLY gate — cleared on logout
-      // No _pin_active = no PIN, even if old pin_state_* keys exist
-      return localStorage.getItem('_pin_active') === '1';
+      // Supports old format '1' and new JSON format {u:id, b:true}
+      return !!localStorage.getItem('_pin_active');
     } catch(e) { return false; }
   }
 
