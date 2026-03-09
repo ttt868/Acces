@@ -1774,17 +1774,11 @@ const server = http.createServer(async (req, res) => {
   
   // TWA verification headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Length');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Date, ETag');
   
   // Simplified headers for Google Identity Services
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Date, ETag');
-  
-  // Additional security headers for authentication
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {

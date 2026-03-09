@@ -8428,6 +8428,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
       // Use real avatar or default SVG
       const avatarUrl = user.avatar || defaultAvatarSvg;
       const cacheBuster = `?t=${Date.now()}`;
+      profileAvatar.referrerPolicy = 'no-referrer';
 
       // Only add cache buster for URLs that aren't data URLs
       if (avatarUrl.startsWith('data:')) {
@@ -8444,6 +8445,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
       // Use real avatar or default SVG
       const avatarUrl = user.avatar || defaultAvatarSvg;
       const cacheBuster = `?t=${Date.now()}`;
+      mobileAvatar.referrerPolicy = 'no-referrer';
 
       // Only add cache buster for URLs that aren't data URLs
       if (avatarUrl.startsWith('data:')) {
@@ -8461,6 +8463,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
       // Use real avatar or default SVG
       const avatarUrl = user.avatar || defaultAvatarSvg;
       const cacheBuster = `?t=${Date.now()}`;
+      dashboardAvatar.referrerPolicy = 'no-referrer';
 
       // Only add cache buster for URLs that aren't data URLs
       if (avatarUrl.startsWith('data:')) {

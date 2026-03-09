@@ -8549,6 +8549,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
       // Add cache-busting parameter for images to prevent browser caching the old image
       const avatarUrl = user.avatar || defaultAvatarSvg;
       const cacheBuster = `?t=${Date.now()}`;
+      profileAvatar.referrerPolicy = 'no-referrer';
 
       // Only add cache buster for URLs that aren't data URLs
       if (avatarUrl.startsWith('data:')) {
@@ -8564,6 +8565,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     if (mobileAvatar) {
       const avatarUrl = user.avatar || defaultAvatarSvg;
       const cacheBuster = `?t=${Date.now()}`;
+      mobileAvatar.referrerPolicy = 'no-referrer';
 
       // Only add cache buster for URLs that aren't data URLs
       if (avatarUrl.startsWith('data:')) {
@@ -8580,6 +8582,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     if (dashboardAvatar) {
       const avatarUrl = user.avatar || defaultAvatarSvg;
       const cacheBuster = `?t=${Date.now()}`;
+      dashboardAvatar.referrerPolicy = 'no-referrer';
 
       // Only add cache buster for URLs that aren't data URLs
       if (avatarUrl.startsWith('data:')) {
