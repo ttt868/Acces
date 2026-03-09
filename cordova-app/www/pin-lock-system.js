@@ -700,10 +700,12 @@
       bioBtn.style.visibility = biometricEnabled ? 'visible' : 'hidden';
     }
 
-    // NEVER auto-trigger biometric on cold start / app open
-    // User's finger may still be on sensor from unlocking phone → instant bypass
-    // User must tap the biometric button manually
-    // Auto-trigger only happens on app resume from background (onAppResume)
+    // Auto-trigger biometric after PIN screen is clearly visible
+    if (biometricEnabled && biometricAvailable && window.Fingerprint && !_pinFrozen) {
+      setTimeout(() => {
+        if (isLocked && !_pinFrozen) triggerBiometricAuth();
+      }, 800);
+    }
   }
 
   function hideLockScreen() {
@@ -1044,12 +1046,19 @@
 
     var bioBtn = document.getElementById('pin-biometric-btn');
 
-    // Re-check biometric availability (plugin may not have been ready on cold start)
-    // Just update button visibility — user taps manually (no auto-trigger)
+    // Re-check biometric availability and auto-trigger after unfreeze
     if (isLocked && biometricEnabled) {
       checkBiometricAvailabilityAsync().then(function(available) {
         if (bioBtn) {
           bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
+        }
+        if (available && isLocked && !_pinFrozen) {
+          setTimeout(function() {
+            if (isLocked && !_pinFrozen) {
+              window._biometricInProgress = false;
+              triggerBiometricAuth();
+            }
+          }, 800);
         }
       });
     } else if (bioBtn) {
@@ -1141,11 +1150,19 @@
         showLockScreen();
         // Check biometric in background — on cold start biometricAvailable is still false
         // so showLockScreen's auto-trigger won't fire. We handle it here instead.
-        // Just update biometric button visibility — NO auto-trigger on cold start
         checkBiometricAvailabilityAsync().then(function(available) {
           var bioBtn = document.getElementById('pin-biometric-btn');
           if (bioBtn) {
             bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
+          }
+          // Auto-trigger biometric after PIN screen is visible
+          if (available && navigator.onLine && isLocked && !_pinFrozen) {
+            setTimeout(function() {
+              if (isLocked && !_pinFrozen) {
+                window._biometricInProgress = false;
+                triggerBiometricAuth();
+              }
+            }, 800);
           }
         });
       } else {
@@ -1153,11 +1170,18 @@
         document.addEventListener('DOMContentLoaded', function() {
           if (!isLocked && !window._pinUnlocked) {
             showLockScreen();
-            // Just update biometric button visibility — NO auto-trigger on cold start
             checkBiometricAvailabilityAsync().then(function(available) {
               var bioBtn = document.getElementById('pin-biometric-btn');
               if (bioBtn) {
                 bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
+              }
+              if (available && navigator.onLine && isLocked && !_pinFrozen) {
+                setTimeout(function() {
+                  if (isLocked && !_pinFrozen) {
+                    window._biometricInProgress = false;
+                    triggerBiometricAuth();
+                  }
+                }, 800);
               }
             });
           }
