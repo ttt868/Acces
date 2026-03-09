@@ -38,8 +38,8 @@
   // Used by offline detector on cold start when currentUser isn't loaded yet
   function isPinEnabledFromCache() {
     try {
-      // Fastest: global PIN flag (survives even if accessoireUser is lost)
-      if (localStorage.getItem('_pin_active') === '1') return true;
+      // _pin_active is the ONLY gate — cleared on logout, so no PIN on login screen
+      if (localStorage.getItem('_pin_active') !== '1') return false;
 
       // Try with currentUser
       var key = getLocalPinKey();
@@ -57,16 +57,8 @@
           if (data2 && data2.pinEnabled) return true;
         }
       }
-      // Last resort: scan all pin_state_* keys
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (k && k.indexOf('pin_state_') === 0) {
-          try {
-            var val = JSON.parse(localStorage.getItem(k));
-            if (val && val.pinEnabled) return true;
-          } catch(e2) {}
-        }
-      }
+      // _pin_active is set but can't find details — still trust it
+      return true;
     } catch(e) {}
     return false;
   }
@@ -90,6 +82,9 @@
   }
 
   function loadLocalPinState() {
+    // Gate: no _pin_active = no PIN (user logged out)
+    if (localStorage.getItem('_pin_active') !== '1') return false;
+
     var key = getLocalPinKey();
     // Fallback: try from saved session if currentUser not loaded yet
     if (!key) {
@@ -101,33 +96,12 @@
         }
       } catch(e) {}
     }
-    // Fallback 2: scan pin_state_* keys if accessoireUser is also missing
-    if (!key) {
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (k && k.indexOf('pin_state_') === 0) {
-          try {
-            var val = JSON.parse(localStorage.getItem(k));
-            if (val && val.pinEnabled) {
-              pinEnabled = true;
-              biometricEnabled = val.biometricEnabled || false;
-              try { localStorage.setItem('_pin_active', '1'); } catch(e3) {}
-              return true;
-            }
-          } catch(e2) {}
-        }
-      }
-      return false;
-    }
+    if (!key) return false;
     try {
       var data = JSON.parse(localStorage.getItem(key));
       if (data && typeof data.pinEnabled === 'boolean') {
         pinEnabled = data.pinEnabled;
         biometricEnabled = data.biometricEnabled || false;
-        // Backfill _pin_active flag
-        if (pinEnabled) {
-          try { localStorage.setItem('_pin_active', '1'); } catch(e3) {}
-        }
         return true;
       }
     } catch(e) {}
@@ -1085,6 +1059,10 @@
   // BEFORE script.js can show the dashboard — prevents PIN bypass
   (function _immediateColdStartCheck() {
     if (window._pinUnlocked) return; // Already unlocked
+
+    // Gate: _pin_active must be set — cleared on logout, so no PIN on login screen
+    if (localStorage.getItem('_pin_active') !== '1') return;
+
     // Check PIN from localStorage directly
     try {
       var data = null;
@@ -1099,22 +1077,8 @@
         }
       }
 
-      // Method 2: if accessoireUser is missing, scan pin_state_* keys
+      // Method 2: _pin_active is set but details missing — trust the flag
       if (!data) {
-        for (var i = 0; i < localStorage.length; i++) {
-          var k = localStorage.key(i);
-          if (k && k.indexOf('pin_state_') === 0) {
-            try {
-              var val = JSON.parse(localStorage.getItem(k));
-              if (val && val.pinEnabled) { data = val; break; }
-            } catch(e2) {}
-          }
-        }
-      }
-
-      // Method 3: if even scan finds nothing, check _pin_active flag
-      if (!data && localStorage.getItem('_pin_active') === '1') {
-        // We know PIN was enabled but lost the state details
         data = { pinEnabled: true, biometricEnabled: false };
       }
 

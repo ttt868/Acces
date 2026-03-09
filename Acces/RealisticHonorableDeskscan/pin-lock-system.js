@@ -52,33 +52,16 @@
   }
 
   function loadLocalPinState() {
+    // Gate: no _pin_active = no PIN (user logged out)
+    if (localStorage.getItem('_pin_active') !== '1') return false;
+
     var key = getLocalPinKey();
-    if (!key) {
-      // Fallback: scan pin_state_* keys if accessoireUser is missing
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (k && k.indexOf('pin_state_') === 0) {
-          try {
-            var val = JSON.parse(localStorage.getItem(k));
-            if (val && val.pinEnabled) {
-              pinEnabled = true;
-              biometricEnabled = val.biometricEnabled || false;
-              try { localStorage.setItem('_pin_active', '1'); } catch(e3) {}
-              return true;
-            }
-          } catch(e2) {}
-        }
-      }
-      return false;
-    }
+    if (!key) return false;
     try {
       var data = JSON.parse(localStorage.getItem(key));
       if (data && typeof data.pinEnabled === 'boolean') {
         pinEnabled = data.pinEnabled;
         biometricEnabled = data.biometricEnabled || false;
-        if (pinEnabled) {
-          try { localStorage.setItem('_pin_active', '1'); } catch(e3) {}
-        }
         return true;
       }
     } catch(e) {}
