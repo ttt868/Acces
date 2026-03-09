@@ -700,13 +700,6 @@
       bioBtn.style.visibility = biometricEnabled ? 'visible' : 'hidden';
     }
 
-    // Auto-trigger biometric if enabled (once only) — skip if frozen
-    // Wait 1s to ensure PIN screen is fully rendered before showing biometric dialog
-    if (biometricEnabled && biometricAvailable && window.Fingerprint && !_pinFrozen) {
-      setTimeout(() => {
-        if (isLocked && !_pinFrozen) triggerBiometricAuth();
-      }, 1000);
-    }
   }
 
   function hideLockScreen() {
@@ -1074,6 +1067,36 @@
     }
   };
 
+  // Wait for splash screen to go away, then trigger biometric
+  // deviceready = Cordova is ready = splash screen hides after this
+  // Then 1.5s delay so user sees PIN screen clearly before biometric popup
+  function _waitForDeviceReadyThenBiometric() {
+    function _triggerAfterDelay() {
+      setTimeout(function() {
+        if (!isLocked || _pinFrozen || !navigator.onLine) return;
+        checkBiometricAvailabilityAsync().then(function(available) {
+          if (available && isLocked && !_pinFrozen) {
+            window._biometricInProgress = false;
+            triggerBiometricAuth();
+          }
+        });
+      }, 1500);
+    }
+    // If deviceready already fired, just delay
+    if (window._cordovaReady) {
+      _triggerAfterDelay();
+    } else {
+      document.addEventListener('deviceready', function() {
+        window._cordovaReady = true;
+        _triggerAfterDelay();
+      }, false);
+      // Fallback in case deviceready never fires (browser testing)
+      setTimeout(function() {
+        if (!window._cordovaReady) _triggerAfterDelay();
+      }, 5000);
+    }
+  }
+
   // ===== IMMEDIATE COLD START CHECK =====
   // This runs SYNCHRONOUSLY when the script loads
   // Shows PIN lock screen IMMEDIATELY from localStorage cache
@@ -1143,24 +1166,17 @@
         showLockScreen();
         // Check biometric in background — on cold start biometricAvailable is still false
         // so showLockScreen's auto-trigger won't fire. We handle it here instead.
+        // Check biometric in background for button visibility
         checkBiometricAvailabilityAsync().then(function(available) {
-          // Update biometric button visibility now that we know the real state
           var bioBtn = document.getElementById('pin-biometric-btn');
           if (bioBtn) {
             bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
           }
-          // Auto-trigger biometric if available and online
-          // IMPORTANT: Wait long enough for PIN screen to be fully visible (1s)
-          // Otherwise biometric dialog appears before PIN screen = confusing + fails
-          if (available && navigator.onLine && isLocked && !_pinFrozen) {
-            setTimeout(function() {
-              if (isLocked && !_pinFrozen) {
-                window._biometricInProgress = false;
-                triggerBiometricAuth();
-              }
-            }, 1000);
-          }
         });
+        // Auto-trigger biometric ONLY after splash screen is gone + PIN visible
+        // deviceready = Cordova ready = splash screen about to hide
+        // Then wait 1.5s so user clearly sees PIN screen first
+        _waitForDeviceReadyThenBiometric();
       } else {
         // DOM not ready yet — wait for it
         document.addEventListener('DOMContentLoaded', function() {
@@ -1171,15 +1187,8 @@
               if (bioBtn) {
                 bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
               }
-              if (available && navigator.onLine && isLocked && !_pinFrozen) {
-                setTimeout(function() {
-                  if (isLocked && !_pinFrozen) {
-                    window._biometricInProgress = false;
-                    triggerBiometricAuth();
-                  }
-                }, 1000);
-              }
             });
+            _waitForDeviceReadyThenBiometric();
           }
         });
       }
