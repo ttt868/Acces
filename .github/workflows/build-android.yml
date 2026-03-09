@@ -93,7 +93,7 @@ jobs:
       env:
         KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
       run: |
-        PASS="${KS_PASS:-Access2026Secure}"
+        PASS="${KS_PASS}"
         echo "{\"android\":{\"debug\":{\"keystore\":\"access-network.keystore\",\"storePassword\":\"${PASS}\",\"alias\":\"access-network\",\"password\":\"${PASS}\",\"keystoreType\":\"jks\"},\"release\":{\"keystore\":\"access-network.keystore\",\"storePassword\":\"${PASS}\",\"alias\":\"access-network\",\"password\":\"${PASS}\",\"keystoreType\":\"jks\"}}}" > build.json
         echo '✅ build.json generated'
 
