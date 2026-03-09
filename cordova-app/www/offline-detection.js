@@ -197,59 +197,55 @@ class OfflineDetector {
 
   // ── State transitions ──
   _goOffline() {
-    // Always allow showing offline page — remove stale page first if needed
+    // ──────────────────────────────────────────────────────────────
+    // ABSOLUTE PRIORITY: If PIN is enabled and not yet unlocked,
+    // NEVER show offline page. Read from localStorage directly —
+    // this works regardless of timing, flags, or script load order.
+    // ──────────────────────────────────────────────────────────────
+    if (!window._pinUnlocked && this._isPinEnabledFromStorage()) {
+      console.log('[OfflineDetector] PIN enabled + not unlocked — offline page blocked');
+      this.isOnline = false;
+
+      // Remove any stale offline page that might exist
+      var stalePage = document.getElementById('connection-offline-page');
+      if (stalePage) { stalePage.remove(); this._unlockBackground(); }
+
+      // Freeze PIN if it's already showing
+      if (typeof window.freezePin === 'function') {
+        window.freezePin();
+      }
+
+      // If PIN screen isn't visible yet, try to show it
+      var pinScreen = document.getElementById('pin-lock-screen');
+      if (!pinScreen || pinScreen.style.display === 'none') {
+        if (typeof window.showFrozenPinFromCache === 'function') {
+          window.showFrozenPinFromCache();
+        } else {
+          // PIN system not loaded yet — wait for it silently
+          this._waitForPinSystem();
+        }
+      }
+
+      this._startAutoRetry();
+      return;
+    }
+
+    // ── Non-PIN path: normal offline page ──
     const existingPage = document.getElementById('connection-offline-page');
     if (!this.isOnline && existingPage && existingPage.classList.contains('is-visible')) {
       return; // Already showing
     }
 
-    console.log('[OfflineDetector] Connection lost');
+    console.log('[OfflineDetector] Connection lost (no PIN)');
     this.isOnline = false;
     this.isChecking = false;
     this.retryCount = 0;
 
-    // Clean up any leftover hidden page from previous cycle
     if (existingPage) {
       existingPage.remove();
     }
     this._unlockBackground();
 
-    // CHECK 0: PIN cold start flag — pin-lock-system.js set this flag, PIN takes absolute priority
-    if (window._pinRequiredOnStart && !window._pinUnlocked) {
-      console.log('[OfflineDetector] PIN required on start — skipping offline page entirely');
-      // Freeze PIN if it's already showing
-      if (typeof window.freezePin === 'function') window.freezePin();
-      this._startAutoRetry();
-      return;
-    }
-
-    // CHECK 1: Is PIN lock screen already visible in DOM?
-    // (pin-lock-system.js may have already shown it via immediate cold start check)
-    var pinScreen = document.getElementById('pin-lock-screen');
-    if (pinScreen && pinScreen.style.display !== 'none' && !window._pinUnlocked) {
-      console.log('[OfflineDetector] PIN screen already visible — skipping offline page');
-      this._startAutoRetry();
-      return;
-    }
-
-    // CHECK 2: PIN enabled + not unlocked → try to show frozen PIN
-    var pinActive = this._isPinEnabledFromStorage();
-    if (pinActive && !window._pinUnlocked) {
-      console.log('[OfflineDetector] PIN enabled + not unlocked — showing frozen PIN');
-      if (typeof window.showFrozenPinFromCache === 'function') {
-        window.showFrozenPinFromCache();
-        this._startAutoRetry();
-        return;
-      }
-      // PIN system not yet loaded — wait silently, do NOT show offline page
-      // PIN system's _immediateColdStartCheck will show frozen PIN when it loads
-      console.log('[OfflineDetector] PIN enabled but system not loaded — waiting silently (no offline page)');
-      this._startAutoRetry();
-      this._waitForPinSystem();
-      return;
-    }
-
-    // No PIN — show offline page as usual
     this._showOfflinePage();
     this._startAutoRetry();
   }
