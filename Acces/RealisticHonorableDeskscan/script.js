@@ -5578,9 +5578,18 @@ function startGradualAccumulation() {
   
   console.log(`✅ localBoostData initialized: multiplier=${initialMultiplier}, referrals=${initialReferrals}, adBoost=false`);
 
-  // Start with zero display
+  // Show instant calculated value instead of zero to prevent flicker on resume
   if (accumulatedCoinsElement) {
-    accumulatedCoinsElement.textContent = formatNumberSmart(0);
+    const _initNow = Math.floor(Date.now() / 1000);
+    const _initElapsed = _initNow - localBoostData.startTimeSec;
+    if (_initElapsed > 0) {
+      const _initBase = window.serverBaseReward || 0.25;
+      const _initReward = _initBase * localBoostData.multiplier;
+      const _initVal = _initElapsed >= 86400 ? _initReward : (_initReward / 86400) * _initElapsed;
+      accumulatedCoinsElement.textContent = formatNumberSmart(_initVal);
+    } else {
+      accumulatedCoinsElement.textContent = formatNumberSmart(0);
+    }
   }
 
   // Refresh processing history to show new Collecting... entry
