@@ -14,7 +14,6 @@
   let biometricAvailable = false;
   let isLocked = false;
   let pinSetupCallback = null;
-  let _pinFrozen = false; // true = PIN visible but non-functional (no internet)
 
   // ===== API HELPERS =====
   function getApiBase() {
@@ -32,43 +31,6 @@
   function getLocalPinKey() {
     var userId = getUserId();
     return userId ? 'pin_state_' + userId : null;
-  }
-
-  // Check PIN state from cache WITHOUT needing currentUser
-  // Used by offline detector on cold start when currentUser isn't loaded yet
-  function isPinEnabledFromCache() {
-    try {
-      // Fastest: global PIN flag (survives even if accessoireUser is lost)
-      if (localStorage.getItem('_pin_active') === '1') return true;
-
-      // Try with currentUser
-      var key = getLocalPinKey();
-      if (key) {
-        var data = JSON.parse(localStorage.getItem(key));
-        if (data && data.pinEnabled) return true;
-      }
-      // Fallback: read userId from saved session (accessoireUser)
-      var saved = localStorage.getItem('accessoireUser');
-      if (saved) {
-        var user = JSON.parse(saved);
-        if (user && user.id) {
-          var fallbackKey = 'pin_state_' + user.id;
-          var data2 = JSON.parse(localStorage.getItem(fallbackKey));
-          if (data2 && data2.pinEnabled) return true;
-        }
-      }
-      // Last resort: scan all pin_state_* keys
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (k && k.indexOf('pin_state_') === 0) {
-          try {
-            var val = JSON.parse(localStorage.getItem(k));
-            if (val && val.pinEnabled) return true;
-          } catch(e2) {}
-        }
-      }
-    } catch(e) {}
-    return false;
   }
 
   function saveLocalPinState() {
@@ -91,18 +53,8 @@
 
   function loadLocalPinState() {
     var key = getLocalPinKey();
-    // Fallback: try from saved session if currentUser not loaded yet
     if (!key) {
-      try {
-        var saved = localStorage.getItem('accessoireUser');
-        if (saved) {
-          var user = JSON.parse(saved);
-          if (user && user.id) key = 'pin_state_' + user.id;
-        }
-      } catch(e) {}
-    }
-    // Fallback 2: scan pin_state_* keys if accessoireUser is also missing
-    if (!key) {
+      // Fallback: scan pin_state_* keys if accessoireUser is missing
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
         if (k && k.indexOf('pin_state_') === 0) {
@@ -124,7 +76,6 @@
       if (data && typeof data.pinEnabled === 'boolean') {
         pinEnabled = data.pinEnabled;
         biometricEnabled = data.biometricEnabled || false;
-        // Backfill _pin_active flag
         if (pinEnabled) {
           try { localStorage.setItem('_pin_active', '1'); } catch(e3) {}
         }
@@ -140,15 +91,25 @@
       const userId = getUserId();
       if (!userId) return;
 
-      // Check biometric availability early
-      await checkBiometricAvailabilityAsync();
-
-      // Load local cache FIRST (instant, works offline)
+      // Load local cache FIRST (instant, sync) — show PIN IMMEDIATELY
+      // This MUST happen before any await to prevent app being visible without PIN
       var hadLocal = loadLocalPinState();
       if (hadLocal) {
         updateSettingsUI();
         if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
+        }
+      }
+
+      // Check biometric availability (async) — PIN is already showing if enabled
+      await checkBiometricAvailabilityAsync();
+
+      // If biometric became available while lock screen is active, update UI + trigger
+      if (isLocked && biometricAvailable && biometricEnabled) {
+        const bioBtn = document.getElementById('pin-biometric-btn');
+        if (bioBtn) bioBtn.style.visibility = 'visible';
+        if (!window._biometricInProgress) {
+          triggerBiometricAuth();
         }
       }
 
@@ -373,87 +334,9 @@
         break;
     }
 
-    // Show biometric button in disable mode if biometric is enabled
-    const setupBioBtn = document.getElementById('pin-setup-biometric-btn');
-    if (setupBioBtn) {
-      if (step === 'disable' && biometricEnabled && biometricAvailable && window.Fingerprint) {
-        setupBioBtn.style.visibility = 'visible';
-      } else {
-        setupBioBtn.style.visibility = 'hidden';
-      }
-    }
-
     modal.style.display = 'flex';
-    setTimeout(() => {
-      modal.classList.add('active');
-      // Auto-trigger biometric when disabling PIN
-      if (step === 'disable' && biometricEnabled && biometricAvailable && window.Fingerprint) {
-        setTimeout(() => window.pinSetupBiometricAuth(), 300);
-      }
-    }, 10);
+    setTimeout(() => modal.classList.add('active'), 10);
   }
-
-  // Biometric auth for setup/disable modal
-  window.pinSetupBiometricAuth = function() {
-    if (setupStep !== 'disable' || !window.Fingerprint || !biometricAvailable || !biometricEnabled) return;
-    if (window._setupBiometricInProgress) return;
-    window._setupBiometricInProgress = true;
-
-    const t = (key) => window.translator ? window.translator.translate(key) : key;
-
-    window.Fingerprint.show(
-      {
-        title: t('Disable PIN'),
-        disableBackup: true
-      },
-      async function() {
-        window._setupBiometricInProgress = false;
-        // Biometric success - animate dots then disable PIN
-        const dots = document.querySelectorAll('#pin-setup-dots .pin-dot');
-        let i = 0;
-        const fillInterval = setInterval(async () => {
-          if (i < dots.length) {
-            dots[i].classList.add('filled');
-            if (navigator.vibrate) navigator.vibrate(15);
-            i++;
-          } else {
-            clearInterval(fillInterval);
-            // Disable PIN via biometric (send to dedicated biometric endpoint)
-            try {
-              const userId = getUserId();
-              const response = await fetch(getApiBase() + '/api/pin/disable-biometric', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId })
-              });
-              const data = await response.json();
-              if (data.success) {
-                pinEnabled = false;
-                biometricEnabled = false;
-                saveLocalPinState();
-                window.closePinModal();
-                updateSettingsUI();
-                if (window.showNotification) {
-                  window.showNotification(t('PIN disabled'), 'success');
-                }
-              } else {
-                showSetupError(t(data.error || 'Failed to disable PIN'));
-                clearSetupDots();
-              }
-            } catch (error) {
-              console.error('[PIN] Error disabling PIN via biometric:', error);
-              showSetupError(t('Network error'));
-              clearSetupDots();
-            }
-          }
-        }, 80);
-      },
-      function(error) {
-        window._setupBiometricInProgress = false;
-        console.log('[PIN] Setup biometric cancelled/failed:', error);
-      }
-    );
-  };
 
   window.closePinModal = function() {
     const modal = document.getElementById('pin-setup-modal');
@@ -664,21 +547,6 @@
   function showLockScreen() {
     // Prevent showing lock screen if already locked or in cooldown after unlock
     if (isLocked || _unlockCooldown) return;
-
-    // If offline page exists, PIN takes priority — remove offline page and freeze
-    var offlinePage = document.getElementById('connection-offline-page');
-    if (offlinePage) {
-      offlinePage.remove();
-      if (window.offlineDetector && typeof window.offlineDetector._unlockBackground === 'function') {
-        window.offlineDetector._unlockBackground();
-      }
-      if (!navigator.onLine) {
-        _pinFrozen = true;
-      }
-    } else if (!navigator.onLine) {
-      // No offline page but still offline — freeze PIN
-      _pinFrozen = true;
-    }
     
     isLocked = true;
     pinInput = '';
@@ -695,24 +563,17 @@
       lockScreen.style.opacity = '1';
     });
 
-    // Show frozen indicator if offline
-    if (_pinFrozen) _showFrozenIndicator();
-    else _hideFrozenIndicator();
-
     // Show biometric button if enabled
-    // On cold start, biometricAvailable may still be false (async check pending)
-    // Show button based on biometricEnabled setting — it will be hidden later if truly unavailable
     const bioBtn = document.getElementById('pin-biometric-btn');
     if (bioBtn) {
-      bioBtn.style.visibility = biometricEnabled ? 'visible' : 'hidden';
+      bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
     }
 
-    // Auto-trigger biometric if enabled (once only) — skip if frozen
-    // Wait 1s to ensure PIN screen is fully rendered before showing biometric dialog
-    if (biometricEnabled && biometricAvailable && window.Fingerprint && !_pinFrozen) {
+    // Auto-trigger biometric immediately if enabled (once only)
+    if (biometricEnabled && biometricAvailable && window.Fingerprint) {
       setTimeout(() => {
-        if (isLocked && !_pinFrozen) triggerBiometricAuth();
-      }, 1000);
+        if (isLocked) triggerBiometricAuth();
+      }, 400);
     }
   }
 
@@ -720,75 +581,34 @@
     if (!isLocked) return;
     isLocked = false;
     window._pinUnlocked = true;
-    window._pinRequiredOnStart = false; // PIN unlocked — offline detector can work normally
     window._biometricInProgress = false;
     
     // Cooldown: prevent re-locking for 2 seconds after unlock
     _unlockCooldown = true;
     setTimeout(() => { _unlockCooldown = false; }, 2000);
-
-    // Start loading data BEFORE hiding PIN screen
-    // So data starts arriving while PIN is still visible
-    _loadDataAfterUnlock();
-
+    
     const lockScreen = document.getElementById('pin-lock-screen');
     if (lockScreen) {
-      // Keep PIN visible briefly while data loads in background
-      // Then smooth fade out after a short delay
+      // Smooth fade out
+      lockScreen.style.transition = 'opacity 0.25s ease-out';
+      lockScreen.style.opacity = '0';
       setTimeout(() => {
-        lockScreen.style.transition = 'opacity 0.35s ease-out';
-        lockScreen.style.opacity = '0';
-        setTimeout(() => {
-          lockScreen.classList.remove('active');
-          lockScreen.style.display = 'none';
-          lockScreen.style.opacity = '';
-          lockScreen.style.transition = '';
+        lockScreen.classList.remove('active');
+        lockScreen.style.display = 'none';
+        lockScreen.style.opacity = '';
+        lockScreen.style.transition = '';
 
-          // Show any notifications that were queued during lock screen
-          if (typeof window._flushNotificationQueue === 'function') {
-            window._flushNotificationQueue();
-          }
-        }, 350);
-      }, 400); // 400ms head-start for data to begin loading
-    }
-  }
-
-  function _loadDataAfterUnlock() {
-    try {
-      // Restore currentUser from session if not loaded yet (cold start)
-      if (!window.currentUser || !window.currentUser.email) {
-        try {
-          var saved = localStorage.getItem('accessoireUser');
-          if (saved) {
-            var userData = JSON.parse(saved);
-            if (userData && userData.email) {
-              window.currentUser = userData;
-              console.log('[PIN] Restored currentUser from session cache');
-            }
-          }
-        } catch(e) {}
-      }
-      if (window.currentUser && window.currentUser.email) {
-        if (typeof window.loadUserData === 'function') {
-          console.log('[PIN] Loading user data after unlock for:', window.currentUser.email);
-          window.loadUserData(window.currentUser.email);
-        } else {
-          console.warn('[PIN] loadUserData not available — reloading page');
-          window.location.reload();
+        // Show any notifications that were queued during lock screen
+        if (typeof window._flushNotificationQueue === 'function') {
+          window._flushNotificationQueue();
         }
-      } else {
-        console.warn('[PIN] No currentUser found — reloading page');
-        window.location.reload();
-      }
-    } catch (e) {
-      console.warn('[PIN] Post-unlock data load error:', e);
-      window.location.reload();
+      }, 250);
     }
+
   }
 
   // ===== LOCK KEYPAD =====
   window.pinKeyPress = function(digit) {
-    if (_pinFrozen) return; // No input when frozen (offline)
     if (pinInput.length >= 6) return;
     pinInput += digit;
     updateLockDots(pinInput.length);
@@ -803,7 +623,6 @@
   };
 
   window.pinKeyDelete = function() {
-    if (_pinFrozen) return; // No input when frozen (offline)
     if (pinInput.length > 0) {
       pinInput = pinInput.slice(0, -1);
       updateLockDots(pinInput.length);
@@ -859,17 +678,10 @@
 
   // ===== BIOMETRIC AUTH =====
   function triggerBiometricAuth() {
-    if (_pinFrozen) return; // No biometric when frozen (offline)
     if (!window.Fingerprint || !biometricAvailable || !biometricEnabled) return;
     // Prevent multiple popups
     if (window._biometricInProgress) return;
     window._biometricInProgress = true;
-
-    // Safety timeout: if plugin never calls back, reset flag after 30s
-    var _bioSafetyTimer = setTimeout(function() {
-      console.warn('[PIN] Biometric safety timeout — resetting flag');
-      window._biometricInProgress = false;
-    }, 30000);
 
     const t = (key) => window.translator ? window.translator.translate(key) : key;
 
@@ -880,13 +692,11 @@
       },
       function() {
         // Success - animate dots filling up then unlock
-        clearTimeout(_bioSafetyTimer);
         window._biometricInProgress = false;
         animateDotsAndUnlock();
       },
       function(error) {
         // Failed or cancelled - just reset flag, user can use PIN or tap bio button
-        clearTimeout(_bioSafetyTimer);
         window._biometricInProgress = false;
         console.log('[PIN] Biometric cancelled/failed:', error);
       }
@@ -919,28 +729,8 @@
 
   // Expose for button tap (manual trigger)
   window.pinBiometricAuth = function() {
-    if (_pinFrozen) return;
-    // Force reset biometric flag on manual button press — user explicitly wants biometric
-    window._biometricInProgress = false;
-    
-    // On cold start, biometricAvailable may still be false (async check pending)
-    // If user pressed the button, check availability first then trigger
-    if (!biometricAvailable && window.Fingerprint) {
-      checkBiometricAvailabilityAsync().then(function(available) {
-        if (available) {
-          window._biometricInProgress = false;
-          triggerBiometricAuth();
-        }
-      });
-    } else {
-      triggerBiometricAuth();
-    }
+    triggerBiometricAuth();
   };
-
-  // Expose pinSetupBiometricAuth if not already defined (fallback)
-  if (!window.pinSetupBiometricAuth) {
-    window.pinSetupBiometricAuth = function() {};
-  }
 
   // ===== APP LIFECYCLE =====
   // Track when app goes to background
@@ -991,198 +781,6 @@
   // Expose loadPinStatus for when user logs in
   window.loadPinStatus = loadPinStatus;
   window.isPinLocked = function() { return isLocked; };
-  // Expose PIN lock state for other systems
-  window.isPinEnabled = function() { return pinEnabled; };
-  window._pinLockVisible = function() { return isLocked; };
-  window.isPinEnabledFromCache = isPinEnabledFromCache;
-
-  // Show/hide "waiting for connection" indicator on PIN screen
-  function _showFrozenIndicator() {
-    var existing = document.getElementById('pin-frozen-indicator');
-    if (existing) { existing.style.display = 'flex'; return; }
-    var lockScreen = document.getElementById('pin-lock-screen');
-    if (!lockScreen) return;
-    var ind = document.createElement('div');
-    ind.id = 'pin-frozen-indicator';
-    ind.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:50px;padding:8px 20px;z-index:10;white-space:nowrap;';
-    // Direct lookup: window.translator may not exist yet on cold start
-    // (Translator class is in script.js which loads later)
-    var t = 'Waiting for connection...';
-    try {
-      if (window.translator && typeof window.translator.translate === 'function') {
-        t = window.translator.translate('Waiting for connection...');
-      } else if (window.translations) {
-        var lang = window.__preloadedLang || localStorage.getItem('preferredLanguage') || 'en';
-        var tr = window.translations[lang];
-        if (tr && tr['Waiting for connection...']) t = tr['Waiting for connection...'];
-      }
-    } catch(e) {}
-    ind.innerHTML = '<span style="width:8px;height:8px;background:#ef4444;border-radius:50%;animation:offDotBlink 1.4s ease-in-out infinite"></span><span style="font-size:0.82rem;font-weight:600;color:#ef4444">' + t + '</span>';
-    lockScreen.appendChild(ind);
-  }
-  function _hideFrozenIndicator() {
-    var ind = document.getElementById('pin-frozen-indicator');
-    if (ind) ind.style.display = 'none';
-  }
-
-  // Freeze/unfreeze PIN (used by offline detector)
-  window.freezePin = function() {
-    _pinFrozen = true;
-    _showFrozenIndicator();
-    console.log('[PIN] Frozen — waiting for internet');
-  };
-  window.unfreezePin = function() {
-    if (!_pinFrozen) return;
-    _pinFrozen = false;
-    _hideFrozenIndicator();
-    console.log('[PIN] Unfrozen — internet available');
-
-    // CRITICAL: Reset biometric flag — may be stuck from a previous failed attempt
-    window._biometricInProgress = false;
-
-    var bioBtn = document.getElementById('pin-biometric-btn');
-
-    // Re-check biometric availability (plugin may not have been ready on cold start)
-    // Then auto-trigger biometric prompt AFTER a delay (let system stabilize)
-    if (isLocked && biometricEnabled) {
-      checkBiometricAvailabilityAsync().then(function(available) {
-        if (bioBtn) {
-          bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
-        }
-        if (available && isLocked && !_pinFrozen) {
-          // Delay biometric trigger — give system time to fully stabilize after reconnect
-          setTimeout(function() {
-            if (isLocked && !_pinFrozen) {
-              window._biometricInProgress = false;
-              triggerBiometricAuth();
-            }
-          }, 1200);
-        }
-      });
-    } else if (bioBtn) {
-      bioBtn.style.visibility = 'hidden';
-    }
-  };
-
-  // Show frozen PIN directly from cache (for cold start without internet)
-  // Works even when currentUser isn't loaded yet
-  window.showFrozenPinFromCache = function() {
-    if (isLocked) return; // Already showing
-    // Load PIN state from cache (with fallback to accessoireUser)
-    var hadLocal = loadLocalPinState();
-    if (hadLocal && pinEnabled) {
-      // Don't wait for biometric check — show PIN immediately, check biometric later
-      _pinFrozen = true;
-      showLockScreen();
-      // Check biometric in background for when PIN unfreezes
-      checkBiometricAvailabilityAsync();
-    }
-  };
-
-  // ===== IMMEDIATE COLD START CHECK =====
-  // This runs SYNCHRONOUSLY when the script loads
-  // Shows PIN lock screen IMMEDIATELY from localStorage cache
-  // BEFORE script.js can show the dashboard — prevents PIN bypass
-  (function _immediateColdStartCheck() {
-    if (window._pinUnlocked) return; // Already unlocked
-    // Check PIN from localStorage directly
-    try {
-      var data = null;
-
-      // Method 1: standard path via accessoireUser
-      var saved = localStorage.getItem('accessoireUser');
-      if (saved) {
-        var user = JSON.parse(saved);
-        if (user && user.id) {
-          var raw = localStorage.getItem('pin_state_' + user.id);
-          if (raw) data = JSON.parse(raw);
-        }
-      }
-
-      // Method 2: if accessoireUser is missing, scan pin_state_* keys
-      if (!data) {
-        for (var i = 0; i < localStorage.length; i++) {
-          var k = localStorage.key(i);
-          if (k && k.indexOf('pin_state_') === 0) {
-            try {
-              var val = JSON.parse(localStorage.getItem(k));
-              if (val && val.pinEnabled) { data = val; break; }
-            } catch(e2) {}
-          }
-        }
-      }
-
-      // Method 3: if even scan finds nothing, check _pin_active flag
-      if (!data && localStorage.getItem('_pin_active') === '1') {
-        // We know PIN was enabled but lost the state details
-        data = { pinEnabled: true, biometricEnabled: false };
-      }
-
-      if (!data || !data.pinEnabled) return;
-      
-      // PIN is enabled → show lock screen IMMEDIATELY
-      console.log('[PIN] Cold start + PIN enabled — showing lock screen immediately');
-      pinEnabled = true;
-      biometricEnabled = data.biometricEnabled || false;
-      // Ensure _pin_active flag exists (backfill for users who enabled PIN before this update)
-      try { localStorage.setItem('_pin_active', '1'); } catch(e3) {}
-      // Global flag: tells OfflineDetector to NEVER show offline page
-      // PIN lock screen takes priority on cold start
-      window._pinRequiredOnStart = true;
-      
-      // If offline, freeze the PIN
-      if (!navigator.onLine) {
-        _pinFrozen = true;
-      }
-      
-      // We need DOM ready for PIN screen element
-      var lockEl = document.getElementById('pin-lock-screen');
-      if (lockEl) {
-        showLockScreen();
-        // Check biometric in background — on cold start biometricAvailable is still false
-        // so showLockScreen's auto-trigger won't fire. We handle it here instead.
-        checkBiometricAvailabilityAsync().then(function(available) {
-          // Update biometric button visibility now that we know the real state
-          var bioBtn = document.getElementById('pin-biometric-btn');
-          if (bioBtn) {
-            bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
-          }
-          // Auto-trigger biometric if available and online
-          // IMPORTANT: Wait long enough for PIN screen to be fully visible (1s)
-          // Otherwise biometric dialog appears before PIN screen = confusing + fails
-          if (available && navigator.onLine && isLocked && !_pinFrozen) {
-            setTimeout(function() {
-              if (isLocked && !_pinFrozen) {
-                window._biometricInProgress = false;
-                triggerBiometricAuth();
-              }
-            }, 1000);
-          }
-        });
-      } else {
-        // DOM not ready yet — wait for it
-        document.addEventListener('DOMContentLoaded', function() {
-          if (!isLocked && !window._pinUnlocked) {
-            showLockScreen();
-            checkBiometricAvailabilityAsync().then(function(available) {
-              var bioBtn = document.getElementById('pin-biometric-btn');
-              if (bioBtn) {
-                bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
-              }
-              if (available && navigator.onLine && isLocked && !_pinFrozen) {
-                setTimeout(function() {
-                  if (isLocked && !_pinFrozen) {
-                    window._biometricInProgress = false;
-                    triggerBiometricAuth();
-                  }
-                }, 1000);
-              }
-            });
-          }
-        });
-      }
-    } catch(e) { console.warn('[PIN] Cold start check error:', e); }
-  })();
 
   // Start when DOM is ready
   if (document.readyState === 'loading') {
