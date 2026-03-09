@@ -691,6 +691,23 @@
   }
 
   // ===== BIOMETRIC AUTH =====
+  var _bioRetryCount = 0;
+  var _BIO_MAX_RETRIES = 2; // Auto-retry up to 2 times on transient errors
+
+  function _isUserCancellation(error) {
+    if (!error) return false;
+    var msg = (typeof error === 'string' ? error : (error.message || error.code || '')).toString().toLowerCase();
+    if (msg.indexOf('cancel') !== -1) return true;
+    if (msg.indexOf('dismiss') !== -1) return true;
+    if (msg.indexOf('user') !== -1) return true;
+    if (msg.indexOf('back') !== -1 && msg.indexOf('callback') === -1) return true;
+    if (error.code === -128 || msg === '-128') return true;
+    if (msg.indexOf('biometric_dismissed') !== -1) return true;
+    if (msg.indexOf('biometric_pin_or_pattern_dismissed') !== -1) return true;
+    if (msg.indexOf('locked') !== -1) return true;
+    return false;
+  }
+
   function triggerBiometricAuth() {
     if (!window.Fingerprint || !biometricAvailable || !biometricEnabled) return;
     // Prevent multiple popups
@@ -707,12 +724,32 @@
       function() {
         // Success - animate dots filling up then unlock
         window._biometricInProgress = false;
+        _bioRetryCount = 0;
         animateDotsAndUnlock();
       },
       function(error) {
-        // Failed or cancelled - just reset flag, user can use PIN or tap bio button
         window._biometricInProgress = false;
-        console.log('[PIN] Biometric cancelled/failed:', error);
+        console.log('[PIN] Biometric failed:', error, '(retry ' + _bioRetryCount + '/' + _BIO_MAX_RETRIES + ')');
+
+        if (_isUserCancellation(error)) {
+          console.log('[PIN] User cancelled biometric — no retry');
+          _bioRetryCount = 0;
+          return;
+        }
+
+        if (_bioRetryCount < _BIO_MAX_RETRIES && isLocked) {
+          _bioRetryCount++;
+          console.log('[PIN] Auto-retrying biometric (' + _bioRetryCount + '/' + _BIO_MAX_RETRIES + ')...');
+          setTimeout(function() {
+            if (isLocked) {
+              triggerBiometricAuth();
+            } else {
+              _bioRetryCount = 0;
+            }
+          }, 600);
+        } else {
+          _bioRetryCount = 0;
+        }
       }
     );
   }
