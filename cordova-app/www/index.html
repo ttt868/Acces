@@ -146,12 +146,6 @@
     html.user-logged-in.app-ready #login-container { display: none !important; }
     html.user-not-logged-in.app-ready #login-container { display: flex !important; }
     html.user-not-logged-in.app-ready #app-container { display: none !important; }
-
-    /* PIN required: show lock screen from FIRST PAINT before any JS runs */
-    html.pin-required #pin-lock-screen {
-      display: flex !important;
-      opacity: 1 !important;
-    }
     
     /* Transaction Filter - Mobile/Desktop responsive */
     .tx-filter-mobile { display: none !important; }
@@ -208,10 +202,6 @@
       }
       if (isLoggedIn) {
         document.documentElement.classList.add('user-logged-in');
-        // PIN BOOTSTRAP: if PIN enabled, show lock screen from first paint
-        if (localStorage.getItem('_pin_active')) {
-          document.documentElement.classList.add('pin-required');
-        }
       } else {
         document.documentElement.classList.add('user-not-logged-in');
       }
