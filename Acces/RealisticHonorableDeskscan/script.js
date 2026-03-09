@@ -1329,7 +1329,8 @@ For more information, visit our platform at: ${window.location.origin}
           email: userEmail,
           userId: userId,
           reason: reason,
-          feedback: feedback
+          feedback: feedback,
+          session_token: currentUser?.sessionToken || currentUser?.session_token || ''
         })
       }).then(async response => {
         const result = await response.json();
@@ -1368,7 +1369,7 @@ For more information, visit our platform at: ${window.location.origin}
         } else {
           console.error('❌ Failed to delete account:', result.error);
           if (typeof showNotification === 'function') {
-            showNotification(translator.translate('Error deleting account: ') + result.error, 'error');
+            showNotification(translator.translate('Error deleting account: ') + translator.translate(result.error || ''), 'error');
           }
         }
       }).catch(error => {

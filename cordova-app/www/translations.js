@@ -483,7 +483,11 @@ window.translations = {
     "Login error. Please try again.": "Login error. Please try again.",
     "Sign-in cancelled.": "Sign-in cancelled.",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "Configuration error (Error 10). Check SHA-1 fingerprint.",
-    "Sign-in failed.": "Sign-in failed."
+    "Sign-in failed.": "Sign-in failed.",
+    "Invalid session - please re-login": "Invalid session - please re-login",
+    "Too many attempts. Please wait.": "Too many attempts. Please wait.",
+    "Invalid PIN (must be 6 digits)": "Invalid PIN (must be 6 digits)",
+    "Invalid session": "Invalid session"
 
   },
 
@@ -1242,7 +1246,11 @@ processingTransaction: "Traitement de la transaction en cours...",
     "Login error. Please try again.": "Erreur de connexion. Veuillez réessayer.",
     "Sign-in cancelled.": "Connexion annulée.",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "Erreur de configuration (Erreur 10). Vérifiez l'empreinte SHA-1.",
-    "Sign-in failed.": "Échec de la connexion."
+    "Sign-in failed.": "Échec de la connexion.",
+    "Invalid session - please re-login": "Session invalide - veuillez vous reconnecter",
+    "Too many attempts. Please wait.": "Trop de tentatives. Veuillez patienter.",
+    "Invalid PIN (must be 6 digits)": "PIN invalide (doit être 6 chiffres)",
+    "Invalid session": "Session invalide"
 
   },
 
@@ -1988,7 +1996,11 @@ processingTransaction: "Procesando transacción...",
     "Login error. Please try again.": "Error de inicio de sesión. Inténtalo de nuevo.",
     "Sign-in cancelled.": "Inicio de sesión cancelado.",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "Error de configuración (Error 10). Verifica la huella SHA-1.",
-    "Sign-in failed.": "Error de inicio de sesión."
+    "Sign-in failed.": "Error de inicio de sesión.",
+    "Invalid session - please re-login": "Sesión inválida - por favor inicia sesión de nuevo",
+    "Too many attempts. Please wait.": "Demasiados intentos. Por favor espera.",
+    "Invalid PIN (must be 6 digits)": "PIN inválido (debe ser 6 dígitos)",
+    "Invalid session": "Sesión inválida"
 
   },
 
@@ -2711,7 +2723,11 @@ processingTransaction: "Elaborazione della transazione in corso...",
     "Login error. Please try again.": "Errore di accesso. Riprova.",
     "Sign-in cancelled.": "Accesso annullato.",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "Errore di configurazione (Errore 10). Controlla l'impronta SHA-1.",
-    "Sign-in failed.": "Accesso non riuscito."
+    "Sign-in failed.": "Accesso non riuscito.",
+    "Invalid session - please re-login": "Sessione non valida - effettua nuovamente l'accesso",
+    "Too many attempts. Please wait.": "Troppi tentativi. Attendere prego.",
+    "Invalid PIN (must be 6 digits)": "PIN non valido (deve essere di 6 cifre)",
+    "Invalid session": "Sessione non valida"
 
   },
 
@@ -3433,7 +3449,11 @@ processingTransaction: "İşlem işleniyor...",
     "Login error. Please try again.": "Giriş hatası. Lütfen tekrar deneyin.",
     "Sign-in cancelled.": "Giriş iptal edildi.",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "Yapılandırma hatası (Hata 10). SHA-1 parmak izini kontrol edin.",
-    "Sign-in failed.": "Giriş başarısız."
+    "Sign-in failed.": "Giriş başarısız.",
+    "Invalid session - please re-login": "Geçersiz oturum - lütfen tekrar giriş yapın",
+    "Too many attempts. Please wait.": "Çok fazla deneme. Lütfen bekleyin.",
+    "Invalid PIN (must be 6 digits)": "Geçersiz PIN (6 rakam olmalıdır)",
+    "Invalid session": "Geçersiz oturum"
 
   },
 
@@ -4167,7 +4187,11 @@ processingTransaction: "İşlem işleniyor...",
     "Login error. Please try again.": "लॉगिन त्रुटि। कृपया पुनः प्रयास करें।",
     "Sign-in cancelled.": "साइन-इन रद्द किया गया।",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "कॉन्फ़िगरेशन त्रुटि (त्रुटि 10)। SHA-1 फ़िंगरप्रिंट जाँचें।",
-    "Sign-in failed.": "साइन-इन विफल।"
+    "Sign-in failed.": "साइन-इन विफल।",
+    "Invalid session - please re-login": "अमान्य सत्र - कृपया पुनः लॉगिन करें",
+    "Too many attempts. Please wait.": "बहुत अधिक प्रयास। कृपया प्रतीक्षा करें।",
+    "Invalid PIN (must be 6 digits)": "अमान्य PIN (6 अंक होने चाहिए)",
+    "Invalid session": "अमान्य सत्र"
 
   },
 
@@ -4891,7 +4915,11 @@ processingTransaction: "İşlem işleniyor...",
     "Login error. Please try again.": "登录错误。请重试。",
     "Sign-in cancelled.": "登录已取消。",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "配置错误（错误 10）。请检查 SHA-1 指纹。",
-    "Sign-in failed.": "登录失败。"
+    "Sign-in failed.": "登录失败。",
+    "Invalid session - please re-login": "会话无效 - 请重新登录",
+    "Too many attempts. Please wait.": "尝试次数过多。请稍候。",
+    "Invalid PIN (must be 6 digits)": "PIN码无效（必须是6位数字）",
+    "Invalid session": "会话无效"
 
   },
 
@@ -5630,7 +5658,11 @@ processingTransaction: "İşlem işleniyor...",
     "Login error. Please try again.": "ログインエラー。もう一度お試しください。",
     "Sign-in cancelled.": "サインインがキャンセルされました。",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "設定エラー（エラー 10）。SHA-1フィンガープリントを確認してください。",
-    "Sign-in failed.": "サインインに失敗しました。"
+    "Sign-in failed.": "サインインに失敗しました。",
+    "Invalid session - please re-login": "セッションが無効です - 再度ログインしてください",
+    "Too many attempts. Please wait.": "試行回数が多すぎます。お待ちください。",
+    "Invalid PIN (must be 6 digits)": "PINが無効です（6桁の数字が必要です）",
+    "Invalid session": "セッションが無効です"
 
   },
 
@@ -6368,7 +6400,11 @@ processingTransaction: "İşlem işleniyor...",
     "Login error. Please try again.": "로그인 오류. 다시 시도해 주세요.",
     "Sign-in cancelled.": "로그인이 취소되었습니다.",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "구성 오류 (오류 10). SHA-1 지문을 확인하세요.",
-    "Sign-in failed.": "로그인 실패."
+    "Sign-in failed.": "로그인 실패.",
+    "Invalid session - please re-login": "세션이 유효하지 않습니다 - 다시 로그인해 주세요",
+    "Too many attempts. Please wait.": "너무 많은 시도입니다. 잠시 기다려 주세요.",
+    "Invalid PIN (must be 6 digits)": "유효하지 않은 PIN (6자리 숫자여야 합니다)",
+    "Invalid session": "유효하지 않은 세션"
 
   },
 
@@ -7095,7 +7131,11 @@ processingTransaction: "İşlem işleniyor...",
     "Login error. Please try again.": "Erro de login. Tente novamente.",
     "Sign-in cancelled.": "Login cancelado.",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "Erro de configuração (Erro 10). Verifique a impressão digital SHA-1.",
-    "Sign-in failed.": "Falha no login."
+    "Sign-in failed.": "Falha no login.",
+    "Invalid session - please re-login": "Sessão inválida - faça login novamente",
+    "Too many attempts. Please wait.": "Muitas tentativas. Aguarde.",
+    "Invalid PIN (must be 6 digits)": "PIN inválido (deve ter 6 dígitos)",
+    "Invalid session": "Sessão inválida"
 
   },
 
@@ -7833,7 +7873,11 @@ insufficientBalance: "Недостаточно средств для этой т
     "Login error. Please try again.": "Ошибка входа. Попробуйте снова.",
     "Sign-in cancelled.": "Вход отменён.",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "Ошибка конфигурации (Ошибка 10). Проверьте отпечаток SHA-1.",
-    "Sign-in failed.": "Ошибка входа."
+    "Sign-in failed.": "Ошибка входа.",
+    "Invalid session - please re-login": "Недействительная сессия - войдите снова",
+    "Too many attempts. Please wait.": "Слишком много попыток. Пожалуйста, подождите.",
+    "Invalid PIN (must be 6 digits)": "Неверный PIN (должен быть 6 цифр)",
+    "Invalid session": "Недействительная сессия"
 
   },
 
@@ -8576,7 +8620,11 @@ insufficientBalance: "Недостаточно средств для этой т
     "Login error. Please try again.": "Anmeldefehler. Bitte versuchen Sie es erneut.",
     "Sign-in cancelled.": "Anmeldung abgebrochen.",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "Konfigurationsfehler (Fehler 10). Überprüfen Sie den SHA-1-Fingerabdruck.",
-    "Sign-in failed.": "Anmeldung fehlgeschlagen."
+    "Sign-in failed.": "Anmeldung fehlgeschlagen.",
+    "Invalid session - please re-login": "Ungültige Sitzung - bitte erneut anmelden",
+    "Too many attempts. Please wait.": "Zu viele Versuche. Bitte warten.",
+    "Invalid PIN (must be 6 digits)": "Ungültige PIN (muss 6 Ziffern haben)",
+    "Invalid session": "Ungültige Sitzung"
 
   },
 
@@ -9366,7 +9414,11 @@ insufficientBalance: "Недостаточно средств для этой т
     "Login error. Please try again.": ".خطأ في تسجيل الدخول. يرجى المحاولة مرة أخرى",
     "Sign-in cancelled.": ".تم إلغاء تسجيل الدخول",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "خطأ في التكوين يرجى التحقق من بصمة SHA-1 (الخطأ 10).",
-    "Sign-in failed.": ".فشل تسجيل الدخول"
+    "Sign-in failed.": ".فشل تسجيل الدخول",
+    "Invalid session - please re-login": "جلسة غير صالحة - يرجى إعادة تسجيل الدخول",
+    "Too many attempts. Please wait.": "محاولات كثيرة جداً. يرجى الانتظار.",
+    "Invalid PIN (must be 6 digits)": "رمز PIN غير صالح (يجب أن يكون 6 أرقام)",
+    "Invalid session": "جلسة غير صالحة"
 
   },
 
@@ -10118,7 +10170,11 @@ insufficientBalance: "Недостаточно средств для этой т
     "Login error. Please try again.": "Kesalahan login. Silakan coba lagi.",
     "Sign-in cancelled.": "Login dibatalkan.",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "Kesalahan konfigurasi (Error 10). Periksa sidik jari SHA-1.",
-    "Sign-in failed.": "Login gagal."
+    "Sign-in failed.": "Login gagal.",
+    "Invalid session - please re-login": "Sesi tidak valid - silakan login kembali",
+    "Too many attempts. Please wait.": "Terlalu banyak percobaan. Harap tunggu.",
+    "Invalid PIN (must be 6 digits)": "PIN tidak valid (harus 6 digit)",
+    "Invalid session": "Sesi tidak valid"
 
   },
 
@@ -10855,7 +10911,11 @@ insufficientBalance: "Недостаточно средств для этой т
     "Login error. Please try again.": "Błąd logowania. Spróbuj ponownie.",
     "Sign-in cancelled.": "Logowanie anulowane.",
     "Configuration error (Error 10). Check SHA-1 fingerprint.": "Błąd konfiguracji (Błąd 10). Sprawdź odcisk palca SHA-1.",
-    "Sign-in failed.": "Logowanie nieudane."
+    "Sign-in failed.": "Logowanie nieudane.",
+    "Invalid session - please re-login": "Nieprawidłowa sesja - zaloguj się ponownie",
+    "Too many attempts. Please wait.": "Zbyt wiele prób. Proszę czekać.",
+    "Invalid PIN (must be 6 digits)": "Nieprawidłowy PIN (musi mieć 6 cyfr)",
+    "Invalid session": "Nieprawidłowa sesja"
 
   }
 };
