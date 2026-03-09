@@ -36,11 +36,18 @@
   <!-- 🔒 منع وميض الرصيد - تغيير النص فوراً -->
   <script>
     window.balanceHiddenOnLoad = localStorage.getItem('balanceHidden') === 'true';
+    // 🔒 PIN protection: show PIN screen BEFORE anything loads
+    if (localStorage.getItem('_pin_active')) {
+      document.documentElement.classList.add('pin-required');
+    }
     // انتظار Cordova
     document.addEventListener('deviceready', function() {
       console.log('✅ Cordova جاهز!');
     }, false);
   </script>
+  <style>
+    html.pin-required #pin-lock-screen { display: flex !important; opacity: 1 !important; }
+  </style>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta http-equiv="Content-Language" content="ar,en,fr,es,de,tr,it,hi,zh,ja,ko,pt,ru,id,pl">
   <meta name="accept-charset" content="UTF-8">

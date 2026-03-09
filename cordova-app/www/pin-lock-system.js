@@ -678,7 +678,11 @@
     hideLockError();
 
     lockScreen.style.display = 'flex';
-    lockScreen.style.opacity = '0';
+    // If already visible from CSS pin-required, skip opacity flash
+    var alreadyVisible = document.documentElement.classList.contains('pin-required');
+    if (!alreadyVisible) {
+      lockScreen.style.opacity = '0';
+    }
     requestAnimationFrame(() => {
       lockScreen.classList.add('active');
       lockScreen.style.opacity = '1';
@@ -711,6 +715,8 @@
     window._pinUnlocked = true;
     window._pinRequiredOnStart = false; // PIN unlocked — offline detector can work normally
     window._biometricInProgress = false;
+    // Remove CSS-level PIN guard
+    document.documentElement.classList.remove('pin-required');
     
     // Cooldown: prevent re-locking for 2 seconds after unlock
     _unlockCooldown = true;
