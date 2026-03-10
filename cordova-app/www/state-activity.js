@@ -47,6 +47,7 @@ class StateProcessingManager {
       
       if (isCordova) {
         // Navigate with history — back button will return to index.html
+        sessionStorage.setItem('_html_nav_ts', Date.now().toString());
         window.location.href = whitepaperUrl;
         return;
       }
@@ -67,6 +68,7 @@ class StateProcessingManager {
       } else {
         // Fallback: direct navigation if popup blocked
         console.log('Popup blocked, using direct navigation');
+        sessionStorage.setItem('_html_nav_ts', Date.now().toString());
         window.location.href = whitepaperUrl;
       }
 

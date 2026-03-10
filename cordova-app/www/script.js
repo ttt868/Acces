@@ -8340,31 +8340,39 @@ window.addEventListener('load', applyArabicCssIfNeeded);
   // ========== SINGLE-DEVICE SESSION GUARD ==========
   // Like Sweatcoin: only ONE device can be logged in at a time.
   // When you log in on Device B, Device A is automatically forced to the login screen.
-  // NO polling — piggybacks on fetchBoostData (every 5s) + visibility change.
   let _sessionGuardActive = false;
-
   let _sessionGuardInterval = null;
+  let _sessionGuardStartTime = 0;
+  // Grace period: don't check session for 90s after page load.
+  // This prevents false logouts when user navigates to .html pages and returns
+  // (Cordova reloads index.html on back button = full page reload).
+  const _SESSION_GUARD_GRACE_MS = 90000;
 
   function startSessionGuard() {
     if (_sessionGuardActive) return;
     _sessionGuardActive = true;
-    // Check session on visibility change (tab/app goes foreground)
-    document.addEventListener('visibilitychange', _onVisibilitySessionCheck);
-    // Cordova resume event
+    _sessionGuardStartTime = Date.now();
+    // Periodic check every 60s (not 30s — gentler in Cordova)
+    _sessionGuardInterval = setInterval(_checkSessionNow, 60000);
+    // Cordova resume event — but only after grace period
     document.addEventListener('resume', _onVisibilitySessionCheck, false);
-    // Periodic check every 30s — works even when processing is NOT active
-    _sessionGuardInterval = setInterval(_checkSessionNow, 30000);
   }
 
   function stopSessionGuard() {
     _sessionGuardActive = false;
-    document.removeEventListener('visibilitychange', _onVisibilitySessionCheck);
     document.removeEventListener('resume', _onVisibilitySessionCheck);
     if (_sessionGuardInterval) { clearInterval(_sessionGuardInterval); _sessionGuardInterval = null; }
   }
 
   async function _checkSessionNow() {
     if (!currentUser || !currentUser.id) return;
+    // Skip during grace period after page load
+    if ((Date.now() - _sessionGuardStartTime) < _SESSION_GUARD_GRACE_MS) return;
+    // Skip if we recently navigated to/from an .html page (in-app navigation)
+    try {
+      const navTs = parseInt(sessionStorage.getItem('_html_nav_ts') || '0');
+      if (navTs && (Date.now() - navTs) < 300000) return; // 5 min grace after .html navigation
+    } catch(e) {}
     const token = currentUser.sessionToken || currentUser.session_token;
     if (!token) return;
     try {
@@ -8382,6 +8390,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
 
   async function _onVisibilitySessionCheck() {
     if (document.hidden) return;
+    // After grace period only
+    if ((Date.now() - _sessionGuardStartTime) < _SESSION_GUARD_GRACE_MS) return;
     _checkSessionNow();
   }
 
@@ -12506,12 +12516,14 @@ if (totalCost > (currentBalance + precision)) {
   window.navigateToTransactionDetails = function(element) {
     const hash = element.getAttribute('data-tx-hash');
     if (hash) {
+      try { sessionStorage.setItem('_html_nav_ts', Date.now().toString()); } catch(e) {}
       window.location.href = `transaction-details.html?hash=${hash}`;
     }
   };
 
   // Show the full network explorer
   window.showFullExplorer = function() {
+    try { sessionStorage.setItem('_html_nav_ts', Date.now().toString()); } catch(e) {}
     window.location.href = 'access-explorer.html';
   };
 
@@ -15980,6 +15992,7 @@ function viewDashboardAddress() {
 
   if (fullAddress && fullAddress.length > 10) {
     // Navigate to address-details.html with the address as a query parameter
+    try { sessionStorage.setItem('_html_nav_ts', Date.now().toString()); } catch(e) {}
     window.location.href = `address-details.html?address=${encodeURIComponent(fullAddress)}`;
   } else {
     console.error('No valid wallet address found');
