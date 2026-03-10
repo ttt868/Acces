@@ -7838,7 +7838,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     currentUser = savedUser;
 
     // Load user data before showing the app interface
-    loadUserData(currentUser.email).then(async () => {
+    loadUserData(currentUser.email, false).then(async () => {
       // Show app interface instead of login
       const loginContainer = document.getElementById('login-container');
       const appContainer = document.getElementById('app-container');
@@ -8446,8 +8446,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
   }
 
   // Load user data from database, ensuring we always get fresh data
-  async function loadUserData(email) {
-    console.log('Loading user data for:', email);
+  async function loadUserData(email, isFreshLogin) {
+    console.log('Loading user data for:', email, isFreshLogin ? '(fresh login)' : '(session restore)');
 
     // Clean up any secondary storage that might exist
     localStorage.removeItem('accessoireUserData');
@@ -8496,8 +8496,9 @@ window.addEventListener('load', applyArabicCssIfNeeded);
           console.log('📷 Preserved original avatar from Google');
         }
 
-        // 🔒 SINGLE-DEVICE: refresh session token on every login (invalidates other devices)
-        if (currentUser.id) {
+        // 🔒 SINGLE-DEVICE: refresh session token ONLY on fresh login (invalidates other devices)
+        // On session restore, keep existing token — don't generate new one
+        if (isFreshLogin && currentUser.id) {
           try {
             const refreshRes = await fetch(getApiBase() + '/api/session/refresh', {
               method: 'POST',
@@ -12900,7 +12901,7 @@ if (totalCost > (currentBalance + precision)) {
     saveUserSession(user);
 
     // Load user data from the server
-    loadUserData(user.email).then(() => {
+    loadUserData(user.email, true).then(() => {
       // After fresh data is loaded, update UI again if needed
       updateUserInfo(currentUser);
 
