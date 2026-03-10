@@ -138,6 +138,12 @@
         updateSettingsUI();
         if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
+          // Auto-trigger biometric on fresh login
+          if (biometricEnabled && biometricAvailable && !window._biometricInProgress) {
+            setTimeout(function() {
+              if (isLocked) triggerBiometricAuth();
+            }, 400);
+          }
         }
       }
 
@@ -154,6 +160,12 @@
         // Show lock screen if PIN enabled and not already locked
         if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
+          // Auto-trigger biometric on fresh login (server confirmed)
+          if (biometricEnabled && biometricAvailable && !window._biometricInProgress) {
+            setTimeout(function() {
+              if (isLocked) triggerBiometricAuth();
+            }, 400);
+          }
         }
       }
     } catch (error) {
