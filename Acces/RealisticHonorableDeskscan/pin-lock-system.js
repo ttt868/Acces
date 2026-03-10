@@ -769,7 +769,7 @@
   // Track when app goes to background
   var _pausedAt = 0;
   var _instantShow = false;
-  var PIN_BACKGROUND_THRESHOLD = 3000; // Show PIN if app was in background > 3 seconds
+  var PIN_BACKGROUND_THRESHOLD = 30000; // Show PIN if app was in background > 30 seconds
 
   document.addEventListener('pause', function() {
     _pausedAt = Date.now();

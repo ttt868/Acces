@@ -951,7 +951,7 @@
   // Track when app goes to background
   var _pausedAt = 0;
   var _instantShow = false;
-  var PIN_BACKGROUND_THRESHOLD = 3000; // Show PIN if app was in background > 3 seconds
+  var PIN_BACKGROUND_THRESHOLD = 30000; // Show PIN if app was in background > 30 seconds
 
   document.addEventListener('pause', function() {
     _pausedAt = Date.now();
@@ -970,9 +970,17 @@
       window._pinUnlocked = false;
       _instantShow = true; // no fade-in on resume
       showLockScreen();
-      // Auto-trigger biometric after PIN screen shows (same delay as cold start)
+      // Auto-trigger biometric INSTANTLY on resume (no splash delay needed)
       if (biometricEnabled) {
-        _waitForDeviceReadyThenBiometric();
+        setTimeout(function() {
+          if (!isLocked || _pinFrozen) return;
+          checkBiometricAvailabilityAsync().then(function(available) {
+            if (available && isLocked && !_pinFrozen) {
+              window._biometricInProgress = false;
+              triggerBiometricAuth();
+            }
+          });
+        }, 100);
       }
     }
   }
