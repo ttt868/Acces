@@ -977,6 +977,15 @@
     if (backgroundDuration < PIN_BACKGROUND_THRESHOLD) {
       return;
     }
+
+    // Skip PIN lock if user was watching a rewarded ad (can take 45s+)
+    if (window._watchingAd) {
+      return;
+    }
+    // Ad just finished — grace period of 10s after ad dismissal
+    if (window._adFinishedAt && (Date.now() - window._adFinishedAt) < 10000) {
+      return;
+    }
     
     if (pinEnabled && window._pinUnlocked) {
       window._pinUnlocked = false;
