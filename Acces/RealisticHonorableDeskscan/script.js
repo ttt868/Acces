@@ -9038,8 +9038,11 @@ function initializeGoogleSignIn() {
       qrContainer.style.minHeight = '150px'; // Prevent layout shift
       qrContainer.style.minWidth = '150px';  // Prevent layout shift
 
-      // Check if we already have QR code in the user object - immediately display it
-      if (currentUser.qrcode_data && currentUser.wallet_address) {
+      // If QR code is already rendered in DOM with correct address, skip entirely
+      const _domQR = qrContainer.querySelector('canvas, #qrcode-display, table, img');
+      if (_domQR && _domQR.offsetWidth > 10 && currentUser.wallet_address) {
+        console.log('QR code already in DOM, skipping re-render');
+      } else if (currentUser.qrcode_data && currentUser.wallet_address) {
         console.log('Using QR code from user object for immediate display');
         // QR code data is generated server-side and contains only safe SVG/Canvas elements
         qrContainer.innerHTML = currentUser.qrcode_data;
@@ -9347,14 +9350,17 @@ function initializeGoogleSignIn() {
 
     }
 
-    // Show loading state
-    qrContainer.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading QR code...</div>';
-    qrContainer.style.backgroundColor = 'white';
-    qrContainer.style.padding = '10px';
-    qrContainer.style.borderRadius = '8px';
-    qrContainer.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+    // Check if QR is already rendered with correct address — no flicker
+    const existingQREl = qrContainer.querySelector('canvas, #qrcode-display, table, img');
+    if (existingQREl && existingQREl.offsetWidth > 10) {
+      const renderedTitle = qrContainer.querySelector('#qrcode-display')?.title;
+      if (renderedTitle === address.trim()) {
+        console.log('QR code already rendered for this address, skipping');
+        return;
+      }
+    }
 
-    // Check session storage for immediate display during page load
+    // Check session storage cache BEFORE clearing container
     if (currentUser && currentUser.id) {
       try {
         const cachedQRCode = sessionStorage.getItem(`qrcode_${currentUser.id}`);
@@ -9370,7 +9376,14 @@ function initializeGoogleSignIn() {
       }
     }
 
-    // If QR code is not in session storage, generate a new one locally
+    // Show loading state only when we actually need to generate
+    qrContainer.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading QR code...</div>';
+    qrContainer.style.backgroundColor = 'white';
+    qrContainer.style.padding = '10px';
+    qrContainer.style.borderRadius = '8px';
+    qrContainer.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+
+    // Generate a new QR code locally
     console.log('Generating new client-side QR code for address:', address);
     generateQRCodeLocally(address, qrContainer);
   }
@@ -10675,9 +10688,13 @@ window.copyAccountAddress = function() {
       link.addEventListener('click', function() {
         const pageName = this.getAttribute('data-page');
         if (pageName === 'network') {
-          // Clear any existing QR code first to prevent displaying old/stale data
           const qrContainer = document.querySelector('.qrcode-container');
-          if (qrContainer) {
+          // Check if QR code is already rendered with correct address — skip to avoid flicker
+          const _existingQR = qrContainer && qrContainer.querySelector('canvas, #qrcode-display, table, img');
+          const _knownAddr = currentUser && (currentUser.wallet_address || currentUser.wallet?.publicAddress) || '';
+          const _qrValid = _existingQR && _existingQR.offsetWidth > 10 && _knownAddr;
+
+          if (qrContainer && !_qrValid) {
             qrContainer.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading QR code...</div>';
             qrContainer.style.backgroundColor = 'white';
             qrContainer.style.padding = '10px';
@@ -10688,33 +10705,13 @@ window.copyAccountAddress = function() {
           // Short delay to ensure user data is loaded
           setTimeout(() => {
             if (currentUser && currentUser.id) {
-              console.log('Initializing wallet and generating QR code for network page');
+              console.log('Initializing wallet for network page');
               initializeUserWallet().then(() => {
-                // Always force regeneration of QR code
+                if (_qrValid) return; // QR already valid, no regeneration needed
                 const address = document.getElementById('user-account-address')?.textContent;
                 if (address && address !== 'Generating...') {
-                  // Force QR code generation every time network page is visited
                   console.log('Generating QR code for network page:', address);
-
-                  // Use the more robust function that actually generates and persists the QR code
                   generateAndSaveQRCode(address, qrContainer);
-
-                  // Add multiple attempts with increasing delays for better reliability
-                  [500, 1500, 3000].forEach(delay => {
-                    setTimeout(() => {
-                      const currentAddress = document.getElementById('user-account-address')?.textContent;
-                      const hasQRCode = qrContainer && (
-                        qrContainer.querySelector('#qrcode-display') || 
-                        qrContainer.querySelector('canvas') || 
-                        qrContainer.querySelector('img')
-                      );
-
-                      if (currentAddress && currentAddress !== 'Generating...' && !hasQRCode) {
-                        console.log(`Retry QR code generation after ${delay}ms`);
-                        generateAndSaveQRCode(currentAddress, qrContainer);
-                      }
-                    }, delay);
-                  });
                 }
               });
             }
@@ -10731,9 +10728,12 @@ window.copyAccountAddress = function() {
         if (currentUser && currentUser.id) {
           console.log('Initializing wallet for already visible network page');
 
-          // Clear any existing QR code and show loading state
           const qrContainer = document.querySelector('.qrcode-container');
-          if (qrContainer) {
+          const _existQR2 = qrContainer && qrContainer.querySelector('canvas, #qrcode-display, table, img');
+          const _knownAddr2 = currentUser.wallet_address || currentUser.wallet?.publicAddress || '';
+          const _qrValid2 = _existQR2 && _existQR2.offsetWidth > 10 && _knownAddr2;
+
+          if (qrContainer && !_qrValid2) {
             qrContainer.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading QR code...</div>';
             qrContainer.style.backgroundColor = 'white';
             qrContainer.style.padding = '10px';
@@ -10742,7 +10742,7 @@ window.copyAccountAddress = function() {
           }
 
           initializeUserWallet().then(() => {
-            // Force QR code generation when page loads with network visible
+            if (_qrValid2) return;
             const address = document.getElementById('user-account-address')?.textContent;
             if (address && address !== 'Generating...') {
               console.log('Generating QR code for initially visible network page');
@@ -14526,9 +14526,13 @@ window.cancelProfileChanges = cancelProfileChanges;
       // Initialize network functionality
       console.log('[Network page] Starting wallet initialization for network page');
       if (currentUser && currentUser.id) {
-        // Show loading indicator for QR code
         const qrContainer = document.querySelector('.qrcode-container');
-        if (qrContainer) {
+        // Check if QR code is already rendered with correct address — skip regeneration to avoid flicker
+        const existingQR = qrContainer && qrContainer.querySelector('canvas, #qrcode-display, table, img');
+        const knownAddress = currentUser.wallet_address || currentUser.wallet?.publicAddress || '';
+        const qrAlreadyValid = existingQR && existingQR.offsetWidth > 10 && knownAddress;
+
+        if (qrContainer && !qrAlreadyValid) {
           qrContainer.innerHTML = '<div style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading QR code...</div>';
           qrContainer.style.backgroundColor = 'white';
           qrContainer.style.padding = '10px';
@@ -14541,12 +14545,14 @@ window.cancelProfileChanges = cancelProfileChanges;
           // Update transaction list
           updateTransactionList();
           
-          // Always regenerate QR code when network page is shown
-          const address = document.getElementById('user-account-address')?.textContent;
-          if (address && address !== 'Generating...') {
-            console.log('Generating QR code for network page in showPage:', address);
-            if (qrContainer) {
-              generateAndSaveQRCode(address, qrContainer);
+          // Only regenerate QR if not already valid
+          if (!qrAlreadyValid) {
+            const address = document.getElementById('user-account-address')?.textContent;
+            if (address && address !== 'Generating...') {
+              console.log('Generating QR code for network page in showPage:', address);
+              if (qrContainer) {
+                generateAndSaveQRCode(address, qrContainer);
+              }
             }
           }
         });
