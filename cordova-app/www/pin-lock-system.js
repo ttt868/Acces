@@ -696,9 +696,10 @@
     lockScreen.style.display = 'flex';
     // If already visible from CSS pin-required, skip opacity flash
     var alreadyVisible = document.documentElement.classList.contains('pin-required');
-    if (!alreadyVisible) {
+    if (!alreadyVisible && !_instantShow) {
       lockScreen.style.opacity = '0';
     }
+    _instantShow = false; // reset flag
     requestAnimationFrame(() => {
       lockScreen.classList.add('active');
       lockScreen.style.opacity = '1';
@@ -949,7 +950,8 @@
   // ===== APP LIFECYCLE =====
   // Track when app goes to background
   var _pausedAt = 0;
-  var PIN_BACKGROUND_THRESHOLD = 30000; // Show PIN if app was in background > 30 seconds
+  var _instantShow = false;
+  var PIN_BACKGROUND_THRESHOLD = 3000; // Show PIN if app was in background > 3 seconds
 
   document.addEventListener('pause', function() {
     _pausedAt = Date.now();
@@ -966,6 +968,7 @@
     
     if (pinEnabled && window._pinUnlocked) {
       window._pinUnlocked = false;
+      _instantShow = true; // no fade-in on resume
       showLockScreen();
       // Auto-trigger biometric after PIN screen shows (same delay as cold start)
       if (biometricEnabled) {
