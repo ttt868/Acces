@@ -8386,27 +8386,34 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         // Set current user data directly from server
         currentUser = {...currentUser, ...userData};
 
-        // 🔒 SINGLE-DEVICE: Always refresh session token (both fresh login and session restore)
-        // This fixes the race condition: if user navigates away before token save completes,
-        // the next session restore re-syncs the token with the DB.
+        // 🔒 SINGLE-DEVICE: Only generate new session token on FRESH LOGIN (new device).
+        // On session restore (page reload, tab restore), just sync the existing token.
         if (currentUser.id) {
-          try {
-            const refreshRes = await fetch('/api/session/refresh', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: currentUser.id })
-            });
-            if (refreshRes.ok) {
-              const refreshData = await refreshRes.json();
-              if (refreshData.session_token) {
-                currentUser.sessionToken = refreshData.session_token;
-                currentUser.session_token = refreshData.session_token;
-                // 🔒 Invalidate cache so stale token is never served to updateUserInfo
-                userDataCache.timestamp = 0;
-                console.log('🔒 Session token refreshed');
+          if (isFreshLogin) {
+            try {
+              const refreshRes = await fetch('/api/session/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id })
+              });
+              if (refreshRes.ok) {
+                const refreshData = await refreshRes.json();
+                if (refreshData.session_token) {
+                  currentUser.sessionToken = refreshData.session_token;
+                  currentUser.session_token = refreshData.session_token;
+                  userDataCache.timestamp = 0;
+                  console.log('🔒 Session token generated (fresh login)');
+                }
               }
+            } catch (e) { console.warn('Session refresh failed:', e); }
+          } else {
+            // Session restore: use the token already in DB (returned by checkIfUserExists)
+            if (userData.session_token) {
+              currentUser.sessionToken = userData.session_token;
+              currentUser.session_token = userData.session_token;
+              console.log('🔒 Session token synced from server (restore)');
             }
-          } catch (e) { console.warn('Session refresh failed:', e); }
+          }
         }
 
         // Explicitly update UI with the fresh data immediately
