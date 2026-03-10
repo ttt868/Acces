@@ -8341,6 +8341,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
   // NO polling — piggybacks on fetchBoostData (every 5s) + visibility change.
   let _sessionGuardActive = false;
 
+  let _sessionGuardInterval = null;
+
   function startSessionGuard() {
     if (_sessionGuardActive) return;
     _sessionGuardActive = true;
@@ -8348,16 +8350,18 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     document.addEventListener('visibilitychange', _onVisibilitySessionCheck);
     // Cordova resume event
     document.addEventListener('resume', _onVisibilitySessionCheck, false);
+    // Periodic check every 30s — works even when processing is NOT active
+    _sessionGuardInterval = setInterval(_checkSessionNow, 30000);
   }
 
   function stopSessionGuard() {
     _sessionGuardActive = false;
     document.removeEventListener('visibilitychange', _onVisibilitySessionCheck);
     document.removeEventListener('resume', _onVisibilitySessionCheck);
+    if (_sessionGuardInterval) { clearInterval(_sessionGuardInterval); _sessionGuardInterval = null; }
   }
 
-  async function _onVisibilitySessionCheck() {
-    if (document.hidden) return;
+  async function _checkSessionNow() {
     if (!currentUser || !currentUser.id) return;
     const token = currentUser.sessionToken || currentUser.session_token;
     if (!token) return;
@@ -8371,6 +8375,11 @@ window.addEventListener('load', applyArabicCssIfNeeded);
       const data = await resp.json();
       if (data.valid === false) forceLogout();
     } catch (e) { /* offline — skip */ }
+  }
+
+  async function _onVisibilitySessionCheck() {
+    if (document.hidden) return;
+    _checkSessionNow();
   }
 
   function forceLogout() {
