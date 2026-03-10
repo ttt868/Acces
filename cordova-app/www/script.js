@@ -5756,8 +5756,9 @@ function startGradualAccumulation() {
 
       const data = await response.json();
       // 🔒 Session invalidated = another device logged in → force logout
+      // Only trigger if session guard is active (token has been synced after loadUserData)
       if (data.sessionValid === false) {
-        if (typeof forceLogout === 'function') forceLogout();
+        if (_sessionGuardActive && typeof forceLogout === 'function') forceLogout();
         return null;
       }
       if (data.success) {
