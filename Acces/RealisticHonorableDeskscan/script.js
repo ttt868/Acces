@@ -8383,18 +8383,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         updateReferralCode(userData.referralCode);
 
         // Set current user data directly from server
-        // 🔒 Preserve local session token — server returns DB token which may be stale
-        const preservedSessionToken = currentUser.sessionToken || currentUser.session_token;
         currentUser = {...currentUser, ...userData};
-        // Restore preserved session token (don't let server overwrite it)
-        if (!isFreshLogin && preservedSessionToken) {
-          currentUser.sessionToken = preservedSessionToken;
-          currentUser.session_token = preservedSessionToken;
-        }
 
-        // 🔒 SINGLE-DEVICE: refresh session token ONLY on fresh login (invalidates other devices)
-        // On session restore, keep existing token — don't generate new one
-        if (isFreshLogin && currentUser.id) {
+        // 🔒 SINGLE-DEVICE: Always refresh session token (both fresh login and session restore)
+        // This fixes the race condition: if user navigates away before token save completes,
+        // the next session restore re-syncs the token with the DB.
+        if (currentUser.id) {
           try {
             const refreshRes = await fetch('/api/session/refresh', {
               method: 'POST',
@@ -8406,7 +8400,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
               if (refreshData.session_token) {
                 currentUser.sessionToken = refreshData.session_token;
                 currentUser.session_token = refreshData.session_token;
-                console.log('🔒 Session token refreshed — other devices will be logged out');
+                console.log('🔒 Session token refreshed');
               }
             }
           } catch (e) { console.warn('Session refresh failed:', e); }
