@@ -41,7 +41,17 @@ class StateProcessingManager {
       // Create a link to the whitepaper HTML file
       const whitepaperUrl = './whitepaper.html';
 
-      // Open whitepaper in new tab for viewing/printing/saving
+      // In Cordova, use location.href with history entry so back button returns to app
+      // window.open in Cordova WebView has inconsistent behavior
+      const isCordova = typeof window.cordova !== 'undefined' || typeof window.IS_CORDOVA_APP !== 'undefined';
+      
+      if (isCordova) {
+        // Navigate with history — back button will return to index.html
+        window.location.href = whitepaperUrl;
+        return;
+      }
+
+      // Web: open in new tab
       const whitepaperWindow = window.open(whitepaperUrl, '_blank');
 
       if (whitepaperWindow) {

@@ -191,13 +191,24 @@ document.addEventListener('deviceready', function() {
 }, false);
 
 // ✅ App Lifecycle - Native app behavior
-// 1. Back button = close app completely
+// 1. Back button = navigate back if on sub-page, close app if on main page
 // 2. Background > 5min = kill app (next open = fresh start with native splash)
 //    No reload, no white flash, no web nonsense
 (function() {
-    // ── BACK BUTTON: Close app ──
+    // ── BACK BUTTON: Smart navigation ──
     document.addEventListener('backbutton', function(e) {
         e.preventDefault();
+        
+        // If we're on a sub-page (whitepaper.html, about.html, etc.) — go back to main app
+        var currentPath = window.location.pathname || '';
+        var isMainPage = currentPath.endsWith('index.html') || currentPath.endsWith('/') || currentPath === '';
+        
+        if (!isMainPage && window.history.length > 1) {
+            window.history.back();
+            return;
+        }
+        
+        // On main page — exit app
         if (navigator.app && navigator.app.exitApp) {
             navigator.app.exitApp();
         }
