@@ -5606,9 +5606,9 @@ function startGradualAccumulation() {
 
       const data = await response.json();
       // 🔒 Session invalidated = another device logged in → force logout
-      // Only trigger if session guard is active (token has been synced after loadUserData)
+      // Only trigger if token is ready (loadUserData completed)
       if (data.sessionValid === false) {
-        if (_sessionGuardActive && typeof forceLogout === 'function') forceLogout();
+        if (_sessionTokenReady && _sessionGuardActive && typeof forceLogout === 'function') forceLogout();
         return null;
       }
       if (data.success) {
@@ -8239,10 +8239,18 @@ window.addEventListener('load', applyArabicCssIfNeeded);
   // ========== SINGLE-DEVICE SESSION GUARD ==========
   // Like Sweatcoin: only ONE device can be logged in at a time.
   // When you log in on Device B, Device A is automatically forced to the login screen.
-  // NO polling — piggybacks on fetchBoostData (every 5s) + visibility change.
+  //
+  // SAFETY: _sessionTokenReady flag ensures NO session check runs until loadUserData()
+  // has fully completed and the token is confirmed synced. This prevents false logouts
+  // if any API call returns sessionValid=false before the token is ready.
   let _sessionGuardActive = false;
-
   let _sessionGuardInterval = null;
+  let _sessionTokenReady = false; // blocks all checks until token is confirmed synced
+
+  function markSessionTokenReady() {
+    _sessionTokenReady = true;
+    console.log('🔒 Session token ready — guard checks enabled');
+  }
 
   function startSessionGuard() {
     if (_sessionGuardActive) return;
@@ -8255,12 +8263,15 @@ window.addEventListener('load', applyArabicCssIfNeeded);
 
   function stopSessionGuard() {
     _sessionGuardActive = false;
+    _sessionTokenReady = false;
     document.removeEventListener('visibilitychange', _onVisibilitySessionCheck);
     if (_sessionGuardInterval) { clearInterval(_sessionGuardInterval); _sessionGuardInterval = null; }
   }
 
   async function _checkSessionNow() {
     if (!currentUser || !currentUser.id) return;
+    // Skip ALL checks until loadUserData has finished syncing the token
+    if (!_sessionTokenReady) return;
     const token = currentUser.sessionToken || currentUser.session_token;
     if (!token) return;
     try {
@@ -8421,6 +8432,9 @@ window.addEventListener('load', applyArabicCssIfNeeded);
 
         // Save only minimal authentication data
         saveUserSession(currentUser);
+
+        // ✅ Token is now confirmed synced — allow session guard checks
+        markSessionTokenReady();
 
         // Load processing stats from fresh user data
         if (window.loadProcessingStatsFromUser) {
