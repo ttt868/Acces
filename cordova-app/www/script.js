@@ -8488,7 +8488,14 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         // ✅ FIX: Preserve avatar if server returns null/empty
         // Keep original avatar from Google if server has no avatar
         const preservedAvatar = currentUser.avatar;
+        // 🔒 Preserve local session token — server returns DB token which may be stale
+        const preservedSessionToken = currentUser.sessionToken || currentUser.session_token;
         currentUser = {...currentUser, ...userData};
+        // Restore preserved session token (don't let server overwrite it)
+        if (!isFreshLogin && preservedSessionToken) {
+          currentUser.sessionToken = preservedSessionToken;
+          currentUser.session_token = preservedSessionToken;
+        }
         
         // If server returned null/empty avatar but we had one, keep it
         if (!currentUser.avatar && preservedAvatar) {

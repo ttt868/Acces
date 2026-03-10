@@ -8383,7 +8383,14 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         updateReferralCode(userData.referralCode);
 
         // Set current user data directly from server
+        // 🔒 Preserve local session token — server returns DB token which may be stale
+        const preservedSessionToken = currentUser.sessionToken || currentUser.session_token;
         currentUser = {...currentUser, ...userData};
+        // Restore preserved session token (don't let server overwrite it)
+        if (!isFreshLogin && preservedSessionToken) {
+          currentUser.sessionToken = preservedSessionToken;
+          currentUser.session_token = preservedSessionToken;
+        }
 
         // 🔒 SINGLE-DEVICE: refresh session token ONLY on fresh login (invalidates other devices)
         // On session restore, keep existing token — don't generate new one
