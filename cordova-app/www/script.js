@@ -5750,7 +5750,8 @@ function startGradualAccumulation() {
       if (!currentUser || !currentUser.id) return null;
 
       const st = currentUser.sessionToken || currentUser.session_token || '';
-      const response = await fetch(getApiBase() + `/api/processing/accumulated/${currentUser.id}?st=${encodeURIComponent(st)}`);
+      const _apiOrigin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : 'https://accesschain.org';
+      const response = await fetch(_apiOrigin + `/api/processing/accumulated/${currentUser.id}?st=${encodeURIComponent(st)}`);
       if (!response.ok) return null;
 
       const data = await response.json();
@@ -8366,7 +8367,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     const token = currentUser.sessionToken || currentUser.session_token;
     if (!token) return;
     try {
-      const resp = await fetch(getApiBase() + '/api/session/check', {
+      const _apiOrigin2 = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : 'https://accesschain.org';
+      const resp = await fetch(_apiOrigin2 + '/api/session/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.id, session_token: token })
@@ -8507,7 +8509,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         // On session restore, keep existing token — don't generate new one
         if (isFreshLogin && currentUser.id) {
           try {
-            const refreshRes = await fetch(getApiBase() + '/api/session/refresh', {
+            const _apiOrigin3 = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : 'https://accesschain.org';
+            const refreshRes = await fetch(_apiOrigin3 + '/api/session/refresh', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ userId: currentUser.id })
