@@ -5755,10 +5755,8 @@ function startGradualAccumulation() {
       if (!response.ok) return null;
 
       const data = await response.json();
-      // 🔒 Session invalidated = another device logged in → force logout
-      // Only trigger if session guard is active (token has been synced after loadUserData)
+      // Session check disabled in Cordova
       if (data.sessionValid === false) {
-        if (_sessionGuardActive && typeof forceLogout === 'function') forceLogout();
         return null;
       }
       if (data.success) {
@@ -8337,96 +8335,12 @@ window.addEventListener('load', applyArabicCssIfNeeded);
   window.loadUserData = loadUserData;
   window.updateUserInfo = updateUserInfo;
 
-  // ========== SINGLE-DEVICE SESSION GUARD ==========
-  // Like Sweatcoin: only ONE device can be logged in at a time.
-  // When you log in on Device B, Device A is automatically forced to the login screen.
-  let _sessionGuardActive = false;
-  let _sessionGuardInterval = null;
-  let _sessionGuardStartTime = 0;
-  // Grace period: don't check session for 90s after page load.
-  // This prevents false logouts when user navigates to .html pages and returns
-  // (Cordova reloads index.html on back button = full page reload).
-  const _SESSION_GUARD_GRACE_MS = 90000;
-
-  function startSessionGuard() {
-    if (_sessionGuardActive) return;
-    _sessionGuardActive = true;
-    _sessionGuardStartTime = Date.now();
-    // Periodic check every 60s (not 30s — gentler in Cordova)
-    _sessionGuardInterval = setInterval(_checkSessionNow, 60000);
-    // Cordova resume event — but only after grace period
-    document.addEventListener('resume', _onVisibilitySessionCheck, false);
-  }
-
-  function stopSessionGuard() {
-    _sessionGuardActive = false;
-    document.removeEventListener('resume', _onVisibilitySessionCheck);
-    if (_sessionGuardInterval) { clearInterval(_sessionGuardInterval); _sessionGuardInterval = null; }
-  }
-
-  async function _checkSessionNow() {
-    if (!currentUser || !currentUser.id) return;
-    // Skip during grace period after page load
-    if ((Date.now() - _sessionGuardStartTime) < _SESSION_GUARD_GRACE_MS) return;
-    // Skip if we recently navigated to/from an .html page (in-app navigation)
-    try {
-      const navTs = parseInt(sessionStorage.getItem('_html_nav_ts') || '0');
-      if (navTs && (Date.now() - navTs) < 300000) return; // 5 min grace after .html navigation
-    } catch(e) {}
-    const token = currentUser.sessionToken || currentUser.session_token;
-    if (!token) return;
-    try {
-      const _apiOrigin2 = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : 'https://accesschain.org';
-      const resp = await fetch(_apiOrigin2 + '/api/session/check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, session_token: token })
-      });
-      if (!resp.ok) return;
-      const data = await resp.json();
-      if (data.valid === false) forceLogout();
-    } catch (e) { /* offline — skip */ }
-  }
-
-  async function _onVisibilitySessionCheck() {
-    if (document.hidden) return;
-    // After grace period only
-    if ((Date.now() - _sessionGuardStartTime) < _SESSION_GUARD_GRACE_MS) return;
-    _checkSessionNow();
-  }
-
-  function forceLogout() {
-    stopSessionGuard();
-    // Clear processing intervals
-    if (activityInterval) { clearInterval(activityInterval); activityInterval = null; }
-    currentUser = null;
-    window.currentUser = null;
-    // Preserve settings
-    const language = localStorage.getItem('preferredLanguage');
-    const themeMode = localStorage.getItem('themeMode');
-    const themeBrightness = localStorage.getItem('themeBrightness');
-    const arabicCss = localStorage.getItem('arabic-css-enabled');
-    // Clear user data
-    localStorage.removeItem('accessoireUser');
-    localStorage.removeItem('accessoireUserData');
-    localStorage.removeItem('_pin_active');
-    // Restore settings
-    if (language) localStorage.setItem('preferredLanguage', language);
-    if (themeMode) localStorage.setItem('themeMode', themeMode);
-    if (themeBrightness) localStorage.setItem('themeBrightness', themeBrightness);
-    if (arabicCss) localStorage.setItem('arabic-css-enabled', arabicCss);
-    // Switch to login screen
-    document.documentElement.classList.remove('user-logged-in');
-    document.documentElement.classList.add('user-not-logged-in');
-    document.documentElement.classList.add('app-ready');
-    // Show notification then reload
-    const t = (key) => window.translator ? window.translator.translate(key) : key;
-    if (window.showNotification) {
-      window.showNotification(t('Your account was logged in on another device'), 'warning');
-    }
-    setTimeout(() => { window.location.reload(); }, 1500);
-  }
-
+  // ========== SESSION GUARD REMOVED FROM CORDOVA ==========
+  // Disabled: Cordova .html navigation causes false logouts.
+  // The web version retains the session guard.
+  function startSessionGuard() { /* disabled in Cordova */ }
+  function stopSessionGuard() { /* disabled in Cordova */ }
+  function forceLogout() { /* disabled in Cordova */ }
   window.startSessionGuard = startSessionGuard;
   window.stopSessionGuard = stopSessionGuard;
   window.forceLogout = forceLogout;
@@ -12516,14 +12430,12 @@ if (totalCost > (currentBalance + precision)) {
   window.navigateToTransactionDetails = function(element) {
     const hash = element.getAttribute('data-tx-hash');
     if (hash) {
-      try { sessionStorage.setItem('_html_nav_ts', Date.now().toString()); } catch(e) {}
       window.location.href = `transaction-details.html?hash=${hash}`;
     }
   };
 
   // Show the full network explorer
   window.showFullExplorer = function() {
-    try { sessionStorage.setItem('_html_nav_ts', Date.now().toString()); } catch(e) {}
     window.location.href = 'access-explorer.html';
   };
 
@@ -15992,7 +15904,6 @@ function viewDashboardAddress() {
 
   if (fullAddress && fullAddress.length > 10) {
     // Navigate to address-details.html with the address as a query parameter
-    try { sessionStorage.setItem('_html_nav_ts', Date.now().toString()); } catch(e) {}
     window.location.href = `address-details.html?address=${encodeURIComponent(fullAddress)}`;
   } else {
     console.error('No valid wallet address found');
