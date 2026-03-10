@@ -8647,20 +8647,16 @@ window.addEventListener('load', applyArabicCssIfNeeded);
             dashboardUserName.textContent = userData.name;
           }
 
-          // 🔒 FIX: Preserve session token - only /api/session/refresh should change it
-          const preservedSessionToken = currentUser.sessionToken || currentUser.session_token;
-          currentUser = {...currentUser, ...userData};
-          // 🔒 CRITICAL: Restore session token after spread (never trust cached/fetched token here)
-          if (preservedSessionToken) {
-            currentUser.sessionToken = preservedSessionToken;
-            currentUser.session_token = preservedSessionToken;
-          }
+          // 🔒 FIX: Only update UI-related fields on currentUser (name/avatar).
+          // NEVER merge full userData or call saveUserSession here.
+          // loadUserData's main flow handles the full merge + session/refresh + save.
+          // Doing a spread merge here caused a race condition where this async callback
+          // overwrote the fresh session_token from /api/session/refresh with a stale one.
+          if (userData.name) currentUser.name = userData.name;
+          if (userData.avatar) currentUser.avatar = userData.avatar;
           delete currentUser._forceUpdate;
           delete currentUser._requiresRefresh;
-
-          // Persist updated user data to localStorage
-          saveUserSession(currentUser);
-          console.log('User data refreshed from server with latest values');
+          console.log('User UI refreshed from server (name/avatar only)');
         }
       }).catch(error => {
         console.error('Error refreshing user data:', error);
