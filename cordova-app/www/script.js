@@ -9179,11 +9179,7 @@ function initializeGoogleSignIn() {
       qrContainer.style.minHeight = '150px'; // Prevent layout shift
       qrContainer.style.minWidth = '150px';  // Prevent layout shift
 
-      // If QR code is already rendered in DOM with correct address, skip entirely
-      const _domQR = qrContainer.querySelector('canvas, #qrcode-display, table, img');
-      if (_domQR && _domQR.offsetWidth > 10 && currentUser.wallet_address) {
-        console.log('QR code already in DOM, skipping re-render');
-      } else if (currentUser.qrcode_data && currentUser.wallet_address) {
+      if (currentUser.qrcode_data && currentUser.wallet_address) {
         console.log('Using QR code from user object for immediate display');
         // QR code data is generated server-side and contains only safe SVG/Canvas elements
         qrContainer.innerHTML = currentUser.qrcode_data;
@@ -9270,6 +9266,12 @@ function initializeGoogleSignIn() {
 
         // Store in current user object
         currentUser.wallet = wallet;
+
+        // Generate QR code now that we have the address
+        const _qrc = document.querySelector('.qrcode-container');
+        if (_qrc && wallet.publicAddress) {
+          generateAndSaveQRCode(wallet.publicAddress, _qrc);
+        }
 
         return wallet;
       }
@@ -9841,6 +9843,16 @@ function initializeGoogleSignIn() {
       if (!address || !qrContainer) {
         console.error('Missing required parameters for QR code generation');
         return false;
+      }
+
+      // Skip if QR already rendered for this exact address (idempotent — prevents flicker)
+      const _existQR = qrContainer.querySelector('canvas, #qrcode-display, table, img');
+      if (_existQR && _existQR.offsetWidth > 10) {
+        const _rTitle = qrContainer.querySelector('#qrcode-display')?.title;
+        if (_rTitle === address.trim()) {
+          console.log('generateAndSaveQRCode: QR already valid for this address, skipping');
+          return true;
+        }
       }
 
       // Clear existing content and set consistent styling
@@ -10943,7 +10955,6 @@ window.copyAccountAddress = function() {
             if (currentUser && currentUser.id) {
               console.log('Initializing wallet for network page');
               initializeUserWallet().then(() => {
-                if (_qrValid) return; // QR already valid, no regeneration needed
                 const address = document.getElementById('user-account-address')?.textContent;
                 if (address && address !== 'Generating...') {
                   console.log('Generating QR code for network page:', address);
@@ -10993,7 +11004,6 @@ window.copyAccountAddress = function() {
           }
 
           initializeUserWallet().then(() => {
-            if (_qrValid2) return;
             const address = document.getElementById('user-account-address')?.textContent;
             if (address && address !== 'Generating...') {
               console.log('Generating QR code for initially visible network page');
