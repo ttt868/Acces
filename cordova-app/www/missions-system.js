@@ -90,7 +90,7 @@
     join_telegram: {
       id: 'join_telegram', 
       reward: 0.02,
-      url: 'https://t.me/+YnQtDWLlQxk5YTU8',
+      url: 'https://t.me/accesschain',
       type: 'social',
       verifyDelay: 10000 // 10 seconds - faster verification
     },
