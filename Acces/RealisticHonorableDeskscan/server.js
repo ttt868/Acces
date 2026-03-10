@@ -1776,6 +1776,11 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Date, ETag');
   
+  // 🔒 Security headers
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
   // Simplified headers for Google Identity Services
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   res.setHeader('Vary', 'Origin');
@@ -3902,6 +3907,20 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        // 🔒 Require session token for wallet update
+        const sessionToken = req.headers['x-session-token'] || '';
+        if (!sessionToken) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+        const validSession = await validateSessionToken(userId, sessionToken);
+        if (!validSession) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
+          return;
+        }
+
         // Check if user exists
         const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [userId]);
 
@@ -4106,9 +4125,11 @@ const server = http.createServer(async (req, res) => {
 
         // 🔒 Return existing session token (don't regenerate on data fetch)
         // Token is only generated on actual login (signin/signup/google)
+        // 🔒 Strip sensitive fields — never expose password or raw private key via profile endpoint
+        const { password, wallet_private_key, ...safeUser } = user;
 
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ user: user, success: true }));
+        res.end(JSON.stringify({ user: safeUser, success: true }));
         return;
       } catch (error) {
         console.error('Database error in /api/user/:email:', error);
@@ -6154,6 +6175,20 @@ const server = http.createServer(async (req, res) => {
         const { handleGenerateWallet } = await import('./wallet-api.js');
         const data = await parseRequestBody(req);
 
+        // 🔒 Require session token for wallet generation
+        const sessionToken = req.headers['x-session-token'] || data.session_token || '';
+        if (!data.userId || !sessionToken) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+        const validSession = await validateSessionToken(data.userId, sessionToken);
+        if (!validSession) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
+          return;
+        }
+
         // Process the request
         const result = await handleGenerateWallet({ body: data }, res);
 
@@ -6176,6 +6211,20 @@ const server = http.createServer(async (req, res) => {
       try {
         const { handleImportWallet } = await import('./wallet-api.js');
         const data = await parseRequestBody(req);
+
+        // 🔒 Require session token for wallet import
+        const sessionToken = req.headers['x-session-token'] || data.session_token || '';
+        if (!data.userId || !sessionToken) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+        const validSession = await validateSessionToken(data.userId, sessionToken);
+        if (!validSession) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
+          return;
+        }
 
         // Process the request
         const result = await handleImportWallet({ body: data }, res);
@@ -9994,9 +10043,9 @@ const server = http.createServer(async (req, res) => {
     // Handle OPTIONS for profile update routes for CORS
     if ((pathname === '/api/users/update-profile' || pathname === '/api/user/update-profile' || pathname === '/api/update-profile') && req.method === 'OPTIONS') {
       res.writeHead(204, {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Methods': 'PUT, POST, GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Session-Token',
         'Access-Control-Max-Age': '86400'
       });
       res.end();

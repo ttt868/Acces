@@ -9280,21 +9280,12 @@ function initializeGoogleSignIn() {
     }
   }
 
-  // Helper function to generate deterministic private key
+  // Helper function to generate cryptographically secure private key
   function generateDeterministicPrivateKey(userId, email) {
-    // Create a seed based on user ID and email
-    const seed = `${userId}-${email}-${Date.now()}`;
-
-    // Simple hash function for deterministic key
-    let hash = 0;
-    for (let i = 0; i < seed.length; i++) {
-      const char = seed.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-
-    // Create a deterministic but unique private key (64 hex characters)
-    return Math.abs(hash).toString(16).padStart(64, '0');
+    // Use crypto.getRandomValues for secure random key generation
+    const randomBytes = new Uint8Array(32);
+    crypto.getRandomValues(randomBytes);
+    return Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   // Update user wallet address and private key on server
@@ -9303,7 +9294,8 @@ function initializeGoogleSignIn() {
       const response = await fetch('/api/user/update-wallet', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
         },
         body: JSON.stringify({
           userId: userId,

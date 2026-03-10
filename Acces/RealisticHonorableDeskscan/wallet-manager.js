@@ -7,11 +7,14 @@ import crypto from 'crypto';
 export const MAX_WALLETS_PER_USER = 5;
 export const WALLET_COOLDOWN_MINUTES = 5;
 
-// Encryption settings - ENCRYPTION_KEY must be set in .env (32 bytes / 32 chars)
+// Encryption settings - ENCRYPTION_KEY MUST be set in .env (minimum 32 characters)
+// Without a persistent key, encrypted wallets become unrecoverable after server restart
 if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY.length < 32) {
-  console.error('⚠️ ENCRYPTION_KEY missing or too short in .env! Must be at least 32 characters.');
+  console.error('🔴 CRITICAL: ENCRYPTION_KEY missing or too short in .env! Must be at least 32 characters.');
+  console.error('🔴 Server cannot start without ENCRYPTION_KEY — encrypted wallets would be lost on restart.');
+  process.exit(1);
 }
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex').substring(0, 32);
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 const ENCRYPTION_IV_LENGTH = 16; // For AES, this is always 16 bytes
 const ENCRYPTION_ALGORITHM = 'aes-256-cbc';
 
@@ -180,19 +183,14 @@ export async function checkWalletCreationLimits(userId) {
   }
 }
 
-// ✅ AUTO-GENERATE WALLET FOR NEW USER - PROPER ETHEREUM ADDRESS GENERATION
+// ✅ AUTO-GENERATE WALLET FOR NEW USER - CRYPTOGRAPHICALLY SECURE KEY GENERATION
 export async function generateWalletForNewUser(userId, email) {
   try {
-    // Generate deterministic wallet from user email + userId for uniqueness
-    const uniqueInput = email + userId.toString();
-    const emailHash = crypto.createHash('sha256').update(uniqueInput).digest('hex');
-    const privateKey = '0x' + emailHash; // Full 64 char (32 bytes) private key
+    // Generate cryptographically secure random private key (32 bytes = 64 hex chars)
+    const privateKey = '0x' + crypto.randomBytes(32).toString('hex');
     
-    // Generate proper Ethereum address from private key using keccak256-like approach
-    // Take SHA256 of private key as seed, then create address from it
+    // Generate wallet address from private key hash
     const addressSeed = crypto.createHash('sha256').update(privateKey).digest('hex');
-    
-    // Use the full hash to create a proper 40-character address (no padding with zeros)
     const walletAddress = '0x' + addressSeed.substring(0, 40);
     
     // Encrypt private key before saving to database
