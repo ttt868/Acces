@@ -8401,6 +8401,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
               if (refreshData.session_token) {
                 currentUser.sessionToken = refreshData.session_token;
                 currentUser.session_token = refreshData.session_token;
+                // 🔒 Invalidate cache so stale token is never served to updateUserInfo
+                userDataCache.timestamp = 0;
                 console.log('🔒 Session token refreshed');
               }
             }
@@ -8645,16 +8647,18 @@ window.addEventListener('load', applyArabicCssIfNeeded);
             dashboardUserName.textContent = userData.name;
           }
 
-          // Update current user data
+          // 🔒 FIX: Preserve session token - only /api/session/refresh should change it
+          const preservedSessionToken = currentUser.sessionToken || currentUser.session_token;
           currentUser = {...currentUser, ...userData};
-          // ✅ FIX: Sync session_token field name (server uses snake_case, client uses camelCase)
-          if (userData.session_token) {
-            currentUser.sessionToken = userData.session_token;
+          // 🔒 CRITICAL: Restore session token after spread (never trust cached/fetched token here)
+          if (preservedSessionToken) {
+            currentUser.sessionToken = preservedSessionToken;
+            currentUser.session_token = preservedSessionToken;
           }
           delete currentUser._forceUpdate;
           delete currentUser._requiresRefresh;
 
-          // ✅ FIX: Persist updated user data to localStorage
+          // Persist updated user data to localStorage
           saveUserSession(currentUser);
           console.log('User data refreshed from server with latest values');
         }
