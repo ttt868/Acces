@@ -10948,6 +10948,21 @@ window.copyAccountAddress = function() {
                 if (address && address !== 'Generating...') {
                   console.log('Generating QR code for network page:', address);
                   generateAndSaveQRCode(address, qrContainer);
+
+                  // Retry only if QR didn't render (no flicker — checks first)
+                  [800, 2500].forEach(delay => {
+                    setTimeout(() => {
+                      const qrc = document.querySelector('.qrcode-container');
+                      const hasQR = qrc && qrc.querySelector('canvas, #qrcode-display, table, img');
+                      if (!hasQR) {
+                        const addr = document.getElementById('user-account-address')?.textContent;
+                        if (addr && addr !== 'Generating...') {
+                          console.log(`Retry QR generation after ${delay}ms`);
+                          generateAndSaveQRCode(addr, qrc);
+                        }
+                      }
+                    }, delay);
+                  });
                 }
               });
             }
@@ -10983,6 +10998,16 @@ window.copyAccountAddress = function() {
             if (address && address !== 'Generating...') {
               console.log('Generating QR code for initially visible network page');
               generateAndSaveQRCode(address, qrContainer);
+
+              // Retry only if QR didn't render
+              setTimeout(() => {
+                const qrc = document.querySelector('.qrcode-container');
+                const hasQR = qrc && qrc.querySelector('canvas, #qrcode-display, table, img');
+                if (!hasQR) {
+                  const addr = document.getElementById('user-account-address')?.textContent;
+                  if (addr && addr !== 'Generating...') generateAndSaveQRCode(addr, qrc);
+                }
+              }, 1500);
             }
           });
         }
