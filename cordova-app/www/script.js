@@ -8480,6 +8480,11 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     localStorage.removeItem('accessoireUser');
     localStorage.removeItem('accessoireUserData');
     localStorage.removeItem('_pin_active');
+    // Clear QR/wallet cache to prevent cross-account contamination
+    localStorage.removeItem('last_qr_data');
+    localStorage.removeItem('last_qr_addr');
+    sessionStorage.clear();
+    window._qrReady = false;
     // Restore settings
     if (language) localStorage.setItem('preferredLanguage', language);
     if (themeMode) localStorage.setItem('themeMode', themeMode);
@@ -14893,6 +14898,11 @@ window.cancelProfileChanges = cancelProfileChanges;
     localStorage.removeItem('accessoireUser');
     localStorage.removeItem('accessoireUserData');
     localStorage.removeItem('_pin_active');
+    // Clear QR/wallet cache to prevent cross-account contamination
+    localStorage.removeItem('last_qr_data');
+    localStorage.removeItem('last_qr_addr');
+    sessionStorage.clear();
+    window._qrReady = false;
     // ظ„ط§ طھظ…ط³ط­ themeMode ظˆ themeBrightness
 
     // ظ„ط§ طھط³طھط®ط¯ظ… localStorage.clear() ظ„ط£ظ†ظ‡ ظٹظ…ط³ط­ ظƒظ„ ط´ظٹط،
