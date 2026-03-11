@@ -14573,6 +14573,13 @@ window.cancelProfileChanges = cancelProfileChanges;
 
   // Show specified page
   window.showPage = function(pageName) {
+    // Scroll to top when switching pages
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    var mc = document.getElementById('main-content');
+    if (mc) mc.scrollTop = 0;
+
     // For network page: restore QR from cache BEFORE showing the page to prevent flash
     if (pageName === 'network') {
       try {

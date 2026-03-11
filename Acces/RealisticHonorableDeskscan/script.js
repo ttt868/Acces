@@ -14288,6 +14288,13 @@ window.cancelProfileChanges = cancelProfileChanges;
 
   // Show specified page
   window.showPage = function(pageName) {
+    // Scroll to top when switching pages - cover all scrollable containers
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    var mc = document.getElementById('main-content');
+    if (mc) mc.scrollTop = 0;
+
     // Hide all pages
     const pages = document.querySelectorAll('.page-content');
     pages.forEach(page => {
