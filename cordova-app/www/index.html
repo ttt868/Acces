@@ -3390,5 +3390,29 @@ Access-Network is a digital rewards platform combining innovation, community fea
 
     <!-- PIN Lock System -->
     <script src="pin-lock-system.js"></script>
+
+    <!-- Block context menu & dismiss selection on non-copyable areas -->
+    <script>
+    (function() {
+      var copyableSelector = 'input, textarea, .profile-email, #profile-email, #referral-code-display, #profile-referral-code, #modal-referral-code, .referral-code-preview, .wallet-address-display, .wallet-address-section, .account-address-text, #dashboard-account-address, #user-account-address, .account-address, .account-address-container, #qr-address-text, #private-key-display, #private-key-input, #account-balance, .account-amount, .account-balance, .stat-value, #user-coins-display, .balance-amount';
+
+      // Block context menu on non-copyable elements
+      document.addEventListener('contextmenu', function(e) {
+        if (!e.target.closest(copyableSelector)) {
+          e.preventDefault();
+        }
+      }, false);
+
+      // Dismiss selection when tapping on non-copyable areas
+      document.addEventListener('touchstart', function(e) {
+        if (!e.target.closest(copyableSelector)) {
+          var sel = window.getSelection();
+          if (sel && sel.rangeCount > 0) {
+            sel.removeAllRanges();
+          }
+        }
+      }, false);
+    })();
+    </script>
 </body>
 </html>
