@@ -1709,7 +1709,7 @@ document.addEventListener('balanceUpdated', function(event) {
           <div class="qrcode-container" id="qr-container">
             <div class="qrcode-label" data-translate="Scan to receive payment">Scan to receive payment</div>
             <div id="qrcode-display" style="width:150px;height:150px;margin:0 auto;position:relative">
-              <img id="qr-img" width="150" height="150" style="display:block;margin:0 auto;opacity:0;transition:opacity 0.15s ease" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-addr="">
+              <img id="qr-img" width="150" height="150" style="display:block;margin:0 auto" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-addr="">
               <div class="logo-overlay">ACCESS</div>
             </div>
             <div id="qr-address-text" class="qrcode-label" style="margin-top:5px;color:#555;word-break:break-all"></div>
@@ -1721,7 +1721,7 @@ document.addEventListener('balanceUpdated', function(event) {
               var a = localStorage.getItem('last_qr_addr');
               if (!d || !a) return;
               var img = document.getElementById('qr-img');
-              if (img) { img.src = d; img.dataset.addr = a; img.style.opacity = '1'; }
+              if (img) { img.src = d; img.dataset.addr = a; }
               var at = document.getElementById('qr-address-text');
               if (at) { at.textContent = a.substring(0,8) + '....' + a.substring(a.length-6); }
               window._qrReady = true;

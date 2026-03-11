@@ -9727,14 +9727,12 @@ function initializeGoogleSignIn() {
 
       if (cachedAddr === newAddr && img.src && img.src.indexOf('data:image/png') === 0) {
         console.log('QR: Already rendered, skipping');
-        img.style.opacity = '1';
         return true;
       }
 
       // If inline script already loaded QR from cache and address matches, skip
       if (window._qrReady && cachedAddr === newAddr) {
         console.log('QR: Cache-loaded by inline script, skipping');
-        img.style.opacity = '1';
         return true;
       }
 
@@ -9755,7 +9753,7 @@ function initializeGoogleSignIn() {
           }
           img.src = dataUrl;
           img.dataset.addr = cleanAddress;
-          img.style.opacity = '1';
+          var at = document.getElementById('qr-address-text');
           if (at) at.textContent = cleanAddress.substring(0,8) + '....' + cleanAddress.substring(cleanAddress.length-6);
           try {
             localStorage.setItem('last_qr_data', dataUrl);
