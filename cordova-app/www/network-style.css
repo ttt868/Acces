@@ -283,10 +283,10 @@ body.arabic .qrcode-container {
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 10px;
+  font-size: 8px;
   color: #000000;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
 }
 
 .dark-theme .logo-overlay {
@@ -329,10 +329,10 @@ body.arabic .qrcode-container {
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 4px;
+  font-size: 8.5px;
   color: black;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
 }
 
 
@@ -502,9 +502,10 @@ body.arabic .qrcode-container {
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 12px;
+  font-size: 8px;
   color: #000000;
   text-transform: uppercase;
+  letter-spacing: 0.2px;
   box-shadow: 0 0 4px rgba(0,0,0,0.2);
   border: 2px solid white;
 }

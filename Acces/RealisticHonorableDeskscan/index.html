@@ -94,7 +94,7 @@
   <link rel="stylesheet" href="style-dashboard.css">
   <link rel="stylesheet" href="style-missions.css?v=13.9">
    <link rel="stylesheet" href="profile-style.css">
-   <link rel="stylesheet" href="network-style.css">
+   <link rel="stylesheet" href="network-style.css?v=20260311q">
   <link rel="stylesheet" href="referrals-style.css">
   <link rel="stylesheet" href="leaderboard-style.css">
 
@@ -722,6 +722,7 @@ document.addEventListener('balanceUpdated', function(event) {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js" integrity="sha256-KHMI4idNwX80EfQGGvK+CetXZOHrB4x/DaYlvKcxF+8=" crossorigin="anonymous"></script>
+  <script>window._nodeQR = window.QRCode;</script>
   <!-- Fallback QR code library if primary fails -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://unpkg.com/qr-scanner@1.4.2/qr-scanner.umd.min.js" defer></script>
@@ -1705,9 +1706,28 @@ document.addEventListener('balanceUpdated', function(event) {
           </div>
         </div>
         <div class="account-address-container">
-          <div class="qrcode-container">
-            <canvas id="wallet-qrcode" width="150" height="150"></canvas>
+          <div class="qrcode-container" id="qr-container">
+            <div class="qrcode-label" data-translate="Scan to receive payment">Scan to receive payment</div>
+            <div id="qrcode-display" style="width:150px;height:150px;margin:0 auto;position:relative">
+              <img id="qr-img" width="150" height="150" style="display:block;margin:0 auto" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-addr="">
+              <div class="logo-overlay">ACCESS</div>
+            </div>
+            <div id="qr-address-text" class="qrcode-label" style="margin-top:5px;color:#555;word-break:break-all"></div>
           </div>
+          <script>
+          (function(){
+            try {
+              var d = localStorage.getItem('last_qr_data');
+              var a = localStorage.getItem('last_qr_addr');
+              if (!d || !a) return;
+              var img = document.getElementById('qr-img');
+              if (img) { img.src = d; img.dataset.addr = a; }
+              var at = document.getElementById('qr-address-text');
+              if (at) { at.textContent = a.substring(0,8) + '....' + a.substring(a.length-6); }
+              window._qrReady = true;
+            } catch(e){}
+          })();
+          </script>
 
           <label data-translate="Your Account Address">Your Account Address</label>
           <div class="account-address">
@@ -2784,7 +2804,7 @@ Access-Network is a digital rewards platform combining innovation, community fea
     <!-- ⚠️ يجب تحميل activity-ad-system.js قبل script.js -->
     <script src="activity-ad-system.js"></script>
     
-    <script src="script.js?v=20260217b"></script>
+    <script src="script.js?v=20260311q"></script>
     <script src="missions-system.js"></script>
     
     <!-- PWA Service Worker Registration -->
