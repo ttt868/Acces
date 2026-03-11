@@ -14497,6 +14497,24 @@ window.cancelProfileChanges = cancelProfileChanges;
 
   // Show specified page
   window.showPage = function(pageName) {
+    // For network page: restore QR from cache BEFORE showing the page to prevent flash
+    if (pageName === 'network') {
+      try {
+        var img = document.getElementById('qr-img');
+        if (img && (!img.src || img.src.indexOf('data:image/png') === -1)) {
+          var cachedData = localStorage.getItem('last_qr_data');
+          var cachedAddr = localStorage.getItem('last_qr_addr');
+          if (cachedData && cachedAddr) {
+            img.src = cachedData;
+            img.dataset.addr = cachedAddr;
+            var at = document.getElementById('qr-address-text');
+            if (at) at.textContent = cachedAddr.substring(0,8) + '....' + cachedAddr.substring(cachedAddr.length-6);
+            window._qrReady = true;
+          }
+        }
+      } catch(e) {}
+    }
+
     // Hide all pages
     const pages = document.querySelectorAll('.page-content');
     pages.forEach(page => {
@@ -14535,22 +14553,6 @@ window.cancelProfileChanges = cancelProfileChanges;
       // Apply another round of translations after a brief delay
       setTimeout(translateKYCPage, 50);
     } else if (pageName === 'network') {
-      // Instantly restore QR from cache before any async work
-      (function() {
-        try {
-          var img = document.getElementById('qr-img');
-          if (!img) return;
-          var cachedData = localStorage.getItem('last_qr_data');
-          var cachedAddr = localStorage.getItem('last_qr_addr');
-          if (cachedData && cachedAddr && (!img.src || img.src.indexOf('data:image/png') === -1)) {
-            img.src = cachedData;
-            img.dataset.addr = cachedAddr;
-            var at = document.getElementById('qr-address-text');
-            if (at) at.textContent = cachedAddr.substring(0,8) + '....' + cachedAddr.substring(cachedAddr.length-6);
-            window._qrReady = true;
-          }
-        } catch(e) {}
-      })();
       // Initialize network functionality
       console.log('[Network page] Starting wallet initialization');
       if (currentUser && currentUser.id) {
