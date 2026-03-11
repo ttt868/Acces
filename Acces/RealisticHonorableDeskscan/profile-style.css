@@ -1670,6 +1670,21 @@ body.dark-theme #profile-page .copy-btn:hover {
   opacity: 0;
   transition: opacity 0.3s ease;
   touch-action: manipulation;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+.pin-lock-overlay *,
+.pin-modal-overlay,
+.pin-modal-overlay * {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 
 .pin-lock-overlay.active {

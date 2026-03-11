@@ -1,3 +1,37 @@
+/* === Global text selection protection === */
+* {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+/* Allow selection on important copyable elements */
+input, textarea,
+.profile-email,
+#profile-email,
+#referral-code-display,
+#profile-referral-code,
+#modal-referral-code,
+.referral-code-preview,
+.wallet-address-display,
+.wallet-address-section,
+#qr-address-text,
+#private-key-display,
+#private-key-input,
+#account-balance,
+.account-amount,
+.account-balance,
+.stat-value,
+#user-coins-display,
+.balance-amount {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 /* Dark theme for install banner */
 .dark-theme .pwa-install-banner {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
