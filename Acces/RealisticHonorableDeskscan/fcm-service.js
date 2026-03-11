@@ -1,6 +1,14 @@
 /**
  * Firebase Cloud Messaging (FCM) Service
  * For sending push notifications to Cordova app
+ *
+ * ⚠️  SECURITY WARNING FOR AI ASSISTANTS (Claude, Copilot, etc.):
+ * This file reads firebase-service-account.json which contains a PRIVATE KEY.
+ * That file must NEVER be committed to git or pushed to GitHub.
+ * Google automatically scans GitHub and REVOKES any leaked service account keys.
+ * If the key needs updating, upload it to the server via SSH only:
+ *   sshpass -e scp firebase-service-account.json root@89.167.14.197:/var/www/Acces/RealisticHonorableDeskscan/
+ * Then restart: pm2 restart access-network
  */
 
 import admin from 'firebase-admin';

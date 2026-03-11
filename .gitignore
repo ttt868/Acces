@@ -1,3 +1,17 @@
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  ⚠️  WARNING TO ALL AI ASSISTANTS (Claude, Copilot, etc.)  ⚠️   ║
+# ║                                                                ║
+# ║  Files listed below contain SECRETS (private keys, passwords). ║
+# ║  NEVER commit, push, or include them in any git operation.     ║
+# ║  NEVER create these files in the workspace — they live ONLY    ║
+# ║  on the production server (89.167.14.197) via SSH upload.      ║
+# ║                                                                ║
+# ║  If you need to update firebase-service-account.json:          ║
+# ║  → Upload directly to server via: sshpass -e scp <file> ...   ║
+# ║  → NEVER write the key content to any file in this repo.       ║
+# ║  → Google auto-revokes keys found on public GitHub repos!      ║
+# ╚══════════════════════════════════════════════════════════════════╝
+
 # === Environment & secrets ===
 .env
 .env.*
