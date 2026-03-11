@@ -7839,6 +7839,29 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     console.log('Restoring user session for:', savedUser.email);
     currentUser = savedUser;
 
+    // ⚡ INSTANT QR RESTORE: Repopulate QR cache from session data before any async work
+    // This ensures last_qr_data is available even if localStorage lost it between sessions
+    try {
+      if (savedUser.qr_data_url && savedUser.qr_addr) {
+        var existingQR = localStorage.getItem('last_qr_data');
+        if (!existingQR) {
+          localStorage.setItem('last_qr_data', savedUser.qr_data_url);
+          localStorage.setItem('last_qr_addr', savedUser.qr_addr);
+          console.log('[Session QR] Restored QR cache from session data');
+        }
+        // Also set img.src directly (even if page is hidden, it primes the element)
+        var qrImg = document.getElementById('qr-img');
+        if (qrImg && (!qrImg.src || qrImg.src.indexOf('data:image/png') === -1)) {
+          qrImg.src = savedUser.qr_data_url;
+          qrImg.dataset.addr = savedUser.qr_addr;
+          var qrAddrText = document.getElementById('qr-address-text');
+          if (qrAddrText) qrAddrText.textContent = savedUser.qr_addr.substring(0,8) + '....' + savedUser.qr_addr.substring(savedUser.qr_addr.length-6);
+          window._qrReady = true;
+          console.log('[Session QR] Set img.src directly from session data');
+        }
+      }
+    } catch(e) { console.warn('[Session QR] Restore failed:', e); }
+
     // Load user data before showing the app interface
     loadUserData(currentUser.email, false).then(async () => {
       // Show app interface instead of login
@@ -8295,18 +8318,27 @@ window.addEventListener('load', applyArabicCssIfNeeded);
  // Save minimal user session data - only what's needed to keep user logged in
   function saveUserSession(user) {
     if (user) {
-      // Save essential authentication data INCLUDING avatar
-      // ✅ FIXED: Now includes name and avatar for proper session restoration
+      // Save essential authentication data INCLUDING avatar and wallet for QR restore
       const minimalUserData = {
         id: user.id,
         email: user.email,
         token: user.token,
         sessionToken: user.session_token || user.sessionToken || '',
         name: user.name || 'User',
-        avatar: user.avatar || ''
+        avatar: user.avatar || '',
+        wallet_address: user.wallet_address || (user.wallet && user.wallet.publicAddress) || ''
       };
+      // Also save QR data URL for instant restore on cold start
+      try {
+        var qrData = localStorage.getItem('last_qr_data');
+        var qrAddr = localStorage.getItem('last_qr_addr');
+        if (qrData && qrAddr) {
+          minimalUserData.qr_data_url = qrData;
+          minimalUserData.qr_addr = qrAddr;
+        }
+      } catch(e) {}
       localStorage.setItem('accessoireUser', JSON.stringify(minimalUserData));
-      console.log('Saved user session for:', minimalUserData.email, 'with avatar:', !!minimalUserData.avatar);
+      console.log('Saved user session for:', minimalUserData.email, 'with wallet:', !!minimalUserData.wallet_address);
     }
   }
 
@@ -9815,6 +9847,12 @@ function initializeGoogleSignIn() {
             if (currentUser && currentUser.id) {
               localStorage.setItem('qr_dataurl_' + currentUser.id, dataUrl);
               localStorage.setItem('qr_address_' + currentUser.id, cleanAddress);
+            }
+            // Also update session with QR data for reliable cold-start restore
+            if (currentUser) {
+              currentUser.qr_data_url = dataUrl;
+              currentUser.qr_addr = cleanAddress;
+              saveUserSession(currentUser);
             }
           } catch(e) {}
           if (currentUser && currentUser.id) {
@@ -14504,6 +14542,16 @@ window.cancelProfileChanges = cancelProfileChanges;
         if (img && (!img.src || img.src.indexOf('data:image/png') === -1)) {
           var cachedData = localStorage.getItem('last_qr_data');
           var cachedAddr = localStorage.getItem('last_qr_addr');
+          // Fallback: try per-user cache keys
+          if ((!cachedData || !cachedAddr) && window.currentUser && window.currentUser.id) {
+            cachedData = cachedData || localStorage.getItem('qr_dataurl_' + window.currentUser.id);
+            cachedAddr = cachedAddr || localStorage.getItem('qr_address_' + window.currentUser.id);
+          }
+          // Fallback: try session data
+          if ((!cachedData || !cachedAddr) && window.currentUser) {
+            cachedData = cachedData || window.currentUser.qr_data_url;
+            cachedAddr = cachedAddr || window.currentUser.qr_addr || window.currentUser.wallet_address;
+          }
           if (cachedData && cachedAddr) {
             img.src = cachedData;
             img.dataset.addr = cachedAddr;
