@@ -7839,25 +7839,58 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     console.log('Restoring user session for:', savedUser.email);
     currentUser = savedUser;
 
-    // ⚡ INSTANT QR RESTORE: Repopulate QR cache from session data before any async work
-    // This ensures last_qr_data is available even if localStorage lost it between sessions
+    // ⚡ INSTANT QR RESTORE on cold start — multiple fallback layers
     try {
+      var _qrImg = document.getElementById('qr-img');
+      var _qrNeedsSet = _qrImg && (!_qrImg.src || _qrImg.src.indexOf('data:image/png') === -1);
+      var _qrDataUrl = null;
+      var _qrAddress = null;
+
+      // Source 1: session-embedded QR data
       if (savedUser.qr_data_url && savedUser.qr_addr) {
-        var existingQR = localStorage.getItem('last_qr_data');
-        if (!existingQR) {
-          localStorage.setItem('last_qr_data', savedUser.qr_data_url);
-          localStorage.setItem('last_qr_addr', savedUser.qr_addr);
-          console.log('[Session QR] Restored QR cache from session data');
+        _qrDataUrl = savedUser.qr_data_url;
+        _qrAddress = savedUser.qr_addr;
+      }
+      // Source 2: localStorage cache
+      if (!_qrDataUrl) {
+        _qrDataUrl = localStorage.getItem('last_qr_data');
+        _qrAddress = localStorage.getItem('last_qr_addr');
+      }
+      // Source 3: per-user localStorage
+      if (!_qrDataUrl && savedUser.id) {
+        _qrDataUrl = localStorage.getItem('qr_dataurl_' + savedUser.id);
+        _qrAddress = _qrAddress || localStorage.getItem('qr_address_' + savedUser.id);
+      }
+      // Source 4: generate synchronously from wallet address
+      if (!_qrDataUrl) {
+        var _wAddr = savedUser.wallet_address || '';
+        if (_wAddr && window.QRCode) {
+          try {
+            var _tmpDiv = document.createElement('div');
+            new window.QRCode(_tmpDiv, { text: _wAddr, width: 150, height: 150, colorDark: '#000000', colorLight: '#ffffff' });
+            var _tmpCanvas = _tmpDiv.querySelector('canvas');
+            if (_tmpCanvas) {
+              _qrDataUrl = _tmpCanvas.toDataURL('image/png');
+              _qrAddress = _wAddr;
+              console.log('[Session QR] Generated synchronously from wallet address');
+            }
+          } catch(ge) {}
         }
-        // Also set img.src directly (even if page is hidden, it primes the element)
-        var qrImg = document.getElementById('qr-img');
-        if (qrImg && (!qrImg.src || qrImg.src.indexOf('data:image/png') === -1)) {
-          qrImg.src = savedUser.qr_data_url;
-          qrImg.dataset.addr = savedUser.qr_addr;
-          var qrAddrText = document.getElementById('qr-address-text');
-          if (qrAddrText) qrAddrText.textContent = savedUser.qr_addr.substring(0,8) + '....' + savedUser.qr_addr.substring(savedUser.qr_addr.length-6);
+      }
+
+      // Apply to img and repopulate caches
+      if (_qrDataUrl && _qrAddress) {
+        try {
+          localStorage.setItem('last_qr_data', _qrDataUrl);
+          localStorage.setItem('last_qr_addr', _qrAddress);
+        } catch(se) {}
+        if (_qrNeedsSet && _qrImg) {
+          _qrImg.src = _qrDataUrl;
+          _qrImg.dataset.addr = _qrAddress;
+          var _qrAt = document.getElementById('qr-address-text');
+          if (_qrAt) _qrAt.textContent = _qrAddress.substring(0,8) + '....' + _qrAddress.substring(_qrAddress.length-6);
           window._qrReady = true;
-          console.log('[Session QR] Set img.src directly from session data');
+          console.log('[Session QR] img.src set from source');
         }
       }
     } catch(e) { console.warn('[Session QR] Restore failed:', e); }
@@ -14542,15 +14575,32 @@ window.cancelProfileChanges = cancelProfileChanges;
         if (img && (!img.src || img.src.indexOf('data:image/png') === -1)) {
           var cachedData = localStorage.getItem('last_qr_data');
           var cachedAddr = localStorage.getItem('last_qr_addr');
-          // Fallback: try per-user cache keys
+          // Fallback 1: per-user cache keys
           if ((!cachedData || !cachedAddr) && window.currentUser && window.currentUser.id) {
             cachedData = cachedData || localStorage.getItem('qr_dataurl_' + window.currentUser.id);
             cachedAddr = cachedAddr || localStorage.getItem('qr_address_' + window.currentUser.id);
           }
-          // Fallback: try session data
+          // Fallback 2: session data (qr_data_url)
           if ((!cachedData || !cachedAddr) && window.currentUser) {
             cachedData = cachedData || window.currentUser.qr_data_url;
             cachedAddr = cachedAddr || window.currentUser.qr_addr || window.currentUser.wallet_address;
+          }
+          // Fallback 3: generate QR SYNCHRONOUSLY from wallet address if we have it
+          if (!cachedData && window.currentUser) {
+            var wAddr = window.currentUser.wallet_address || (window.currentUser.wallet && window.currentUser.wallet.publicAddress) || '';
+            if (wAddr && window.QRCode) {
+              try {
+                var tmpDiv = document.createElement('div');
+                new window.QRCode(tmpDiv, { text: wAddr, width: 150, height: 150, colorDark: '#000000', colorLight: '#ffffff' });
+                var tmpCanvas = tmpDiv.querySelector('canvas');
+                if (tmpCanvas) {
+                  cachedData = tmpCanvas.toDataURL('image/png');
+                  cachedAddr = wAddr;
+                  try { localStorage.setItem('last_qr_data', cachedData); localStorage.setItem('last_qr_addr', cachedAddr); } catch(se) {}
+                  console.log('[showPage] QR generated synchronously from wallet address');
+                }
+              } catch(ge) { console.warn('[showPage] Sync QR gen failed:', ge); }
+            }
           }
           if (cachedData && cachedAddr) {
             img.src = cachedData;

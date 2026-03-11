@@ -785,6 +785,35 @@
           }
         } catch(e) {}
       }
+
+      // Ensure QR is ready before user can navigate (prevents flash on Network page)
+      try {
+        var qImg = document.getElementById('qr-img');
+        if (qImg && (!qImg.src || qImg.src.indexOf('data:image/png') === -1)) {
+          var qd = localStorage.getItem('last_qr_data');
+          var qa = localStorage.getItem('last_qr_addr');
+          // Try session-embedded QR
+          if (!qd && window.currentUser) {
+            qd = window.currentUser.qr_data_url;
+            qa = window.currentUser.qr_addr;
+          }
+          // Sync generation from wallet address as last resort
+          if (!qd && window.currentUser && window.currentUser.wallet_address && window.QRCode) {
+            var td = document.createElement('div');
+            new window.QRCode(td, { text: window.currentUser.wallet_address, width: 150, height: 150, colorDark: '#000000', colorLight: '#ffffff' });
+            var tc = td.querySelector('canvas');
+            if (tc) { qd = tc.toDataURL('image/png'); qa = window.currentUser.wallet_address; }
+          }
+          if (qd && qa) {
+            qImg.src = qd; qImg.dataset.addr = qa;
+            var qat = document.getElementById('qr-address-text');
+            if (qat) qat.textContent = qa.substring(0,8) + '....' + qa.substring(qa.length-6);
+            window._qrReady = true;
+            try { localStorage.setItem('last_qr_data', qd); localStorage.setItem('last_qr_addr', qa); } catch(se) {}
+          }
+        }
+      } catch(qe) {}
+
       if (window.currentUser && window.currentUser.email) {
         if (typeof window.loadUserData === 'function') {
           console.log('[PIN] Loading user data after unlock for:', window.currentUser.email);
