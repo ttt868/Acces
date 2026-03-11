@@ -21,7 +21,9 @@ firebase-service-account.json
 **/firebase-service-account.json
 
 # === Keystores & signing ===
-*.keystore
+# NOTE: cordova-app/keystores/debug.keystore and cordova-app/access-network.keystore
+# are needed by GitHub Actions CI/CD — do NOT remove them from git.
+# The release keystore password comes from GitHub Secrets (KEYSTORE_PASSWORD).
 *.jks
 *.p12
 *.pem
