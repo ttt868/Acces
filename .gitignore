@@ -1,5 +1,19 @@
+# === Environment & secrets ===
 .env
-node_modules
+.env.*
+
+# === Firebase service account (NEVER push — Google will revoke it) ===
 firebase-service-account.json
+**/firebase-service-account.json
+
+# === Keystores & signing ===
 *.keystore
+*.jks
+*.p12
+*.pem
+
+# === Build config with passwords ===
 cordova-app/build.json
+
+# === Dependencies ===
+node_modules/
