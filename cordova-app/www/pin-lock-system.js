@@ -1200,35 +1200,19 @@
     function _triggerAfterDelay() {
       if (isReload) {
         // Page reload (returning from external HTML):
-        // BiometricPrompt CryptoObject needs full re-initialization.
-        // Double isAvailable() forces native plugin to fully re-init.
-        // Step 1: 200ms for Cordova bridge
-        // Step 2: isAvailable() — first init (plugin bridge)
-        // Step 3: 400ms pause for native BiometricPrompt setup
-        // Step 4: isAvailable() — second init (CryptoObject ready)
-        // Step 5: 400ms — hardware sensor fully warm
-        // Step 6: show() — works first time
+        // 150ms bridge → isAvailable() warmup → 550ms sensor ready → show()
+        // Total ~700ms — proven sweet spot between speed and reliability
         setTimeout(function() {
           if (!isLocked || _pinFrozen || !navigator.onLine) return;
-          // First warmup call
-          checkBiometricAvailabilityAsync().then(function(available1) {
-            if (!available1 || !isLocked || _pinFrozen) return;
-            // Wait for native BiometricPrompt to fully initialize
+          checkBiometricAvailabilityAsync().then(function(available) {
+            if (!available || !isLocked || _pinFrozen) return;
             setTimeout(function() {
               if (!isLocked || _pinFrozen) return;
-              // Second warmup call — ensures CryptoObject is ready
-              checkBiometricAvailabilityAsync().then(function(available2) {
-                if (!available2 || !isLocked || _pinFrozen) return;
-                // Final pause for hardware sensor
-                setTimeout(function() {
-                  if (!isLocked || _pinFrozen) return;
-                  window._biometricInProgress = false;
-                  triggerBiometricAuth();
-                }, 400);
-              });
-            }, 400);
+              window._biometricInProgress = false;
+              triggerBiometricAuth();
+            }, 550);
           });
-        }, 200);
+        }, 150);
       } else {
         // True cold start: longer delay so user sees PIN after splash
         setTimeout(function() {
