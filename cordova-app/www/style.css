@@ -1615,13 +1615,12 @@ html.dark-theme .logo {
   display: block !important;
   content: '' !important;
   position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60% !important;
+  bottom: -2px;
+  left: 0;
+  width: 100% !important;
   height: 2px !important;
   background: var(--primary-gradient) !important;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .mobile-nav-item:hover {
