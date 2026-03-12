@@ -1786,8 +1786,8 @@ body.pin-lock-active {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 400px;
-  padding: clamp(15px, 4vh, 40px) 20px;
+  max-width: 360px;
+  padding: 40px 20px;
   box-sizing: border-box;
 }
 
@@ -1802,22 +1802,22 @@ body.pin-lock-active {
 
 .pin-lock-title {
   color: #fff;
-  font-size: clamp(18px, 4vmin, 26px);
+  font-size: 24px;
   font-weight: 700;
-  margin: 0 0 clamp(4px, 1vh, 10px) 0;
+  margin: 0 0 8px 0;
 }
 
 .pin-lock-subtitle {
   color: rgba(255, 255, 255, 0.5);
-  font-size: clamp(12px, 2.5vmin, 16px);
-  margin: 0 0 clamp(16px, 3vh, 32px) 0;
+  font-size: 14px;
+  margin: 0 0 32px 0;
 }
 
 /* ===== PIN Dots ===== */
 .pin-dots-container {
   display: flex;
-  gap: clamp(10px, 2.5vmin, 18px);
-  margin-bottom: clamp(8px, 2vh, 20px);
+  gap: 16px;
+  margin-bottom: 16px;
   transition: transform 0.1s;
 }
 
@@ -1834,8 +1834,8 @@ body.pin-lock-active {
 }
 
 .pin-dot {
-  width: clamp(12px, 2.5vmin, 18px);
-  height: clamp(12px, 2.5vmin, 18px);
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.3);
   background: transparent;
@@ -1861,20 +1861,20 @@ body.pin-lock-active {
 .pin-keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(6px, 1.5vmin, 14px);
+  gap: 12px;
   width: 100%;
-  max-width: clamp(220px, 50vmin, 300px);
-  margin-top: clamp(12px, 3vh, 45px);
+  max-width: 280px;
+  margin-top: 45px;
 }
 
 .pin-key {
-  width: clamp(52px, 11vmin, 78px);
-  height: clamp(52px, 11vmin, 78px);
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  font-size: clamp(20px, 4.5vmin, 30px);
+  font-size: 28px;
   font-weight: 500;
   cursor: pointer;
   display: flex;
@@ -1897,7 +1897,7 @@ body.pin-lock-active {
 }
 
 .pin-key-delete {
-  font-size: clamp(18px, 3.5vmin, 24px);
+  font-size: 22px;
   background: none !important;
   border: none !important;
   box-shadow: none !important;
@@ -1914,7 +1914,7 @@ body.pin-lock-active {
 }
 
 .pin-key-biometric {
-  font-size: clamp(22px, 4.5vmin, 30px);
+  font-size: 28px;
   color: #10b981;
   background: none !important;
   border: none !important;
@@ -1968,14 +1968,14 @@ body.pin-lock-active {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 400px;
-  padding: clamp(15px, 4vh, 40px) 20px;
+  max-width: 360px;
+  padding: 40px 20px;
   position: relative;
   box-sizing: border-box;
 }
 
 .pin-modal-container .pin-keypad {
-  margin-top: clamp(10px, 2vh, 21px);
+  margin-top: 21px;
 }
 
 .pin-modal-close {
@@ -2008,32 +2008,32 @@ body.pin-lock-active {
 }
 
 .pin-modal-icon {
-  width: clamp(52px, 10vmin, 76px);
-  height: clamp(52px, 10vmin, 76px);
-  border-radius: clamp(14px, 3vmin, 22px);
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
   background: linear-gradient(135deg, #4a90e2, #7c3aed);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: clamp(12px, 2.5vh, 24px);
+  margin-bottom: 24px;
 }
 
 .pin-modal-icon i {
   color: #fff;
-  font-size: clamp(24px, 5vmin, 34px);
+  font-size: 32px;
 }
 
 .pin-modal-title {
   color: #fff;
-  font-size: clamp(18px, 3.5vmin, 24px);
+  font-size: 22px;
   font-weight: 700;
-  margin: 0 0 clamp(4px, 1vh, 10px) 0;
+  margin: 0 0 8px 0;
 }
 
 .pin-modal-subtitle {
   color: rgba(255, 255, 255, 0.5);
-  font-size: clamp(12px, 2.5vmin, 16px);
-  margin: 0 0 clamp(14px, 3vh, 28px) 0;
+  font-size: 14px;
+  margin: 0 0 28px 0;
   text-align: center;
 }
 
