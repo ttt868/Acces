@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Access Network</title>
     <link rel="icon" type="image/png" href="logo.png">
+    <style>html{background:#000}body{opacity:0}</style>
+    <script>
+    (function(){
+        var rtl=['ar'];
+        var valid=['en','ar','fr','es','tr','de','pt','ru','zh','ja','ko','hi','it','id','pl'];
+        var s=localStorage.getItem('preferredLanguage');
+        if(!s||valid.indexOf(s)===-1){var n=(navigator.language||'en').substring(0,2);s=valid.indexOf(n)!==-1?n:'en';}
+        document.documentElement.setAttribute('lang',s);
+        document.documentElement.setAttribute('dir',rtl.indexOf(s)!==-1?'rtl':'ltr');
+    })();
+    </script>
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="Add Access Network to MetaMask and other Web3 wallets. Connect to Access blockchain with one click using our network configuration tool.">
@@ -473,16 +484,46 @@
                 font-size: 0.75rem;
             }
         }
+
+        /* ===== LANGUAGE DROPDOWN ===== */
+        .lang-dropdown{position:absolute;top:20px;right:70px;z-index:1001}
+        [dir="rtl"] .lang-dropdown{right:auto;left:70px}
+        .lang-toggle{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 14px;border-radius:50px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;backdrop-filter:blur(12px);transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+        .lang-toggle:hover{background:rgba(255,255,255,0.1)}
+        .lang-toggle i{font-size:14px}
+        body.light-mode .lang-toggle{background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.1);color:#111}
+        .lang-menu{position:absolute;top:calc(100% + 8px);right:0;background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:8px 0;min-width:180px;max-height:360px;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,0.6);backdrop-filter:blur(20px);opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .25s}
+        body.light-mode .lang-menu{background:#fff;border:1px solid #e0e0e0;box-shadow:0 12px 40px rgba(0,0,0,0.15)}
+        .lang-dropdown.open .lang-menu{opacity:1;visibility:visible;transform:translateY(0)}
+        .lang-option{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;font-size:13px;color:#aaa;transition:all .2s;border:none;background:none;width:100%;text-align:left}
+        .lang-option:hover{background:rgba(255,255,255,0.06);color:#fff}
+        body.light-mode .lang-option{color:#555}
+        body.light-mode .lang-option:hover{background:rgba(0,0,0,0.04);color:#111}
+        .lang-option.active{color:#3898FF;font-weight:600}
+        .lang-option .lang-flag{font-size:16px}
+        .lang-menu::-webkit-scrollbar{width:4px}
+        .lang-menu::-webkit-scrollbar-track{background:transparent}
+        .lang-menu::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:4px}
+        [dir="rtl"] .lang-menu{right:auto;left:0}
+        [dir="rtl"] .lang-option{text-align:right}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <div class="lang-dropdown" id="langDropdown">
+                <button class="lang-toggle" id="langToggle">
+                    <i class="fas fa-globe"></i>
+                    <span id="langLabel">English</span>
+                    <i class="fas fa-chevron-down" style="font-size:10px;opacity:0.6"></i>
+                </button>
+                <div class="lang-menu" id="langMenu"></div>
+            </div>
             <button class="theme-toggle" onclick="toggleTheme()">
                 <i class="fas fa-moon theme-icon"></i>
             </button>
             <div class="title">Access Network</div>
-            <div class="subtitle">Add to your wallet</div>
+            <div class="subtitle" data-i18n="subtitle">Add to your wallet</div>
         </div>
 
         <div class="content">
@@ -490,7 +531,7 @@
 
             <div class="network-info">
                 <div class="info-item">
-                    <span class="info-label">Network Name</span>
+                    <span class="info-label" data-i18n="net_name">Network Name</span>
                     <div style="display: flex; align-items: center;">
                         <span class="info-value">Access Network</span>
                         <button class="copy-btn" onclick="copyToClipboard('Access Network', this)">
@@ -500,7 +541,7 @@
                 </div>
 
                 <div class="info-item">
-                    <span class="info-label">RPC URL</span>
+                    <span class="info-label" data-i18n="rpc_url">RPC URL</span>
                     <div style="display: flex; align-items: center;">
                         <span class="info-value" id="rpc-url-display"></span>
                         <button class="copy-btn" onclick="copyToClipboard(window.location.origin + '/rpc', this)">
@@ -510,7 +551,7 @@
                 </div>
 
                 <div class="info-item">
-                    <span class="info-label">Chain ID</span>
+                    <span class="info-label" data-i18n="chain_id">Chain ID</span>
                     <div style="display: flex; align-items: center;">
                         <span class="info-value">22888</span>
                         <button class="copy-btn" onclick="copyToClipboard('22888', this)">
@@ -520,7 +561,7 @@
                 </div>
 
                 <div class="info-item">
-                    <span class="info-label">Symbol</span>
+                    <span class="info-label" data-i18n="symbol">Symbol</span>
                     <div style="display: flex; align-items: center;">
                         <span class="info-value">ACCESS</span>
                         <button class="copy-btn" onclick="copyToClipboard('ACCESS', this)">
@@ -530,7 +571,7 @@
                 </div>
 
                 <div class="info-item">
-                    <span class="info-label">Explorer</span>
+                    <span class="info-label" data-i18n="explorer">Explorer</span>
                     <div style="display: flex; align-items: center;">
                         <span class="info-value" id="explorer-url-display"></span>
                         <button class="copy-btn" onclick="copyToClipboard(window.location.origin + '/access-explorer.html', this)">
@@ -546,7 +587,7 @@
                         <i class="fas fa-wallet"></i>
                     </div>
                     <div class="wallet-text">
-                        <div class="wallet-name">Connect Wallet</div>
+                        <div class="wallet-name" data-i18n="connect_wallet">Connect Wallet</div>
                         <div class="wallet-desc">MetaMask, Trust Wallet, Coinbase</div>
                     </div>
                 </div>
@@ -554,34 +595,34 @@
 
             <button id="manual-btn" class="manual-btn" onclick="toggleManualInstructions()">
                 <i class="fas fa-book"></i>
-                Manual Setup Guide
+                <span data-i18n="manual_guide">Manual Setup Guide</span>
             </button>
 
             <div id="manual-instructions" class="manual-instructions">
-                <h4><i class="fas fa-tools"></i> Manual Setup Steps</h4>
+                <h4><i class="fas fa-tools"></i> <span data-i18n="manual_title">Manual Setup Steps</span></h4>
                 <ol>
-                    <li>Open your digital wallet app</li>
-                    <li>Go to network settings</li>
-                    <li>Click "Add Custom Network"</li>
-                    <li>Enter the network information shown above</li>
-                    <li>Save settings and switch to Access Network</li>
-                    <li>Done! You're now connected to Access Network</li>
+                    <li data-i18n="step1">Open your digital wallet app</li>
+                    <li data-i18n="step2">Go to network settings</li>
+                    <li data-i18n="step3">Click "Add Custom Network"</li>
+                    <li data-i18n="step4">Enter the network information shown above</li>
+                    <li data-i18n="step5">Save settings and switch to Access Network</li>
+                    <li data-i18n="step6">Done! You're now connected to Access Network</li>
                 </ol>
             </div>
 
             <a href="/" class="back-link">
                 <i class="fas fa-arrow-left"></i>
-                Back to Homepage
+                <span data-i18n="back_home">Back to Homepage</span>
             </a>
         </div>
     </div>
 
-    <div class="footer">
+    <div class="footer" data-i18n="footer">
         © 2025 AccessScan. All rights reserved.
     </div>
 
     <div id="copyNotification" class="copy-notification">
-        <i class="fas fa-check-circle"></i> Successfully Copied!
+        <i class="fas fa-check-circle"></i> <span data-i18n="copied">Successfully Copied!</span>
     </div>
 
     <script>
@@ -948,26 +989,110 @@
         function toggleManualInstructions() {
             const instructions = document.getElementById('manual-instructions');
             const button = document.getElementById('manual-btn');
+            const lang = T[currentLang] || {};
 
             if (instructions.style.display === 'none' || !instructions.style.display) {
                 instructions.style.display = 'block';
-                button.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Instructions';
-                showStatus('Follow the steps below to add the network manually', 'info');
+                button.innerHTML = '<i class="fas fa-eye-slash"></i> <span data-i18n="hide_guide">' + (lang.hide_guide || 'Hide Instructions') + '</span>';
+                showStatus(lang.status_manual || 'Follow the steps below to add the network manually', 'info');
             } else {
                 instructions.style.display = 'none';
-                button.innerHTML = '<i class="fas fa-book"></i> Manual Setup Guide';
+                button.innerHTML = '<i class="fas fa-book"></i> <span data-i18n="manual_guide">' + (lang.manual_guide || 'Manual Setup Guide') + '</span>';
             }
         }
+
+        // ===== LANGUAGE SYSTEM =====
+        var currentLang = 'en';
+        var defaultTexts = {};
+
+        var LANGS = [
+            {code:'en',flag:'🇺🇸',name:'English'},
+            {code:'ar',flag:'🇸🇦',name:'العربية',rtl:true},
+            {code:'fr',flag:'🇫🇷',name:'Français'},
+            {code:'es',flag:'🇪🇸',name:'Español'},
+            {code:'tr',flag:'🇹🇷',name:'Türkçe'},
+            {code:'de',flag:'🇩🇪',name:'Deutsch'},
+            {code:'pt',flag:'🇧🇷',name:'Português'},
+            {code:'ru',flag:'🇷🇺',name:'Русский'},
+            {code:'zh',flag:'🇨🇳',name:'中文'},
+            {code:'ja',flag:'🇯🇵',name:'日本語'},
+            {code:'ko',flag:'🇰🇷',name:'한국어'},
+            {code:'hi',flag:'🇮🇳',name:'हिन्दी'},
+            {code:'it',flag:'🇮🇹',name:'Italiano'},
+            {code:'id',flag:'🇮🇩',name:'Indonesia'},
+            {code:'pl',flag:'🇵🇱',name:'Polski'}
+        ];
+
+        var T = {
+            ar:{subtitle:"أضف إلى محفظتك",net_name:"اسم الشبكة",rpc_url:"رابط RPC",chain_id:"معرف السلسلة",symbol:"الرمز",explorer:"المستكشف",connect_wallet:"ربط المحفظة",manual_guide:"دليل الإعداد اليدوي",hide_guide:"إخفاء التعليمات",manual_title:"خطوات الإعداد اليدوي",step1:"افتح تطبيق المحفظة الرقمية",step2:"اذهب إلى إعدادات الشبكة",step3:"انقر على \"إضافة شبكة مخصصة\"",step4:"أدخل معلومات الشبكة الموضحة أعلاه",step5:"احفظ الإعدادات وانتقل إلى شبكة Access",step6:"تم! أنت الآن متصل بشبكة Access",back_home:"العودة للصفحة الرئيسية",footer:"© 2025 AccessScan. جميع الحقوق محفوظة.",copied:"تم النسخ بنجاح!",status_choose:"اختر طريقتك المفضلة لإضافة الشبكة",status_manual:"اتبع الخطوات أدناه لإضافة الشبكة يدوياً"},
+            fr:{subtitle:"Ajouter à votre portefeuille",net_name:"Nom du réseau",rpc_url:"URL RPC",chain_id:"ID de chaîne",symbol:"Symbole",explorer:"Explorateur",connect_wallet:"Connecter le portefeuille",manual_guide:"Guide de configuration manuelle",hide_guide:"Masquer les instructions",manual_title:"Étapes de configuration manuelle",step1:"Ouvrez votre application de portefeuille",step2:"Allez dans les paramètres réseau",step3:"Cliquez sur \"Ajouter un réseau personnalisé\"",step4:"Entrez les informations réseau affichées ci-dessus",step5:"Enregistrez et basculez vers Access Network",step6:"Terminé ! Vous êtes connecté à Access Network",back_home:"Retour à l'accueil",footer:"© 2025 AccessScan. Tous droits réservés.",copied:"Copié avec succès !",status_choose:"Choisissez votre méthode préférée pour ajouter le réseau",status_manual:"Suivez les étapes ci-dessous pour ajouter le réseau manuellement"},
+            es:{subtitle:"Añadir a tu billetera",net_name:"Nombre de red",rpc_url:"URL RPC",chain_id:"ID de cadena",symbol:"Símbolo",explorer:"Explorador",connect_wallet:"Conectar billetera",manual_guide:"Guía de configuración manual",hide_guide:"Ocultar instrucciones",manual_title:"Pasos de configuración manual",step1:"Abre tu aplicación de billetera",step2:"Ve a configuración de red",step3:"Haz clic en \"Agregar red personalizada\"",step4:"Ingresa la información de red mostrada arriba",step5:"Guarda la configuración y cambia a Access Network",step6:"¡Listo! Ya estás conectado a Access Network",back_home:"Volver al inicio",footer:"© 2025 AccessScan. Todos los derechos reservados.",copied:"¡Copiado exitosamente!",status_choose:"Elige tu método preferido para agregar la red",status_manual:"Sigue los pasos de abajo para agregar la red manualmente"},
+            tr:{subtitle:"Cüzdanınıza ekleyin",net_name:"Ağ adı",rpc_url:"RPC URL",chain_id:"Zincir ID",symbol:"Sembol",explorer:"Gezgin",connect_wallet:"Cüzdan bağla",manual_guide:"Manuel Kurulum Kılavuzu",hide_guide:"Talimatları gizle",manual_title:"Manuel Kurulum Adımları",step1:"Dijital cüzdan uygulamanızı açın",step2:"Ağ ayarlarına gidin",step3:"\"Özel Ağ Ekle\" seçeneğine tıklayın",step4:"Yukarıda gösterilen ağ bilgilerini girin",step5:"Ayarları kaydedin ve Access Network'e geçin",step6:"Tamam! Artık Access Network'e bağlısınız",back_home:"Ana sayfaya dön",footer:"© 2025 AccessScan. Tüm hakları saklıdır.",copied:"Başarıyla kopyalandı!",status_choose:"Ağı eklemek için tercih ettiğiniz yöntemi seçin",status_manual:"Ağı manuel olarak eklemek için aşağıdaki adımları izleyin"},
+            de:{subtitle:"Zu deinem Wallet hinzufügen",net_name:"Netzwerkname",rpc_url:"RPC-URL",chain_id:"Chain-ID",symbol:"Symbol",explorer:"Explorer",connect_wallet:"Wallet verbinden",manual_guide:"Manuelle Einrichtung",hide_guide:"Anleitung ausblenden",manual_title:"Manuelle Einrichtungsschritte",step1:"Öffne deine Wallet-App",step2:"Gehe zu den Netzwerkeinstellungen",step3:"Klicke auf \"Benutzerdefiniertes Netzwerk hinzufügen\"",step4:"Gib die oben angezeigten Netzwerkinformationen ein",step5:"Speichere die Einstellungen und wechsle zu Access Network",step6:"Fertig! Du bist jetzt mit Access Network verbunden",back_home:"Zurück zur Startseite",footer:"© 2025 AccessScan. Alle Rechte vorbehalten.",copied:"Erfolgreich kopiert!",status_choose:"Wähle deine bevorzugte Methode zum Hinzufügen des Netzwerks",status_manual:"Folge den Schritten unten, um das Netzwerk manuell hinzuzufügen"},
+            pt:{subtitle:"Adicionar à sua carteira",net_name:"Nome da rede",rpc_url:"URL RPC",chain_id:"ID da cadeia",symbol:"Símbolo",explorer:"Explorador",connect_wallet:"Conectar carteira",manual_guide:"Guia de configuração manual",hide_guide:"Ocultar instruções",manual_title:"Passos de configuração manual",step1:"Abra o app da sua carteira digital",step2:"Vá para configurações de rede",step3:"Clique em \"Adicionar rede personalizada\"",step4:"Insira as informações de rede mostradas acima",step5:"Salve as configurações e mude para Access Network",step6:"Pronto! Você está conectado à Access Network",back_home:"Voltar à página inicial",footer:"© 2025 AccessScan. Todos os direitos reservados.",copied:"Copiado com sucesso!",status_choose:"Escolha seu método preferido para adicionar a rede",status_manual:"Siga os passos abaixo para adicionar a rede manualmente"},
+            ru:{subtitle:"Добавить в ваш кошелёк",net_name:"Название сети",rpc_url:"URL RPC",chain_id:"ID цепи",symbol:"Символ",explorer:"Обозреватель",connect_wallet:"Подключить кошелёк",manual_guide:"Ручная настройка",hide_guide:"Скрыть инструкции",manual_title:"Шаги ручной настройки",step1:"Откройте приложение вашего кошелька",step2:"Перейдите в настройки сети",step3:"Нажмите \"Добавить пользовательскую сеть\"",step4:"Введите информацию о сети, показанную выше",step5:"Сохраните настройки и переключитесь на Access Network",step6:"Готово! Вы подключены к Access Network",back_home:"Вернуться на главную",footer:"© 2025 AccessScan. Все права защищены.",copied:"Успешно скопировано!",status_choose:"Выберите предпочтительный способ добавления сети",status_manual:"Следуйте шагам ниже для ручного добавления сети"},
+            zh:{subtitle:"添加到您的钱包",net_name:"网络名称",rpc_url:"RPC 地址",chain_id:"链 ID",symbol:"符号",explorer:"浏览器",connect_wallet:"连接钱包",manual_guide:"手动设置指南",hide_guide:"隐藏说明",manual_title:"手动设置步骤",step1:"打开您的数字钱包应用",step2:"进入网络设置",step3:"点击\"添加自定义网络\"",step4:"输入上方显示的网络信息",step5:"保存设置并切换到 Access Network",step6:"完成！您已连接到 Access Network",back_home:"返回首页",footer:"© 2025 AccessScan. 保留所有权利。",copied:"复制成功！",status_choose:"选择您添加网络的首选方式",status_manual:"按照以下步骤手动添加网络"},
+            ja:{subtitle:"ウォレットに追加",net_name:"ネットワーク名",rpc_url:"RPC URL",chain_id:"チェーンID",symbol:"シンボル",explorer:"エクスプローラー",connect_wallet:"ウォレット接続",manual_guide:"手動セットアップガイド",hide_guide:"説明を隠す",manual_title:"手動セットアップ手順",step1:"デジタルウォレットアプリを開く",step2:"ネットワーク設定に移動",step3:"「カスタムネットワークを追加」をクリック",step4:"上記のネットワーク情報を入力",step5:"設定を保存してAccess Networkに切り替え",step6:"完了！Access Networkに接続されました",back_home:"ホームに戻る",footer:"© 2025 AccessScan. All rights reserved.",copied:"コピーしました！",status_choose:"ネットワークを追加する方法を選択してください",status_manual:"以下の手順に従ってネットワークを手動で追加してください"},
+            ko:{subtitle:"지갑에 추가",net_name:"네트워크 이름",rpc_url:"RPC URL",chain_id:"체인 ID",symbol:"심볼",explorer:"탐색기",connect_wallet:"지갑 연결",manual_guide:"수동 설정 가이드",hide_guide:"설명 숨기기",manual_title:"수동 설정 단계",step1:"디지털 지갑 앱을 엽니다",step2:"네트워크 설정으로 이동합니다",step3:"\"맞춤 네트워크 추가\"를 클릭합니다",step4:"위에 표시된 네트워크 정보를 입력합니다",step5:"설정을 저장하고 Access Network로 전환합니다",step6:"완료! Access Network에 연결되었습니다",back_home:"홈으로 돌아가기",footer:"© 2025 AccessScan. All rights reserved.",copied:"복사되었습니다!",status_choose:"네트워크를 추가할 방법을 선택하세요",status_manual:"아래 단계에 따라 네트워크를 수동으로 추가하세요"},
+            hi:{subtitle:"अपने वॉलेट में जोड़ें",net_name:"नेटवर्क नाम",rpc_url:"RPC URL",chain_id:"चेन ID",symbol:"प्रतीक",explorer:"एक्सप्लोरर",connect_wallet:"वॉलेट कनेक्ट करें",manual_guide:"मैनुअल सेटअप गाइड",hide_guide:"निर्देश छिपाएं",manual_title:"मैनुअल सेटअप चरण",step1:"अपना डिजिटल वॉलेट ऐप खोलें",step2:"नेटवर्क सेटिंग्स पर जाएं",step3:"\"कस्टम नेटवर्क जोड़ें\" पर क्लिक करें",step4:"ऊपर दिखाई गई नेटवर्क जानकारी दर्ज करें",step5:"सेटिंग्स सेव करें और Access Network पर स्विच करें",step6:"हो गया! आप अब Access Network से जुड़े हैं",back_home:"होमपेज पर वापस",footer:"© 2025 AccessScan. सर्वाधिकार सुरक्षित।",copied:"सफलतापूर्वक कॉपी किया!",status_choose:"नेटवर्क जोड़ने का अपना पसंदीदा तरीका चुनें",status_manual:"नेटवर्क को मैन्युअली जोड़ने के लिए नीचे दिए गए चरणों का पालन करें"},
+            it:{subtitle:"Aggiungi al tuo portafoglio",net_name:"Nome rete",rpc_url:"URL RPC",chain_id:"ID catena",symbol:"Simbolo",explorer:"Esploratore",connect_wallet:"Collega portafoglio",manual_guide:"Guida configurazione manuale",hide_guide:"Nascondi istruzioni",manual_title:"Passaggi configurazione manuale",step1:"Apri la tua app portafoglio digitale",step2:"Vai alle impostazioni di rete",step3:"Clicca su \"Aggiungi rete personalizzata\"",step4:"Inserisci le informazioni di rete mostrate sopra",step5:"Salva le impostazioni e passa ad Access Network",step6:"Fatto! Sei ora connesso ad Access Network",back_home:"Torna alla home",footer:"© 2025 AccessScan. Tutti i diritti riservati.",copied:"Copiato con successo!",status_choose:"Scegli il metodo preferito per aggiungere la rete",status_manual:"Segui i passaggi sotto per aggiungere la rete manualmente"},
+            id:{subtitle:"Tambahkan ke dompet Anda",net_name:"Nama jaringan",rpc_url:"URL RPC",chain_id:"ID Rantai",symbol:"Simbol",explorer:"Penjelajah",connect_wallet:"Hubungkan dompet",manual_guide:"Panduan Pengaturan Manual",hide_guide:"Sembunyikan instruksi",manual_title:"Langkah Pengaturan Manual",step1:"Buka aplikasi dompet digital Anda",step2:"Buka pengaturan jaringan",step3:"Klik \"Tambah Jaringan Kustom\"",step4:"Masukkan informasi jaringan yang ditampilkan di atas",step5:"Simpan pengaturan dan beralih ke Access Network",step6:"Selesai! Anda sekarang terhubung ke Access Network",back_home:"Kembali ke Beranda",footer:"© 2025 AccessScan. Semua hak dilindungi.",copied:"Berhasil disalin!",status_choose:"Pilih metode yang Anda sukai untuk menambahkan jaringan",status_manual:"Ikuti langkah di bawah untuk menambahkan jaringan secara manual"},
+            pl:{subtitle:"Dodaj do portfela",net_name:"Nazwa sieci",rpc_url:"URL RPC",chain_id:"ID łańcucha",symbol:"Symbol",explorer:"Eksplorator",connect_wallet:"Połącz portfel",manual_guide:"Instrukcja ręcznej konfiguracji",hide_guide:"Ukryj instrukcje",manual_title:"Kroki ręcznej konfiguracji",step1:"Otwórz aplikację portfela cyfrowego",step2:"Przejdź do ustawień sieci",step3:"Kliknij \"Dodaj sieć niestandardową\"",step4:"Wprowadź informacje o sieci pokazane powyżej",step5:"Zapisz ustawienia i przełącz na Access Network",step6:"Gotowe! Jesteś teraz połączony z Access Network",back_home:"Powrót do strony głównej",footer:"© 2025 AccessScan. Wszelkie prawa zastrzeżone.",copied:"Skopiowano pomyślnie!",status_choose:"Wybierz preferowaną metodę dodania sieci",status_manual:"Postępuj zgodnie z poniższymi krokami, aby ręcznie dodać sieć"}
+        };
+
+        function buildLangMenu() {
+            var menu = document.getElementById('langMenu');
+            menu.innerHTML = '';
+            LANGS.forEach(function(l) {
+                var btn = document.createElement('button');
+                btn.className = 'lang-option' + (l.code === currentLang ? ' active' : '');
+                btn.innerHTML = '<span class="lang-flag">' + l.flag + '</span> ' + l.name;
+                btn.onclick = function() { setLanguage(l.code); document.getElementById('langDropdown').classList.remove('open'); };
+                menu.appendChild(btn);
+            });
+        }
+
+        function applyTranslation(lang) {
+            var html = document.documentElement;
+            var info = LANGS.find(function(l) { return l.code === lang; });
+            html.setAttribute('dir', info && info.rtl ? 'rtl' : 'ltr');
+            html.setAttribute('lang', lang);
+            var tr = T[lang];
+            document.querySelectorAll('[data-i18n]').forEach(function(el) {
+                var key = el.getAttribute('data-i18n');
+                if (tr && tr[key]) {
+                    el.innerHTML = tr[key];
+                } else if (defaultTexts[key]) {
+                    el.innerHTML = defaultTexts[key];
+                }
+            });
+        }
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('preferredLanguage', lang);
+            applyTranslation(lang);
+            buildLangMenu();
+            var info = LANGS.find(function(l) { return l.code === lang; });
+            if (info) document.getElementById('langLabel').textContent = info.name;
+        }
+
+        document.getElementById('langDropdown').addEventListener('click', function(e) {
+            if (e.target.closest('.lang-option')) return;
+            this.classList.toggle('open');
+        });
+        document.addEventListener('click', function(e) {
+            var dd = document.getElementById('langDropdown');
+            if (!dd.contains(e.target)) dd.classList.remove('open');
+        });
 
         document.addEventListener('DOMContentLoaded', function() {
             const savedTheme = localStorage.getItem('theme');
             
-            // الوضع الليلي هو الافتراضي دائماً
             if (savedTheme === 'light') {
                 document.body.classList.add('light-mode');
                 document.querySelector('.theme-icon').className = 'fas fa-sun theme-icon';
             } else {
-                // تأكد من إزالة light-mode وحفظ الوضع الليلي
                 document.body.classList.remove('light-mode');
                 document.querySelector('.theme-icon').className = 'fas fa-moon theme-icon';
                 if (!savedTheme) {
@@ -984,8 +1109,32 @@
             if (explorerUrlDisplay) {
                 explorerUrlDisplay.textContent = window.location.origin + '/access-explorer.html';
             }
-            
-            showStatus('Choose your preferred method to add the network', 'info');
+
+            // Save default English texts
+            document.querySelectorAll('[data-i18n]').forEach(function(el) {
+                defaultTexts[el.getAttribute('data-i18n')] = el.innerHTML;
+            });
+
+            // Init language
+            var validCodes = LANGS.map(function(l) { return l.code; });
+            var saved = localStorage.getItem('preferredLanguage');
+            if (!saved || validCodes.indexOf(saved) === -1) {
+                var nav = (navigator.language || 'en').substring(0, 2);
+                saved = validCodes.indexOf(nav) !== -1 ? nav : 'en';
+            }
+            currentLang = saved;
+            if (currentLang !== 'en') applyTranslation(currentLang);
+            buildLangMenu();
+            var info = LANGS.find(function(l) { return l.code === currentLang; });
+            if (info) document.getElementById('langLabel').textContent = info.name;
+
+            // Reveal body
+            document.body.offsetHeight;
+            document.body.style.opacity = '1';
+            document.body.style.transition = 'opacity 0.15s';
+
+            var lang = T[currentLang] || {};
+            showStatus(lang.status_choose || 'Choose your preferred method to add the network', 'info');
         });
     </script>
 </body>
