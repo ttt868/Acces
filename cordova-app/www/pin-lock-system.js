@@ -1179,20 +1179,18 @@
     function _triggerAfterDelay() {
       if (isReload) {
         // Page reload (returning from external HTML):
-        // 1) 100ms initial wait for Cordova bridge to stabilize
-        // 2) isAvailable() warms up the native fingerprint plugin
-        // 3) 400ms after isAvailable — sensor hardware fully ready
-        // Total ~500ms — faster, sensor still works on first try
+        // DO NOT auto-trigger biometric — Android may have a cached biometric session
+        // that auto-approves without finger placement (critical security risk).
+        // Just ensure biometric button is visible so user can press it manually.
         setTimeout(function() {
-          if (!isLocked || _pinFrozen || !navigator.onLine) return;
+          if (!isLocked || _pinFrozen) return;
           checkBiometricAvailabilityAsync().then(function(available) {
-            if (!available || !isLocked || _pinFrozen) return;
-            setTimeout(function() {
-              if (!isLocked || _pinFrozen) return;
-              window._biometricInProgress = false;
-              triggerBiometricAuth();
-            }, 400);
+            var bioBtn = document.getElementById('pin-biometric-btn');
+            if (bioBtn) {
+              bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
+            }
           });
+        }, 100);
         }, 100);
       } else {
         // True cold start: longer delay so user sees PIN after splash
