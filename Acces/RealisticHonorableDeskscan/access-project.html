@@ -781,14 +781,14 @@
                         <span data-i18n="dl_webapp">Web App</span>
                     </div>
                 </a>
-                <a href="#" class="dl-btn dl-btn-secondary" id="playStoreBtn" style="display:none;">
+                <a href="#" class="dl-btn dl-btn-secondary" id="playStoreBtn">
                     <i class="fab fa-google-play"></i>
                     <div class="dl-btn-label">
                         <span class="dl-btn-small" data-i18n="dl_geton">Get it on</span>
                         <span>Google Play</span>
                     </div>
                 </a>
-                <a href="#" class="dl-btn dl-btn-disabled" style="display:none;">
+                <a href="#" class="dl-btn dl-btn-disabled">
                     <i class="fab fa-apple"></i>
                     <div class="dl-btn-label">
                         <span class="dl-btn-small" data-i18n="dl_soon">Coming Soon</span>
@@ -907,6 +907,12 @@
                     <div class="network-item-label">RPC</div>
                     <div class="network-item-value" style="font-size:clamp(0.85rem,3.5vw,1.3rem);display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;"><span>accesschain.org/rpc</span><button onclick="navigator.clipboard.writeText('https://accesschain.org/rpc').then(()=>{this.querySelector('svg path').setAttribute('d','M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z');this.querySelector('svg').style.stroke='#00e676';setTimeout(()=>{this.querySelector('svg path').setAttribute('d','M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z');this.querySelector('svg').style.stroke=''},1500)})" style="background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);display:flex;align-items:center;" title="Copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button></div>
                 </div>
+            </div>
+            <div style="text-align:center;padding:24px 20px 28px;">
+                <button onclick="connectWallet()" style="display:inline-flex;align-items:center;gap:10px;padding:14px 36px;background:var(--gradient);color:#fff;border:none;border-radius:50px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.3s ease;box-shadow:0 4px 15px rgba(59,130,246,0.3);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 25px rgba(59,130,246,0.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 15px rgba(59,130,246,0.3)'">
+                    <i class="fas fa-wallet"></i>
+                    <span data-i18n="net_connect">Connect Wallet</span>
+                </button>
             </div>
         </div>
     </section>
@@ -1196,6 +1202,113 @@
 
     <script>
 
+    // ===== WALLET CONNECT =====
+    const accessNetwork = {
+        chainId: '0x5948',
+        chainName: 'Access Network',
+        nativeCurrency: { name: 'ACCESS', symbol: 'ACCESS', decimals: 18 },
+        rpcUrls: ['https://accesschain.org/rpc'],
+        blockExplorerUrls: ['https://accesschain.org/access-explorer.html']
+    };
+
+    async function connectWallet() {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (typeof window.ethereum !== 'undefined') {
+            try {
+                await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [accessNetwork] });
+                setTimeout(async () => {
+                    try {
+                        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: accessNetwork.chainId }] });
+                    } catch (e) { console.log('Switch not performed'); }
+                }, 1000);
+            } catch (error) {
+                console.error('Error adding network:', error);
+                if (error.code !== 4001) showWalletSelector();
+            }
+        } else if (isMobile) {
+            showWalletSelector();
+        } else {
+            showWalletSelector();
+        }
+    }
+
+    function showWalletSelector() {
+        const currentUrl = encodeURIComponent(window.location.href);
+        const modal = document.createElement('div');
+        modal.id = 'wallet-modal';
+        modal.innerHTML = `
+            <div class="wallet-modal-overlay" onclick="closeWalletModal()">
+                <div class="wallet-modal-content" onclick="event.stopPropagation()">
+                    <div class="wallet-modal-header">
+                        <h3><i class="fas fa-wallet"></i> Select Wallet</h3>
+                        <button class="modal-close" onclick="closeWalletModal()"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="wallet-modal-body">
+                        <p class="wallet-modal-desc">Choose your wallet to add Access Network</p>
+                        <a href="https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}" class="wallet-option" onclick="closeWalletModal()">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" class="wallet-logo">
+                            <div class="wallet-option-info"><span class="wallet-option-name">MetaMask</span><span class="wallet-option-desc">Open in MetaMask app</span></div>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        <a href="https://link.trustwallet.com/open_url?coin_id=60&url=${currentUrl}" class="wallet-option" onclick="closeWalletModal()">
+                            <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="Trust Wallet" class="wallet-logo">
+                            <div class="wallet-option-info"><span class="wallet-option-name">Trust Wallet</span><span class="wallet-option-desc">Open in Trust Wallet app</span></div>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        <a href="https://go.cb-w.com/dapp?cb_url=${currentUrl}" class="wallet-option" onclick="closeWalletModal()">
+                            <img src="https://altcoinsbox.com/wp-content/uploads/2022/12/coinbase-wallet-logo.png" alt="Coinbase" class="wallet-logo">
+                            <div class="wallet-option-info"><span class="wallet-option-name">Coinbase Wallet</span><span class="wallet-option-desc">Open in Coinbase app</span></div>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        <div class="wallet-divider"><span>or install a wallet</span></div>
+                        <div class="install-options">
+                            <a href="https://metamask.io/download/" target="_blank" class="install-btn"><i class="fas fa-download"></i> Install MetaMask</a>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        if (!document.getElementById('wallet-modal-styles')) {
+            const s = document.createElement('style');
+            s.id = 'wallet-modal-styles';
+            s.textContent = `
+                .wallet-modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;animation:wmFadeIn .2s ease}
+                @keyframes wmFadeIn{from{opacity:0}to{opacity:1}}
+                .wallet-modal-content{background:#000;border-radius:20px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;border:1px solid #111;animation:wmSlideUp .3s ease}
+                body.light-mode .wallet-modal-content{background:#fff;border:1px solid #e9ecef}
+                @keyframes wmSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+                .wallet-modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid #111}
+                body.light-mode .wallet-modal-header{border-bottom:1px solid #e9ecef}
+                .wallet-modal-header h3{color:#fff;font-size:1.1rem;display:flex;align-items:center;gap:10px}
+                body.light-mode .wallet-modal-header h3{color:#111}
+                .modal-close{background:transparent;border:none;color:#888;font-size:1.2rem;cursor:pointer;padding:5px;transition:color .2s}
+                .modal-close:hover{color:#fff}body.light-mode .modal-close:hover{color:#111}
+                .wallet-modal-body{padding:20px}
+                .wallet-modal-desc{color:#888;text-align:center;margin-bottom:20px;font-size:.9rem}
+                .wallet-option{display:flex;align-items:center;padding:15px;background:#000;border-radius:12px;margin-bottom:10px;text-decoration:none;color:#fff;transition:all .2s ease;border:1px solid transparent}
+                body.light-mode .wallet-option{background:#f8f9fa;color:#111}
+                .wallet-option:hover{background:#111;border-color:#3898FF;transform:translateX(5px)}
+                body.light-mode .wallet-option:hover{background:#e9ecef}
+                .wallet-logo{width:40px;height:40px;border-radius:10px;margin-right:15px}
+                .wallet-option-info{flex:1;display:flex;flex-direction:column}
+                .wallet-option-name{font-weight:600;font-size:1rem}
+                .wallet-option-desc{font-size:.8rem;color:#888}
+                .wallet-option i.fa-chevron-right{color:#888}
+                .wallet-divider{display:flex;align-items:center;margin:20px 0;color:#666;font-size:.85rem}
+                .wallet-divider::before,.wallet-divider::after{content:'';flex:1;height:1px;background:#111}
+                body.light-mode .wallet-divider::before,body.light-mode .wallet-divider::after{background:#e9ecef}
+                .wallet-divider span{padding:0 15px}
+                .install-options{text-align:center}
+                .install-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border-radius:10px;text-decoration:none;font-weight:500;transition:all .2s ease}
+                .install-btn:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(102,126,234,.4)}`;
+            document.head.appendChild(s);
+        }
+        document.body.appendChild(modal);
+    }
+
+    function closeWalletModal() {
+        const m = document.getElementById('wallet-modal');
+        if (m) m.remove();
+    }
 
     // ===== 15 LANGUAGES =====
     const LANGS = [
@@ -1231,7 +1344,7 @@
             feat4_title:"تعدين إثبات الحصة",feat4_desc:"اكسب توكنات ACCESS من خلال نظام المعالجة. لا حاجة لأجهزة باهظة الثمن.",
             feat5_title:"رسوم معاملات ضئيلة",feat5_desc:"رسوم Gas منخفضة للغاية لجميع المعاملات على الشبكة.",
             feat6_title:"تصميم للجوال أولاً",feat6_desc:"مصمم لمستخدمي الجوال. متاح كتطبيق ويب تقدمي وتطبيق أندرويد أصلي.",
-            net_tag:"مواصفات الشبكة",net_title:"نظرة تقنية عامة",net_name:"اسم الشبكة",net_symbol:"رمز العملة",net_block:"وقت الكتلة",net_consensus:"الإجماع",net_supply:"الحد الأقصى",net_type:"نوع الشبكة",
+            net_tag:"مواصفات الشبكة",net_title:"نظرة تقنية عامة",net_name:"اسم الشبكة",net_symbol:"رمز العملة",net_block:"وقت الكتلة",net_consensus:"الإجماع",net_supply:"الحد الأقصى",net_type:"نوع الشبكة",net_connect:"ربط المحفظة",
             how_tag:"البداية",how_title:"كيف يعمل",how_desc:"ابدأ استخدام Access Network في خطوات بسيطة. لا تحتاج معرفة تقنية.",
             step1_title:"أنشئ حسابك",step1_desc:"سجّل بالبريد الإلكتروني. يتم إنشاء محفظتك الآمنة تلقائياً بتشفير عالي المستوى.",
             step2_title:"ابدأ جلسة النشاط",step2_desc:"فعّل جلسة المعالجة لبدء التحقق من المعاملات وكسب مكافآت ACCESS.",
@@ -1284,7 +1397,7 @@
             feat4_title:"Minage Proof of Stake",feat4_desc:"Gagnez des tokens ACCESS grâce au système de traitement. Aucun matériel coûteux requis.",
             feat5_title:"Frais minimaux",feat5_desc:"Frais de Gas extrêmement bas pour toutes les transactions sur le réseau.",
             feat6_title:"Conçu pour le mobile",feat6_desc:"Disponible en tant qu'application web progressive et application Android native.",
-            net_tag:"SPÉCIFICATIONS",net_title:"Aperçu technique",net_name:"Nom du réseau",net_symbol:"Symbole",net_block:"Temps de bloc",net_consensus:"Consensus",net_supply:"Supply max",net_type:"Type de réseau",
+            net_tag:"SPÉCIFICATIONS",net_title:"Aperçu technique",net_name:"Nom du réseau",net_symbol:"Symbole",net_block:"Temps de bloc",net_consensus:"Consensus",net_supply:"Supply max",net_type:"Type de réseau",net_connect:"Connecter le portefeuille",
             how_tag:"DÉMARRAGE",how_title:"Comment ça marche",how_desc:"Commencez à utiliser Access Network en quelques étapes simples.",
             step1_title:"Créer un compte",step1_desc:"Inscrivez-vous avec votre email. Votre portefeuille sécurisé est automatiquement généré.",
             step2_title:"Démarrer une session",step2_desc:"Activez votre session pour commencer à valider les transactions.",
@@ -1337,7 +1450,7 @@
             feat4_title:"Minería Proof of Stake",feat4_desc:"Gana tokens ACCESS sin hardware costoso.",
             feat5_title:"Tarifas mínimas",feat5_desc:"Tarifas de Gas extremadamente bajas.",
             feat6_title:"Diseño móvil primero",feat6_desc:"Disponible como PWA y app nativa Android.",
-            net_tag:"ESPECIFICACIONES",net_title:"Visión técnica",net_name:"Nombre de red",net_symbol:"Símbolo",net_block:"Tiempo de bloque",net_consensus:"Consenso",net_supply:"Supply máx",net_type:"Tipo de red",
+            net_tag:"ESPECIFICACIONES",net_title:"Visión técnica",net_name:"Nombre de red",net_symbol:"Símbolo",net_block:"Tiempo de bloque",net_consensus:"Consenso",net_supply:"Supply máx",net_type:"Tipo de red",net_connect:"Conectar billetera",
             how_tag:"INICIO",how_title:"Cómo funciona",how_desc:"Empieza con Access Network en simples pasos.",
             step1_title:"Crear cuenta",step1_desc:"Regístrate con tu email. Tu billetera se genera automáticamente.",
             step2_title:"Iniciar sesión",step2_desc:"Activa tu sesión para validar transacciones y ganar recompensas.",
@@ -1390,7 +1503,7 @@
             feat4_title:"Proof of Stake madenciliği",feat4_desc:"Pahalı donanım olmadan ACCESS token kazanın. Cihazınızdan doğrudan ödüller alın.",
             feat5_title:"Minimum ücretler",feat5_desc:"Son derece düşük Gas ücretleri. Token gönderme, akıllı sözleşme veya dApp etkileşimi çok ucuz.",
             feat6_title:"Mobil öncelikli tasarım",feat6_desc:"Cüzdanınıza her yerden erişin. PWA ve yerel Android uygulaması olarak mevcut.",
-            net_tag:"AĞ ÖZELLİKLERİ",net_title:"Teknik Genel Bakış",net_name:"Ağ adı",net_symbol:"Para birimi",net_block:"Blok süresi",net_consensus:"Konsensüs",net_supply:"Maks arz",net_type:"Ağ türü",
+            net_tag:"AĞ ÖZELLİKLERİ",net_title:"Teknik Genel Bakış",net_name:"Ağ adı",net_symbol:"Para birimi",net_block:"Blok süresi",net_consensus:"Konsensüs",net_supply:"Maks arz",net_type:"Ağ türü",net_connect:"Cüzdan bağla",
             how_tag:"BAŞLANGIÇ",how_title:"Nasıl Çalışır",how_desc:"Birkaç basit adımda başlayın. Teknik bilgi gerekmez.",
             step1_title:"Hesap oluştur",step1_desc:"E-posta ile kaydolun. Güvenli cüzdanınız şifreli olarak otomatik oluşturulur.",
             step2_title:"Oturum başlat",step2_desc:"İşlemleri doğrulamak ve ACCESS ödülleri kazanmak için oturumunuzu etkinleştirin.",
@@ -1443,7 +1556,7 @@
             feat4_title:"Proof-of-Stake-Mining",feat4_desc:"ACCESS-Token ohne teure Hardware verdienen. Belohnungen direkt über Ihr Gerät.",
             feat5_title:"Minimale Gebühren",feat5_desc:"Extrem niedrige Gas-Gebühren für alle Netzwerktransaktionen.",
             feat6_title:"Mobile-First-Design",feat6_desc:"Wallet überall nutzen. Als PWA und native Android-App verfügbar.",
-            net_tag:"NETZWERK-SPEZIFIKATIONEN",net_title:"Technischer Überblick",net_name:"Netzwerkname",net_symbol:"Währungssymbol",net_block:"Blockzeit",net_consensus:"Konsens",net_supply:"Max Supply",net_type:"Netzwerktyp",
+            net_tag:"NETZWERK-SPEZIFIKATIONEN",net_title:"Technischer Überblick",net_name:"Netzwerkname",net_symbol:"Währungssymbol",net_block:"Blockzeit",net_consensus:"Konsens",net_supply:"Max Supply",net_type:"Netzwerktyp",net_connect:"Wallet verbinden",
             how_tag:"ERSTE SCHRITTE",how_title:"Wie es funktioniert",how_desc:"Starten Sie in wenigen einfachen Schritten. Kein technisches Wissen erforderlich.",
             step1_title:"Konto erstellen",step1_desc:"Registrieren Sie sich per E-Mail. Ihr sicheres Wallet wird automatisch mit Verschlüsselung erstellt.",
             step2_title:"Sitzung starten",step2_desc:"Aktivieren Sie Ihre Sitzung zur Transaktionsvalidierung und verdienen Sie ACCESS-Belohnungen.",
@@ -1496,7 +1609,7 @@
             feat4_title:"Mineração Proof of Stake",feat4_desc:"Ganhe tokens ACCESS sem hardware caro. Receba recompensas diretamente do seu dispositivo.",
             feat5_title:"Taxas mínimas",feat5_desc:"Taxas de Gas extremamente baixas para todas as transações na rede.",
             feat6_title:"Design mobile-first",feat6_desc:"Acesse sua carteira de qualquer lugar. Disponível como PWA e app Android nativo.",
-            net_tag:"ESPECIFICAÇÕES DA REDE",net_title:"Visão Técnica",net_name:"Nome da rede",net_symbol:"Símbolo",net_block:"Tempo de bloco",net_consensus:"Consenso",net_supply:"Supply máx",net_type:"Tipo de rede",
+            net_tag:"ESPECIFICAÇÕES DA REDE",net_title:"Visão Técnica",net_name:"Nome da rede",net_symbol:"Símbolo",net_block:"Tempo de bloco",net_consensus:"Consenso",net_supply:"Supply máx",net_type:"Tipo de rede",net_connect:"Conectar carteira",
             how_tag:"INÍCIO",how_title:"Como funciona",how_desc:"Comece a usar Access Network em poucos passos simples. Sem conhecimento técnico necessário.",
             step1_title:"Criar conta",step1_desc:"Registre-se com seu email. Sua carteira segura é gerada automaticamente com criptografia.",
             step2_title:"Iniciar sessão",step2_desc:"Ative sua sessão para validar transações e ganhar recompensas ACCESS.",
@@ -1549,7 +1662,7 @@
             feat4_title:"Proof of Stake майнинг",feat4_desc:"Зарабатывайте ACCESS без дорогого оборудования. Награды прямо с вашего устройства.",
             feat5_title:"Минимальные комиссии",feat5_desc:"Крайне низкие комиссии Gas для всех транзакций в сети.",
             feat6_title:"Мобильный дизайн",feat6_desc:"Доступ к кошельку отовсюду. Доступно как PWA и Android-приложение.",
-            net_tag:"СПЕЦИФИКАЦИИ СЕТИ",net_title:"Технический обзор",net_name:"Название сети",net_symbol:"Символ валюты",net_block:"Время блока",net_consensus:"Консенсус",net_supply:"Макс. запас",net_type:"Тип сети",
+            net_tag:"СПЕЦИФИКАЦИИ СЕТИ",net_title:"Технический обзор",net_name:"Название сети",net_symbol:"Символ валюты",net_block:"Время блока",net_consensus:"Консенсус",net_supply:"Макс. запас",net_type:"Тип сети",net_connect:"Подключить кошелёк",
             how_tag:"НАЧАЛО РАБОТЫ",how_title:"Как это работает",how_desc:"Начните за несколько простых шагов. Технические знания не требуются.",
             step1_title:"Создать аккаунт",step1_desc:"Зарегистрируйтесь по email. Безопасный кошелёк создаётся автоматически с шифрованием.",
             step2_title:"Начать сессию",step2_desc:"Активируйте сессию для валидации транзакций и получения наград ACCESS.",
@@ -1602,7 +1715,7 @@
             feat4_title:"PoS挖矿",feat4_desc:"无需昂贵硬件即可赚取ACCESS代币。直接从您的设备获得奖励。",
             feat5_title:"最低费用",feat5_desc:"网络上所有交易的Gas费用极低。",
             feat6_title:"移动优先设计",feat6_desc:"随时随地访问您的钱包。提供PWA和原生Android应用。",
-            net_tag:"网络规格",net_title:"技术概览",net_name:"网络名称",net_symbol:"货币符号",net_block:"出块时间",net_consensus:"共识",net_supply:"最大供应",net_type:"网络类型",
+            net_tag:"网络规格",net_title:"技术概览",net_name:"网络名称",net_symbol:"货币符号",net_block:"出块时间",net_consensus:"共识",net_supply:"最大供应",net_type:"网络类型",net_connect:"连接钱包",
             how_tag:"入门指南",how_title:"工作原理",how_desc:"简单几步即可开始使用Access Network。无需技术知识。",
             step1_title:"创建账户",step1_desc:"使用电子邮件注册。您的安全钱包将自动生成并加密。",
             step2_title:"开始活动会话",step2_desc:"激活您的处理会话，开始验证交易并赚取ACCESS奖励。",
@@ -1655,7 +1768,7 @@
             feat4_title:"PoSマイニング",feat4_desc:"高価なハードウェアなしでACCESSトークンを獲得。デバイスから直接報酬を受け取れます。",
             feat5_title:"最小手数料",feat5_desc:"ネットワーク上の全トランザクションで極めて低いGas手数料。",
             feat6_title:"モバイルファーストデザイン",feat6_desc:"どこからでもウォレットにアクセス。PWAとネイティブAndroidアプリとして利用可能。",
-            net_tag:"ネットワーク仕様",net_title:"技術概要",net_name:"ネットワーク名",net_symbol:"通貨シンボル",net_block:"ブロック時間",net_consensus:"コンセンサス",net_supply:"最大供給量",net_type:"ネットワークタイプ",
+            net_tag:"ネットワーク仕様",net_title:"技術概要",net_name:"ネットワーク名",net_symbol:"通貨シンボル",net_block:"ブロック時間",net_consensus:"コンセンサス",net_supply:"最大供給量",net_type:"ネットワークタイプ",net_connect:"ウォレット接続",
             how_tag:"はじめに",how_title:"仕組み",how_desc:"簡単なステップで始めましょう。技術的な知識は不要です。",
             step1_title:"アカウント作成",step1_desc:"メールで登録。安全なウォレットが暗号化付きで自動生成されます。",
             step2_title:"セッション開始",step2_desc:"処理セッションを開始してトランザクションを検証し、ACCESS報酬を獲得。",
@@ -1708,7 +1821,7 @@
             feat4_title:"PoS 채굴",feat4_desc:"고가의 하드웨어 없이 ACCESS 토큰 획득. 기기에서 직접 보상 수령.",
             feat5_title:"최소 수수료",feat5_desc:"네트워크의 모든 트랜잭션에 대해 극도로 낮은 Gas 수수료.",
             feat6_title:"모바일 우선 디자인",feat6_desc:"어디서나 지갑에 접근. PWA 및 네이티브 Android 앱으로 이용 가능.",
-            net_tag:"네트워크 사양",net_title:"기술 개요",net_name:"네트워크 이름",net_symbol:"통화 기호",net_block:"블록 시간",net_consensus:"합의",net_supply:"최대 공급",net_type:"네트워크 유형",
+            net_tag:"네트워크 사양",net_title:"기술 개요",net_name:"네트워크 이름",net_symbol:"통화 기호",net_block:"블록 시간",net_consensus:"합의",net_supply:"최대 공급",net_type:"네트워크 유형",net_connect:"지갑 연결",
             how_tag:"시작하기",how_title:"작동 방식",how_desc:"간단한 몇 단계로 시작하세요. 기술적 지식이 필요하지 않습니다.",
             step1_title:"계정 생성",step1_desc:"이메일로 가입. 안전한 지갑이 암호화와 함께 자동 생성됩니다.",
             step2_title:"세션 시작",step2_desc:"처리 세션을 활성화하여 트랜잭션을 검증하고 ACCESS 보상을 획득.",
@@ -1761,7 +1874,7 @@
             feat4_title:"PoS माइनिंग",feat4_desc:"महंगे हार्डवेयर के बिना ACCESS टोकन कमाएं। अपने डिवाइस से सीधे पुरस्कार प्राप्त करें।",
             feat5_title:"न्यूनतम शुल्क",feat5_desc:"नेटवर्क पर सभी लेनदेन के लिए अत्यंत कम Gas शुल्क।",
             feat6_title:"मोबाइल-फ़र्स्ट डिज़ाइन",feat6_desc:"कहीं से भी अपने वॉलेट तक पहुंचें। PWA और नेटिव Android ऐप के रूप में उपलब्ध।",
-            net_tag:"नेटवर्क विनिर्देश",net_title:"तकनीकी अवलोकन",net_name:"नेटवर्क नाम",net_symbol:"मुद्रा प्रतीक",net_block:"ब्लॉक समय",net_consensus:"सहमति",net_supply:"अधिकतम आपूर्ति",net_type:"नेटवर्क प्रकार",
+            net_tag:"नेटवर्क विनिर्देश",net_title:"तकनीकी अवलोकन",net_name:"नेटवर्क नाम",net_symbol:"मुद्रा प्रतीक",net_block:"ब्लॉक समय",net_consensus:"सहमति",net_supply:"अधिकतम आपूर्ति",net_type:"नेटवर्क प्रकार",net_connect:"वॉलेट कनेक्ट करें",
             how_tag:"शुरू करें",how_title:"कैसे काम करता है",how_desc:"कुछ सरल चरणों में शुरू करें। तकनीकी ज्ञान आवश्यक नहीं।",
             step1_title:"अकाउंट बनाएं",step1_desc:"ईमेल से साइन अप करें। आपका सुरक्षित वॉलेट एन्क्रिप्शन के साथ स्वतः बन जाएगा।",
             step2_title:"सेशन शुरू करें",step2_desc:"लेनदेन सत्यापित करने और ACCESS पुरस्कार कमाने के लिए अपना सेशन सक्रिय करें।",
@@ -1814,7 +1927,7 @@
             feat4_title:"Mining Proof of Stake",feat4_desc:"Guadagna token ACCESS senza hardware costoso. Ricevi premi direttamente dal tuo dispositivo.",
             feat5_title:"Commissioni minime",feat5_desc:"Commissioni Gas estremamente basse per tutte le transazioni sulla rete.",
             feat6_title:"Design mobile-first",feat6_desc:"Accedi al tuo wallet ovunque. Disponibile come PWA e app nativa Android.",
-            net_tag:"SPECIFICHE DI RETE",net_title:"Panoramica Tecnica",net_name:"Nome rete",net_symbol:"Simbolo valuta",net_block:"Tempo blocco",net_consensus:"Consenso",net_supply:"Supply max",net_type:"Tipo di rete",
+            net_tag:"SPECIFICHE DI RETE",net_title:"Panoramica Tecnica",net_name:"Nome rete",net_symbol:"Simbolo valuta",net_block:"Tempo blocco",net_consensus:"Consenso",net_supply:"Supply max",net_type:"Tipo di rete",net_connect:"Collega portafoglio",
             how_tag:"INIZIARE",how_title:"Come funziona",how_desc:"Inizia con pochi semplici passaggi. Nessuna conoscenza tecnica richiesta.",
             step1_title:"Crea account",step1_desc:"Registrati con email. Il tuo wallet sicuro viene generato automaticamente con crittografia.",
             step2_title:"Avvia sessione",step2_desc:"Attiva la sessione per validare transazioni e guadagnare premi ACCESS.",
@@ -1867,7 +1980,7 @@
             feat4_title:"Mining Proof of Stake",feat4_desc:"Dapatkan token ACCESS tanpa perangkat keras mahal. Terima hadiah langsung dari perangkat Anda.",
             feat5_title:"Biaya minimal",feat5_desc:"Biaya Gas sangat rendah untuk semua transaksi di jaringan.",
             feat6_title:"Desain mobile-first",feat6_desc:"Akses dompet Anda dari mana saja. Tersedia sebagai PWA dan aplikasi Android native.",
-            net_tag:"SPESIFIKASI JARINGAN",net_title:"Tinjauan Teknis",net_name:"Nama jaringan",net_symbol:"Simbol mata uang",net_block:"Waktu blok",net_consensus:"Konsensus",net_supply:"Supply maks",net_type:"Jenis jaringan",
+            net_tag:"SPESIFIKASI JARINGAN",net_title:"Tinjauan Teknis",net_name:"Nama jaringan",net_symbol:"Simbol mata uang",net_block:"Waktu blok",net_consensus:"Konsensus",net_supply:"Supply maks",net_type:"Jenis jaringan",net_connect:"Hubungkan dompet",
             how_tag:"MEMULAI",how_title:"Cara Kerja",how_desc:"Mulai gunakan Access Network dalam beberapa langkah sederhana. Tidak perlu pengetahuan teknis.",
             step1_title:"Buat akun",step1_desc:"Daftar dengan email. Dompet aman Anda otomatis dibuat dengan enkripsi.",
             step2_title:"Mulai sesi",step2_desc:"Aktifkan sesi untuk memvalidasi transaksi dan mendapatkan hadiah ACCESS.",
@@ -1920,7 +2033,7 @@
             feat4_title:"Proof of Stake mining",feat4_desc:"Verdien ACCESS tokens zonder dure hardware. Ontvang beloningen direct vanaf uw apparaat.",
             feat5_title:"Minimale kosten",feat5_desc:"Extreem lage Gas-kosten voor alle transacties op het netwerk.",
             feat6_title:"Mobile-first ontwerp",feat6_desc:"Toegang tot uw wallet overal. Beschikbaar als PWA en native Android-app.",
-            net_tag:"NETWERKSPECIFICATIES",net_title:"Technisch Overzicht",net_name:"Netwerknaam",net_symbol:"Valutasymbool",net_block:"Bloktijd",net_consensus:"Consensus",net_supply:"Max supply",net_type:"Netwerktype",
+            net_tag:"NETWERKSPECIFICATIES",net_title:"Technisch Overzicht",net_name:"Netwerknaam",net_symbol:"Valutasymbool",net_block:"Bloktijd",net_consensus:"Consensus",net_supply:"Max supply",net_type:"Netwerktype",net_connect:"Portemonnee verbinden",
             how_tag:"AAN DE SLAG",how_title:"Hoe het werkt",how_desc:"Begin in een paar eenvoudige stappen. Geen technische kennis vereist.",
             step1_title:"Account aanmaken",step1_desc:"Registreer met uw e-mail. Uw veilige wallet wordt automatisch gegenereerd met versleuteling.",
             step2_title:"Sessie starten",step2_desc:"Activeer uw sessie om transacties te valideren en ACCESS-beloningen te verdienen.",
@@ -1973,7 +2086,7 @@
             feat4_title:"Mining Proof of Stake",feat4_desc:"Zdobywaj tokeny ACCESS bez drogiego sprzętu. Otrzymuj nagrody bezpośrednio z urządzenia.",
             feat5_title:"Minimalne opłaty",feat5_desc:"Ekstremalnie niskie opłaty Gas za wszystkie transakcje w sieci.",
             feat6_title:"Projektowanie mobile-first",feat6_desc:"Dostęp do portfela z każdego miejsca. Dostępne jako PWA i natywna aplikacja Android.",
-            net_tag:"SPECYFIKACJA SIECI",net_title:"Przegląd Techniczny",net_name:"Nazwa sieci",net_symbol:"Symbol waluty",net_block:"Czas bloku",net_consensus:"Konsensus",net_supply:"Maks. podaż",net_type:"Typ sieci",
+            net_tag:"SPECYFIKACJA SIECI",net_title:"Przegląd Techniczny",net_name:"Nazwa sieci",net_symbol:"Symbol waluty",net_block:"Czas bloku",net_consensus:"Konsensus",net_supply:"Maks. podaż",net_type:"Typ sieci",net_connect:"Połącz portfel",
             how_tag:"ROZPOCZĘCIE",how_title:"Jak to działa",how_desc:"Zacznij korzystać z Access Network w kilku prostych krokach. Wiedza techniczna nie jest wymagana.",
             step1_title:"Utwórz konto",step1_desc:"Zarejestruj się e-mailem. Twój bezpieczny portfel jest automatycznie generowany z szyfrowaniem.",
             step2_title:"Rozpocznij sesję",step2_desc:"Aktywuj sesję, aby walidować transakcje i zdobywać nagrody ACCESS.",
