@@ -138,12 +138,6 @@
         updateSettingsUI();
         if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
-          // Auto-trigger biometric on fresh login
-          if (biometricEnabled && biometricAvailable && !window._biometricInProgress) {
-            setTimeout(function() {
-              if (isLocked) triggerBiometricAuth();
-            }, 400);
-          }
         }
       }
 
@@ -160,12 +154,6 @@
         // Show lock screen if PIN enabled and not already locked
         if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
-          // Auto-trigger biometric on fresh login (server confirmed)
-          if (biometricEnabled && biometricAvailable && !window._biometricInProgress) {
-            setTimeout(function() {
-              if (isLocked) triggerBiometricAuth();
-            }, 400);
-          }
         }
       }
     } catch (error) {
@@ -1024,18 +1012,6 @@
       window._pinUnlocked = false;
       _instantShow = true; // no fade-in on resume
       showLockScreen();
-      // Auto-trigger biometric INSTANTLY on resume (no splash delay needed)
-      if (biometricEnabled) {
-        setTimeout(function() {
-          if (!isLocked || _pinFrozen) return;
-          checkBiometricAvailabilityAsync().then(function(available) {
-            if (available && isLocked && !_pinFrozen) {
-              window._biometricInProgress = false;
-              triggerBiometricAuth();
-            }
-          });
-        }, 100);
-      }
     }
   }
 
@@ -1116,20 +1092,10 @@
     var bioBtn = document.getElementById('pin-biometric-btn');
 
     // Re-check biometric availability (plugin may not have been ready on cold start)
-    // Then auto-trigger biometric prompt AFTER a delay (let system stabilize)
     if (isLocked && biometricEnabled) {
       checkBiometricAvailabilityAsync().then(function(available) {
         if (bioBtn) {
           bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
-        }
-        if (available && isLocked && !_pinFrozen) {
-          // Delay biometric trigger — give system time to fully stabilize after reconnect
-          setTimeout(function() {
-            if (isLocked && !_pinFrozen) {
-              window._biometricInProgress = false;
-              triggerBiometricAuth();
-            }
-          }, 1200);
         }
       });
     } else if (bioBtn) {
@@ -1249,31 +1215,25 @@
       var lockEl = document.getElementById('pin-lock-screen');
       if (lockEl) {
         showLockScreen();
-        // Check biometric in background — on cold start biometricAvailable is still false
-        // so showLockScreen's auto-trigger won't fire. We handle it here instead.
-        // Check biometric in background for button visibility
+        // Check biometric in background for button visibility (no auto-trigger)
         checkBiometricAvailabilityAsync().then(function(available) {
           var bioBtn = document.getElementById('pin-biometric-btn');
           if (bioBtn) {
             bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
           }
         });
-        // Auto-trigger biometric ONLY after splash screen is gone + PIN visible
-        // deviceready = Cordova ready = splash screen about to hide
-        // Then wait 1.5s so user clearly sees PIN screen first
-        _waitForDeviceReadyThenBiometric();
       } else {
         // DOM not ready yet — wait for it
         document.addEventListener('DOMContentLoaded', function() {
           if (!isLocked && !window._pinUnlocked) {
             showLockScreen();
+            // Check biometric in background for button visibility (no auto-trigger)
             checkBiometricAvailabilityAsync().then(function(available) {
               var bioBtn = document.getElementById('pin-biometric-btn');
               if (bioBtn) {
                 bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
               }
             });
-            _waitForDeviceReadyThenBiometric();
           }
         });
       }
