@@ -1589,9 +1589,7 @@ html.dark-theme .logo {
   padding: 10px 0;
   color: var(--text-color);
   font-size: 12px;
-  text-align: center;
-  -webkit-tap-highlight-color: transparent;
-  outline: none;
+  text-align: center; /* Ensure text is centered */
 }
 
 /* Override generic <a> styles for bottom nav buttons */
@@ -1611,18 +1609,11 @@ html.dark-theme .logo {
   content: none !important;
 }
 
-.mobile-nav-item:hover,
-.mobile-nav-item:focus,
-.mobile-nav-item:active {
+.mobile-nav-item:hover {
   color: var(--text-color);
-  outline: none !important;
-  -webkit-tap-highlight-color: transparent;
 }
 
-.mobile-nav-item.active,
-.mobile-nav-item.active:hover,
-.mobile-nav-item.active:focus,
-.mobile-nav-item.active:active {
+.mobile-nav-item.active:hover {
   color: var(--primary-color);
 }
 
