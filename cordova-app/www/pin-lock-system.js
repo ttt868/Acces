@@ -385,6 +385,7 @@
     }
 
     modal.style.display = 'flex';
+    document.body.classList.add('pin-lock-active');
     setTimeout(() => {
       modal.classList.add('active');
       // Auto-trigger biometric when disabling PIN
@@ -462,6 +463,7 @@
       modal.classList.remove('active');
       setTimeout(() => {
         modal.style.display = 'none';
+        document.body.classList.remove('pin-lock-active');
       }, 300);
     }
     // Reset toggle if user cancelled setup
@@ -706,6 +708,7 @@
     hideLockError();
 
     lockScreen.style.display = 'flex';
+    document.body.classList.add('pin-lock-active');
     // If already visible from CSS pin-required, skip opacity flash
     var alreadyVisible = document.documentElement.classList.contains('pin-required');
     if (!alreadyVisible && !_instantShow) {
@@ -760,6 +763,7 @@
           lockScreen.style.display = 'none';
           lockScreen.style.opacity = '';
           lockScreen.style.transition = '';
+          document.body.classList.remove('pin-lock-active');
 
           // Show any notifications that were queued during lock screen
           if (typeof window._flushNotificationQueue === 'function') {
