@@ -1592,6 +1592,31 @@ html.dark-theme .logo {
   text-align: center; /* Ensure text is centered */
 }
 
+/* Override generic <a> styles for bottom nav buttons */
+.mobile-nav-item,
+.mobile-nav-item:hover,
+.mobile-nav-item:focus,
+.mobile-nav-item:active,
+.mobile-nav-item:visited {
+  transform: none !important;
+}
+
+.mobile-nav-item::after,
+.mobile-nav-item:hover::after {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  content: none !important;
+}
+
+.mobile-nav-item:hover {
+  color: var(--text-color);
+}
+
+.mobile-nav-item.active:hover {
+  color: var(--primary-color);
+}
+
 .mobile-nav-item i {
   font-size: 20px;
   margin-bottom: 4px;
