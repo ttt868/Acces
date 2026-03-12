@@ -218,6 +218,8 @@ document.addEventListener('deviceready', function() {
         var dashboardPage = document.getElementById('dashboard-page');
         var isDashboardVisible = dashboardPage && dashboardPage.style.display !== 'none';
         
+        console.log('[BackButton] isDashboardVisible:', isDashboardVisible, 'display:', dashboardPage ? dashboardPage.style.display : 'N/A');
+        
         if (!isDashboardVisible) {
             // Close more menu if open
             var moreMenu = document.getElementById('more-menu');
@@ -226,6 +228,13 @@ document.addEventListener('deviceready', function() {
             // Navigate to dashboard — showPage handles nav active state
             if (typeof window.showPage === 'function') {
                 window.showPage('dashboard');
+                console.log('[BackButton] showPage(dashboard) called');
+                
+                // Verify active states after showPage
+                var items = document.querySelectorAll('.mobile-nav-item');
+                items.forEach(function(el) {
+                    console.log('[BackButton] nav:', el.getAttribute('data-page'), 'active:', el.classList.contains('active'));
+                });
             }
             
             return;

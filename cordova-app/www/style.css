@@ -1590,18 +1590,6 @@ html.dark-theme .logo {
   color: var(--text-color);
   font-size: 12px;
   text-align: center; /* Ensure text is centered */
-  text-decoration: none !important;
-  outline: none !important;
-  -webkit-tap-highlight-color: transparent;
-  border-bottom: 3px solid transparent;
-}
-
-.mobile-nav-item:hover,
-.mobile-nav-item:focus,
-.mobile-nav-item:active,
-.mobile-nav-item:visited {
-  text-decoration: none !important;
-  outline: none !important;
 }
 
 .mobile-nav-item i {
@@ -1611,7 +1599,6 @@ html.dark-theme .logo {
 
 .mobile-nav-item.active {
   color: var(--primary-color);
-  border-bottom: 3px solid var(--primary-color);
 }
 
 /* Fix for Arabic text alignment in mobile navigation */
