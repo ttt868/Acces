@@ -1676,8 +1676,6 @@ body.dark-theme #profile-page .copy-btn:hover {
   transition: opacity 0.3s ease;
   touch-action: manipulation;
   overflow: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   -webkit-user-select: none !important;
   -moz-user-select: none !important;
   -ms-user-select: none !important;
@@ -1868,8 +1866,6 @@ body.pin-lock-active {
   transition: opacity 0.3s ease;
   touch-action: manipulation;
   overflow: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .pin-modal-overlay.active {
@@ -2058,79 +2054,203 @@ body.pin-lock-active {
 @media (orientation: landscape) and (max-height: 500px) {
   .pin-lock-overlay,
   .pin-modal-overlay {
-    align-items: flex-start;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
   }
+
+  /* Side-by-side layout: info left, keypad right */
   .pin-lock-container,
   .pin-modal-container {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
     justify-content: center;
-    max-width: 100%;
-    padding: 10px 20px;
-    gap: 0 30px;
-  }
-  /* Left side: title + dots */
-  .pin-lock-title,
-  .pin-modal-title {
+    max-width: 680px;
     width: 100%;
-    text-align: center;
-    font-size: 18px;
-    margin-bottom: 2px;
+    padding: 8px 24px;
+    gap: 32px;
   }
-  .pin-lock-subtitle,
-  .pin-modal-subtitle {
-    width: 100%;
-    text-align: center;
-    margin-bottom: 10px;
-    font-size: 12px;
-  }
+
+  /* === Left panel: branding + dots === */
   .pin-lock-logo {
-    margin-bottom: 8px;
+    order: 1;
+    margin-bottom: 10px;
   }
   .pin-lock-logo img {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
   }
+
+  .pin-lock-title,
+  .pin-modal-title {
+    order: 2;
+    width: auto;
+    font-size: 18px;
+    margin: 0 0 4px 0;
+    white-space: nowrap;
+  }
+
+  .pin-lock-subtitle,
+  .pin-modal-subtitle {
+    order: 3;
+    width: auto;
+    font-size: 12px;
+    margin: 0 0 12px 0;
+    white-space: nowrap;
+  }
+
   .pin-dots-container {
-    margin-bottom: 8px;
+    order: 4;
+    margin-bottom: 6px;
     gap: 10px;
   }
   .pin-dot {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
+    border-width: 1.5px;
   }
-  .pin-keypad {
-    gap: 5px;
-    max-width: 220px;
-    margin-top: 5px;
-  }
-  .pin-key {
-    width: 48px;
-    height: 48px;
-    font-size: 20px;
-  }
-  .pin-key-delete {
-    font-size: 18px;
-  }
-  .pin-key-biometric {
-    font-size: 22px;
-  }
+
   .pin-error-msg {
-    font-size: 12px;
-    margin: 4px 0 8px 0;
+    order: 5;
+    font-size: 11px;
+    margin: 2px 0 4px 0;
   }
+
   .pin-modal-icon {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 8px;
+    order: 1;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    margin-bottom: 10px;
   }
   .pin-modal-icon i {
-    font-size: 24px;
+    font-size: 22px;
   }
   .pin-modal-close {
-    top: -10px;
+    top: 2px;
+    right: 8px;
+  }
+
+  /* Group left elements in a virtual column via the container */
+  .pin-lock-container,
+  .pin-modal-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+
+  /* Use CSS to split: wrap info elements in implicit column */
+  /* Since HTML can't change, we use a trick: put keypad on the right */
+  .pin-lock-container {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto;
+    align-items: center;
+    justify-items: center;
+    column-gap: 28px;
+    row-gap: 0;
+  }
+
+  .pin-modal-container {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto;
+    align-items: center;
+    justify-items: center;
+    column-gap: 28px;
+    row-gap: 0;
+  }
+
+  /* Left column elements */
+  .pin-lock-logo,
+  .pin-lock-title,
+  .pin-lock-subtitle,
+  .pin-dots-container,
+  .pin-error-msg,
+  .pin-modal-icon,
+  .pin-modal-title,
+  .pin-modal-subtitle,
+  .pin-modal-close {
+    grid-column: 1;
+  }
+
+  /* Keypad goes to the right column, spans all rows */
+  .pin-keypad {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    gap: 4px;
+    max-width: none;
+    width: auto;
+    margin-top: 0;
+  }
+
+  .pin-key {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .pin-key:active {
+    background: rgba(74, 144, 226, 0.35);
+    transform: scale(0.93);
+  }
+  .pin-key-delete {
+    font-size: 16px;
+    background: transparent;
+    border-color: transparent;
+  }
+  .pin-key-biometric {
+    font-size: 20px;
+    border-color: transparent;
+  }
+}
+
+/* Extra-short landscape (very small phones) */
+@media (orientation: landscape) and (max-height: 360px) {
+  .pin-lock-container,
+  .pin-modal-container {
+    padding: 4px 16px;
+    column-gap: 20px;
+  }
+  .pin-lock-title,
+  .pin-modal-title {
+    font-size: 16px;
+  }
+  .pin-lock-subtitle,
+  .pin-modal-subtitle {
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+  .pin-dot {
+    width: 11px;
+    height: 11px;
+  }
+  .pin-dots-container {
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .pin-key {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+  }
+  .pin-keypad {
+    gap: 3px;
+  }
+  .pin-modal-icon {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 6px;
+  }
+  .pin-modal-icon i {
+    font-size: 18px;
+  }
+  .pin-lock-logo img {
+    width: 30px;
+    height: 30px;
   }
 }
 
