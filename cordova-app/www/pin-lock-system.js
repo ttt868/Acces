@@ -932,8 +932,6 @@
   }
 
   // ===== BIOMETRIC AUTH =====
-  var _bioRetryCount = 0; // Track retries for page reload scenario
-
   function triggerBiometricAuth() {
     if (_pinFrozen) return; // No biometric when frozen (offline)
     if (!window.Fingerprint || !biometricAvailable || !biometricEnabled) return;
@@ -958,25 +956,13 @@
         // Success - animate dots filling up then unlock
         clearTimeout(_bioSafetyTimer);
         window._biometricInProgress = false;
-        _bioRetryCount = 0;
         animateDotsAndUnlock();
       },
       function(error) {
-        // Failed or cancelled
+        // Failed or cancelled - user can use PIN or tap bio button
         clearTimeout(_bioSafetyTimer);
         window._biometricInProgress = false;
         console.log('[PIN] Biometric cancelled/failed:', error);
-
-        // Auto-retry once after page reload — sensor may not be fully warm yet
-        if (_bioRetryCount < 1 && isLocked && !_pinFrozen) {
-          _bioRetryCount++;
-          console.log('[PIN] Auto-retrying biometric (attempt ' + (_bioRetryCount + 1) + ')');
-          setTimeout(function() {
-            if (isLocked && !_pinFrozen) triggerBiometricAuth();
-          }, 400);
-        } else {
-          _bioRetryCount = 0;
-        }
       }
     );
   }
@@ -1192,20 +1178,22 @@
     var isReload = _isPageReload();
     function _triggerAfterDelay() {
       if (isReload) {
-        // Page reload: warm up plugin with isAvailable, then short pause, then show
-        // This ensures native fingerprint sensor is fully initialized
+        // Page reload (returning from external HTML):
+        // 1) 200ms initial wait for Cordova bridge to stabilize
+        // 2) isAvailable() warms up the native fingerprint plugin
+        // 3) 600ms after isAvailable — sensor hardware fully ready
+        // Total ~800ms — fast enough, but sensor works on first try
         setTimeout(function() {
           if (!isLocked || _pinFrozen || !navigator.onLine) return;
           checkBiometricAvailabilityAsync().then(function(available) {
             if (!available || !isLocked || _pinFrozen) return;
-            // Small pause after isAvailable so sensor is ready for show()
             setTimeout(function() {
               if (!isLocked || _pinFrozen) return;
               window._biometricInProgress = false;
               triggerBiometricAuth();
-            }, 250);
+            }, 600);
           });
-        }, 100);
+        }, 200);
       } else {
         // True cold start: longer delay so user sees PIN after splash
         setTimeout(function() {
