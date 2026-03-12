@@ -932,6 +932,8 @@
   }
 
   // ===== BIOMETRIC AUTH =====
+  var _bioRetryCount = 0; // Track retries for page reload scenario
+
   function triggerBiometricAuth() {
     if (_pinFrozen) return; // No biometric when frozen (offline)
     if (!window.Fingerprint || !biometricAvailable || !biometricEnabled) return;
@@ -956,13 +958,25 @@
         // Success - animate dots filling up then unlock
         clearTimeout(_bioSafetyTimer);
         window._biometricInProgress = false;
+        _bioRetryCount = 0;
         animateDotsAndUnlock();
       },
       function(error) {
-        // Failed or cancelled - just reset flag, user can use PIN or tap bio button
+        // Failed or cancelled
         clearTimeout(_bioSafetyTimer);
         window._biometricInProgress = false;
         console.log('[PIN] Biometric cancelled/failed:', error);
+
+        // Auto-retry once after page reload — sensor may not be fully warm yet
+        if (_bioRetryCount < 1 && isLocked && !_pinFrozen) {
+          _bioRetryCount++;
+          console.log('[PIN] Auto-retrying biometric (attempt ' + (_bioRetryCount + 1) + ')');
+          setTimeout(function() {
+            if (isLocked && !_pinFrozen) triggerBiometricAuth();
+          }, 400);
+        } else {
+          _bioRetryCount = 0;
+        }
       }
     );
   }
