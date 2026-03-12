@@ -490,7 +490,14 @@ window.translations = {
     "Invalid session - please re-login": "Invalid session - please re-login",
     "Too many attempts. Please wait.": "Too many attempts. Please wait.",
     "Invalid PIN (must be 6 digits)": "Invalid PIN (must be 6 digits)",
-    "Invalid session": "Invalid session"
+    "Invalid session": "Invalid session",
+    "wallet_title": "Select Wallet",
+    "wallet_desc": "Choose your wallet to add Access Network",
+    "wallet_metamask": "Open in MetaMask app",
+    "wallet_trust": "Open in Trust Wallet app",
+    "wallet_coinbase": "Open in Coinbase app",
+    "wallet_or_install": "or install a wallet",
+    "wallet_install_mm": "Install MetaMask"
 
   },
 
@@ -1256,7 +1263,14 @@ processingTransaction: "Traitement de la transaction en cours...",
     "Invalid session - please re-login": "Session invalide - veuillez vous reconnecter",
     "Too many attempts. Please wait.": "Trop de tentatives. Veuillez patienter.",
     "Invalid PIN (must be 6 digits)": "PIN invalide (doit être 6 chiffres)",
-    "Invalid session": "Session invalide"
+    "Invalid session": "Session invalide",
+    "wallet_title": "Sélectionner un portefeuille",
+    "wallet_desc": "Choisissez votre portefeuille pour ajouter Access Network",
+    "wallet_metamask": "Ouvrir dans l'app MetaMask",
+    "wallet_trust": "Ouvrir dans l'app Trust Wallet",
+    "wallet_coinbase": "Ouvrir dans l'app Coinbase",
+    "wallet_or_install": "ou installer un portefeuille",
+    "wallet_install_mm": "Installer MetaMask"
 
   },
 
@@ -2009,7 +2023,14 @@ processingTransaction: "Procesando transacción...",
     "Invalid session - please re-login": "Sesión inválida - por favor inicia sesión de nuevo",
     "Too many attempts. Please wait.": "Demasiados intentos. Por favor espera.",
     "Invalid PIN (must be 6 digits)": "PIN inválido (debe ser 6 dígitos)",
-    "Invalid session": "Sesión inválida"
+    "Invalid session": "Sesión inválida",
+    "wallet_title": "Seleccionar billetera",
+    "wallet_desc": "Elige tu billetera para añadir Access Network",
+    "wallet_metamask": "Abrir en la app MetaMask",
+    "wallet_trust": "Abrir en la app Trust Wallet",
+    "wallet_coinbase": "Abrir en la app Coinbase",
+    "wallet_or_install": "o instalar una billetera",
+    "wallet_install_mm": "Instalar MetaMask"
 
   },
 
@@ -2739,7 +2760,14 @@ processingTransaction: "Elaborazione della transazione in corso...",
     "Invalid session - please re-login": "Sessione non valida - effettua nuovamente l'accesso",
     "Too many attempts. Please wait.": "Troppi tentativi. Attendere prego.",
     "Invalid PIN (must be 6 digits)": "PIN non valido (deve essere di 6 cifre)",
-    "Invalid session": "Sessione non valida"
+    "Invalid session": "Sessione non valida",
+    "wallet_title": "Seleziona portafoglio",
+    "wallet_desc": "Scegli il tuo portafoglio per aggiungere Access Network",
+    "wallet_metamask": "Apri nell'app MetaMask",
+    "wallet_trust": "Apri nell'app Trust Wallet",
+    "wallet_coinbase": "Apri nell'app Coinbase",
+    "wallet_or_install": "o installa un portafoglio",
+    "wallet_install_mm": "Installa MetaMask"
 
   },
 
@@ -3468,7 +3496,14 @@ processingTransaction: "İşlem işleniyor...",
     "Invalid session - please re-login": "Geçersiz oturum - lütfen tekrar giriş yapın",
     "Too many attempts. Please wait.": "Çok fazla deneme. Lütfen bekleyin.",
     "Invalid PIN (must be 6 digits)": "Geçersiz PIN (6 rakam olmalıdır)",
-    "Invalid session": "Geçersiz oturum"
+    "Invalid session": "Geçersiz oturum",
+    "wallet_title": "Cüzdan Seç",
+    "wallet_desc": "Access Network eklemek için cüzdanınızı seçin",
+    "wallet_metamask": "MetaMask uygulamasında aç",
+    "wallet_trust": "Trust Wallet uygulamasında aç",
+    "wallet_coinbase": "Coinbase uygulamasında aç",
+    "wallet_or_install": "veya bir cüzdan yükleyin",
+    "wallet_install_mm": "MetaMask Yükle"
 
   },
 
@@ -4209,7 +4244,14 @@ processingTransaction: "İşlem işleniyor...",
     "Invalid session - please re-login": "अमान्य सत्र - कृपया पुनः लॉगिन करें",
     "Too many attempts. Please wait.": "बहुत अधिक प्रयास। कृपया प्रतीक्षा करें।",
     "Invalid PIN (must be 6 digits)": "अमान्य PIN (6 अंक होने चाहिए)",
-    "Invalid session": "अमान्य सत्र"
+    "Invalid session": "अमान्य सत्र",
+    "wallet_title": "वॉलेट चुनें",
+    "wallet_desc": "Access Network जोड़ने के लिए अपना वॉलेट चुनें",
+    "wallet_metamask": "MetaMask ऐप में खोलें",
+    "wallet_trust": "Trust Wallet ऐप में खोलें",
+    "wallet_coinbase": "Coinbase ऐप में खोलें",
+    "wallet_or_install": "या वॉलेट इंस्टॉल करें",
+    "wallet_install_mm": "MetaMask इंस्टॉल करें"
 
   },
 
@@ -4940,7 +4982,14 @@ processingTransaction: "İşlem işleniyor...",
     "Invalid session - please re-login": "会话无效 - 请重新登录",
     "Too many attempts. Please wait.": "尝试次数过多。请稍候。",
     "Invalid PIN (must be 6 digits)": "PIN码无效（必须是6位数字）",
-    "Invalid session": "会话无效"
+    "Invalid session": "会话无效",
+    "wallet_title": "选择钱包",
+    "wallet_desc": "选择您的钱包以添加 Access Network",
+    "wallet_metamask": "在 MetaMask 应用中打开",
+    "wallet_trust": "在 Trust Wallet 应用中打开",
+    "wallet_coinbase": "在 Coinbase 应用中打开",
+    "wallet_or_install": "或安装钱包",
+    "wallet_install_mm": "安装 MetaMask"
 
   },
 
@@ -5686,7 +5735,14 @@ processingTransaction: "İşlem işleniyor...",
     "Invalid session - please re-login": "セッションが無効です - 再度ログインしてください",
     "Too many attempts. Please wait.": "試行回数が多すぎます。お待ちください。",
     "Invalid PIN (must be 6 digits)": "PINが無効です（6桁の数字が必要です）",
-    "Invalid session": "セッションが無効です"
+    "Invalid session": "セッションが無効です",
+    "wallet_title": "ウォレットを選択",
+    "wallet_desc": "Access Networkを追加するウォレットを選んでください",
+    "wallet_metamask": "MetaMaskアプリで開く",
+    "wallet_trust": "Trust Walletアプリで開く",
+    "wallet_coinbase": "Coinbaseアプリで開く",
+    "wallet_or_install": "またはウォレットをインストール",
+    "wallet_install_mm": "MetaMaskをインストール"
 
   },
 
@@ -6431,7 +6487,14 @@ processingTransaction: "İşlem işleniyor...",
     "Invalid session - please re-login": "세션이 유효하지 않습니다 - 다시 로그인해 주세요",
     "Too many attempts. Please wait.": "너무 많은 시도입니다. 잠시 기다려 주세요.",
     "Invalid PIN (must be 6 digits)": "유효하지 않은 PIN (6자리 숫자여야 합니다)",
-    "Invalid session": "유효하지 않은 세션"
+    "Invalid session": "유효하지 않은 세션",
+    "wallet_title": "지갑 선택",
+    "wallet_desc": "Access Network를 추가할 지갑을 선택하세요",
+    "wallet_metamask": "MetaMask 앱에서 열기",
+    "wallet_trust": "Trust Wallet 앱에서 열기",
+    "wallet_coinbase": "Coinbase 앱에서 열기",
+    "wallet_or_install": "또는 지갑 설치",
+    "wallet_install_mm": "MetaMask 설치"
 
   },
 
@@ -7165,7 +7228,14 @@ processingTransaction: "İşlem işleniyor...",
     "Invalid session - please re-login": "Sessão inválida - faça login novamente",
     "Too many attempts. Please wait.": "Muitas tentativas. Aguarde.",
     "Invalid PIN (must be 6 digits)": "PIN inválido (deve ter 6 dígitos)",
-    "Invalid session": "Sessão inválida"
+    "Invalid session": "Sessão inválida",
+    "wallet_title": "Selecionar carteira",
+    "wallet_desc": "Escolha sua carteira para adicionar Access Network",
+    "wallet_metamask": "Abrir no app MetaMask",
+    "wallet_trust": "Abrir no app Trust Wallet",
+    "wallet_coinbase": "Abrir no app Coinbase",
+    "wallet_or_install": "ou instale uma carteira",
+    "wallet_install_mm": "Instalar MetaMask"
 
   },
 
@@ -7910,7 +7980,14 @@ insufficientBalance: "Недостаточно средств для этой т
     "Invalid session - please re-login": "Недействительная сессия - войдите снова",
     "Too many attempts. Please wait.": "Слишком много попыток. Пожалуйста, подождите.",
     "Invalid PIN (must be 6 digits)": "Неверный PIN (должен быть 6 цифр)",
-    "Invalid session": "Недействительная сессия"
+    "Invalid session": "Недействительная сессия",
+    "wallet_title": "Выбрать кошелёк",
+    "wallet_desc": "Выберите кошелёк для добавления Access Network",
+    "wallet_metamask": "Открыть в приложении MetaMask",
+    "wallet_trust": "Открыть в приложении Trust Wallet",
+    "wallet_coinbase": "Открыть в приложении Coinbase",
+    "wallet_or_install": "или установите кошелёк",
+    "wallet_install_mm": "Установить MetaMask"
 
   },
 
@@ -8660,7 +8737,14 @@ insufficientBalance: "Недостаточно средств для этой т
     "Invalid session - please re-login": "Ungültige Sitzung - bitte erneut anmelden",
     "Too many attempts. Please wait.": "Zu viele Versuche. Bitte warten.",
     "Invalid PIN (must be 6 digits)": "Ungültige PIN (muss 6 Ziffern haben)",
-    "Invalid session": "Ungültige Sitzung"
+    "Invalid session": "Ungültige Sitzung",
+    "wallet_title": "Wallet auswählen",
+    "wallet_desc": "Wähle dein Wallet, um Access Network hinzuzufügen",
+    "wallet_metamask": "In MetaMask-App öffnen",
+    "wallet_trust": "In Trust Wallet-App öffnen",
+    "wallet_coinbase": "In Coinbase-App öffnen",
+    "wallet_or_install": "oder ein Wallet installieren",
+    "wallet_install_mm": "MetaMask installieren"
 
   },
 
@@ -9457,7 +9541,14 @@ insufficientBalance: "Недостаточно средств для этой т
     "Invalid session - please re-login": "جلسة غير صالحة - يرجى إعادة تسجيل الدخول",
     "Too many attempts. Please wait.": "محاولات كثيرة جداً. يرجى الانتظار.",
     "Invalid PIN (must be 6 digits)": "الرمز السري غير صالح (يجب أن يكون 6 أرقام)",
-    "Invalid session": "جلسة غير صالحة"
+    "Invalid session": "جلسة غير صالحة",
+    "wallet_title": "اختر المحفظة",
+    "wallet_desc": "اختر محفظتك لإضافة شبكة Access",
+    "wallet_metamask": "فتح في تطبيق ميتاماسك",
+    "wallet_trust": "فتح في تطبيق تراست واليت",
+    "wallet_coinbase": "فتح في تطبيق كوينباس",
+    "wallet_or_install": "أو قم بتثبيت محفظة",
+    "wallet_install_mm": "تثبيت ميتاماسك"
 
   },
 
@@ -10216,7 +10307,14 @@ insufficientBalance: "Недостаточно средств для этой т
     "Invalid session - please re-login": "Sesi tidak valid - silakan login kembali",
     "Too many attempts. Please wait.": "Terlalu banyak percobaan. Harap tunggu.",
     "Invalid PIN (must be 6 digits)": "PIN tidak valid (harus 6 digit)",
-    "Invalid session": "Sesi tidak valid"
+    "Invalid session": "Sesi tidak valid",
+    "wallet_title": "Pilih Dompet",
+    "wallet_desc": "Pilih dompet Anda untuk menambahkan Access Network",
+    "wallet_metamask": "Buka di aplikasi MetaMask",
+    "wallet_trust": "Buka di aplikasi Trust Wallet",
+    "wallet_coinbase": "Buka di aplikasi Coinbase",
+    "wallet_or_install": "atau instal dompet",
+    "wallet_install_mm": "Instal MetaMask"
 
   },
 
@@ -10960,7 +11058,14 @@ insufficientBalance: "Недостаточно средств для этой т
     "Invalid session - please re-login": "Nieprawidłowa sesja - zaloguj się ponownie",
     "Too many attempts. Please wait.": "Zbyt wiele prób. Proszę czekać.",
     "Invalid PIN (must be 6 digits)": "Nieprawidłowy PIN (musi mieć 6 cyfr)",
-    "Invalid session": "Nieprawidłowa sesja"
+    "Invalid session": "Nieprawidłowa sesja",
+    "wallet_title": "Wybierz portfel",
+    "wallet_desc": "Wybierz portfel, aby dodać Access Network",
+    "wallet_metamask": "Otwórz w aplikacji MetaMask",
+    "wallet_trust": "Otwórz w aplikacji Trust Wallet",
+    "wallet_coinbase": "Otwórz w aplikacji Coinbase",
+    "wallet_or_install": "lub zainstaluj portfel",
+    "wallet_install_mm": "Zainstaluj MetaMask"
 
   }
 };

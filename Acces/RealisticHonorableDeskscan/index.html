@@ -3164,6 +3164,10 @@ Access-Network is a digital rewards platform combining innovation, community fea
           return;
         }
 
+        // Get current language translations
+        const lang = localStorage.getItem('preferredLanguage') || 'en';
+        const t = (window.translations && window.translations[lang]) || {};
+
         // Show wallet selection modal
         const currentUrl = encodeURIComponent(window.location.origin + '/add-network.html');
         
@@ -3173,19 +3177,19 @@ Access-Network is a digital rewards platform combining innovation, community fea
           <div class="wallet-modal-overlay" onclick="closeWalletConnectModal()">
             <div class="wallet-modal-content" onclick="event.stopPropagation()">
               <div class="wallet-modal-header">
-                <h3><i class="fas fa-wallet"></i> Add Network</h3>
+                <h3><i class="fas fa-wallet"></i> ${t.wallet_title||'Select Wallet'}</h3>
                 <button class="modal-close-btn" onclick="closeWalletConnectModal()">
                   <i class="fas fa-times"></i>
                 </button>
               </div>
               <div class="wallet-modal-body">
-                <p class="wallet-modal-desc">Select wallet to add Access Network</p>
+                <p class="wallet-modal-desc">${t.wallet_desc||'Choose your wallet to add Access Network'}</p>
                 
                 <a href="https://metamask.app.link/dapp/${window.location.host}/add-network.html" class="wallet-option-item" onclick="closeWalletConnectModal()">
                   <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" class="wallet-logo-img">
                   <div class="wallet-option-info">
                     <span class="wallet-option-name">MetaMask</span>
-                    <span class="wallet-option-desc">Open in MetaMask</span>
+                    <span class="wallet-option-desc">${t.wallet_metamask||'Open in MetaMask app'}</span>
                   </div>
                   <i class="fas fa-chevron-right" style="color:#888"></i>
                 </a>
@@ -3194,7 +3198,7 @@ Access-Network is a digital rewards platform combining innovation, community fea
                   <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="Trust Wallet" class="wallet-logo-img">
                   <div class="wallet-option-info">
                     <span class="wallet-option-name">Trust Wallet</span>
-                    <span class="wallet-option-desc">Open in Trust Wallet</span>
+                    <span class="wallet-option-desc">${t.wallet_trust||'Open in Trust Wallet app'}</span>
                   </div>
                   <i class="fas fa-chevron-right" style="color:#888"></i>
                 </a>
@@ -3203,17 +3207,17 @@ Access-Network is a digital rewards platform combining innovation, community fea
                   <img src="https://altcoinsbox.com/wp-content/uploads/2022/12/coinbase-wallet-logo.png" alt="Coinbase" class="wallet-logo-img">
                   <div class="wallet-option-info">
                     <span class="wallet-option-name">Coinbase Wallet</span>
-                    <span class="wallet-option-desc">Open in Coinbase</span>
+                    <span class="wallet-option-desc">${t.wallet_coinbase||'Open in Coinbase app'}</span>
                   </div>
                   <i class="fas fa-chevron-right" style="color:#888"></i>
                 </a>
                 
                 <div class="wallet-divider-line">
-                  <span>or install</span>
+                  <span>${t.wallet_or_install||'or install a wallet'}</span>
                 </div>
                 
                 <a href="https://metamask.io/download/" target="_blank" class="install-wallet-btn">
-                  <i class="fas fa-download"></i> Install MetaMask
+                  <i class="fas fa-download"></i> ${t.wallet_install_mm||'Install MetaMask'}
                 </a>
               </div>
             </div>

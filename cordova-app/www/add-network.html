@@ -685,6 +685,11 @@
             // Get the current page URL for deep linking
             const currentUrl = encodeURIComponent(window.location.href);
             
+            // Wallet translations
+            const wt={ar:{t:"اختر المحفظة",d:"اختر محفظتك لإضافة شبكة Access",mm:"فتح في تطبيق ميتاماسك",tw:"فتح في تطبيق تراست واليت",cb:"فتح في تطبيق كوينباس",oi:"أو قم بتثبيت محفظة",im:"تثبيت ميتاماسك"},fr:{t:"Sélectionner un portefeuille",d:"Choisissez votre portefeuille pour ajouter Access Network",mm:"Ouvrir dans l'app MetaMask",tw:"Ouvrir dans l'app Trust Wallet",cb:"Ouvrir dans l'app Coinbase",oi:"ou installer un portefeuille",im:"Installer MetaMask"},es:{t:"Seleccionar billetera",d:"Elige tu billetera para añadir Access Network",mm:"Abrir en la app MetaMask",tw:"Abrir en la app Trust Wallet",cb:"Abrir en la app Coinbase",oi:"o instalar una billetera",im:"Instalar MetaMask"},tr:{t:"Cüzdan Seç",d:"Access Network eklemek için cüzdanınızı seçin",mm:"MetaMask uygulamasında aç",tw:"Trust Wallet uygulamasında aç",cb:"Coinbase uygulamasında aç",oi:"veya bir cüzdan yükleyin",im:"MetaMask Yükle"},de:{t:"Wallet auswählen",d:"Wähle dein Wallet, um Access Network hinzuzufügen",mm:"In MetaMask-App öffnen",tw:"In Trust Wallet-App öffnen",cb:"In Coinbase-App öffnen",oi:"oder ein Wallet installieren",im:"MetaMask installieren"},pt:{t:"Selecionar carteira",d:"Escolha sua carteira para adicionar Access Network",mm:"Abrir no app MetaMask",tw:"Abrir no app Trust Wallet",cb:"Abrir no app Coinbase",oi:"ou instale uma carteira",im:"Instalar MetaMask"},ru:{t:"Выбрать кошелёк",d:"Выберите кошелёк для добавления Access Network",mm:"Открыть в приложении MetaMask",tw:"Открыть в приложении Trust Wallet",cb:"Открыть в приложении Coinbase",oi:"или установите кошелёк",im:"Установить MetaMask"},zh:{t:"选择钱包",d:"选择您的钱包以添加 Access Network",mm:"在 MetaMask 应用中打开",tw:"在 Trust Wallet 应用中打开",cb:"在 Coinbase 应用中打开",oi:"或安装钱包",im:"安装 MetaMask"},ja:{t:"ウォレットを選択",d:"Access Networkを追加するウォレットを選んでください",mm:"MetaMaskアプリで開く",tw:"Trust Walletアプリで開く",cb:"Coinbaseアプリで開く",oi:"またはウォレットをインストール",im:"MetaMaskをインストール"},ko:{t:"지갑 선택",d:"Access Network를 추가할 지갑을 선택하세요",mm:"MetaMask 앱에서 열기",tw:"Trust Wallet 앱에서 열기",cb:"Coinbase 앱에서 열기",oi:"또는 지갑 설치",im:"MetaMask 설치"},hi:{t:"वॉलेट चुनें",d:"Access Network जोड़ने के लिए अपना वॉलेट चुनें",mm:"MetaMask ऐप में खोलें",tw:"Trust Wallet ऐप में खोलें",cb:"Coinbase ऐप में खोलें",oi:"या वॉलेट इंस्टॉल करें",im:"MetaMask इंस्टॉल करें"},it:{t:"Seleziona portafoglio",d:"Scegli il tuo portafoglio per aggiungere Access Network",mm:"Apri nell'app MetaMask",tw:"Apri nell'app Trust Wallet",cb:"Apri nell'app Coinbase",oi:"o installa un portafoglio",im:"Installa MetaMask"},id:{t:"Pilih Dompet",d:"Pilih dompet Anda untuk menambahkan Access Network",mm:"Buka di aplikasi MetaMask",tw:"Buka di aplikasi Trust Wallet",cb:"Buka di aplikasi Coinbase",oi:"atau instal dompet",im:"Instal MetaMask"},pl:{t:"Wybierz portfel",d:"Wybierz portfel, aby dodać Access Network",mm:"Otwórz w aplikacji MetaMask",tw:"Otwórz w aplikacji Trust Wallet",cb:"Otwórz w aplikacji Coinbase",oi:"lub zainstaluj portfel",im:"Zainstaluj MetaMask"}};
+            const lang=localStorage.getItem('preferredLanguage')||'en';
+            const w=wt[lang]||{};
+
             // Create modal overlay
             const modal = document.createElement('div');
             modal.id = 'wallet-modal';
@@ -692,19 +697,19 @@
                 <div class="wallet-modal-overlay" onclick="closeWalletModal()">
                     <div class="wallet-modal-content" onclick="event.stopPropagation()">
                         <div class="wallet-modal-header">
-                            <h3><i class="fas fa-wallet"></i> Select Wallet</h3>
+                            <h3><i class="fas fa-wallet"></i> ${w.t||'Select Wallet'}</h3>
                             <button class="modal-close" onclick="closeWalletModal()">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <div class="wallet-modal-body">
-                            <p class="wallet-modal-desc">Choose your wallet to add Access Network</p>
+                            <p class="wallet-modal-desc">${w.d||'Choose your wallet to add Access Network'}</p>
                             
                             <a href="https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}" class="wallet-option" onclick="closeWalletModal()">
                                 <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" class="wallet-logo">
                                 <div class="wallet-option-info">
                                     <span class="wallet-option-name">MetaMask</span>
-                                    <span class="wallet-option-desc">Open in MetaMask app</span>
+                                    <span class="wallet-option-desc">${w.mm||'Open in MetaMask app'}</span>
                                 </div>
                                 <i class="fas fa-chevron-right"></i>
                             </a>
@@ -713,7 +718,7 @@
                                 <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="Trust Wallet" class="wallet-logo">
                                 <div class="wallet-option-info">
                                     <span class="wallet-option-name">Trust Wallet</span>
-                                    <span class="wallet-option-desc">Open in Trust Wallet app</span>
+                                    <span class="wallet-option-desc">${w.tw||'Open in Trust Wallet app'}</span>
                                 </div>
                                 <i class="fas fa-chevron-right"></i>
                             </a>
@@ -722,18 +727,18 @@
                                 <img src="https://altcoinsbox.com/wp-content/uploads/2022/12/coinbase-wallet-logo.png" alt="Coinbase" class="wallet-logo">
                                 <div class="wallet-option-info">
                                     <span class="wallet-option-name">Coinbase Wallet</span>
-                                    <span class="wallet-option-desc">Open in Coinbase app</span>
+                                    <span class="wallet-option-desc">${w.cb||'Open in Coinbase app'}</span>
                                 </div>
                                 <i class="fas fa-chevron-right"></i>
                             </a>
                             
                             <div class="wallet-divider">
-                                <span>or install a wallet</span>
+                                <span>${w.oi||'or install a wallet'}</span>
                             </div>
                             
                             <div class="install-options">
                                 <a href="https://metamask.io/download/" target="_blank" class="install-btn">
-                                    <i class="fas fa-download"></i> Install MetaMask
+                                    <i class="fas fa-download"></i> ${w.im||'Install MetaMask'}
                                 </a>
                             </div>
                         </div>
