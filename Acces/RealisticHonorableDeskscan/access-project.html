@@ -1284,7 +1284,8 @@
     }
 
     function showWalletSelector() {
-        const currentUrl = encodeURIComponent(window.location.href);
+        const addNetworkUrl = window.location.origin + '/add-network.html';
+        const addNetworkUrlEncoded = encodeURIComponent(addNetworkUrl);
         const modal = document.createElement('div');
         modal.id = 'wallet-modal';
         modal.innerHTML = `
@@ -1296,17 +1297,17 @@
                     </div>
                     <div class="wallet-modal-body">
                         <p class="wallet-modal-desc">Choose your wallet to add Access Network</p>
-                        <a href="https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}" class="wallet-option" onclick="closeWalletModal()">
+                        <a href="https://metamask.app.link/dapp/${window.location.host}/add-network.html" class="wallet-option" onclick="closeWalletModal()">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" class="wallet-logo">
                             <div class="wallet-option-info"><span class="wallet-option-name">MetaMask</span><span class="wallet-option-desc">Open in MetaMask app</span></div>
                             <i class="fas fa-chevron-right"></i>
                         </a>
-                        <a href="https://link.trustwallet.com/open_url?coin_id=60&url=${currentUrl}" class="wallet-option" onclick="closeWalletModal()">
+                        <a href="https://link.trustwallet.com/open_url?coin_id=60&url=${addNetworkUrlEncoded}" class="wallet-option" onclick="closeWalletModal()">
                             <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="Trust Wallet" class="wallet-logo">
                             <div class="wallet-option-info"><span class="wallet-option-name">Trust Wallet</span><span class="wallet-option-desc">Open in Trust Wallet app</span></div>
                             <i class="fas fa-chevron-right"></i>
                         </a>
-                        <a href="https://go.cb-w.com/dapp?cb_url=${currentUrl}" class="wallet-option" onclick="closeWalletModal()">
+                        <a href="https://go.cb-w.com/dapp?cb_url=${addNetworkUrlEncoded}" class="wallet-option" onclick="closeWalletModal()">
                             <img src="https://altcoinsbox.com/wp-content/uploads/2022/12/coinbase-wallet-logo.png" alt="Coinbase" class="wallet-logo">
                             <div class="wallet-option-info"><span class="wallet-option-name">Coinbase Wallet</span><span class="wallet-option-desc">Open in Coinbase app</span></div>
                             <i class="fas fa-chevron-right"></i>
