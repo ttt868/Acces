@@ -219,32 +219,27 @@ document.addEventListener('deviceready', function() {
         var isDashboardVisible = dashboardPage && dashboardPage.style.display !== 'none';
         
         if (!isDashboardVisible) {
-            // Not on dashboard — navigate to dashboard
+            // Not on dashboard — navigate back to dashboard
+            
+            // FIRST: Clear ALL highlights from every nav element
+            var allActive = document.querySelectorAll('.mobile-nav-item.active, .nav-link.active, .more-menu-item.active');
+            for (var i = 0; i < allActive.length; i++) {
+                allActive[i].classList.remove('active');
+            }
+            
+            // Set active ONLY on dashboard button
+            var dashBtn = document.querySelector('.mobile-nav-item[data-page="dashboard"]');
+            if (dashBtn) dashBtn.classList.add('active');
+            var dashLink = document.querySelector('.nav-link[data-page="dashboard"]');
+            if (dashLink) dashLink.classList.add('active');
+            
+            // Close more menu if open
+            var moreMenu = document.getElementById('more-menu');
+            if (moreMenu) moreMenu.style.display = 'none';
+            
+            // NOW navigate to dashboard
             if (typeof window.showPage === 'function') {
                 window.showPage('dashboard');
-                // Remove active from ALL nav elements (mobile nav + desktop nav + more menu items)
-                var mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-                mobileNavItems.forEach(function(item) { item.classList.remove('active'); });
-                var navLinks = document.querySelectorAll('.nav-link');
-                navLinks.forEach(function(link) { link.classList.remove('active'); });
-                var moreMenuItems = document.querySelectorAll('.more-menu-item');
-                moreMenuItems.forEach(function(item) { item.classList.remove('active'); });
-                
-                // Set active ONLY on dashboard
-                mobileNavItems.forEach(function(item) {
-                    if (item.getAttribute('data-page') === 'dashboard') {
-                        item.classList.add('active');
-                    }
-                });
-                navLinks.forEach(function(link) {
-                    if (link.getAttribute('data-page') === 'dashboard') {
-                        link.classList.add('active');
-                    }
-                });
-                
-                // Close more menu if open
-                var moreMenu = document.getElementById('more-menu');
-                if (moreMenu) { moreMenu.style.display = 'none'; }
             }
             return;
         }
