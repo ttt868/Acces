@@ -1610,19 +1610,6 @@ html.dark-theme .logo {
   content: none !important;
 }
 
-/* Purple underline for active nav button */
-.mobile-nav-item.active::after {
-  display: block !important;
-  content: '' !important;
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 100% !important;
-  height: 2px !important;
-  background: var(--primary-gradient) !important;
-  border-radius: 0;
-}
-
 .mobile-nav-item:hover {
   color: var(--text-color);
 }
