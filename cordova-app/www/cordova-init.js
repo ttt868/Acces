@@ -221,26 +221,40 @@ document.addEventListener('deviceready', function() {
         if (!isDashboardVisible) {
             // Not on dashboard — navigate back to dashboard
             
-            // FIRST: Clear ALL highlights from every nav element
-            var allActive = document.querySelectorAll('.mobile-nav-item.active, .nav-link.active, .more-menu-item.active');
-            for (var i = 0; i < allActive.length; i++) {
-                allActive[i].classList.remove('active');
+            // Close more menu if open
+            var moreMenu = document.getElementById('more-menu');
+            if (moreMenu) moreMenu.style.display = 'none';
+            
+            // Force remove active from EVERY mobile-nav-item, nav-link, more-menu-item
+            var items = document.querySelectorAll('.mobile-nav-item, .nav-link, .more-menu-item');
+            for (var i = 0; i < items.length; i++) {
+                items[i].classList.remove('active');
+                items[i].style.color = '';
+                items[i].style.borderColor = '';
+                items[i].style.borderBottom = '';
+                items[i].style.borderTop = '';
             }
             
-            // Set active ONLY on dashboard button
+            // Set active ONLY on dashboard
             var dashBtn = document.querySelector('.mobile-nav-item[data-page="dashboard"]');
             if (dashBtn) dashBtn.classList.add('active');
             var dashLink = document.querySelector('.nav-link[data-page="dashboard"]');
             if (dashLink) dashLink.classList.add('active');
             
-            // Close more menu if open
-            var moreMenu = document.getElementById('more-menu');
-            if (moreMenu) moreMenu.style.display = 'none';
-            
-            // NOW navigate to dashboard
+            // Navigate to dashboard
             if (typeof window.showPage === 'function') {
                 window.showPage('dashboard');
             }
+            
+            // Double-check after a frame in case showPage re-adds something
+            setTimeout(function() {
+                var items2 = document.querySelectorAll('.mobile-nav-item, .nav-link, .more-menu-item');
+                for (var j = 0; j < items2.length; j++) {
+                    if (items2[j].getAttribute('data-page') !== 'dashboard') {
+                        items2[j].classList.remove('active');
+                    }
+                }
+            }, 50);
             return;
         }
         
