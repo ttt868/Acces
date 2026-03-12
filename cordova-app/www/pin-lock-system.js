@@ -1173,25 +1173,37 @@
 
   // Wait for splash screen to go away, then trigger biometric
   // True cold start: 1.5s delay so user sees PIN screen after splash
-  // Page reload (from HTML nav): 150ms — user was just using the app
+  // Page reload (from HTML nav): fast — user was just using the app
   function _waitForDeviceReadyThenBiometric() {
-    var delay = _isPageReload() ? 150 : 1500;
+    var isReload = _isPageReload();
     function _triggerAfterDelay() {
-      setTimeout(function() {
-        if (!isLocked || _pinFrozen || !navigator.onLine) return;
-        // On page reload biometric was already available — skip re-check
-        if (biometricAvailable && isLocked && !_pinFrozen) {
-          window._biometricInProgress = false;
-          triggerBiometricAuth();
-        } else {
+      if (isReload) {
+        // Page reload: warm up plugin with isAvailable, then short pause, then show
+        // This ensures native fingerprint sensor is fully initialized
+        setTimeout(function() {
+          if (!isLocked || _pinFrozen || !navigator.onLine) return;
+          checkBiometricAvailabilityAsync().then(function(available) {
+            if (!available || !isLocked || _pinFrozen) return;
+            // Small pause after isAvailable so sensor is ready for show()
+            setTimeout(function() {
+              if (!isLocked || _pinFrozen) return;
+              window._biometricInProgress = false;
+              triggerBiometricAuth();
+            }, 250);
+          });
+        }, 100);
+      } else {
+        // True cold start: longer delay so user sees PIN after splash
+        setTimeout(function() {
+          if (!isLocked || _pinFrozen || !navigator.onLine) return;
           checkBiometricAvailabilityAsync().then(function(available) {
             if (available && isLocked && !_pinFrozen) {
               window._biometricInProgress = false;
               triggerBiometricAuth();
             }
           });
-        }
-      }, delay);
+        }, 1500);
+      }
     }
     // If deviceready already fired, just delay
     if (window._cordovaReady) {
