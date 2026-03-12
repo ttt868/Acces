@@ -349,6 +349,7 @@
     }
 
     modal.style.display = 'flex';
+    document.body.classList.add('pin-lock-active');
     setTimeout(() => modal.classList.add('active'), 10);
   }
 
@@ -358,6 +359,7 @@
       modal.classList.remove('active');
       setTimeout(() => {
         modal.style.display = 'none';
+        document.body.classList.remove('pin-lock-active');
       }, 300);
     }
     // Reset toggle if user cancelled setup
@@ -587,6 +589,7 @@
     hideLockError();
 
     lockScreen.style.display = 'flex';
+    document.body.classList.add('pin-lock-active');
     if (!_instantShow) {
       lockScreen.style.opacity = '0';
     }
@@ -630,6 +633,7 @@
         lockScreen.style.display = 'none';
         lockScreen.style.opacity = '';
         lockScreen.style.transition = '';
+        document.body.classList.remove('pin-lock-active');
 
         // Show any notifications that were queued during lock screen
         if (typeof window._flushNotificationQueue === 'function') {
