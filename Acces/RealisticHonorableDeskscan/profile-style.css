@@ -1710,8 +1710,8 @@ body.pin-lock-active {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 360px;
-  padding: 40px 20px;
+  max-width: 400px;
+  padding: clamp(15px, 4vh, 40px) 20px;
   box-sizing: border-box;
 }
 
@@ -1726,22 +1726,22 @@ body.pin-lock-active {
 
 .pin-lock-title {
   color: #fff;
-  font-size: 24px;
+  font-size: clamp(18px, 4vmin, 26px);
   font-weight: 700;
-  margin: 0 0 8px 0;
+  margin: 0 0 clamp(4px, 1vh, 10px) 0;
 }
 
 .pin-lock-subtitle {
   color: rgba(255, 255, 255, 0.5);
-  font-size: 14px;
-  margin: 0 0 32px 0;
+  font-size: clamp(12px, 2.5vmin, 16px);
+  margin: 0 0 clamp(16px, 3vh, 32px) 0;
 }
 
 /* ===== PIN Dots ===== */
 .pin-dots-container {
   display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: clamp(10px, 2.5vmin, 18px);
+  margin-bottom: clamp(8px, 2vh, 20px);
   transition: transform 0.1s;
 }
 
@@ -1758,8 +1758,8 @@ body.pin-lock-active {
 }
 
 .pin-dot {
-  width: 16px;
-  height: 16px;
+  width: clamp(12px, 2.5vmin, 18px);
+  height: clamp(12px, 2.5vmin, 18px);
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.3);
   background: transparent;
@@ -1785,20 +1785,20 @@ body.pin-lock-active {
 .pin-keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: clamp(6px, 1.5vmin, 14px);
   width: 100%;
-  max-width: 280px;
-  margin-top: 16px;
+  max-width: clamp(220px, 50vmin, 300px);
+  margin-top: clamp(8px, 2vh, 20px);
 }
 
 .pin-key {
-  width: 72px;
-  height: 72px;
+  width: clamp(52px, 11vmin, 78px);
+  height: clamp(52px, 11vmin, 78px);
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  font-size: 28px;
+  font-size: clamp(20px, 4.5vmin, 30px);
   font-weight: 500;
   cursor: pointer;
   display: flex;
@@ -1821,7 +1821,7 @@ body.pin-lock-active {
 }
 
 .pin-key-delete {
-  font-size: 22px;
+  font-size: clamp(18px, 3.5vmin, 24px);
   background: transparent;
 }
 
@@ -1830,7 +1830,7 @@ body.pin-lock-active {
 }
 
 .pin-key-biometric {
-  font-size: 28px;
+  font-size: clamp(22px, 4.5vmin, 30px);
   color: #10b981;
   background: transparent;
 }
@@ -1877,8 +1877,8 @@ body.pin-lock-active {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 360px;
-  padding: 40px 20px;
+  max-width: 400px;
+  padding: clamp(15px, 4vh, 40px) 20px;
   position: relative;
   box-sizing: border-box;
 }
@@ -1913,32 +1913,32 @@ body.pin-lock-active {
 }
 
 .pin-modal-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
+  width: clamp(52px, 10vmin, 76px);
+  height: clamp(52px, 10vmin, 76px);
+  border-radius: clamp(14px, 3vmin, 22px);
   background: linear-gradient(135deg, #4a90e2, #7c3aed);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: clamp(12px, 2.5vh, 24px);
 }
 
 .pin-modal-icon i {
   color: #fff;
-  font-size: 32px;
+  font-size: clamp(24px, 5vmin, 34px);
 }
 
 .pin-modal-title {
   color: #fff;
-  font-size: 22px;
+  font-size: clamp(18px, 3.5vmin, 24px);
   font-weight: 700;
-  margin: 0 0 8px 0;
+  margin: 0 0 clamp(4px, 1vh, 10px) 0;
 }
 
 .pin-modal-subtitle {
   color: rgba(255, 255, 255, 0.5);
-  font-size: 14px;
-  margin: 0 0 28px 0;
+  font-size: clamp(12px, 2.5vmin, 16px);
+  margin: 0 0 clamp(14px, 3vh, 28px) 0;
   text-align: center;
 }
 
@@ -2001,54 +2001,6 @@ body.pin-lock-active {
 
 /* ===== Light Theme Lock Screen ===== */
 /* Lock screen always stays dark for professional look */
-
-/* ===== Responsive ===== */
-@media (max-height: 600px) {
-  .pin-lock-container,
-  .pin-modal-container {
-    padding: 15px;
-  }
-  .pin-lock-logo img {
-    width: 56px;
-    height: 56px;
-  }
-  .pin-lock-title,
-  .pin-modal-title {
-    font-size: 20px;
-    margin-bottom: 4px;
-  }
-  .pin-lock-subtitle,
-  .pin-modal-subtitle {
-    margin-bottom: 16px;
-    font-size: 13px;
-  }
-  .pin-key {
-    width: 56px;
-    height: 56px;
-    font-size: 22px;
-  }
-  .pin-keypad {
-    gap: 6px;
-    max-width: 230px;
-    margin-top: 10px;
-  }
-  .pin-dots-container {
-    margin-bottom: 8px;
-    gap: 12px;
-  }
-  .pin-dot {
-    width: 14px;
-    height: 14px;
-  }
-  .pin-modal-icon {
-    width: 56px;
-    height: 56px;
-    margin-bottom: 16px;
-  }
-  .pin-modal-icon i {
-    font-size: 26px;
-  }
-}
 
 /* ===== Landscape Orientation ===== */
 @media (orientation: landscape) and (max-height: 500px) {
