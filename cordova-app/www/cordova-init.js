@@ -203,12 +203,40 @@ document.addEventListener('deviceready', function() {
         var currentPath = window.location.pathname || '';
         var isMainPage = currentPath.endsWith('index.html') || currentPath.endsWith('/') || currentPath === '';
         
-        if (!isMainPage && window.history.length > 1) {
-            window.history.back();
+        if (!isMainPage) {
+            window.location.href = 'index.html';
             return;
         }
         
-        // On main page — exit app
+        // On main page (SPA) — check which internal page is visible
+        var dashboardPage = document.getElementById('dashboard-page');
+        var isDashboardVisible = dashboardPage && dashboardPage.style.display !== 'none';
+        
+        if (!isDashboardVisible) {
+            // Not on dashboard — navigate to dashboard
+            if (typeof window.showPage === 'function') {
+                window.showPage('dashboard');
+                // Update mobile nav active state
+                var mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+                mobileNavItems.forEach(function(item) {
+                    item.classList.remove('active');
+                    if (item.getAttribute('data-page') === 'dashboard') {
+                        item.classList.add('active');
+                    }
+                });
+                // Update desktop nav active state
+                var navLinks = document.querySelectorAll('.nav-link');
+                navLinks.forEach(function(link) {
+                    link.classList.remove('active');
+                    if (link.getAttribute('data-page') === 'dashboard') {
+                        link.classList.add('active');
+                    }
+                });
+            }
+            return;
+        }
+        
+        // On dashboard — exit app
         if (navigator.app && navigator.app.exitApp) {
             navigator.app.exitApp();
         }
