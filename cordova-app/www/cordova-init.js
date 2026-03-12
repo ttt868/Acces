@@ -204,7 +204,13 @@ document.addEventListener('deviceready', function() {
         var isMainPage = currentPath.endsWith('index.html') || currentPath.endsWith('/') || currentPath === '';
         
         if (!isMainPage) {
-            window.location.href = 'index.html';
+            // On access-explorer.html (first explorer page) — go back to main app
+            if (currentPath.endsWith('access-explorer.html')) {
+                window.location.href = 'index.html';
+            } else {
+                // On other sub-pages — go back page by page through history
+                window.history.back();
+            }
             return;
         }
         
