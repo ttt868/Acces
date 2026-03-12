@@ -431,32 +431,57 @@
         /* ===== NETWORK INFO ===== */
         .network-info {
             background: var(--bg2);
-            border-radius: 20px;
+            border-radius: 16px;
             border: 1px solid var(--border);
             overflow: hidden;
+            max-width: 600px;
+            margin: 0 auto;
         }
         .network-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1px;
-            background: var(--border);
+            display: flex;
+            flex-direction: column;
         }
         .network-item {
-            background: var(--bg2);
-            padding: 28px 24px;
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        .network-item:last-child {
+            border-bottom: none;
         }
         .network-item-label {
-            font-size: 12px;
+            font-size: clamp(11px, 2.8vw, 13px);
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.2px;
             color: var(--text3);
-            margin-bottom: 8px;
+            flex-shrink: 0;
         }
         .network-item-value {
-            font-size: 1.3rem;
-            font-weight: 700;
+            font-size: clamp(0.85rem, 3.2vw, 1.1rem);
+            font-weight: 600;
             color: var(--text);
+            text-align: right;
+        }
+        .net-connect-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 36px;
+            background: var(--gradient);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59,130,246,0.3);
+        }
+        .net-connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59,130,246,0.5);
         }
 
         /* ===== HOW IT WORKS ===== */
@@ -728,7 +753,7 @@
             .hero h1 { font-size: 2rem; }
             .features-grid { grid-template-columns: 1fr; }
             .steps { grid-template-columns: 1fr; }
-            .network-grid { grid-template-columns: 1fr 1fr; }
+            .network-item { padding: 13px 16px; }
         }
 
 
@@ -905,15 +930,15 @@
                 </div>
                 <div class="network-item">
                     <div class="network-item-label">RPC</div>
-                    <div class="network-item-value" style="font-size:clamp(0.85rem,3.5vw,1.3rem);display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;"><span>accesschain.org/rpc</span><button onclick="navigator.clipboard.writeText('https://accesschain.org/rpc').then(()=>{this.querySelector('svg path').setAttribute('d','M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z');this.querySelector('svg').style.stroke='#00e676';setTimeout(()=>{this.querySelector('svg path').setAttribute('d','M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z');this.querySelector('svg').style.stroke=''},1500)})" style="background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);display:flex;align-items:center;" title="Copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button></div>
+                    <div class="network-item-value" style="display:flex;align-items:center;gap:5px;"><span>accesschain.org/rpc</span><button onclick="navigator.clipboard.writeText('https://accesschain.org/rpc').then(()=>{this.querySelector('svg path').setAttribute('d','M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z');this.querySelector('svg').style.stroke='#00e676';setTimeout(()=>{this.querySelector('svg path').setAttribute('d','M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z');this.querySelector('svg').style.stroke=''},1500)})" style="background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);display:flex;align-items:center;" title="Copy"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button></div>
                 </div>
             </div>
-            <div style="text-align:center;padding:24px 20px 28px;">
-                <button onclick="connectWallet()" style="display:inline-flex;align-items:center;gap:10px;padding:14px 36px;background:var(--gradient);color:#fff;border:none;border-radius:50px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.3s ease;box-shadow:0 4px 15px rgba(59,130,246,0.3);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 25px rgba(59,130,246,0.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 15px rgba(59,130,246,0.3)'">
-                    <i class="fas fa-wallet"></i>
-                    <span data-i18n="net_connect">Connect Wallet</span>
-                </button>
-            </div>
+        </div>
+        <div style="text-align:center;margin-top:20px;">
+            <button onclick="connectWallet()" class="net-connect-btn">
+                <i class="fas fa-wallet"></i>
+                <span data-i18n="net_connect">Connect Wallet</span>
+            </button>
         </div>
     </section>
 
