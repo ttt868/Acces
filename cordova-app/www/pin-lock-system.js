@@ -5,19 +5,27 @@
 (function() {
   'use strict';
 
-  // ===== BUILD VERSION (change on each release to detect app updates) =====
-  var BUILD_ID = 'v20250613a';
+  // ===== BUILD VERSION (auto-updated by after_prepare hook on each build) =====
+  var BUILD_ID = '__BUILD_20260312_000000__';
 
   // Detect if app was updated (build changed since last unlock)
   function _isAppUpdated() {
     try {
       var stored = localStorage.getItem('_pin_build_id');
+      if (!stored) return true; // First install
       return stored !== BUILD_ID;
     } catch(e) { return true; }
   }
   // Mark current build as known — called after first successful unlock
   function _markBuildKnown() {
     try { localStorage.setItem('_pin_build_id', BUILD_ID); } catch(e) {}
+  }
+  // Detect page reload (returning from HTML page) vs true cold start
+  function _isPageReload() {
+    try { return sessionStorage.getItem('_pin_session_active') === '1'; } catch(e) { return false; }
+  }
+  function _markSessionActive() {
+    try { sessionStorage.setItem('_pin_session_active', '1'); } catch(e) {}
   }
 
   // ===== STATE =====
@@ -760,6 +768,8 @@
 
     // Mark this build as known after successful unlock
     _markBuildKnown();
+    // Mark session active so page reloads (from HTML nav) use fast biometric
+    _markSessionActive();
 
     // Start loading data BEFORE hiding PIN screen
     // So data starts arriving while PIN is still visible
@@ -1162,19 +1172,26 @@
   };
 
   // Wait for splash screen to go away, then trigger biometric
-  // deviceready = Cordova is ready = splash screen hides after this
-  // Then 1.5s delay so user sees PIN screen clearly before biometric popup
+  // True cold start: 1.5s delay so user sees PIN screen after splash
+  // Page reload (from HTML nav): 150ms — user was just using the app
   function _waitForDeviceReadyThenBiometric() {
+    var delay = _isPageReload() ? 150 : 1500;
     function _triggerAfterDelay() {
       setTimeout(function() {
         if (!isLocked || _pinFrozen || !navigator.onLine) return;
-        checkBiometricAvailabilityAsync().then(function(available) {
-          if (available && isLocked && !_pinFrozen) {
-            window._biometricInProgress = false;
-            triggerBiometricAuth();
-          }
-        });
-      }, 1500);
+        // On page reload biometric was already available — skip re-check
+        if (biometricAvailable && isLocked && !_pinFrozen) {
+          window._biometricInProgress = false;
+          triggerBiometricAuth();
+        } else {
+          checkBiometricAvailabilityAsync().then(function(available) {
+            if (available && isLocked && !_pinFrozen) {
+              window._biometricInProgress = false;
+              triggerBiometricAuth();
+            }
+          });
+        }
+      }, delay);
     }
     // If deviceready already fired, just delay
     if (window._cordovaReady) {

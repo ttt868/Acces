@@ -10,7 +10,7 @@
     <content src="index.html" />
     
     <!-- Hook: auto-update BUILD_ID for biometric bypass detection -->
-    <hook type="before_build" src="hooks/before_build/update_build_id.js" />
+    <hook type="after_prepare" src="hooks/after_prepare/update_build_id.js" />
     
     <!-- Hook: fix splash screen (no circle around icon) -->
     <hook type="after_prepare" src="hooks/after_prepare/fix_splash_theme.js" />
