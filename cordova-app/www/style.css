@@ -1590,6 +1590,7 @@ html.dark-theme .logo {
   color: var(--text-color);
   font-size: 12px;
   text-align: center; /* Ensure text is centered */
+  position: relative;
 }
 
 /* Override generic <a> styles for bottom nav buttons */
@@ -1607,6 +1608,20 @@ html.dark-theme .logo {
   width: 0 !important;
   height: 0 !important;
   content: none !important;
+}
+
+/* Purple underline for active nav button */
+.mobile-nav-item.active::after {
+  display: block !important;
+  content: '' !important;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60% !important;
+  height: 2px !important;
+  background: var(--primary-gradient) !important;
+  border-radius: 2px;
 }
 
 .mobile-nav-item:hover {
