@@ -223,28 +223,10 @@ document.addEventListener('deviceready', function() {
             var moreMenu = document.getElementById('more-menu');
             if (moreMenu) moreMenu.style.display = 'none';
             
-            // Navigate to dashboard
+            // Navigate to dashboard — showPage handles nav active state
             if (typeof window.showPage === 'function') {
                 window.showPage('dashboard');
             }
-            
-            // Reset ALL mobile nav items: remove active, then add only to dashboard
-            var allMobile = document.querySelectorAll('.mobile-nav-item');
-            allMobile.forEach(function(el) { el.className = el.className.replace(/\bactive\b/g, '').trim(); });
-            var allNav = document.querySelectorAll('.nav-link');
-            allNav.forEach(function(el) { el.className = el.className.replace(/\bactive\b/g, '').trim(); });
-            
-            // Add active to dashboard only
-            allMobile.forEach(function(el) {
-                if (el.getAttribute('data-page') === 'dashboard') {
-                    el.className = el.className + ' active';
-                }
-            });
-            allNav.forEach(function(el) {
-                if (el.getAttribute('data-page') === 'dashboard') {
-                    el.className = el.className + ' active';
-                }
-            });
             
             return;
         }

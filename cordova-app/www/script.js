@@ -14637,6 +14637,28 @@ window.cancelProfileChanges = cancelProfileChanges;
       pageToShow.style.display = 'block';
     }
 
+    // Sync mobile bottom nav active state to match current page
+    var mobileNavAll = document.querySelectorAll('.mobile-nav-item');
+    var isInMoreMenu = (pageName === 'network' || pageName === 'tasks' || pageName === 'pointsystem' || pageName === 'kyc');
+    for (var ni = 0; ni < mobileNavAll.length; ni++) {
+      var navPage = mobileNavAll[ni].getAttribute('data-page');
+      if (navPage === pageName || (isInMoreMenu && navPage === 'more')) {
+        mobileNavAll[ni].classList.add('active');
+      } else {
+        mobileNavAll[ni].classList.remove('active');
+      }
+    }
+    // Sync desktop sidebar nav
+    var desktopNavAll = document.querySelectorAll('.nav-link');
+    for (var di = 0; di < desktopNavAll.length; di++) {
+      var dPage = desktopNavAll[di].getAttribute('data-page');
+      if (dPage === pageName) {
+        desktopNavAll[di].classList.add('active');
+      } else {
+        desktopNavAll[di].classList.remove('active');
+      }
+    }
+
     // Update mobile header title
     const mobileTitle = document.getElementById('mobile-page-title');
     if (mobileTitle) {
