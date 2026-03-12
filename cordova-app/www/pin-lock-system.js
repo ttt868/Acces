@@ -933,8 +933,10 @@
 
   // ===== BIOMETRIC AUTH =====
   // Minimum time for a real fingerprint scan (dialog open → finger recognized)
-  // Any success faster than this = Android cached biometric session = not secure
-  var BIO_MIN_AUTH_TIME_MS = 800;
+  // Cached Android session resolves in < 50ms (instant, no finger)
+  // Real finger scan takes 300ms+ (human physically placing finger)
+  // Threshold: 150ms — safely rejects cached sessions, never blocks real scans
+  var BIO_MIN_AUTH_TIME_MS = 150;
 
   function triggerBiometricAuth() {
     if (_pinFrozen) return; // No biometric when frozen (offline)
