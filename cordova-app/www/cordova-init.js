@@ -222,22 +222,29 @@ document.addEventListener('deviceready', function() {
             // Not on dashboard — navigate to dashboard
             if (typeof window.showPage === 'function') {
                 window.showPage('dashboard');
-                // Update mobile nav active state
+                // Remove active from ALL nav elements (mobile nav + desktop nav + more menu items)
                 var mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+                mobileNavItems.forEach(function(item) { item.classList.remove('active'); });
+                var navLinks = document.querySelectorAll('.nav-link');
+                navLinks.forEach(function(link) { link.classList.remove('active'); });
+                var moreMenuItems = document.querySelectorAll('.more-menu-item');
+                moreMenuItems.forEach(function(item) { item.classList.remove('active'); });
+                
+                // Set active ONLY on dashboard
                 mobileNavItems.forEach(function(item) {
-                    item.classList.remove('active');
                     if (item.getAttribute('data-page') === 'dashboard') {
                         item.classList.add('active');
                     }
                 });
-                // Update desktop nav active state
-                var navLinks = document.querySelectorAll('.nav-link');
                 navLinks.forEach(function(link) {
-                    link.classList.remove('active');
                     if (link.getAttribute('data-page') === 'dashboard') {
                         link.classList.add('active');
                     }
                 });
+                
+                // Close more menu if open
+                var moreMenu = document.getElementById('more-menu');
+                if (moreMenu) { moreMenu.style.display = 'none'; }
             }
             return;
         }
