@@ -932,6 +932,10 @@
   }
 
   // ===== BIOMETRIC AUTH =====
+  // Minimum time for a real fingerprint scan (dialog open → finger recognized)
+  // Any success faster than this = Android cached biometric session = not secure
+  var BIO_MIN_AUTH_TIME_MS = 800;
+
   function triggerBiometricAuth() {
     if (_pinFrozen) return; // No biometric when frozen (offline)
     if (!window.Fingerprint || !biometricAvailable || !biometricEnabled) return;
@@ -945,6 +949,7 @@
       window._biometricInProgress = false;
     }, 30000);
 
+    var _showTime = Date.now();
     const t = (key) => window.translator ? window.translator.translate(key) : key;
 
     window.Fingerprint.show(
@@ -953,8 +958,22 @@
         disableBackup: true
       },
       function() {
-        // Success - animate dots filling up then unlock
         clearTimeout(_bioSafetyTimer);
+        var elapsed = Date.now() - _showTime;
+
+        if (elapsed < BIO_MIN_AUTH_TIME_MS) {
+          // Success was instant — cached Android biometric session
+          // NOT a real finger scan. Consume the cache and retry.
+          console.warn('[PIN] Biometric instant success (' + elapsed + 'ms) — cached session, consuming and retrying');
+          window._biometricInProgress = false;
+          // Cache is now consumed — next call will require real finger
+          setTimeout(function() {
+            if (isLocked && !_pinFrozen) triggerBiometricAuth();
+          }, 500);
+          return;
+        }
+
+        // Real authentication — user placed finger (took > 800ms)
         window._biometricInProgress = false;
         animateDotsAndUnlock();
       },
@@ -1179,18 +1198,18 @@
     function _triggerAfterDelay() {
       if (isReload) {
         // Page reload (returning from external HTML):
-        // DO NOT auto-trigger biometric — Android may have a cached biometric session
-        // that auto-approves without finger placement (critical security risk).
-        // Just ensure biometric button is visible so user can press it manually.
+        // Auto-trigger biometric — time-based security in triggerBiometricAuth()
+        // will reject cached Android sessions and retry with real finger
         setTimeout(function() {
-          if (!isLocked || _pinFrozen) return;
+          if (!isLocked || _pinFrozen || !navigator.onLine) return;
           checkBiometricAvailabilityAsync().then(function(available) {
-            var bioBtn = document.getElementById('pin-biometric-btn');
-            if (bioBtn) {
-              bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
-            }
+            if (!available || !isLocked || _pinFrozen) return;
+            setTimeout(function() {
+              if (!isLocked || _pinFrozen) return;
+              window._biometricInProgress = false;
+              triggerBiometricAuth();
+            }, 300);
           });
-        }, 100);
         }, 100);
       } else {
         // True cold start: longer delay so user sees PIN after splash
