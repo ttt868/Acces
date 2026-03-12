@@ -1179,10 +1179,10 @@
     function _triggerAfterDelay() {
       if (isReload) {
         // Page reload (returning from external HTML):
-        // 1) 200ms initial wait for Cordova bridge to stabilize
+        // 1) 100ms initial wait for Cordova bridge to stabilize
         // 2) isAvailable() warms up the native fingerprint plugin
-        // 3) 600ms after isAvailable — sensor hardware fully ready
-        // Total ~800ms — fast enough, but sensor works on first try
+        // 3) 400ms after isAvailable — sensor hardware fully ready
+        // Total ~500ms — faster, sensor still works on first try
         setTimeout(function() {
           if (!isLocked || _pinFrozen || !navigator.onLine) return;
           checkBiometricAvailabilityAsync().then(function(available) {
@@ -1191,9 +1191,9 @@
               if (!isLocked || _pinFrozen) return;
               window._biometricInProgress = false;
               triggerBiometricAuth();
-            }, 600);
+            }, 400);
           });
-        }, 200);
+        }, 100);
       } else {
         // True cold start: longer delay so user sees PIN after splash
         setTimeout(function() {
