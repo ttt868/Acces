@@ -5,6 +5,21 @@
 (function() {
   'use strict';
 
+  // ===== BUILD VERSION (change on each release to detect app updates) =====
+  var BUILD_ID = 'v20250613a';
+
+  // Detect if app was updated (build changed since last unlock)
+  function _isAppUpdated() {
+    try {
+      var stored = localStorage.getItem('_pin_build_id');
+      return stored !== BUILD_ID;
+    } catch(e) { return true; }
+  }
+  // Mark current build as known — called after first successful unlock
+  function _markBuildKnown() {
+    try { localStorage.setItem('_pin_build_id', BUILD_ID); } catch(e) {}
+  }
+
   // ===== STATE =====
   let pinInput = '';
   let setupPin = '';
@@ -138,6 +153,10 @@
         updateSettingsUI();
         if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
+          // Auto-trigger biometric (skip if app was just updated)
+          if (biometricEnabled && biometricAvailable && !_isAppUpdated()) {
+            setTimeout(function() { triggerBiometricAuth(); }, 400);
+          }
         }
       }
 
@@ -154,6 +173,10 @@
         // Show lock screen if PIN enabled and not already locked
         if (pinEnabled && !isLocked && !window._pinUnlocked) {
           showLockScreen();
+          // Auto-trigger biometric (skip if app was just updated)
+          if (biometricEnabled && biometricAvailable && !_isAppUpdated()) {
+            setTimeout(function() { triggerBiometricAuth(); }, 400);
+          }
         }
       }
     } catch (error) {
@@ -735,6 +758,9 @@
     _unlockCooldown = true;
     setTimeout(() => { _unlockCooldown = false; }, 2000);
 
+    // Mark this build as known after successful unlock
+    _markBuildKnown();
+
     // Start loading data BEFORE hiding PIN screen
     // So data starts arriving while PIN is still visible
     _loadDataAfterUnlock();
@@ -1012,6 +1038,14 @@
       window._pinUnlocked = false;
       _instantShow = true; // no fade-in on resume
       showLockScreen();
+      // Auto-trigger biometric on resume (always — not an update scenario)
+      if (biometricEnabled) {
+        setTimeout(function() {
+          checkBiometricAvailabilityAsync().then(function(available) {
+            if (available && isLocked) triggerBiometricAuth();
+          });
+        }, 100);
+      }
     }
   }
 
@@ -1096,6 +1130,10 @@
       checkBiometricAvailabilityAsync().then(function(available) {
         if (bioBtn) {
           bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
+        }
+        // Auto-trigger biometric after unfreeze (skip if app was just updated)
+        if (available && isLocked && !_isAppUpdated()) {
+          setTimeout(function() { triggerBiometricAuth(); }, 1200);
         }
       });
     } else if (bioBtn) {
@@ -1215,25 +1253,34 @@
       var lockEl = document.getElementById('pin-lock-screen');
       if (lockEl) {
         showLockScreen();
-        // Check biometric in background for button visibility (no auto-trigger)
-        checkBiometricAvailabilityAsync().then(function(available) {
-          var bioBtn = document.getElementById('pin-biometric-btn');
-          if (bioBtn) {
-            bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
-          }
-        });
+        // Auto-trigger biometric after splash (skip if app was just updated)
+        if (biometricEnabled && !_isAppUpdated()) {
+          _waitForDeviceReadyThenBiometric();
+        } else {
+          // Just check availability for button visibility
+          checkBiometricAvailabilityAsync().then(function(available) {
+            var bioBtn = document.getElementById('pin-biometric-btn');
+            if (bioBtn) {
+              bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
+            }
+          });
+        }
       } else {
         // DOM not ready yet — wait for it
         document.addEventListener('DOMContentLoaded', function() {
           if (!isLocked && !window._pinUnlocked) {
             showLockScreen();
-            // Check biometric in background for button visibility (no auto-trigger)
-            checkBiometricAvailabilityAsync().then(function(available) {
-              var bioBtn = document.getElementById('pin-biometric-btn');
-              if (bioBtn) {
-                bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
-              }
-            });
+            // Auto-trigger biometric after splash (skip if app was just updated)
+            if (biometricEnabled && !_isAppUpdated()) {
+              _waitForDeviceReadyThenBiometric();
+            } else {
+              checkBiometricAvailabilityAsync().then(function(available) {
+                var bioBtn = document.getElementById('pin-biometric-btn');
+                if (bioBtn) {
+                  bioBtn.style.visibility = (biometricEnabled && biometricAvailable) ? 'visible' : 'hidden';
+                }
+              });
+            }
           }
         });
       }
