@@ -1041,10 +1041,15 @@
       // Auto-trigger biometric on resume (always — not an update scenario)
       if (biometricEnabled) {
         setTimeout(function() {
-          checkBiometricAvailabilityAsync().then(function(available) {
-            if (available && isLocked) triggerBiometricAuth();
-          });
-        }, 100);
+          // biometric was already available before pause — skip re-check for speed
+          if (biometricAvailable && isLocked) {
+            triggerBiometricAuth();
+          } else {
+            checkBiometricAvailabilityAsync().then(function(available) {
+              if (available && isLocked) triggerBiometricAuth();
+            });
+          }
+        }, 150);
       }
     }
   }
