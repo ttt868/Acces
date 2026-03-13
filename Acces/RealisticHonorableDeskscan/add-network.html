@@ -92,7 +92,7 @@
 
         .container {
             max-width: 500px;
-            margin: 15px auto;
+            margin: 5px auto;
             background: #000000;
             border-radius: 20px;
             overflow: hidden;
@@ -109,7 +109,7 @@
 
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 50px 20px 20px;
+            padding: 15px 20px;
             text-align: center;
             color: white;
             position: relative;
@@ -486,11 +486,12 @@
         }
 
         /* ===== LANGUAGE DROPDOWN ===== */
-        .lang-dropdown{position:absolute;top:12px;left:15px;z-index:1001}
-        .lang-toggle{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:8px 14px;border-radius:50px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;backdrop-filter:blur(12px);transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
-        .lang-toggle:hover{background:rgba(255,255,255,0.1)}
+        .lang-dropdown{position:absolute;top:13px;right:50px;z-index:1001}
+        .lang-toggle{background:transparent;border:none;color:rgba(255,255,255,0.9);padding:6px 8px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:4px;transition:all .3s;text-transform:uppercase;letter-spacing:0.5px}
+        .lang-toggle:hover{color:#fff}
         .lang-toggle i{font-size:14px}
-        body.light-mode .lang-toggle{background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.1);color:#111}
+        body.light-mode .lang-toggle{color:rgba(0,0,0,0.7)}
+        body.light-mode .lang-toggle:hover{color:#000}
         .lang-menu{position:absolute;top:calc(100% + 8px);right:0;background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:8px 0;min-width:180px;max-height:360px;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,0.6);backdrop-filter:blur(20px);opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .25s}
         body.light-mode .lang-menu{background:#fff;border:1px solid #e0e0e0;box-shadow:0 12px 40px rgba(0,0,0,0.15)}
         .lang-dropdown.open .lang-menu{opacity:1;visibility:visible;transform:translateY(0)}
@@ -510,17 +511,16 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="lang-dropdown" id="langDropdown">
-                <button class="lang-toggle" id="langToggle">
-                    <i class="fas fa-globe"></i>
-                    <span id="langLabel">English</span>
-                    <i class="fas fa-chevron-down" style="font-size:10px;opacity:0.6"></i>
-                </button>
-                <div class="lang-menu" id="langMenu"></div>
-            </div>
             <button class="theme-toggle" onclick="toggleTheme()">
                 <i class="fas fa-moon theme-icon"></i>
             </button>
+            <div class="lang-dropdown" id="langDropdown">
+                <button class="lang-toggle" id="langToggle">
+                    <span id="langLabel">EN</span>
+                    <i class="fas fa-chevron-down" style="font-size:9px;opacity:0.6"></i>
+                </button>
+                <div class="lang-menu" id="langMenu"></div>
+            </div>
             <div class="title">Access Network</div>
             <div class="subtitle" data-i18n="subtitle">Add to your wallet</div>
         </div>
@@ -1073,7 +1073,7 @@
             applyTranslation(lang);
             buildLangMenu();
             var info = LANGS.find(function(l) { return l.code === lang; });
-            if (info) document.getElementById('langLabel').textContent = info.name;
+            if (info) document.getElementById('langLabel').textContent = info.code.toUpperCase();
         }
 
         document.getElementById('langDropdown').addEventListener('click', function(e) {
@@ -1125,7 +1125,7 @@
             if (currentLang !== 'en') applyTranslation(currentLang);
             buildLangMenu();
             var info = LANGS.find(function(l) { return l.code === currentLang; });
-            if (info) document.getElementById('langLabel').textContent = info.name;
+            if (info) document.getElementById('langLabel').textContent = info.code.toUpperCase();
 
             // Reveal body
             document.body.offsetHeight;
