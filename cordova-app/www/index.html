@@ -3134,8 +3134,10 @@ Access-Network is a digital rewards platform combining innovation, community fea
           .wm-divider::before,.wm-divider::after{content:'';flex:1;height:1px;background:#333}
           body.light-theme .wm-divider::before,body.light-theme .wm-divider::after{background:#e0e0e0}
           .wm-divider span{padding:0 12px}
-          .wm-install{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border-radius:10px;text-decoration:none;font-weight:500;font-size:.9rem;transition:all .2s ease}
-          .wm-install:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(102,126,234,0.4)}
+          .wm-install{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff!important;border-radius:10px;text-decoration:none;font-weight:500;font-size:.9rem;transition:all .2s ease;outline:none;position:relative}
+          .wm-install::after{display:none!important;content:none!important}
+          .wm-install:focus,.wm-install:active,.wm-install:visited{color:#fff!important;outline:none!important;text-decoration:none!important}
+          .wm-install:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(102,126,234,0.4);color:#fff!important}
         `;
         document.head.appendChild(wmStyles);
 
