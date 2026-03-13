@@ -3065,141 +3065,7 @@ Access-Network is a digital rewards platform combining innovation, community fea
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
       }
 
-      /* Wallet Connect Modal Styles */
-      .wallet-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.85);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 99999;
-        padding: 20px;
-        animation: modalFadeIn 0.2s ease;
-      }
-      @keyframes modalFadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      .wallet-modal-content {
-        background: #1a1a1a;
-        border-radius: 20px;
-        width: 100%;
-        max-width: 380px;
-        max-height: 85vh;
-        overflow-y: auto;
-        border: 1px solid #333;
-        animation: modalSlideUp 0.3s ease;
-      }
-      @keyframes modalSlideUp {
-        from { transform: translateY(20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-      }
-      .wallet-modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 18px 20px;
-        border-bottom: 1px solid #333;
-      }
-      .wallet-modal-header h3 {
-        color: #fff;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 0;
-      }
-      .modal-close-btn {
-        background: transparent;
-        border: none;
-        color: #888;
-        font-size: 1.1rem;
-        cursor: pointer;
-        padding: 5px;
-        transition: color 0.2s;
-      }
-      .modal-close-btn:hover { color: #fff; }
-      .wallet-modal-body { padding: 20px; }
-      .wallet-modal-desc {
-        color: #888;
-        text-align: center;
-        margin-bottom: 18px;
-        font-size: 0.85rem;
-      }
-      .wallet-option-item {
-        display: flex;
-        align-items: center;
-        padding: 14px;
-        background: #2a2a2a;
-        border-radius: 12px;
-        margin-bottom: 10px;
-        text-decoration: none;
-        color: #fff;
-        transition: all 0.2s ease;
-        border: 1px solid transparent;
-      }
-      .wallet-option-item:hover {
-        background: #333;
-        border-color: #3898FF;
-        transform: translateX(5px);
-      }
-      .wallet-logo-img {
-        width: 38px;
-        height: 38px;
-        border-radius: 10px;
-        margin-right: 14px;
-      }
-      .wallet-option-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-      }
-      .wallet-option-name {
-        font-weight: 600;
-        font-size: 0.95rem;
-      }
-      .wallet-option-desc {
-        font-size: 0.75rem;
-        color: #888;
-      }
-      .wallet-divider-line {
-        display: flex;
-        align-items: center;
-        margin: 18px 0;
-        color: #555;
-        font-size: 0.8rem;
-      }
-      .wallet-divider-line::before,
-      .wallet-divider-line::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: #333;
-      }
-      .wallet-divider-line span { padding: 0 12px; }
-      .install-wallet-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        width: 100%;
-        padding: 12px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: #fff;
-        border-radius: 10px;
-        text-decoration: none;
-        font-weight: 500;
-        font-size: 0.9rem;
-        transition: all 0.2s ease;
-      }
-      .install-wallet-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-      }
+      /* Wallet Connect Modal Styles — injected dynamically via openWalletConnectModal() */
     </style>
 
     <script>
@@ -3217,64 +3083,98 @@ Access-Network is a digital rewards platform combining innovation, community fea
       function openWalletConnectModal() {
         // Check if wallet is available in browser
         if (typeof window.ethereum !== 'undefined') {
-          // Direct connection available
           addNetworkToWallet();
           return;
         }
 
+        // Detect RTL
+        const isRTL = document.documentElement.dir === 'rtl' || document.documentElement.getAttribute('dir') === 'rtl' || (localStorage.getItem('preferredLanguage') === 'ar');
+        const dir = isRTL ? 'rtl' : 'ltr';
+
+        // Always recreate styles to match current language direction
+        const existingStyles = document.getElementById('wallet-modal-styles');
+        if (existingStyles) existingStyles.remove();
+
+        const wmStyles = document.createElement('style');
+        wmStyles.id = 'wallet-modal-styles';
+        wmStyles.textContent = `
+          .wm-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;animation:wmFadeIn .2s ease}
+          @keyframes wmFadeIn{from{opacity:0}to{opacity:1}}
+          .wm-content{background:#1a1a1a;border-radius:20px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;border:1px solid #333;animation:wmSlideUp .3s ease}
+          @keyframes wmSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+          .wm-header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid #333}
+          .wm-header h3{color:#fff;font-size:1rem;display:flex;align-items:center;gap:10px;margin:0}
+          .wm-close{background:transparent;border:none;color:#888;font-size:1.1rem;cursor:pointer;padding:5px;transition:color .2s}
+          .wm-close:hover{color:#fff}
+          .wm-body{padding:20px}
+          .wm-desc{color:#888;text-align:center;margin-bottom:18px;font-size:.85rem}
+          .wm-option{display:flex;align-items:center;gap:12px;padding:14px;background:#2a2a2a;border-radius:12px;margin-bottom:10px;text-decoration:none;color:#fff;transition:all .2s ease;border:1px solid transparent}
+          .wm-option:hover{background:#333;border-color:#3898FF;transform:translateX(5px)}
+          .wm-logo{width:38px;height:38px;border-radius:10px;flex-shrink:0}
+          .wm-info{flex:1;display:flex;flex-direction:column}
+          .wm-name{font-weight:600;font-size:.95rem}
+          .wm-subdesc{font-size:.75rem;color:#888}
+          .wm-chevron{color:#888;flex-shrink:0}
+          [dir="rtl"] .wm-chevron{transform:rotate(180deg)}
+          .wm-divider{display:flex;align-items:center;margin:18px 0;color:#555;font-size:.8rem}
+          .wm-divider::before,.wm-divider::after{content:'';flex:1;height:1px;background:#333}
+          .wm-divider span{padding:0 12px}
+          .wm-install{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border-radius:10px;text-decoration:none;font-weight:500;font-size:.9rem;transition:all .2s ease}
+          .wm-install:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(102,126,234,0.4)}
+        `;
+        document.head.appendChild(wmStyles);
+
         // Get current language translations
         const lang = localStorage.getItem('preferredLanguage') || 'en';
         const t = (window.translations && window.translations[lang]) || {};
-
-        // Show wallet selection modal
         const currentUrl = encodeURIComponent('https://accesschain.org/add-network.html');
         
         const modal = document.createElement('div');
         modal.id = 'wallet-connect-modal';
         modal.innerHTML = `
-          <div class="wallet-modal-overlay" onclick="closeWalletConnectModal()">
-            <div class="wallet-modal-content" onclick="event.stopPropagation()">
-              <div class="wallet-modal-header">
+          <div class="wm-overlay" onclick="closeWalletConnectModal()">
+            <div class="wm-content" dir="${dir}" onclick="event.stopPropagation()">
+              <div class="wm-header">
                 <h3><i class="fas fa-wallet"></i> ${t.wallet_title||'Select Wallet'}</h3>
-                <button class="modal-close-btn" onclick="closeWalletConnectModal()">
+                <button class="wm-close" onclick="closeWalletConnectModal()">
                   <i class="fas fa-times"></i>
                 </button>
               </div>
-              <div class="wallet-modal-body">
-                <p class="wallet-modal-desc">${t.wallet_desc||'Choose your wallet to add Access Network'}</p>
+              <div class="wm-body">
+                <p class="wm-desc">${t.wallet_desc||'Choose your wallet to add Access Network'}</p>
                 
-                <a href="https://metamask.app.link/dapp/accesschain.org/add-network.html" class="wallet-option-item" onclick="closeWalletConnectModal()">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" class="wallet-logo-img">
-                  <div class="wallet-option-info">
-                    <span class="wallet-option-name">MetaMask</span>
-                    <span class="wallet-option-desc">${t.wallet_metamask||'Open in MetaMask app'}</span>
+                <a href="https://metamask.app.link/dapp/accesschain.org/add-network.html" class="wm-option" onclick="closeWalletConnectModal()">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" class="wm-logo">
+                  <div class="wm-info">
+                    <span class="wm-name">MetaMask</span>
+                    <span class="wm-subdesc">${t.wallet_metamask||'Open in MetaMask app'}</span>
                   </div>
-                  <i class="fas fa-chevron-right" style="color:#888"></i>
+                  <i class="fas fa-chevron-right wm-chevron"></i>
                 </a>
                 
-                <a href="https://link.trustwallet.com/open_url?coin_id=60&url=${currentUrl}" class="wallet-option-item" onclick="closeWalletConnectModal()">
-                  <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="Trust Wallet" class="wallet-logo-img">
-                  <div class="wallet-option-info">
-                    <span class="wallet-option-name">Trust Wallet</span>
-                    <span class="wallet-option-desc">${t.wallet_trust||'Open in Trust Wallet app'}</span>
+                <a href="https://link.trustwallet.com/open_url?coin_id=60&url=${currentUrl}" class="wm-option" onclick="closeWalletConnectModal()">
+                  <img src="https://trustwallet.com/assets/images/media/assets/TWT.png" alt="Trust Wallet" class="wm-logo">
+                  <div class="wm-info">
+                    <span class="wm-name">Trust Wallet</span>
+                    <span class="wm-subdesc">${t.wallet_trust||'Open in Trust Wallet app'}</span>
                   </div>
-                  <i class="fas fa-chevron-right" style="color:#888"></i>
+                  <i class="fas fa-chevron-right wm-chevron"></i>
                 </a>
                 
-                <a href="https://go.cb-w.com/dapp?cb_url=${currentUrl}" class="wallet-option-item" onclick="closeWalletConnectModal()">
-                  <img src="https://altcoinsbox.com/wp-content/uploads/2022/12/coinbase-wallet-logo.png" alt="Coinbase" class="wallet-logo-img">
-                  <div class="wallet-option-info">
-                    <span class="wallet-option-name">Coinbase Wallet</span>
-                    <span class="wallet-option-desc">${t.wallet_coinbase||'Open in Coinbase app'}</span>
+                <a href="https://go.cb-w.com/dapp?cb_url=${currentUrl}" class="wm-option" onclick="closeWalletConnectModal()">
+                  <img src="https://altcoinsbox.com/wp-content/uploads/2022/12/coinbase-wallet-logo.png" alt="Coinbase" class="wm-logo">
+                  <div class="wm-info">
+                    <span class="wm-name">Coinbase Wallet</span>
+                    <span class="wm-subdesc">${t.wallet_coinbase||'Open in Coinbase app'}</span>
                   </div>
-                  <i class="fas fa-chevron-right" style="color:#888"></i>
+                  <i class="fas fa-chevron-right wm-chevron"></i>
                 </a>
                 
-                <div class="wallet-divider-line">
+                <div class="wm-divider">
                   <span>${t.wallet_or_install||'or install a wallet'}</span>
                 </div>
                 
-                <a href="https://metamask.io/download/" target="_blank" class="install-wallet-btn">
+                <a href="https://metamask.io/download/" target="_blank" class="wm-install">
                   <i class="fas fa-download"></i> ${t.wallet_install_mm||'Install MetaMask'}
                 </a>
               </div>

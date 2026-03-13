@@ -1337,15 +1337,17 @@
                 .modal-close:hover{color:#fff}body.light-mode .modal-close:hover{color:#111}
                 .wallet-modal-body{padding:20px}
                 .wallet-modal-desc{color:#888;text-align:center;margin-bottom:20px;font-size:.9rem}
-                .wallet-option{display:flex;align-items:center;padding:15px;background:#000;border-radius:12px;margin-bottom:10px;text-decoration:none;color:#fff;transition:all .2s ease;border:1px solid transparent}
+                .wallet-option{display:flex;align-items:center;gap:12px;padding:15px;background:#000;border-radius:12px;margin-bottom:10px;text-decoration:none;color:#fff;transition:all .2s ease;border:1px solid transparent}
                 body.light-mode .wallet-option{background:#f8f9fa;color:#111}
                 .wallet-option:hover{background:#111;border-color:#3898FF;transform:translateX(5px)}
                 body.light-mode .wallet-option:hover{background:#e9ecef}
-                .wallet-logo{width:40px;height:40px;border-radius:10px;margin-right:15px}
+                .wallet-logo{width:40px;height:40px;border-radius:10px;margin:0}
+                [dir="rtl"] .wallet-logo{margin:0}
                 .wallet-option-info{flex:1;display:flex;flex-direction:column}
                 .wallet-option-name{font-weight:600;font-size:1rem}
                 .wallet-option-desc{font-size:.8rem;color:#888}
                 .wallet-option i.fa-chevron-right{color:#888}
+                [dir="rtl"] .wallet-option i.fa-chevron-right{transform:rotate(180deg)}
                 .wallet-divider{display:flex;align-items:center;margin:20px 0;color:#666;font-size:.85rem}
                 .wallet-divider::before,.wallet-divider::after{content:'';flex:1;height:1px;background:#111}
                 body.light-mode .wallet-divider::before,body.light-mode .wallet-divider::after{background:#e9ecef}
