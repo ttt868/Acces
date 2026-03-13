@@ -3050,13 +3050,17 @@ Access-Network is a digital rewards platform combining innovation, community fea
           body.light-theme .wm-header{border-bottom-color:#e0e0e0}
           .wm-header h3{color:#fff;font-size:1rem;display:flex;align-items:center;gap:10px;margin:0}
           body.light-theme .wm-header h3{color:#222}
-          .wm-close{background:transparent;border:none;color:#888;font-size:1.1rem;cursor:pointer;padding:5px;transition:color .2s}
-          .wm-close:hover{color:#fff}
+          .wm-close{all:unset!important;color:#888;font-size:1.1rem;cursor:pointer;padding:5px;transition:color .2s}
+          .wm-close:before,.wm-close:after{display:none!important;content:none!important;background:none!important}
+          .wm-close:hover{color:#fff;transform:none!important;box-shadow:none!important;background:none!important}
+          .wm-close:hover:before{display:none!important}
           body.light-theme .wm-close:hover{color:#222}
           .wm-body{padding:20px}
           .wm-desc{color:#888;text-align:center;margin-bottom:18px;font-size:.85rem}
           body.light-theme .wm-desc{color:#666}
-          .wm-option{display:flex;align-items:center;gap:12px;padding:14px;background:#2a2a2a;border-radius:12px;margin-bottom:10px;text-decoration:none;color:#fff;transition:all .2s ease;border:1px solid transparent}
+          .wm-option{display:flex;align-items:center;gap:12px;padding:14px;background:#2a2a2a;border-radius:12px;margin-bottom:10px;text-decoration:none;color:#fff;transition:all .2s ease;border:1px solid transparent;outline:none;position:relative}
+          .wm-option:focus,.wm-option:active,.wm-option:visited{outline:none!important;text-decoration:none!important;box-shadow:none!important}
+          .wm-option::after{display:none!important;content:none!important;width:0!important;height:0!important;background:none!important}
           body.light-theme .wm-option{background:#f5f5f5;color:#222;border-color:#e0e0e0}
           .wm-option:hover{background:#333;border-color:#3898FF;transform:translateX(5px)}
           body.light-theme .wm-option:hover{background:#eaeaea;border-color:#3898FF}
