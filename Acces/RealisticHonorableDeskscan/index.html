@@ -3042,16 +3042,22 @@ Access-Network is a digital rewards platform combining innovation, community fea
         wmStyles.textContent = `
           .wm-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;animation:wmFadeIn .2s ease}
           @keyframes wmFadeIn{from{opacity:0}to{opacity:1}}
-          .wm-content{background:#1a1a1a;border-radius:20px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;border:1px solid #333;animation:wmSlideUp .3s ease}
+          .wm-content{background:#000;border-radius:20px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;border:1px solid #111;animation:wmSlideUp .3s ease}
+          body.light-mode .wm-content{background:#fff;border-color:#e9ecef}
           @keyframes wmSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-          .wm-header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid #333}
+          .wm-header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid #111}
+          body.light-mode .wm-header{border-bottom-color:#e9ecef}
           .wm-header h3{color:#fff;font-size:1rem;display:flex;align-items:center;gap:10px;margin:0}
+          body.light-mode .wm-header h3{color:#111}
           .wm-close{background:transparent;border:none;color:#888;font-size:1.1rem;cursor:pointer;padding:5px;transition:color .2s}
           .wm-close:hover{color:#fff}
+          body.light-mode .wm-close:hover{color:#111}
           .wm-body{padding:20px}
           .wm-desc{color:#888;text-align:center;margin-bottom:18px;font-size:.85rem}
-          .wm-option{display:flex;align-items:center;gap:12px;padding:14px;background:#2a2a2a;border-radius:12px;margin-bottom:10px;text-decoration:none;color:#fff;transition:all .2s ease;border:1px solid transparent}
-          .wm-option:hover{background:#333;border-color:#3898FF;transform:translateX(5px)}
+          .wm-option{display:flex;align-items:center;gap:12px;padding:14px;background:#000;border-radius:12px;margin-bottom:10px;text-decoration:none;color:#fff;transition:all .2s ease;border:1px solid transparent}
+          body.light-mode .wm-option{background:#f8f9fa;color:#111}
+          .wm-option:hover{background:#111;border-color:#3898FF;transform:translateX(5px)}
+          body.light-mode .wm-option:hover{background:#e9ecef}
           .wm-logo{width:38px;height:38px;border-radius:10px;flex-shrink:0}
           .wm-info{flex:1;display:flex;flex-direction:column}
           .wm-name{font-weight:600;font-size:.95rem}
@@ -3059,7 +3065,8 @@ Access-Network is a digital rewards platform combining innovation, community fea
           .wm-chevron{color:#888;flex-shrink:0}
           [dir="rtl"] .wm-chevron{transform:rotate(180deg)}
           .wm-divider{display:flex;align-items:center;margin:18px 0;color:#555;font-size:.8rem}
-          .wm-divider::before,.wm-divider::after{content:'';flex:1;height:1px;background:#333}
+          .wm-divider::before,.wm-divider::after{content:'';flex:1;height:1px;background:#111}
+          body.light-mode .wm-divider::before,body.light-mode .wm-divider::after{background:#e9ecef}
           .wm-divider span{padding:0 12px}
           .wm-install{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border-radius:10px;text-decoration:none;font-weight:500;font-size:.9rem;transition:all .2s ease}
           .wm-install:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(102,126,234,0.4)}
