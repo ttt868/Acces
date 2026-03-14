@@ -4,6 +4,7 @@ class BalancePrivacyManager {
     this.isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
     this.hiddenText = '••••••••';
     this.originalValues = new Map(); // تخزين القيم الأصلية
+    this._mutationTimeout = null;
     this.init();
   }
 
@@ -60,21 +61,15 @@ class BalancePrivacyManager {
       '#user-coins',
       '#profile-coins', 
       '#Transfer-balance',
-      '.wallet-balance span' // رصيد البلوك تشين في صفحة blockchain
+      '#network-coins'
     ];
 
     balanceSelectors.forEach(selector => {
         const element = document.querySelector(selector);
         if (element && element.textContent) {
           const currentText = element.textContent.trim();
-          // يتعامل مع الأرقام العادية والأرقام التي تحتوي على فواصل
           if ((currentText.match(/^\d+(\.\d+)?$/) || currentText.match(/^\d{1,3}(,\d{3})*(\.\d+)?$/)) && currentText !== this.hiddenText) {
             this.originalValues.set(selector, currentText);
-
-            // تحديث العرض فوراً إذا لم يكن مخفياً
-            if (!this.isBalanceHidden) {
-              // القيمة محفوظة ومعروضة بشكل صحيح
-            }
           }
         }
       });
@@ -120,7 +115,7 @@ class BalancePrivacyManager {
       '#user-coins',
       '#profile-coins', 
       '#Transfer-balance',
-      '.wallet-balance span' // رصيد البلوك تشين يتشفر
+      '#network-coins'
     ];
 
     balanceSelectors.forEach(selector => {
@@ -163,7 +158,7 @@ class BalancePrivacyManager {
     }
     
     // استخدام querySelectorAll لتحديث جميع العناصر (بما فيها صفحة Network)
-    const balanceSelectors = '#user-coins, #profile-coins, #Transfer-balance, .wallet-balance span';
+    const balanceSelectors = '#user-coins, #profile-coins, #Transfer-balance, #network-coins';
 
     document.querySelectorAll(balanceSelectors).forEach(element => {
       if (element) {
@@ -209,19 +204,13 @@ class BalancePrivacyManager {
   }
 
   setupMutationObserver() {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach(mutation => {
-        if (mutation.type === 'childList') {
-          mutation.addedNodes.forEach(node => {
-            if (node.nodeType === 1) {
-              // حفظ القيم الجديدة عند إضافة عناصر جديدة فوراً
-              this.saveAllOriginalValues();
-              this.updateEyeIcon();
-              this.applyPrivacyState();
-            }
-          });
-        }
-      });
+    const observer = new MutationObserver(() => {
+      // debounce لمنع الوميض - تنفيذ مرة واحدة فقط بعد استقرار DOM
+      if (this._mutationTimeout) clearTimeout(this._mutationTimeout);
+      this._mutationTimeout = setTimeout(() => {
+        this.updateEyeIcon();
+        this.applyPrivacyState();
+      }, 50);
     });
 
     observer.observe(document.body, {
@@ -235,9 +224,11 @@ class BalancePrivacyManager {
     document.addEventListener('click', (e) => {
       const navLink = e.target.closest('.nav-link, .mobile-nav-item');
       if (navLink) {
-        this.saveAllOriginalValues();
-        this.updateEyeIcon();
-        this.applyPrivacyState();
+        // تأجيل قصير ليكتمل عرض الصفحة الجديدة أولاً
+        setTimeout(() => {
+          this.updateEyeIcon();
+          this.applyPrivacyState();
+        }, 100);
       }
     });
 
