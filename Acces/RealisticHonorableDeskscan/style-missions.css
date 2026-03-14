@@ -89,7 +89,7 @@
 [data-theme="dark"] .ms-header,
 .dark-theme .ms-header {
   background: #2a2a2a;
-  border-color: #3a3a3a;
+  border-color: #2a2a2a;
 }
 
 .ms-title-section h2 {
@@ -146,7 +146,7 @@
 [data-theme="dark"] .ms-section,
 .dark-theme .ms-section {
   background: #2a2a2a;
-  border-color: #3a3a3a;
+  border-color: #2a2a2a;
 }
 
 .ms-section-header {
@@ -162,7 +162,7 @@
 [data-theme="dark"] .ms-section-header,
 .dark-theme .ms-section-header {
   background: #333333;
-  border-bottom-color: #3a3a3a;
+  border-bottom-color: #2a2a2a;
 }
 
 .ms-section-header i {

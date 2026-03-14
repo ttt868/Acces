@@ -1576,6 +1576,10 @@ html.dark-theme .logo {
   z-index: 100;
 }
 
+.dark-theme .mobile-nav {
+  border-top-color: var(--card-background);
+}
+
 .mobile-nav-items {
   display: flex;
   justify-content: space-around;
@@ -3416,6 +3420,10 @@ body.arabic .mobile-nav-item span {
   border: 1px solid var(--border-color);
 }
 
+.dark-theme .tokenomics-processing-section {
+  border-color: var(--card-background);
+}
+
 /* Mining Overview Cards */
 .tokenomics-processing-grid {
   display: grid;
@@ -3950,7 +3958,7 @@ body.arabic .mobile-nav-item span {
 /* Dark Theme Adjustments */
 .dark-theme .tokenomics-future-vision-section {
   background: var(--card-background);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--card-background);
   box-shadow: var(--shadow-md);
 }
 
@@ -4445,7 +4453,7 @@ body.arabic .mobile-nav-item span {
 /* Enhanced Dark Theme Adjustments */
 .dark-theme .tokenomics-page-hero {
   background: var(--card-background);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--card-background);
   box-shadow: none;
 }
 
@@ -4499,7 +4507,7 @@ body.arabic .mobile-nav-item span {
 .dark-theme .tokenomics-mining-section,
 .dark-theme .tokenomics-whitepaper-card {
   background: var(--card-background);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--card-background);
   box-shadow: var(--shadow-md);
 }
 

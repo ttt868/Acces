@@ -875,7 +875,7 @@
 
 .dark-theme #dashboard-page .dashboard-header {
   background: rgba(0, 0, 0, 0.95);
-  border-bottom-color: rgba(255, 255, 255, 0.1);
+  border-bottom-color: transparent;
 }
 
 
@@ -1018,7 +1018,7 @@
   /* الوضع الليلي للهواتف فقط - لون متناسق مع باقي العناصر */
   .dark-theme #dashboard-page .dashboard-header {
     background: var(--card-background);
-    border-bottom-color: var(--border-color);
+    border-bottom-color: transparent;
   }
 
   /* إظهار avatar الشريط الجانبي في الموبايل */
@@ -1337,7 +1337,7 @@
 
   .dark-theme .dashboard-activity-timer::before {
     background: var(--card-background);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--card-background);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   }
 }
@@ -1739,7 +1739,7 @@ html[dir="rtl"] .action-button,
 /* Dark theme adjustments */
 .dark-theme .secondary-button {
   background: var(--card-background);
-  border-color: var(--border-color);
+  border: 1px solid var(--card-background) !important;
   color: #ffffff;
 }
 

@@ -52,7 +52,7 @@
 
 .dark-theme .stat-card {
   background: var(--card-background);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--card-background);
 }
 
 .mini-logo, .balance-logo {
@@ -880,6 +880,10 @@
   margin-top: px;
   position: relative;
   top: -30px;
+}
+
+.dark-theme .settings-section {
+  border-color: var(--card-background);
 }
 
 .section-title {
