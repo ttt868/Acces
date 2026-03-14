@@ -1350,8 +1350,8 @@
     transform: translateX(calc(-50% - 2px));
     z-index: 15;
     font-size: 11px;
-    font-weight: 700;
-    color: #000000;
+    font-weight: 500;
+    color: #6b7280;
     text-transform: uppercase;
     letter-spacing: 1px;
     white-space: nowrap;
@@ -1368,6 +1368,7 @@
 
 /* Timer bolt icon - normal state */
 .timer-bolt-icon {
+  display: none !important;
   color: #9ca3af;
   transition: color 0.3s ease;
   margin-left: 4px;
@@ -1482,7 +1483,7 @@
 }
 
 .dark-theme .dashboard-timer-title {
-  color: #ffffff;
+  color: #9ca3af;
 }
 
 .dark-theme .dashboard-countdown {
