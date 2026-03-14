@@ -12362,4 +12362,3566 @@ if (totalCost > (currentBalance + precision)) {
       // Update UI to display database balance
       const walletBalance = document.getElementById('network-coins');
       if (walletBalance) {
+        const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+        if (!isBalanceHidden) {
+          walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
+        }
+      }
+
+      // If wallet exists, ensure its balance matches database
+      if (currentUser.wallet) {
+        // Always set wallet balance to match user's coins from database
+        currentUser.wallet.balance = currentUser.coins;
+      }
+
+      console.log('Wallet balance displayed from database coins:', currentUser.coins);
+    }
+  }
+
+  // Fetch transactions from the server
+  async function fetchUserTransactions() {
+    if (!currentUser || !currentUser.id) {
+      console.error("Cannot fetch transactions: User not logged in");
+      return [];
+    }
+
+    try {
+      console.log("Fetching transactions from server for user:", currentUser.id);
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/${currentUser.id}/transactions`);
+
+      if (!response.ok) {
+        throw new Error(`Server returned status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log(`Successfully fetched ${data.transactions.length} transactions from server`);
+
+      // Format transactions for client-side display
+      return data.transactions.map(tx => ({
+        hash: tx.hash,
+        from: tx.sender_address,
+        to: tx.recipient_address,
+        amount: parseFloat(tx.amount),
+        timestamp: parseInt(tx.timestamp),
+        status: tx.status || 'confirmed',
+        description: tx.description,
+        gas_fee: parseFloat(tx.gas_fee || 0)
+      }));
+    } catch (error) {
+      console.error("Error fetching transactions from server:", error);
+      return [];
+    }
+  }
+
+  // Initialize network data when showing network page
+  document.addEventListener('DOMContentLoaded', function() {
+    const navLinks = document.querySelectorAll('.nav-link[data-page="network"], .mobile-nav-item[data-page="network"]');
+
+    navLinks.forEach(link => {
+      link.addEventListener('click', function() {
+        // Timeout to ensure page is visible first
+        setTimeout(async () => {
+          if (currentUser && currentUser.id) {
+            // Show loading indicator
+            const transactionList = document.getElementById('transaction-list');
+            if (transactionList) {
+              transactionList.innerHTML = '<div class="loading-indicator"><i class="fas fa-spinner fa-spin"></i> Loading transactions...</div>';
+            }
+
+            try {
+              // Before initializing the wallet, fetch fresh user data to ensure we have the latest balance
+              const userData = await checkIfUserExists(currentUser.email);
+
+              if (userData) {
+                // Update current user with latest data from server
+                currentUser.coins = userData.coins || 0;
+
+                // Immediately display user's actual balance from database
+                syncWalletBalanceWithUserCoins();
+
+                // Initialize wallet data
+                await initializeUserWallet();
+
+                // Make sure wallet balance is synced with user coins again
+                syncWalletBalanceWithUserCoins();
+
+                // Fetch transactions from server
+                const serverTransactions = await fetchUserTransactions();
+
+                // Merge with any local transactions
+                if (currentUser.wallet) {
+                  // Get local transactions if they exist
+                  const localTransactions = currentUser.wallet.transactions || [];
+
+                  // Create a set of transaction hashes from server to avoid duplicates
+                  const serverTransactionHashes = new Set(serverTransactions.map(tx => tx.hash));
+
+                  // Filter out local transactions that are already on the server
+                  const uniqueLocalTransactions = localTransactions.filter(tx => 
+                    tx.hash && !serverTransactionHashes.has(tx.hash)
+                  );
+
+                  // Combine transactions, placing server transactions first
+                  currentUser.wallet.transactions = [
+                    ...serverTransactions,
+                    ...uniqueLocalTransactions
+                  ].sort((a, b) => b.timestamp - a.timestamp); // Sort by timestamp, newest first
+                } else if (currentUser.wallet === undefined) {
+                  // Initialize wallet object if it doesn't exist
+                  currentUser.wallet = {
+                    transactions: serverTransactions,
+                    balance: currentUser.coins || 0
+                  };
+                }
+
+                // Update transaction list
+                updateTransactionList();
+              }
+            } catch (err) {
+              console.error("Error fetching data:", err);
+
+              // Still try to initialize wallet with existing data
+              syncWalletBalanceWithUserCoins();
+              await initializeUserWallet();
+              updateTransactionList();
+            }
+          }
+        }, 100);
+      });
+    });
+  });
+
+
+
+
+  
+ 
+ 
+// Format coins to show proper decimal places without unnecessary zeros
+    function formatCoins(value) {
+      if (value === undefined || value === null) return '0.00';
+
+      // Convert to number and format with 8 decimal places initially
+      const num = parseFloat(value);
+
+      // If the value is exactly zero, just return "0.00"
+      if (num === 0) return '0.00';
+
+      // Format with up to 8 decimal places
+      const fixed = num.toFixed(8);
+
+      // For numbers less than 1, preserve all significant decimal places
+      if (num < 1 && num > 0) {
+        // Remove trailing zeros but keep at least 2 decimal places for values like 0.10
+        const trimmed = fixed.replace(/0+$/, '');
+        const decimalPart = trimmed.split('.')[1] || '';
+
+        // If only one decimal place, add zero to make it 0.50 instead of 0.5
+        if (decimalPart.length === 1) {
+          return trimmed + '0';
+        }
+
+        // Special handling for values like 0.02, 0.03, etc.
+        // Ensure they show as 0.02, not 0.2
+        if (decimalPart.length === 2 && decimalPart.endsWith('0')) {
+          return trimmed; // Keep 0.50 as 0.50, not 0.5
+        }
+
+        // For values like 0.01998, 0.00123456 etc., show them completely
+        return trimmed;
+      }
+
+      // For numbers 1 and above, ensure at least 2 decimal places
+      let formatted = fixed.replace(/0+$/, ''); // Remove trailing zeros first
+      
+      // Ensure at least 2 decimal places
+      const parts = formatted.split('.');
+      if (parts.length === 1) {
+        parts.push('00'); // No decimal part, add .00
+      } else if (parts[1].length === 0) {
+        parts[1] = '00'; // Empty decimal part
+      } else if (parts[1].length === 1) {
+        parts[1] = parts[1] + '0'; // Only 1 decimal digit, add 0
+      }
+      formatted = parts.join('.');
+      
+      // Add thousand separators for numbers >= 1000
+      if (num >= 1000) {
+        const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return intPart + '.' + parts[1];
+      }
+      
+      return formatted;
+    }
+
+
+
+
+
+
+
+
+
+
+  
+
+  // Update user's coin balance
+  function updateUserCoins(coins) {
+    const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+    if (!isBalanceHidden) {
+      const coinElements = document.querySelectorAll('#user-coins, #profile-coins');
+      coinElements.forEach(element => {
+        element.textContent = formatCoins(coins);
+      });
+    }
+  }
+  
+
+  
+  
+
+  // Show privacy policy modal for new users
+  function showPrivacyPolicyModal(user, referralCode) {
+    // Create modal container
+    const modalContainer = document.createElement('div');
+    modalContainer.className = 'privacy-policy-modal';
+
+    // Ensure modal appears on top of everything
+    modalContainer.style.position = 'fixed';
+    modalContainer.style.zIndex = '9999';
+    modalContainer.style.top = '0';
+    modalContainer.style.left = '0';
+    modalContainer.style.width = '100%';
+    modalContainer.style.height = '100%';
+    modalContainer.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    modalContainer.style.display = 'flex';
+    modalContainer.style.justifyContent = 'center';
+    modalContainer.style.alignItems = 'center';
+
+    // Check if dark mode is active
+    const isDarkMode = document.documentElement.classList.contains('dark-theme');
+
+    // Set theme-aware colors
+    const bgColor = isDarkMode ? 'var(--card-background, #2a2a2a)' : 'white';
+    const textColor = isDarkMode ? 'var(--text-color, #f5f5f5)' : '#333';
+    const lightTextColor = isDarkMode ? 'var(--light-text, #aaaaaa)' : '#777';
+    const borderColor = isDarkMode ? 'var(--border-color, #3a3a3a)' : '#e1e4e8';
+    const shadowColor = isDarkMode ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)';
+
+    // Create modal content with theme-aware styles
+    const isArabic = translator.getCurrentLanguage() === 'ar';
+    modalContainer.innerHTML = `
+      <div class="privacy-policy-content" style="width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; background-color: ${bgColor}; color: ${textColor}; border-radius: 8px; padding: 20px; box-shadow: 0 4px 10px ${shadowColor}; border: 1px solid ${borderColor}; direction: ${isArabic ? 'rtl' : 'ltr'}; text-align: ${isArabic ? 'right' : 'left'};">
+        <h2 style="text-align: center; margin-bottom:20px; color: ${textColor};" data-translate-key="Privacy Policy & Terms of Service">${translator.translate('Privacy Policy & Terms of Service')}</h2>
+        <div class="privacy-policy-text" style="margin-bottom: 20px;">
+          <h3 style="color: #4CAF50;" data-translate-key="1. Introduction">${translator.translate('1. Introduction')}</h3>
+          <p style="color: ${textColor};" data-translate-key="Welcome to AccessoireDigital. Before proceeding, please review and accept our Privacy Policy and Terms of Service.">${translator.translate('Welcome to AccessoireDigital. Before proceeding, please review and accept our Privacy Policy and Terms of Service.')}</p>
+
+          <h3 style="color: #4CAF50;" data-translate-key="2. Platform Services">${translator.translate('2. Platform Services')}</h3>
+          <p style="color: ${textColor};" data-translate-key="AccessoireDigital is a comprehensive digital assets platform offering cloud processing services, digital account management, and secure transaction processing. Users can earn Points through our 24-hour processing cycles and participate in our referral program.">${translator.translate('AccessoireDigital is a comprehensive digital assets platform offering cloud processing services, digital account management, and secure transaction processing. Users can earn Points through our 24-hour processing cycles and participate in our referral program.')}</p>
+
+
+          <h3 style="color: #4CAF50;" data-translate-key="3. Platform Purpose">${translator.translate('3. Platform Purpose')}</h3>
+          <p style="color: ${textColor};" data-translate-key="Access-Network is a digital engagement platform that rewards active participation through a secure distributed point system. Points are earned through daily activities, referrals, and community interaction. These digital assets can be transferred between users and stored in personal wallets for future use within the ecosystem.">${translator.translate('Access-Network is a digital engagement platform that rewards active participation through a secure distributed point system. Points are earned through daily activities, referrals, and community interaction. These digital assets can be transferred between users and stored in personal wallets for future use within the ecosystem.')}</p>
+
+          
+
+          <h3 style="color: #4CAF50;" data-translate-key="4. Account & Transaction System">${translator.translate('4. Account & Transaction System')}</h3>
+          <p style="color: ${textColor};" data-translate-key="Each user receives a unique digital account address for sending and receiving Points. All transactions are recorded on our secure digital network with full transparency and immutable transaction history.">${translator.translate('Each user receives a unique digital account address for sending and receiving Points. All transactions are recorded on our secure digital network with full transparency and immutable transaction history.')}</p>
+
         
+
+          <h3 style="color: #4CAF50;" data-translate-key="5. Processing & Rewards System">${translator.translate('5. Processing & Rewards System')}</h3>
+          <p style="color: ${textColor};" data-translate-key="Users can participate in cloud processing to earn Points every 24 hours. Processing rewards are distributed based on activity and referral bonuses. All earnings are automatically credited to your account balance upon completion of processing cycles.">${translator.translate('Users can participate in cloud processing to earn Points every 24 hours. Processing rewards are distributed based on activity and referral bonuses. All earnings are automatically credited to your account balance upon completion of processing cycles.')}</p>
+
+          <h3 style="color: #4CAF50;" data-translate-key="6. Referral Program">${translator.translate('6. Referral Program')}</h3>
+          <p style="color: ${textColor};" data-translate-key="Users can invite others using their unique referral code. Successful referrals earn bonuses for both the referrer and new user. All referral rewards are processed automatically and added to account balances.">${translator.translate('Users can invite others using their unique referral code. Successful referrals earn bonuses for both the referrer and new user. All referral rewards are processed automatically and added to account balances.')}</p>
+
+          <h3 style="color: #4CAF50;" data-translate-key="7. Transaction Fees & Policies">${translator.translate('7. Transaction Fees & Policies')}</h3>
+          <p style="color: ${textColor};" data-translate-key="All transactions include a minimal network fee of 0.00002 Points to maintain network security. Minimum transaction amounts and daily limits may apply to ensure system stability and security.">${translator.translate('All transactions include a minimal network fee of 0.00002 Points to maintain network security. Minimum transaction amounts and daily limits may apply to ensure system stability and security.')}</p>
+
+          <h3 style="color: #4CAF50;" data-translate-key="8. Data Collection & Security">${translator.translate('8. Data Collection & Security')}</h3>
+          <p style="color: ${textColor};" data-translate-key="We collect essential information including your Google account details (name, email, profile picture) for authentication purposes only. YOUR DATA IS COMPLETELY PRIVATE: We do NOT share, sell, or distribute your personal information to any third parties under any circumstances. All user data and private keys are encrypted using industry-standard AES-256 security protocols and stored securely in our protected databases. Your information is used exclusively for platform functionality and your account security.">${translator.translate('We collect essential information including your Google account details (name, email, profile picture) for authentication purposes only. YOUR DATA IS COMPLETELY PRIVATE: We do NOT share, sell, or distribute your personal information to any third parties under any circumstances. All user data and private keys are encrypted using industry-standard AES-256 security protocols and stored securely in our protected databases. Your information is used exclusively for platform functionality and your account security.')}</p>
+
+          <h3 style="color: #4CAF50;" data-translate-key="9. Privacy & Data Usage">${translator.translate('9. Privacy & Data Usage')}</h3>
+          <p style="color: ${textColor};" data-translate-key="Your personal information is used solely for platform functionality, security, and user experience enhancement. We do not share your data with third parties without explicit consent, except as required by applicable laws.">${translator.translate('Your personal information is used solely for platform functionality, security, and user experience enhancement. We do not share your data with third parties without explicit consent, except as required by applicable laws.')}</p>
+
+          <h3 style="color: #4CAF50;" data-translate-key="10. User Responsibilities">${translator.translate('10. User Responsibilities')}</h3>
+          <p style="color: ${textColor};" data-translate-key="Users are responsible for securing their account credentials and private keys. AccessoireDigital is not liable for losses due to user negligence, unauthorized access, or failure to follow security guidelines.">${translator.translate('Users are responsible for securing their account credentials and private keys. AccessoireDigital is not liable for losses due to user negligence, unauthorized access, or failure to follow security guidelines.')}</p>
+
+          <h3 style="color: #4CAF50;" data-translate-key="11. Account Deletion & Data Removal">${translator.translate('11. Account Deletion & Data Removal')}</h3>
+          <p style="color: ${textColor};" data-translate-key="Users have the right to permanently delete their account at any time through the profile settings. When you delete your account: (1) All personal data including email, name, and profile information will be permanently removed. (2) All your Points balance will be lost forever and cannot be recovered. (3) Your referral code and all referral relationships will be permanently deleted. (4) All transaction history and activity records will be completely erased. (5) Your wallet and private keys will be permanently deleted. (6) This action is IRREVERSIBLE and CANNOT be undone. Once your account is deleted, there is no way to restore your data, Points, or any information associated with your account. We do not retain any backup copies of deleted accounts.">${translator.translate('Users have the right to permanently delete their account at any time through the profile settings. When you delete your account: (1) All personal data including email, name, and profile information will be permanently removed. (2) All your Points balance will be lost forever and cannot be recovered. (3) Your referral code and all referral relationships will be permanently deleted. (4) All transaction history and activity records will be completely erased. (5) Your wallet and private keys will be permanently deleted. (6) This action is IRREVERSIBLE and CANNOT be undone. Once your account is deleted, there is no way to restore your data, Points, or any information associated with your account. We do not retain any backup copies of deleted accounts.')}</p>
+
+          <h3 style="color: #4CAF50;" data-translate-key="12. Platform Modifications">${translator.translate('12. Platform Modifications')}</h3>
+          <p style="color: ${textColor};" data-translate-key="We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.">${translator.translate('We reserve the right to modify platform features, terms, or policies with reasonable notice to users. Continued use of the platform constitutes acceptance of any updates to these terms.')}</p>
+
+         <h3 style="color: #4CAF50;" data-translate-key="Note:">
+  ${translator.translate('Note:')}
+</h3>
+<p style="color: ${textColor};" data-translate-key="Points are platform-specific digital rewards and are not intended as financial instruments or investments.">
+  ${translator.translate('Points are platform-specific digital rewards and are not intended as financial instruments or investments.')}
+</p>
+
+<p style="color: ${textColor}; margin-top: 20px; direction: ${translator.getCurrentLanguage() === 'ar' ? 'rtl' : 'ltr'};">
+  <strong data-translate-key="Contact Email:">${translator.translate('Contact Email:')}</strong> 
+  <a href="mailto:support@accesschain.org" style="color: #2196F3; text-decoration: none;">support@accesschain.org</a>
+</p>
+</div>
+
+        <div class="privacy-policy-actions" style="display: flex; flex-direction: column; gap: 15px; border-top: 1px solid ${borderColor}; padding-top: 15px;">
+          <div class="privacy-checkbox" style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="privacy-accept" required style="width: 18px; height: 18px;">
+            <label for="privacy-accept" style="font-weight: bold; color: ${textColor};" data-translate-key="I have read and accept the Privacy Policy and Terms of Service">${translator.translate('I have read and accept the Privacy Policy and Terms of Service')}</label>
+          </div>
+          <div class="privacy-buttons" style="display: flex; justify-content: space-between; gap: 10px;">
+            <button id="decline-privacy" class="decline-btn" style="flex: 1; padding: 12px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;" data-translate-key="Decline">${translator.translate('Decline')}</button>
+            <button id="accept-privacy" class="accept-btn" disabled style="flex: 1; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; opacity: 0.6;" data-translate-key="Accept & Continue">${translator.translate('Accept & Continue')}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add to DOM
+    document.body.appendChild(modalContainer);
+
+    // Add event listeners
+    const checkbox = document.getElementById('privacy-accept');
+    const acceptButton = document.getElementById('accept-privacy');
+    const declineButton = document.getElementById('decline-privacy');
+
+    //    // Toggle accept button based on checkbox
+    checkbox.addEventListener('change', function() {
+      acceptButton.disabled = !this.checked;
+      acceptButton.style.opacity = this.checked ? '1' : '0.6';
+    });
+
+    // Accept button action
+    acceptButton.addEventListener('click', function() {
+      // Close modal
+      modalContainer.remove();
+
+      // Set flag that user accepted privacy policy
+      currentUser.acceptedPrivacyPolicy = true;
+
+      // Continue with login
+      continueWithLogin(user, referralCode);
+    });
+
+    // Decline button action
+    declineButton.addEventListener('click', function() {
+      // Close modal
+      modalContainer.remove();
+
+      // Sign out user
+      signOut(firebaseAuth).then(() => {
+        // Show message that privacy policy must be accepted
+        const errorMsg = document.getElementById('login-error');
+        if (errorMsg) {
+          errorMsg.textContent = 'You must accept the Privacy Policy to use AccessoireDigital.';
+          errorMsg.style.display = 'block';
+        }
+      });
+    });
+  }
+
+  
+  // Continue with login process after privacy policy acceptance
+  function continueWithLogin(user, referralCode) {
+    console.log('🔐 continueWithLogin called for:', user.email, 'with referral code:', referralCode);
+    // Use class-based system for auth state - NO direct style manipulation
+    document.documentElement.classList.remove('user-not-logged-in');
+    document.documentElement.classList.add('user-logged-in');
+    document.documentElement.classList.add('auth-ready');
+    // ⚡ CRITICAL: Add app-ready immediately to show the app interface
+    document.documentElement.classList.add('app-ready');
+    document.body.classList.add('app-ready');
+
+    // Force the user object to request a fresh update
+    user._forceUpdate = true;
+
+    // Show basic user info right away
+    updateUserInfo(user);
+
+    // Save minimal user session in local storage
+    saveUserSession(user);
+
+    // Load user data from the server
+    loadUserData(user.email, true).then(() => {
+      // After fresh data is loaded, update UI again if needed
+      updateUserInfo(currentUser);
+
+      // Connect to WebSocket for presence tracking
+      if (currentUser.id) {
+        // 🌐 Sync detected device language to database for notifications
+        const detectedLang = localStorage.getItem('preferredLanguage');
+        if (detectedLang) {
+          saveLanguageToDatabase(detectedLang);
+        }
+        
+        connectPresenceWebSocket(currentUser.id);
+        // Load processing history when restoring session
+        addProcessingHistoryEntry();
+        
+        // ⚡ PRELOAD: تحميل بيانات صفحة Activity مسبقاً
+        preloadActivityData(currentUser.id);
+        // 🔒 Start single-device session guard
+        startSessionGuard();
+        
+        // Pre-generate QR code so it's ready when user visits Network page
+        initializeUserWallet().then(function() {
+          console.log('[Login] QR pre-generated');
+        }).catch(function(e) { console.error('[Login] QR pre-gen failed:', e); });
+        
+        // 🔔 طلب إذن الإشعارات للتطبيق (TWA/PWA) - نافذة النظام العادية
+        if ('Notification' in window) {
+          if (Notification.permission === 'default') {
+            requestNotificationPermission(currentUser.id);
+          } else if (Notification.permission === 'granted') {
+            // الإذن موجود مسبقاً، نسجل الـ subscription فقط
+            registerPushNotifications(currentUser.id);
+          }
+        }
+      }
+
+      // Process login with DB integration
+      console.log('About to call processLogin with referralCode:', referralCode);
+      processLogin(user, referralCode);
+    }).catch(error => {
+      console.error('Error during login data loading:', error);
+      // Still process login even if there was an error
+      console.log('⚠️ Loading failed, but calling processLogin anyway with referral code:', referralCode);
+      processLogin(user, referralCode);
+    });
+  }
+
+ // Process login with database integration
+        // Shows welcome message with bonus if user registered with referral
+  function processLogin(user, referralCode) {
+    console.log('Processing login for:', user.email, user.name, 'with referralCode:', referralCode);
+
+    // ✅ OPTIMIZED: If currentUser already has ID from loadUserData, skip duplicate check
+    if (currentUser && currentUser.id) {
+      console.log('✅ User already has ID from loadUserData:', currentUser.id);
+      updateUserCoins(currentUser.coins || 0);
+      updateReferralCode(currentUser.referralCode);
+      loadUserReferrals(currentUser.id);
+      return;
+    }
+
+    // First check if user exists in the database
+    checkIfUserExists(user.email).then(async (existingUser) => {
+      if (existingUser) {
+        console.log('User exists, loading data:', existingUser);
+        // User exists, update UI with their data
+        updateUserCoins(existingUser.coins || 0);
+        updateReferralCode(existingUser.referralCode);
+        // ✅ FIX: Preserve avatar
+        const preservedAvatar = currentUser.avatar;
+        currentUser = {...currentUser, ...existingUser};
+        if (!currentUser.avatar && preservedAvatar) {
+          currentUser.avatar = preservedAvatar;
+        }
+
+        // Also load their referrals
+        loadUserReferrals(existingUser.id);
+      } else {
+        console.log('Creating new user with referralCode:', referralCode);
+        
+        // ⚠️ SERVER CREATES REFERRAL CODE - Don't send from client
+        // ✅ FIX: Wait for user creation and update currentUser.id
+        try {
+          const responseData = await createUser(user, null, referralCode);
+          if (responseData && responseData.user) {
+            console.log('✅ Create user completed in processLogin, ID:', responseData.user.id);
+            // ✅ FIX: Preserve avatar from Google
+            const preservedAvatar = currentUser.avatar;
+            currentUser = {...currentUser, ...responseData.user, id: responseData.user.id};
+            if (!currentUser.avatar && preservedAvatar) {
+              currentUser.avatar = preservedAvatar;
+            }
+            saveUserSession(currentUser);
+          }
+        } catch (err) {
+          console.error('❌ Error creating user:', err);
+        }
+      }
+    }).catch(error => {
+      console.error('Error during user check:', error);
+      // Use fallback if server fails
+      useFallbackUserData();
+    });
+  }
+
+  // Check if user exists in the database
+  // ⚡ OPTIMIZED: Cache user data to avoid repeated API calls
+  const userDataCache = {
+    data: null,
+    email: null,
+    timestamp: 0,
+    TTL: 10000 // 10 seconds cache
+  };
+
+ async function checkIfUserExists(email, forceRefresh = false) {
+  // ⚡ Return cached data if available and not expired
+  const now = Date.now();
+  if (!forceRefresh && userDataCache.email === email && userDataCache.data && (now - userDataCache.timestamp) < userDataCache.TTL) {
+    console.log('⚡ Using cached user data for:', email);
+    return userDataCache.data;
+  }
+
+  try {
+    // 🔧 CORDOVA FIX: Use getApiOrigin() for API calls
+    const origin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+    const apiUrl = `${origin}/api/user/${encodeURIComponent(email)}`;
+    console.log('Checking if user exists at:', apiUrl);
+
+    const response = await fetch(apiUrl);
+
+    // Handle 404 as "user not found" rather than an error
+    if (response.status === 404) {
+      console.log('User not found in database (404)');
+      return null;
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const text = await response.text();
+    let userData;
+
+    try {
+      userData = JSON.parse(text);
+    } catch (parseError) {
+      console.error('Error parsing JSON response:', parseError, 'Raw response:', text);
+      throw new Error('Invalid JSON response');
+    }
+
+    // Check if the response indicates success
+    if (!userData.success || !userData.user) {
+      console.log('User not found in database response');
+      return null;
+    }
+
+    // ⚡ AUTO-CREATE WALLET in background (non-blocking) if missing for existing users
+    if (!userData.user.wallet_address && userData.user.id) {
+      console.log('⚠️ User has no wallet_address, requesting auto-generation in background...');
+      // تشغيل في الخلفية بدون انتظار
+      fetch(`/api/wallet/auto-create/${userData.user.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userData.user.email })
+      }).then(walletResponse => {
+        if (walletResponse.ok) {
+          return walletResponse.json();
+        }
+      }).then(walletData => {
+        if (walletData && walletData.success && walletData.wallet_address) {
+          // تحديث currentUser في الخلفية
+          if (currentUser && currentUser.id === userData.user.id) {
+            currentUser.wallet_address = walletData.wallet_address;
+            saveUserSession(currentUser);
+          }
+          console.log('✅ Auto-created wallet in background:', walletData.wallet_address);
+        }
+      }).catch(walletError => {
+        console.warn('Could not auto-create wallet:', walletError);
+      });
+    }
+
+    // Create a copy without the private key
+    const { wallet_private_key, ...safeUser } = userData.user;
+    console.log('User data received (safe):', { ...userData, user: safeUser });
+
+    // ⚡ Cache the result
+    userDataCache.data = userData.user;
+    userDataCache.email = email;
+    userDataCache.timestamp = Date.now();
+
+    return userData.user;
+  } catch (error) {
+    console.error('Error checking user:', error);
+    return null;
+  }
+}
+
+//
+
+ // Create a new user in the database
+  async function createUser(user, newReferralCode, referrerCode) {
+    try {
+      console.log('🚀 createUser called with referrerCode:', referrerCode);
+      
+      // ⚠️ لا نرسل referralCode - السيرفر ينشئه
+      const userData = {
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+        coins: 0,
+        processingActive: false,
+        referrerCode: referrerCode,
+        privacyAccepted: user.acceptedPrivacyPolicy || false,
+        language: localStorage.getItem('preferredLanguage') || 'en'
+      };
+
+      console.log('📦 User data being sent to server:', userData);
+
+      // 🔧 CORDOVA FIX: Use getApiOrigin() for API calls
+      const origin = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
+      
+      // Send the create request
+      const response = await fetch(`${origin}/api/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+      });
+
+      // Check response status
+      if (!response.ok) {
+        // Try to get error message from response
+        const errorText = await response.text();
+        console.error('Server returned error:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Carefully parse the response
+      const responseText = await response.text();
+      let responseData;
+
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Error parsing server response:', parseError, 'Raw response:', responseText);
+        throw new Error('Invalid JSON response from server');
+      }
+
+      // Make sure we have a user object
+      if (!responseData || !responseData.user) {
+        console.error('Server returned unexpected response format:', responseData);
+        throw new Error('Invalid response format');
+      }
+
+      // ✅ استخدم الرمز الصحيح من السيرفر فوراً
+      const serverReferralCode = responseData.user.referral_code;
+      console.log('✅ Server created referral code:', serverReferralCode);
+      
+      updateUserCoins(responseData.user.coins || 0);
+      updateReferralCode(serverReferralCode);
+
+      // Save complete user data
+      const updatedUser = {
+        ...currentUser,
+        ...responseData.user,
+        id: responseData.user.id,
+        referralCode: serverReferralCode
+      };
+
+      // Update current user globally
+      currentUser = updatedUser;
+
+      // Also update user session storage for persistence
+      saveUserSession(updatedUser);
+
+      console.log('User created successfully:', responseData.user);
+      console.log('Bonus message from server:', responseData.bonusMessage);
+      
+      // عرض إشعار المكافأة مع أيقونة الهدية
+      if (responseData.bonusMessage) {
+        console.log('🎁 SHOWING BONUS NOTIFICATION!');
+        
+        const notification = document.createElement('div');
+        notification.className = 'notification success';
+        
+        // ترجمة رسالة البونص باستخدام translator
+        const translatedMessage = translator.translate(responseData.bonusMessage);
+        
+        // Secure: Build notification with safe DOM methods
+        const notifContent = document.createElement('div');
+        notifContent.className = 'notification-content';
+        
+        const giftIcon = document.createElement('i');
+        giftIcon.className = 'fas fa-gift';
+        giftIcon.style.color = 'inherit';
+        giftIcon.style.setProperty('color', 'inherit', 'important');
+        
+        const messagePara = document.createElement('p');
+        messagePara.textContent = translatedMessage;
+        
+        const closeBtnBonus = document.createElement('span');
+        closeBtnBonus.className = 'close-btn';
+        const closeIconBonus = document.createElement('i');
+        closeIconBonus.className = 'fas fa-times';
+        closeBtnBonus.appendChild(closeIconBonus);
+        
+        notifContent.appendChild(giftIcon);
+        notifContent.appendChild(messagePara);
+        notifContent.appendChild(closeBtnBonus);
+        notification.appendChild(notifContent);
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+          notification.classList.add('show');
+        }, 100);
+
+        const closeBonusBtn = notification.querySelector('.close-btn');
+        closeBonusBtn.addEventListener('click', () => {
+          notification.classList.remove('show');
+          setTimeout(() => {
+            notification.remove();
+          }, 300);
+        });
+
+        setTimeout(() => {
+          notification.classList.remove('show');
+          setTimeout(() => {
+            notification.remove();
+          }, 300);
+        }, 5000);
+      }
+      
+      return responseData;
+    } catch (error) {
+      console.error('Error during user creation:', error);
+      // Use fallback data if server fails
+      useFallbackUserData();
+      return null;
+    }
+  }
+  // Load user referrals from database
+  async function loadUserReferrals(userId) {
+    try {
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/referrals/${userId}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const referralsData = await response.json();
+
+      // Update the referrals list in the UI
+      updateReferralsList(referralsData.referrals);
+    } catch (error) {
+      console.error('Referrals loading error:', error);
+      // Show empty referrals list or a message
+      showEmptyReferralsList();
+    }
+  }
+
+  // Update the UI with referrals data
+  // Function to specifically update the "No referrals yet" message with current language
+  function updateNoReferralsMessage() {
+    const noReferralsMessage = document.querySelector('.empty-referrals p[data-translate="No referrals yet"]');
+    if (noReferralsMessage) {
+      noReferralsMessage.textContent = translator.translate('No referrals yet');
+    }
+  }
+  
+  // Observer to detect when the empty referrals message appears in the DOM
+  function observeReferralsChanges() {
+    const referralsList = document.getElementById('referrals-list');
+    if (!referralsList) return;
+    
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          // Check if empty referrals message was added
+          const noRefMsg = referralsList.querySelector('.empty-referrals p[data-translate="No referrals yet"]');
+          if (noRefMsg) {
+            updateNoReferralsMessage();
+          }
+        }
+      });
+    });
+    
+    observer.observe(referralsList, { childList: true, subtree: true });
+  }
+
+
+  function updateReferralsList(referrals) {
+    try {
+      const referralsList = document.getElementById('referrals-list');
+      if (!referralsList) {
+        console.error('Referrals list element not found');
+        return;
+      }
+
+      // Clear existing list
+      referralsList.innerHTML = '';
+
+      // Calculate total referral earnings (0.15 coins per referral)
+      const referralBonus = 0.15;
+      let totalReferralEarnings = 0;
+
+      if (referrals && Array.isArray(referrals) && referrals.length > 0) {
+        // Calculate total earnings
+        totalReferralEarnings = referrals.length * referralBonus;
+
+        // Update the referral earnings display
+        const referralEarningsElement = document.querySelector('.bonus-value');
+        if (referralEarningsElement) {
+          referralEarningsElement.textContent = formatNumberSmart(totalReferralEarnings);
+        }
+
+        console.log('Displaying referrals:', referrals);
+        referrals.forEach(referral => {
+          const item = document.createElement('li');
+
+          // Mask email for privacy (show only first 3 characters)
+          const maskedEmail = maskEmail(referral.email);
+
+          // Enhanced logging with more explicit type checking
+          console.log(`CLIENT: Processing referral ${referral.name} with processing status:`, 
+                     `processing_active=${referral.processing_active} (${typeof referral.processing_active})`, 
+                     `processingactive=${referral.processingactive} (${typeof referral.processingactive})`,
+                     `is_active=${referral.is_active} (${typeof referral.is_active})`);
+
+          // Use strict numerical comparison - convert all status values to numbers
+          const processing_active_num = parseInt(referral.processing_active) || 0;
+          const processingactive_num = parseInt(referral.processingactive) || 0;
+          const is_active_num = parseInt(referral.is_active) || 0;
+
+          console.log(`Numeric values (after parseInt): processing_active=${processing_active_num}, processingactive=${processingactive_num}, is_active=${is_active_num}`);
+
+          // Determine active status primarily based on the is_active flag from WebSocket tracking
+          // This is the most reliable indicator since it tracks real-time presence
+          let isActive = is_active_num === 1;
+
+          // Fallback to processing status checks if is_active is 0 but processing is active
+          const serverTimeDiff = currentUser.server_time_diff || 0;
+          const now = Date.now() + serverTimeDiff; // Use server time for more accurate checks
+
+          const endTime = parseInt(referral.processing_end_time) || 0;
+          const startTime = parseInt(referral.processing_start_time) || 0;
+
+          // Processing session is valid if times are valid and processing is in progress
+          const timeValid = endTime > 0 && startTime > 0 && endTime > now && startTime <= now;
+
+          // If WebSocket shows offline but processing is active and within time window, consider active
+          if (!isActive && (processing_active_num === 1 || processingactive_num === 1) && timeValid) {
+            isActive = true;
+            console.log(`${referral.name} has active processing session but inactive WebSocket - marking as active`);
+          }
+
+          // Always respect end time - if processing session has ended, user must be inactive
+          if (endTime > 0 && endTime <= now) {
+            isActive = false;
+            console.log(`${referral.name} session has ended (end_time=${endTime}, now=${now}) - marking as inactive`);
+          }
+
+          // Style based on status
+          const statusColor = isActive ? '#4CAF50' : '#F44336';
+          // Use simple Online/Offline text instead of translation keys
+          const statusText = isActive ? 'Online' : 'Offline';
+
+          // Log final decision 
+          console.log(`Final status for ${referral.name}: isActive=${isActive}, statusText=${statusText}`);
+
+          const defaultAvatar = '';
+          item.innerHTML = `
+            <div class="referral-user">
+              <img src="${referral.avatar || defaultAvatar}" alt="User" class="referral-avatar" onerror="this.onerror=null;">
+              <div class="referral-user-info">
+                <div class="referral-name">${referral.name}</div>
+                <div class="referral-email">${maskedEmail}</div>
+              </div>
+            </div>
+            <div class="referral-info">
+              <div class="referral-date">${formatDate(referral.date)}</div>
+              <div class="referral-status">
+                <span class="status-indicator" style="background-color: ${statusColor};"></span>
+                <span class="activity-status-text">${statusText}</span>
+              </div>
+            </div>
+          `;
+
+          referralsList.appendChild(item);
+        });
+      } else {
+        console.log('No referrals found, showing empty state');
+        showEmptyReferralsList();
+
+        // Reset referral earnings to 0 if no referrals
+        const referralEarningsElement = document.querySelector('.bonus-value');
+        if (referralEarningsElement) {
+          referralEarningsElement.textContent = '0';
+        }
+      }
+    } catch (error) {
+      console.error('Error updating referrals list:', error);
+      showEmptyReferralsList();
+    }
+  }
+
+  // Mask email for privacy
+  function maskEmail(email) {
+    if (!email) return '';
+
+    const parts = email.split('@');
+    if (parts.length !== 2) return email;
+
+    const name = parts[0];
+    const domain = parts[1];
+
+    // Show first 3 characters, then mask the rest
+    const maskedName = name.length <= 3 
+      ? name 
+      : name.substring(0, 3) + '***';
+
+    return `${maskedName}@${domain}`;
+  }
+
+  // Format date for display
+  function formatDate(dateStr) {
+    if (!dateStr) return 'Invalid Date';
+    try {
+      // Handle numeric timestamp
+      if (!isNaN(dateStr)) {
+        dateStr = new Date(Number(dateStr)).toISOString();
+      }
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      
+      // Force English date format regardless of device language
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString();
+      const day = date.getDate().toString();
+      
+      return `${day}/${month}/${year}`;
+    } catch (e) {
+      return 'Invalid Date';
+    }
+  }
+
+  // Show empty referrals list message
+  function showEmptyReferralsList() {
+    const referralsList = document.getElementById('referrals-list');
+
+    if (!referralsList) return;
+
+    referralsList.innerHTML = `
+      <li class="empty-referrals">
+        <div class="empty-message">
+          <i class="fas fa-users"></i>
+          <p data-translate="No referrals yet">No referrals yet</p>
+        </div>
+      </li>
+    `;
+    
+    // Immediately translate the message to the current language
+    updateNoReferralsMessage();
+  }
+
+
+
+
+
+
+
+
+// Profile Menu Functions (Three Dots Menu)
+function toggleProfileMenu() {
+  const menu = document.getElementById('profile-dropdown-menu');
+  if (menu) {
+    menu.classList.toggle('show');
+  }
+}
+
+function editProfile() {
+  // Close the menu first
+  const menu = document.getElementById('profile-dropdown-menu');
+  if (menu) {
+    menu.classList.remove('show');
+  }
+
+  // Enter edit mode for profile name
+  const profileNameInput = document.getElementById('profile-name-input');
+  const profileNameDisplay = document.getElementById('profile-name');
+  const editButtonsContainer = document.querySelector('.profile-edit-buttons');
+  const memberSinceElement = document.getElementById('profile-member-since');
+
+  if (profileNameInput && profileNameDisplay && editButtonsContainer) {
+    profileNameInput.classList.add('active');
+    profileNameDisplay.classList.add('hidden');
+    profileNameInput.value = profileNameDisplay.textContent.replace('User', '').trim();
+    profileNameInput.focus();
+    editButtonsContainer.style.display = 'flex';
+
+    // ط¥ط®ظپط§ط، طھط§ط±ظٹط® ط§ظ„ط¹ط¶ظˆظٹط© ط¹ظ†ط¯ ط¨ط¯ط، طھط¹ط¯ظٹظ„ ط§ظ„ط§ط³ظ… ظ…ظ† ط§ظ„ظ‚ط§ط¦ظ…ط©
+    if (memberSinceElement) {
+      memberSinceElement.style.display = 'none';
+      memberSinceElement.style.visibility = 'hidden';
+      memberSinceElement.style.opacity = '0';
+    }
+
+    // Add editing class to profile container like in enterEditMode
+    const profileContainer = document.querySelector('.profile-name-container');
+    if (profileContainer) {
+      profileContainer.classList.add('editing');
+    }
+
+    // Hide user name label during editing
+    const userNameLabel = document.getElementById('user-name-label');
+    if (userNameLabel) {
+      userNameLabel.classList.add('hidden-during-edit');
+    }
+  }
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', function(event) {
+  const menuContainer = document.querySelector('.profile-menu-container');
+  const menu = document.getElementById('profile-dropdown-menu');
+
+  if (menuContainer && menu && !menuContainer.contains(event.target)) {
+    menu.classList.remove('show');
+  }
+});
+
+// Functions to save and cancel profile changes
+function saveProfileChanges() {
+  const profileNameInput = document.getElementById('profile-name-input');
+  const profileNameDisplay = document.getElementById('profile-name');
+  const editButtonsContainer = document.querySelector('.profile-edit-buttons');
+  const memberSinceElement = document.getElementById('profile-member-since');
+
+  if (profileNameInput && profileNameDisplay) {
+    // Save the name
+    const newName = profileNameInput.value.trim();
+    if (newName) {
+      profileNameDisplay.textContent = 'User ' + newName;
+    }
+
+    // Reset UI
+    profileNameInput.classList.remove('active');
+    profileNameDisplay.classList.remove('hidden');
+    
+    if (editButtonsContainer) {
+      editButtonsContainer.style.display = 'none';
+    }
+
+    // Show member since date when saving
+    if (memberSinceElement) {
+      memberSinceElement.style.display = 'block';
+      memberSinceElement.style.visibility = 'visible';
+      memberSinceElement.style.opacity = '1';
+    }
+
+    // Remove editing class
+    const profileContainer = document.querySelector('.profile-name-container');
+    if (profileContainer) {
+      profileContainer.classList.remove('editing');
+    }
+
+    // Show user name label
+    const userNameLabel = document.getElementById('user-name-label');
+    if (userNameLabel) {
+      userNameLabel.classList.remove('hidden-during-edit');
+    }
+  }
+}
+
+function cancelProfileChanges() {
+  const profileNameInput = document.getElementById('profile-name-input');
+  const profileNameDisplay = document.getElementById('profile-name');
+  const editButtonsContainer = document.querySelector('.profile-edit-buttons');
+  const memberSinceElement = document.getElementById('profile-member-since');
+
+  if (profileNameInput && profileNameDisplay) {
+    // Reset UI without saving
+    profileNameInput.classList.remove('active');
+    profileNameDisplay.classList.remove('hidden');
+    
+    if (editButtonsContainer) {
+      editButtonsContainer.style.display = 'none';
+    }
+
+    // Show member since date when canceling
+    if (memberSinceElement) {
+      memberSinceElement.style.display = 'block';
+      memberSinceElement.style.visibility = 'visible';
+      memberSinceElement.style.opacity = '1';
+    }
+
+    // Remove editing class
+    const profileContainer = document.querySelector('.profile-name-container');
+    if (profileContainer) {
+      profileContainer.classList.remove('editing');
+    }
+
+    // Show user name label
+    const userNameLabel = document.getElementById('user-name-label');
+    if (userNameLabel) {
+      userNameLabel.classList.remove('hidden-during-edit');
+    }
+  }
+}
+
+// Make functions globally available
+window.toggleProfileMenu = toggleProfileMenu;
+window.editProfile = editProfile;
+window.saveProfileChanges = saveProfileChanges;
+window.cancelProfileChanges = cancelProfileChanges;
+
+
+  // Global profile editing manager
+  let profileEditingInitialized = false;
+
+  // Initialize profile editing functionality
+   function initializeProfileEditing() {
+     // Prevent multiple initializations
+     if (profileEditingInitialized) {
+       return;
+     }
+     profileEditingInitialized = true;
+     const avatarContainer = document.getElementById('avatar-container');
+     const profileImageUpload = document.getElementById('profile-image-upload');
+     const profileNameInput = document.getElementById('profile-name-input');
+     const profileNameDisplay = document.getElementById('profile-name');
+     const editIcon = document.querySelector('.edit-icon'); // This line will still query for the icon, but it's added dynamically later.
+     const saveChangesBtn = document.getElementById('save-profile-changes');
+     const cancelChangesBtn = document.getElementById('cancel-profile-changes');
+     const editButtonsContainer = document.querySelector('.profile-edit-buttons');
+
+     let hasChanges = false;
+     let newProfileImage = null;
+     let isEditing = false;
+
+     // Function to enter edit mode
+     function enterEditMode() {
+       isEditing = true;
+       window._profileIsEditingState = true;
+       profileNameInput.classList.add('active');
+       profileNameDisplay.classList.add('hidden');
+       profileNameInput.value = profileNameDisplay.textContent.replace('User', '').trim();
+       profileNameInput.focus();
+       showEditButtons();
+
+       // Hide member since date during editing
+       const memberSinceElement = document.getElementById('profile-member-since');
+       if (memberSinceElement) {
+         memberSinceElement.style.display = 'none';
+       }
+     }
+
+     // Function to cancel edit mode
+     function cancelEditMode() {
+       isEditing = false;
+       window._profileIsEditingState = false;
+       hasChanges = false;
+       newProfileImage = null;
+       profileNameInput.classList.remove('active');
+       profileNameDisplay.classList.remove('hidden');
+       hideEditButtons();
+
+       // Show member since date when canceling
+       const memberSinceElement = document.getElementById('profile-member-since');
+       if (memberSinceElement) {
+         memberSinceElement.style.display = 'block';
+         memberSinceElement.style.visibility = 'visible';
+         memberSinceElement.style.opacity = '1';
+       }
+
+       // Reset avatar if it was changed
+       if (newProfileImage) {
+         const profileAvatar = document.getElementById('profile-avatar');
+         if (profileAvatar && currentUser && currentUser.avatar) {
+           profileAvatar.src = currentUser.avatar;
+         }
+         newProfileImage = null;
+       }
+     }
+
+     // Function to show edit buttons
+     function showEditButtons() {
+       console.log('Showing edit buttons...');
+       if (editButtonsContainer) {
+         editButtonsContainer.style.display = 'flex';
+         console.log('Edit buttons displayed');
+       } else {
+         console.log('Edit buttons container not found');
+       }
+       // Hide user name label during editing
+       const userNameLabel = document.getElementById('user-name-label');
+       if (userNameLabel) {
+         userNameLabel.classList.add('hidden-during-edit');
+       }
+
+       // Add editing class to profile container
+       const profileContainer = document.querySelector('.profile-name-container');
+       if (profileContainer) {
+         profileContainer.classList.add('editing');
+       }
+     }
+
+     // Function to hide edit buttons
+     function hideEditButtons() {
+       if (editButtonsContainer) {
+         editButtonsContainer.style.display = 'none';
+       }
+       // Show user name label when not editing
+       const userNameLabel = document.getElementById('user-name-label');
+       if (userNameLabel) {
+         userNameLabel.classList.remove('hidden-during-edit');
+       }
+
+       // Remove editing class from profile container
+       const profileContainer = document.querySelector('.profile-name-container');
+       if (profileContainer) {
+         profileContainer.classList.remove('editing');
+       }
+     }
+
+     // Handle cancel button click - use onclick to prevent duplicate listeners on reinitialize
+     if (cancelChangesBtn) {
+       cancelChangesBtn.onclick = function(e) {
+         e.stopPropagation();
+         cancelEditMode();
+       };
+     }
+
+     // Handle click outside to cancel editing (only add once)
+     if (!window._profileEditOutsideClickAdded) {
+       window._profileEditOutsideClickAdded = true;
+       document.addEventListener('click', function(e) {
+         // Use window-level editing state since closures may change
+         if (window._profileIsEditingState) {
+           const profileContainer = document.querySelector('.profile-name-container');
+           const editBtns = document.querySelector('.profile-edit-buttons');
+           const nameInput = document.getElementById('profile-name-input');
+           const editIcn = document.querySelector('.edit-icon');
+           const isClickInsideProfile = profileContainer && profileContainer.contains(e.target);
+           const isClickOnButtons = editBtns && editBtns.contains(e.target);
+           const isClickOnInput = nameInput && nameInput.contains(e.target);
+           const isClickOnEditIcon = editIcn && editIcn.contains(e.target);
+
+           if (!isClickInsideProfile || (!isClickOnButtons && !isClickOnInput && !isClickOnEditIcon)) {
+             if (typeof window._profileCancelEditMode === 'function') {
+               window._profileCancelEditMode();
+             }
+           }
+         }
+       });
+     }
+
+     // Expose editing state and cancel function to window for outside-click handler
+     window._profileIsEditingState = isEditing;
+     window._profileCancelEditMode = cancelEditMode;
+
+     // Handle input blur - but don't auto-cancel if buttons are visible (use onblur to prevent duplicates)
+     if (profileNameInput) {
+       profileNameInput.onblur = function(e) {
+         setTimeout(() => {
+           if (isEditing && !hasChanges) {
+             const activeElement = document.activeElement;
+             if (activeElement !== saveChangesBtn && activeElement !== cancelChangesBtn && activeElement !== editIcon) {
+               cancelEditMode();
+             }
+           }
+         }, 150);
+       };
+     }
+
+     // Setup photo options menu event listeners
+     function setupPhotoOptionsMenu() {
+       const cameraOption = document.getElementById('camera-option');
+       const galleryOption = document.getElementById('gallery-option');
+       const deleteOption = document.getElementById('delete-option');
+
+       if (cameraOption) {
+         cameraOption.onclick = null;
+         cameraOption.onclick = function(e) {
+           e.stopPropagation();
+           e.preventDefault();
+           hidePhotoMenu();
+           if (navigator.camera && navigator.camera.getPicture) {
+             // Mark pending camera action for resume handler
+             window._pendingCameraAction = true;
+             window._nativeUIActive = true;
+             navigator.camera.getPicture(
+               function(imageURI) {
+                 window._pendingCameraAction = false;
+                 window._nativeUIActive = false;
+                 console.log('[Camera] Success - FILE_URI:', imageURI ? imageURI.substring(0, 80) : 'null');
+                 // Use setTimeout to ensure WebView is fully restored after native camera
+                 setTimeout(function() {
+                   // Convert file to base64 for display AND server upload
+                   window.resolveLocalFileSystemURL(imageURI, function(fileEntry) {
+                     fileEntry.file(function(file) {
+                       var reader = new FileReader();
+                       reader.onloadend = function() {
+                         var base64Data = this.result; // data:image/jpeg;base64,...
+                         console.log('[Camera] Base64 conversion done, length:', base64Data ? base64Data.length : 0);
+                         
+                         // Display image in frame using base64
+                         var profileAvatar = document.getElementById('profile-avatar');
+                         if (profileAvatar) {
+                           profileAvatar.src = base64Data;
+                           console.log('[Camera] Avatar displayed with base64');
+                         }
+                         var dashAvatar = document.getElementById('dashboard-profile-avatar');
+                         if (dashAvatar) dashAvatar.src = base64Data;
+                         
+                         // Save for server upload
+                         newProfileImage = base64Data;
+                         hasChanges = true;
+                         isEditing = true;
+                         var btns = document.querySelector('.profile-edit-buttons');
+                         if (btns) btns.style.display = 'flex';
+                         if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
+                         if (currentUser) currentUser.avatar = base64Data;
+                         if (typeof showNotification === 'function') {
+                           showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
+                         }
+                       };
+                       reader.onerror = function(err) {
+                         console.error('[Camera] FileReader error:', err);
+                         // Fallback: use file URI directly as the image data
+                         newProfileImage = imageURI;
+                         hasChanges = true;
+                         isEditing = true;
+                         var btns2 = document.querySelector('.profile-edit-buttons');
+                         if (btns2) btns2.style.display = 'flex';
+                         if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
+                         if (typeof showNotification === 'function') {
+                           showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
+                         }
+                       };
+                       reader.readAsDataURL(file);
+                     }, function(err) {
+                       console.error('[Camera] file() error:', err);
+                     });
+                   }, function(err) {
+                     console.error('[Camera] resolveLocalFileSystemURL error:', err);
+                     // Fallback: try using the URI directly
+                     newProfileImage = imageURI;
+                     hasChanges = true;
+                     isEditing = true;
+                     var btns3 = document.querySelector('.profile-edit-buttons');
+                     if (btns3) btns3.style.display = 'flex';
+                     if (editButtonsContainer) editButtonsContainer.style.display = 'flex';
+                     if (typeof showNotification === 'function') {
+                       showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
+                     }
+                   });
+                 }, 200);
+               },
+               function(err) {
+                 window._pendingCameraAction = false;
+                 window._nativeUIActive = false;
+                 console.error('[Camera] Error:', err);
+                 if (typeof showNotification === 'function') {
+                   const errMsg = err === 'No Image Selected' ? translator.translate('No Image Selected') : (err || translator.translate('Camera error'));
+                   showNotification(errMsg, 'error');
+                 }
+               },
+               {
+                 quality: 70,
+                 destinationType: Camera.DestinationType.FILE_URI,
+                 sourceType: Camera.PictureSourceType.CAMERA,
+                 cameraDirection: Camera.Direction.FRONT,
+                 encodingType: Camera.EncodingType.JPEG,
+                 targetWidth: 400,
+                 targetHeight: 400,
+                 correctOrientation: true
+               }
+             );
+           } else {
+             window._nativeUIActive = true;
+             var profileImageUpload = document.getElementById('profile-image-upload');
+             if (profileImageUpload) {
+               profileImageUpload.setAttribute('capture', 'user');
+               profileImageUpload.setAttribute('accept', 'image/*');
+               profileImageUpload.click();
+             }
+           }
+         };
+       }
+
+       if (galleryOption) {
+         // ط¥ط²ط§ظ„ط© ط£ظٹ ظ…ط¹ط§ظ„ط¬ط§طھ ط³ط§ط¨ظ‚ط© ظ„ظ…ظ†ط¹ ط§ظ„طھظƒط±ط§ط±
+         galleryOption.onclick = null;
+         galleryOption.onclick = function(e) {
+           e.stopPropagation();
+           e.preventDefault();
+
+           console.log('Gallery option clicked');
+           window._nativeUIActive = true;
+           const profileImageUpload = document.getElementById('profile-image-upload');
+
+           if (profileImageUpload) {
+             // ط¥ط¹ط¯ط§ط¯ ط§ظ„ظ…ط¹ط±ط¶
+             profileImageUpload.removeAttribute('capture');
+             profileImageUpload.setAttribute('accept', 'image/*');
+             profileImageUpload.click();
+             console.log('Gallery opened');
+           }
+           hidePhotoMenu();
+         };
+       }
+
+       if (deleteOption) {
+         // مرحبا
+         deleteOption.onclick = null;
+         deleteOption.onclick = function(e) {
+           e.stopPropagation();
+           deleteProfilePhoto();
+           hidePhotoMenu();
+         };
+       }
+     }
+
+     // Show photo options menu
+     function showPhotoMenu() {
+       window.showPhotoMenu();
+     }
+
+     // Hide photo options menu
+     function hidePhotoMenu() {
+       window.hidePhotoMenu();
+     }
+
+     // Delete profile photo - Fix duplicate message issue
+     function deleteProfilePhoto() {
+       const profileAvatar = document.getElementById('profile-avatar');
+       if (profileAvatar && currentUser) {
+         // Check if user already has default avatar - new clean user icon
+        const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+
+         // Check if current avatar is already default or null
+         if (!currentUser.avatar || currentUser.avatar === defaultAvatar || currentUser.avatar === null) {
+           // Show single message that there's no photo to delete
+           if (typeof showNotification === 'function') {
+             const message = (typeof translator !== 'undefined' && translator.translate)
+               ? translator.translate('No profile photo to delete')
+               : 'No profile photo to delete';
+             showNotification(message, 'info');
+           }
+           return; // Stop here - don't show any other messages
+         }
+
+         // Update avatar image immediately to default
+         profileAvatar.src = defaultAvatar;
+
+         // Update all avatar instances in the page
+         const dashboardAvatar = document.getElementById('dashboard-profile-avatar');
+         if (dashboardAvatar) {
+           dashboardAvatar.src = defaultAvatar;
+         }
+         const mobileAvatar = document.getElementById('mobile-user-avatar');
+         if (mobileAvatar) {
+           mobileAvatar.src = defaultAvatar;
+         }
+
+         // Update user data with default avatar (not null)
+         if (currentUser) {
+           currentUser.avatar = defaultAvatar;
+           currentUser.lastProfileUpdate = Date.now();
+
+           // Send delete directly to server
+           const apiBase = (typeof getApiOrigin !== 'undefined' ? getApiOrigin() : window.location.origin);
+           fetch(apiBase + '/api/profile/delete-photo', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ userId: currentUser.id })
+           }).then(function(r) { return r.json(); }).then(function(data) {
+             if (!data.success) {
+               fetch(apiBase + '/api/users/update-profile', {
+                 method: 'PUT',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+               }).catch(function() {});
+             }
+           }).catch(function() {
+             fetch(apiBase + '/api/users/update-profile', {
+               method: 'PUT',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+             }).catch(function() {});
+           });
+
+           // Save to session immediately
+           saveUserSession(currentUser);
+
+           // Show single success notification only
+           if (typeof showNotification === 'function') {
+             const message = (typeof translator !== 'undefined' && translator.translate)
+               ? translator.translate('Profile photo changed to default')
+               : 'Profile photo changed to default';
+             showNotification(message, 'success');
+           }
+         }
+       }
+     }
+
+     // Setup avatar container with camera icon and menu
+     if (avatarContainer) {
+       // Check if camera icon already exists to avoid duplicates
+       let cameraIcon = avatarContainer.querySelector('.camera-icon-badge');
+       if (!cameraIcon) {
+         cameraIcon = document.createElement('div');
+         cameraIcon.className = 'camera-icon-badge';
+         cameraIcon.innerHTML = '<i class="fas fa-camera"></i>';
+         avatarContainer.appendChild(cameraIcon);
+       }
+
+       // Setup photo options menu event listeners
+       setupPhotoOptionsMenu();
+
+       // Handle click on camera icon/avatar to show menu
+       // Use onclick instead of addEventListener to prevent duplicate handlers on reinitialize
+       function handleCameraClick(e) {
+         e.stopPropagation();
+         e.preventDefault();
+         const menu = document.querySelector('.photo-options-menu');
+
+         // Don't trigger if clicking on menu itself
+         if (menu && menu.contains(e.target)) {
+           return;
+         }
+
+         if (menu) {
+           if (menu.classList.contains('show')) {
+             window.hidePhotoMenu();
+           } else {
+             window.showPhotoMenu();
+           }
+         }
+       }
+
+       // Use onclick (not addEventListener) to avoid duplicate listeners on reinitialize
+       if (cameraIcon) {
+         cameraIcon.onclick = handleCameraClick;
+       }
+
+       // Add click handler to profile avatar image for easy access
+       const profileAvatar = avatarContainer.querySelector('.profile-avatar');
+       if (profileAvatar) {
+         profileAvatar.onclick = function(e) {
+           e.stopPropagation();
+           e.preventDefault();
+           handleCameraClick(e);
+         };
+         profileAvatar.style.cursor = 'pointer';
+       }
+
+       // Hide menu when clicking outside avatar container (only add once)
+       if (!window._photoMenuOutsideClickAdded) {
+         window._photoMenuOutsideClickAdded = true;
+         document.addEventListener('click', function(e) {
+           const container = document.getElementById('avatar-container');
+           const menu = document.querySelector('.photo-options-menu');
+           if (menu && menu.classList.contains('show') && !menu.contains(e.target) && container && !container.contains(e.target)) {
+             window.hidePhotoMenu();
+           }
+         });
+       }
+     }
+
+     // ظ…ط¹ط§ظ„ط¬ ط§ط®طھظٹط§ط± ط§ظ„طµظˆط± - ظ…ط­ط³ظ† ظ„ط¶ظ…ط§ظ† ط§ظ„ط¹ظ…ظ„ ظ…ظ† ط£ظˆظ„ ظ…ط±ط©
+     // Use onchange to prevent duplicate listeners on reinitialize
+     if (profileImageUpload) {
+       profileImageUpload.onchange = function(event) {
+         window._nativeUIActive = false;
+         const file = event.target.files[0];
+         if (!file) return;
+
+         console.log('ًFile selected:', file.name, file.type, file.size);
+
+         // Check file type
+         if (!file.type.startsWith('image/')) {
+             showNotification(translator.translate('Please select a valid image file'), 'error');
+           event.target.value = '';
+           return;
+         }
+
+         // Check file size (15MB)
+         if (file.size > 15 * 1024 * 1024) {
+             showNotification('File size is too large. Maximum 15MB allowed', 'error');
+           event.target.value = '';
+           return;
+         }
+
+         // ظ‚ط±ط§ط،ط© ظˆط¹ط±ط¶ ط§ظ„طµظˆط±ط© ظپظˆط±ط§ظ‹ ظ…ط¹ ظ…ط¹ط§ظ„ط¬ط© ط£ظپط¶ظ„ ظ„ظ„ط£ط®ط·ط§ط،
+         const reader = new FileReader();
+
+         reader.onload = function(e) {
+           try {
+             const imageData = e.target.result;
+             console.log('Image loaded successfully, data length:', imageData.length);
+
+             // طھط­ط¯ظٹط« طµظˆط±ط© ط§ظ„ظ…ظ„ظپ ط§ظ„ط´ط®طµظٹ ظپظˆط±ط§ظ‹
+             const profileAvatar = document.getElementById('profile-avatar');
+             if (profileAvatar) {
+               profileAvatar.src = imageData;
+               console.log('âœ… Profile avatar updated');
+             }
+
+             // طھط­ط¯ظٹط« طµظˆط±ط© ظ„ظˆط­ط© ط§ظ„طھط­ظƒظ…
+             const dashboardAvatar = document.getElementById('dashboard-profile-avatar');
+             if (dashboardAvatar) {
+               dashboardAvatar.src = imageData;
+               console.log('Dashboard avatar updated');
+             }
+
+             // ط­ظپط¸ ط§ظ„ط¨ظٹط§ظ†ط§طھ ظˆطھظپط¹ظٹظ„ ط§ظ„طھط­ط±ظٹط± ظپظˆط±ط§ظ‹
+             newProfileImage = imageData;
+             hasChanges = true;
+             isEditing = true;
+
+             // ط¥ط¸ظ‡ط§ط± ط£ط²ط±ط§ط± ط§ظ„طھط­ط±ظٹط± ظپظˆط±ط§ظ‹ ط¨ط¯ظˆظ† طھط£ط®ظٹط±
+             if (editButtonsContainer) {
+               editButtonsContainer.style.display = 'flex';
+               console.log('Edit buttons shown');
+             }
+
+             // ط¥ط®ظپط§ط، ظ‚ط§ط¦ظ…ط© ط§ظ„طµظˆط±
+             const photoMenu = document.querySelector('.photo-options-menu');
+             if (photoMenu) {
+               window.hidePhotoMenu();
+               console.log('Photo menu hidden');
+             }
+
+             // Success message
+             if (typeof showNotification === 'function') {
+               showNotification(translator.translate('Image selected successfully - click Save to update'), 'success');
+             }
+
+             console.log('Image selection completed successfully');
+
+           } catch (error) {
+             console.error('Error processing image:', error);
+             if (typeof showNotification === 'function') {
+               showNotification('Error processing image', 'error');
+             }
+           }
+         };
+
+         reader.onerror = function(error) {
+           console.error('â‌Œ File reading error:', error);
+           if (typeof showNotification === 'function') {
+             showNotification('Failed to read file', 'error');
+           }
+         };
+
+         // ط¨ط¯ط، ظ‚ط±ط§ط،ط© ط§ظ„ظ…ظ„ظپ
+         reader.readAsDataURL(file);
+
+         // ظ…ط³ط­ ط§ظ„ظ…ط¯ط®ظ„ ظ„ظ„ط³ظ…ط§ط­ ط¨ط§ط®طھظٹط§ط± ظ†ظپط³ ط§ظ„ظ…ظ„ظپ ظ…ط±ط© ط£ط®ط±ظ‰
+         setTimeout(() => {
+           event.target.value = '';
+         }, 100);
+       };
+     }
+
+     // Handle name input change - use oninput to prevent duplicate listeners on reinitialize
+     if (profileNameInput) {
+       profileNameInput.oninput = function() {
+         hasChanges = true;
+         if (!isEditing) {
+           isEditing = true;
+           window._profileIsEditingState = true;
+           showEditButtons();
+         }
+       };
+     }
+
+     // Function to ensure edit buttons are shown when image changes
+     function ensureEditButtonsVisible() {
+       console.log('Ensuring edit buttons are visible...');
+       if (editButtonsContainer) {
+         editButtonsContainer.style.display = 'flex';
+         console.log('âœ“ Edit buttons made visible');
+       }
+       const userNameLabel = document.getElementById('user-name-label');
+       if (userNameLabel) {
+         userNameLabel.classList.add('hidden-during-edit');
+       }
+       hasChanges = true;
+       isEditing = true;
+     }
+
+     // Save changes button - use onclick to prevent duplicate listeners on reinitialize
+     if (saveChangesBtn) {
+       saveChangesBtn.onclick = function(e) {
+         e.stopPropagation();
+         // Validate name length (maximum 22 characters)
+         let sanitizedName = profileNameInput.value.trim();
+         if (sanitizedName.length > 15) {
+           sanitizedName = sanitizedName.substring(0, 15);
+          showNotification(translator.translate('Name truncated to 15 characters'), 'warning');
+
+           profileNameInput.value = sanitizedName;
+         }
+         saveProfileChanges(sanitizedName, newProfileImage);
+       };
+     }
+
+     // Function to reset profile edit UI
+     function resetProfileEditUI() {
+       const profileNameInput = document.getElementById('profile-name-input');
+       const profileNameDisplay = document.getElementById('profile-name');
+
+       if (profileNameInput && profileNameDisplay) {
+         profileNameInput.classList.remove('active');
+         profileNameDisplay.classList.remove('hidden');
+       }
+
+       // Show member since date when resetting
+       const memberSinceElement = document.getElementById('profile-member-since');
+       if (memberSinceElement) {
+         memberSinceElement.style.display = 'block';
+         memberSinceElement.style.visibility = 'visible';
+         memberSinceElement.style.opacity = '1';
+       }
+
+       isEditing = false;
+       hasChanges = false;
+       newProfileImage = null;
+       hideEditButtons();
+     }
+
+     // Function to save profile changes - modified to prevent duplicate messages
+     async function saveProfileChanges(newName, newImage, skipSuccessMessage) {
+       if (!currentUser || !currentUser.id) {
+         console.error('No user is currently logged in');
+         showNotification(translator.translate('You must be logged in to update your profile'), 'error');
+         return;
+       }
+
+       // Validate name length
+       if (newName && newName.length > 15) {
+         newName = newName.substring(0, 15);
+         showNotification(translator.translate('Name truncated to 15 characters'), 'warning');
+       }
+
+       // Prevent multiple simultaneous updates
+       if (window.profileUpdateInProgress) {
+         return;
+       }
+       window.profileUpdateInProgress = true;
+
+       try {
+         // Show loading notification only once
+         showNotification(translator.translate('Updating profile...'), 'info');
+
+
+         // Create update data
+         const updateData = {
+           userId: currentUser.id,
+           name: newName,
+           avatar: null // Default to null to indicate no change
+         };
+
+         // If there's a new image, include it but limit the size
+         if (newImage) {
+           try {
+             // Check if image is too large (over 800KB as base64)
+             if (newImage.length > 800000) {
+               // Resize the image by creating a temporary image element
+               const img = new Image();
+               img.src = newImage;
+               await new Promise(resolve => {
+                 img.onload = resolve;
+               });
+
+               // Create canvas to resize image
+               const canvas = document.createElement('canvas');
+               const ctx = canvas.getContext('2d');
+
+               // Calculate new dimensions (max 300px width/height for smaller size)
+               const maxDim = 300;
+               let width = img.width;
+               let height = img.height;
+
+               if (width > height && width > maxDim) {
+                 height = (height * maxDim) / width;
+                 width = maxDim;
+               } else if (height > maxDim) {
+                 width = (width * maxDim) / height;
+                 height = maxDim;
+               }
+
+               canvas.width = width;
+               canvas.height = height;
+
+               // Draw resized image to canvas
+               ctx.drawImage(img, 0, 0, width, height);
+
+               // Get reduced size base64 with higher compression
+               updateData.avatar = canvas.toDataURL('image/jpeg', 0.6);
+               console.log('Image resized for upload, new size:', updateData.avatar.length);
+             } else {
+               updateData.avatar = newImage;
+             }
+           } catch (imgError) {
+             console.error('Error processing image:', imgError);
+             showNotification('Error processing image. Using text-only update.', 'warning');
+             // Continue with just the name update
+           }
+         }
+
+         console.log('Sending profile update with data:', {
+           userId: updateData.userId,
+           name: updateData.name,
+           hasAvatar: updateData.avatar !== null
+         });
+
+         // Try multiple endpoints in sequence with clear error handling
+         let success = false;
+         let lastError = null;
+         const endpoints = [
+           { url: '/api/profile/update', method: 'POST' },
+           { url: '/api/profile/update', method: 'PUT' },
+           { url: '/api/users/update-profile', method: 'PUT' },
+           { url: '/api/user/update-profile', method: 'POST' }
+         ];
+
+         for (let i = 0; i < endpoints.length; i++) {
+           const endpoint = endpoints[i];
+           try {
+             console.log(`Trying endpoint ${i+1}/${endpoints.length}: ${endpoint.method} ${endpoint.url}`);
+
+             const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}${endpoint.url}`, {
+               method: endpoint.method,
+               headers: {
+                 'Content-Type': 'application/json'
+               },
+               body: JSON.stringify(updateData),
+               timeout: 8000
+             });
+
+             console.log(`Endpoint ${i+1} response status:`, response.status);
+
+             if (response.ok) {
+               const result = await response.json();
+               if (result.success) {
+                 handleSuccessfulUpdate(newName, updateData.avatar, result, skipSuccessMessage);
+                 success = true;
+                 break;
+               } else {
+                 lastError = new Error(result.error || 'Unknown error');
+               }
+             } else {
+               lastError = new Error(`Server returned status: ${response.status}`);
+               // Don't retry on 404 with this endpoint, move to next one
+             }
+           } catch (error) {
+             console.error(`Endpoint ${i+1} failed:`, error);
+             lastError = error;
+             // Continue to next endpoint
+           }
+
+           // Short delay before trying next endpoint
+           if (!success && i < endpoints.length - 1) {
+             await new Promise(resolve => setTimeout(resolve, 500));
+           }
+         }
+
+         if (!success) {
+           // All attempts failed
+           throw lastError || new Error('Profile update failed after trying all endpoints');
+         }
+       } catch (error) {
+         console.error('Error updating profile:', error);
+         showNotification(translator.translate('Error updating profile:') + ' ' + (error.message || translator.translate('Please try again.')), 'error');
+       } finally {
+         // Reset the flag to allow future updates
+         window.profileUpdateInProgress = false;
+       }
+     }
+
+     // Helper function for successful profile updates
+     function handleSuccessfulUpdate(newName, newImage, result, skipSuccessMessage) {
+       // Update currentUser with new data
+       currentUser.name = newName;
+
+       // Update avatar only if we have a new one
+       if (result.user && result.user.avatar) {
+         currentUser.avatar = result.user.avatar;
+       } else if (newImage) {
+         currentUser.avatar = newImage;
+       }
+
+       // Log the update
+       console.log('Profile updated successfully:', {
+         name: currentUser.name,
+         avatar: currentUser.avatar ? 'Updated' : 'Unchanged'
+       });
+
+       // Add a timestamp to indicate when this was last updated
+       currentUser.lastProfileUpdate = Date.now();
+
+       // Update UI immediately
+       updateUserInfo(currentUser);
+
+       // Update user session with the latest data
+       // Clear any cache flags to indicate this is fresh data
+       currentUser._fromCache = false;
+       saveUserSession(currentUser);
+
+       // We no longer store detailed user data in localStorage
+       // Only update the minimal authentication data
+       saveUserSession(currentUser);
+
+       // Reset state variables
+       hasChanges = false;
+       newProfileImage = null;
+
+       // Reset profile edit UI
+       resetProfileEditUI();
+
+       // Show success message only if not skipped (avoid duplicate messages when deleting photos)
+       if (skipSuccessMessage !== true) {
+         showNotification(translator.translate('Profile updated successfully'), 'success');
+       }
+
+       // FIXED: Delay server verification to allow server time to save the new image
+       // Immediate checkIfUserExists causes race condition - old image is fetched before server saves new one
+       if (currentUser.email) {
+         // Wait 2.5 seconds for server to process and save the new image
+         setTimeout(function() {
+           // Force refresh to bypass cache - cache may have old SVG avatar
+           checkIfUserExists(currentUser.email, true).then(userData => {
+             if (userData) {
+               console.log('Verified profile changes with server data after delay');
+
+               // Only update if server data is newer than our local lastProfileUpdate
+               // This prevents overwriting with stale cached data
+               if (!currentUser.lastProfileUpdate || 
+                   !userData.lastProfileUpdate || 
+                   userData.lastProfileUpdate >= currentUser.lastProfileUpdate) {
+                 
+                 // Make sure our UI reflects the latest server data
+                 updateUserInfo(userData);
+
+                 // Save the verified server data
+                 saveUserSession(userData);
+               } else {
+                 console.log('Skipping server data - local data is newer');
+               }
+             }
+           }).catch(error => {
+             console.error('Error verifying profile update:', error);
+           });
+         }, 2500);
+       }
+     }
+
+     // Direct click handler for profile name editing - use onclick to prevent duplicates
+     if (profileNameDisplay) {
+       profileNameDisplay.onclick = function(e) {
+         e.stopPropagation();
+         enterEditMode();
+       };
+       profileNameDisplay.style.cursor = 'pointer';
+     }
+
+     // طھظ… ط¥ط²ط§ظ„ط© ظ‡ط°ط§ ط§ظ„ظƒظˆط¯ ط§ظ„ظ…ظƒط±ط± ظ„ط£ظ†ظ‡ طھظ… ط¥ط¶ط§ظپطھظ‡ ط£ط¹ظ„ط§ظ‡
+
+     // Initialize the photo options menu
+     if (avatarContainer) {
+       setupPhotoOptionsMenu();
+     }
+   }
+
+  // Global function to reinitialize profile editing
+  function reinitializeProfileEditing() {
+    profileEditingInitialized = false;
+    initializeProfileEditing();
+  }
+
+  // Global functions for profile photo menu
+  window.showPhotoMenu = function() {
+    const menu = document.querySelector('.photo-options-menu');
+    if (menu) {
+      menu.classList.add('show');
+    }
+  };
+
+  window.hidePhotoMenu = function() {
+    const menu = document.querySelector('.photo-options-menu');
+    if (menu) {
+      menu.classList.remove('show');
+    }
+  };
+
+  window.deleteProfilePhoto = function() {
+    const profileAvatar = document.getElementById('profile-avatar');
+    if (profileAvatar && currentUser) {
+      const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+      if (!currentUser.avatar || currentUser.avatar === defaultAvatar || currentUser.avatar === null) {
+        if (typeof showNotification === 'function') {
+          const msg = (typeof translator !== 'undefined' && translator.translate) ? translator.translate('No profile photo to delete') : 'No profile photo to delete';
+          showNotification(msg, 'info');
+        }
+        return;
+      }
+
+      // Update ALL avatar elements immediately
+      profileAvatar.src = defaultAvatar;
+      const dashboardAvatar = document.getElementById('dashboard-profile-avatar');
+      if (dashboardAvatar) dashboardAvatar.src = defaultAvatar;
+      const mobileAvatar = document.getElementById('mobile-user-avatar');
+      if (mobileAvatar) mobileAvatar.src = defaultAvatar;
+
+      // Update currentUser in memory immediately
+      currentUser.avatar = defaultAvatar;
+      currentUser.lastProfileUpdate = Date.now();
+
+      // Send delete directly to server
+      const apiBase = (typeof getApiOrigin !== 'undefined' ? getApiOrigin() : window.location.origin);
+      fetch(apiBase + '/api/profile/delete-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+          console.log('Profile photo deleted on server');
+        } else {
+          fetch(apiBase + '/api/users/update-profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+          }).catch(function() {});
+        }
+      }).catch(function() {
+        fetch(apiBase + '/api/users/update-profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+        }).catch(function() {});
+      });
+
+      // Save to session immediately
+      saveUserSession(currentUser);
+
+      if (typeof showNotification === 'function') {
+        const msg = (typeof translator !== 'undefined' && translator.translate) ? translator.translate('Profile photo changed to default') : 'Profile photo changed to default';
+        showNotification(msg, 'success');
+      }
+    }
+  };
+
+  // Simple Profile Menu System - Only provides global utility functions
+  // All option handlers (camera, gallery, delete) are set by initializeProfileEditing() only
+  function setupSimpleProfileMenu() {
+    // No duplicate handler setup - initializeProfileEditing handles everything
+  }
+
+  // Handle Android resume after camera - WebView may have been destroyed and recreated
+  document.addEventListener('resume', function() {
+    console.log('[Resume] App resumed, pendingCameraAction:', window._pendingCameraAction, 'nativeUIActive:', window._nativeUIActive);
+    if (window._pendingCameraAction) {
+      // Don't reset _pendingCameraAction here - let the camera callback handle it
+      // Don't call reinitializeProfileEditing() - it creates new closures that lose
+      // the camera data (newProfileImage, hasChanges) causing SVG to appear after save
+      console.log('[Resume] Camera action pending, waiting for camera callback to deliver result');
+    }
+    // Safety: clear _nativeUIActive after 5s in case user cancelled gallery without selecting
+    if (window._nativeUIActive) {
+      setTimeout(function() {
+        if (window._nativeUIActive) {
+          console.log('[Resume] Clearing stale _nativeUIActive flag');
+          window._nativeUIActive = false;
+        }
+      }, 5000);
+    }
+  }, false);
+
+  // Simple global functions
+  window.showPhotoMenu = function() {
+    const menu = document.querySelector('.photo-options-menu');
+    if (menu) {
+      menu.classList.add('show');
+    }
+  };
+
+  window.hidePhotoMenu = function() {
+    const menu = document.querySelector('.photo-options-menu');
+    if (menu) {
+      menu.classList.remove('show');
+    }
+  };
+
+  // Initialize simple system
+  setupSimpleProfileMenu();
+
+
+
+
+
+  // Queue for notifications deferred while PIN lock screen is active
+  var _notificationQueue = [];
+
+  // Flush queued notifications after PIN unlock
+  window._flushNotificationQueue = function() {
+    var queued = _notificationQueue.splice(0);
+    queued.forEach(function(n) { showNotification(n.message, n.type); });
+  };
+
+  // Function to show notification
+  function showNotification(message, type = 'info') {
+    // Block notifications while PIN lock screen is active (except connection restored)
+    var pinScreen = document.getElementById('pin-lock-screen');
+    if (pinScreen && pinScreen.style.display !== 'none' && pinScreen.classList.contains('active')) {
+      // Allow only "Connection restored" through
+      if (message && message.toLowerCase().indexOf('connection restored') === -1 &&
+          message.indexOf('تم استعادة الاتصال') === -1 &&
+          message.indexOf('Connexion rétablie') === -1 &&
+          message.indexOf('Conexión restaurada') === -1 &&
+          message.indexOf('Connessione ripristinata') === -1 &&
+          message.indexOf('Bağlantı yeniden') === -1 &&
+          message.indexOf('कनेक्शन बहाल') === -1 &&
+          message.indexOf('连接已恢复') === -1 &&
+          message.indexOf('接続が復旧') === -1 &&
+          message.indexOf('연결이 복구') === -1 &&
+          message.indexOf('Conexão restaurada') === -1 &&
+          message.indexOf('Соединение восстановлено') === -1 &&
+          message.indexOf('Verbindung wiederhergestellt') === -1 &&
+          message.indexOf('Koneksi dipulihkan') === -1 &&
+          message.indexOf('Połączenie przywrócone') === -1) {
+        _notificationQueue.push({ message: message, type: type });
+        return;
+      }
+    }
+
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    // Secure: Build notification with safe DOM methods
+    const notifContent = document.createElement('div');
+    notifContent.className = 'notification-content';
+    
+    const icon = document.createElement('i');
+    icon.className = `fas ${type === 'success' ? 'fa-check' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}`;
+    
+    const messagePara = document.createElement('p');
+    messagePara.textContent = message;
+    
+    const closeBtnNotif = document.createElement('span');
+    closeBtnNotif.className = 'close-btn';
+    const closeIconNotif = document.createElement('i');
+    closeIconNotif.className = 'fas fa-times';
+    closeBtnNotif.appendChild(closeIconNotif);
+    
+    notifContent.appendChild(icon);
+    notifContent.appendChild(messagePara);
+    notifContent.appendChild(closeBtnNotif);
+    notification.appendChild(notifContent);
+    document.body.appendChild(notification);
+
+    // Add animation classes
+    setTimeout(() => {
+      notification.classList.add('show');
+    }, 100);
+
+    // Handle close button
+    const closeBtnElement = notification.querySelector('.close-btn');
+    closeBtnElement.addEventListener('click', () => {
+      notification.classList.remove('show');
+      setTimeout(() => {
+        notification.remove();
+      }, 300);
+    });
+
+    // Auto hide after 5 seconds
+    setTimeout(() => {
+      notification.classList.remove('show');
+      setTimeout(() => {
+        notification.remove();
+      }, 300);
+    }, 5000);
+  }
+
+  // ✅ Export showNotification globally for missions-system.js and other files
+  window.showNotification = showNotification;
+
+
+
+  
+  // Update referral code display
+  function updateReferralCode(code) {
+    const codeElements = document.querySelectorAll('#user-referral-code, #referral-code-display, #profile-referral-code');
+    codeElements.forEach(element => {
+      element.textContent = code;
+    });
+  }
+
+  // Generate random referral code
+  function generateReferralCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
+  // Set up navigation
+  function setupNavigation() {
+    // Desktop navigation
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+      link.addEventListener('click', function(e) {
+        // ✅ تجاهل زر الخروج - لديه onclick منفصل
+        if (this.getAttribute('onclick') && this.getAttribute('onclick').includes('logout')) {
+          return; // لا تفعل شيء، logout() سيتولى الأمر
+        }
+        
+        e.preventDefault();
+        const pageName = this.getAttribute('data-page');
+        if (!pageName) return; // ✅ تجاهل الروابط بدون data-page
+        
+        showPage(pageName);
+
+        // Update active state
+        navLinks.forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Mobile navigation
+    const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+    mobileNavItems.forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        const pageName = this.getAttribute('data-page');
+
+        if (pageName === 'more') {
+          // Toggle the more menu
+          const moreMenu = document.getElementById('more-menu');
+          if (moreMenu) {
+            moreMenu.style.display = moreMenu.style.display === 'block' ? 'none' : 'block';
+          } else {
+            // Create the more menu if it doesn't exist
+            createMoreMenu();
+          }
+
+          // Update active state
+          mobileNavItems.forEach(i => i.classList.remove('active'));
+          this.classList.add('active');
+        } else {
+          // Hide more menu if open
+          const moreMenu = document.getElementById('more-menu');
+          if (moreMenu) {
+            moreMenu.style.display = 'none';
+          }
+
+          showPage(pageName);
+
+          // Update active state
+          mobileNavItems.forEach(i => i.classList.remove('active'));
+          this.classList.add('active');
+        }
+      });
+    });
+
+    // Toggle sidebar on mobile
+    const toggleSidebar = document.getElementById('toggle-sidebar');
+    if (toggleSidebar) {
+      toggleSidebar.addEventListener('click', function() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('sidebar-open');
+      });
+    }
+  }
+
+  // Show specified page
+  window.showPage = function(pageName) {
+    // Scroll to top when switching pages
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    var mc = document.getElementById('main-content');
+    if (mc) mc.scrollTop = 0;
+
+    // For network page: restore QR from cache BEFORE showing the page to prevent flash
+    if (pageName === 'network') {
+      try {
+        var img = document.getElementById('qr-img');
+        if (img && (!img.src || img.src.indexOf('data:image/png') === -1)) {
+          var cachedData = localStorage.getItem('last_qr_data');
+          var cachedAddr = localStorage.getItem('last_qr_addr');
+          // Fallback 1: per-user cache keys
+          if ((!cachedData || !cachedAddr) && window.currentUser && window.currentUser.id) {
+            cachedData = cachedData || localStorage.getItem('qr_dataurl_' + window.currentUser.id);
+            cachedAddr = cachedAddr || localStorage.getItem('qr_address_' + window.currentUser.id);
+          }
+          // Fallback 2: session data (qr_data_url)
+          if ((!cachedData || !cachedAddr) && window.currentUser) {
+            cachedData = cachedData || window.currentUser.qr_data_url;
+            cachedAddr = cachedAddr || window.currentUser.qr_addr || window.currentUser.wallet_address;
+          }
+          // Fallback 3: generate QR SYNCHRONOUSLY from wallet address if we have it
+          if (!cachedData && window.currentUser) {
+            var wAddr = window.currentUser.wallet_address || (window.currentUser.wallet && window.currentUser.wallet.publicAddress) || '';
+            if (wAddr && window.QRCode) {
+              try {
+                var tmpDiv = document.createElement('div');
+                new window.QRCode(tmpDiv, { text: wAddr, width: 150, height: 150, colorDark: '#000000', colorLight: '#ffffff' });
+                var tmpCanvas = tmpDiv.querySelector('canvas');
+                if (tmpCanvas) {
+                  cachedData = tmpCanvas.toDataURL('image/png');
+                  cachedAddr = wAddr;
+                  try { localStorage.setItem('last_qr_data', cachedData); localStorage.setItem('last_qr_addr', cachedAddr); } catch(se) {}
+                  console.log('[showPage] QR generated synchronously from wallet address');
+                }
+              } catch(ge) { console.warn('[showPage] Sync QR gen failed:', ge); }
+            }
+          }
+          if (cachedData && cachedAddr) {
+            img.src = cachedData;
+            img.dataset.addr = cachedAddr;
+            var at = document.getElementById('qr-address-text');
+            if (at) at.textContent = cachedAddr.substring(0,8) + '....' + cachedAddr.substring(cachedAddr.length-6);
+            window._qrReady = true;
+          }
+        }
+      } catch(e) {}
+    }
+
+    // Hide all pages
+    const pages = document.querySelectorAll('.page-content');
+    pages.forEach(page => {
+      page.style.display = 'none';
+    });
+
+    // Show requested page
+    const pageToShow = document.getElementById(pageName + '-page');
+    if (pageToShow) {
+      pageToShow.style.display = 'block';
+    }
+
+    // Sync mobile bottom nav active state to match current page
+    var mobileNavAll = document.querySelectorAll('.mobile-nav-item');
+    var isInMoreMenu = (pageName === 'network' || pageName === 'tasks' || pageName === 'pointsystem' || pageName === 'kyc');
+    for (var ni = 0; ni < mobileNavAll.length; ni++) {
+      var navPage = mobileNavAll[ni].getAttribute('data-page');
+      if (navPage === pageName || (isInMoreMenu && navPage === 'more')) {
+        mobileNavAll[ni].classList.add('active');
+      } else {
+        mobileNavAll[ni].classList.remove('active');
+      }
+    }
+    // Sync desktop sidebar nav
+    var desktopNavAll = document.querySelectorAll('.nav-link');
+    for (var di = 0; di < desktopNavAll.length; di++) {
+      var dPage = desktopNavAll[di].getAttribute('data-page');
+      if (dPage === pageName) {
+        desktopNavAll[di].classList.add('active');
+      } else {
+        desktopNavAll[di].classList.remove('active');
+      }
+    }
+
+    // Update mobile header title
+    const mobileTitle = document.getElementById('mobile-page-title');
+    if (mobileTitle) {
+      mobileTitle.textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+    }
+
+    // Handle special page initialization
+    if (pageName === 'activity') {
+      initializeActivityPage();
+    } else if (pageName === 'referrals') {
+      initializeReferralsPage();
+    } else if (pageName === 'tasks') {
+      // Initialize missions system
+      if (typeof initMissionsSystem === 'function') {
+        initMissionsSystem();
+      }
+    } else if (pageName === 'profile') {
+      // Always reinitialize to ensure handlers are fresh after navigation
+      reinitializeProfileEditing();
+    } else if (pageName === 'kyc') {
+      // Immediately apply translations when KYC page is shown
+      translateKYCPage();
+      
+      // Apply another round of translations after a brief delay
+      setTimeout(translateKYCPage, 50);
+    } else if (pageName === 'network') {
+      // Initialize network functionality
+      console.log('[Network page] Starting wallet initialization');
+      if (currentUser && currentUser.id) {
+        // Initialize wallet data (updates balance, address) — QR generated inside initializeUserWallet
+        initializeUserWallet().then(function() {
+          updateTransactionList();
+        }).catch(function(e) { console.error('[Network page] Wallet init failed:', e); });
+      } else {
+        showNotification(translator.translate('Please log in to access your wallet'), 'info');
+      }
+    }
+  };
+
+
+
+
+  // Initialize referrals page
+  function initializeReferralsPage() {
+    // Copy referral code button functionality
+    const copyRefBtn = document.getElementById('copy-referral');
+    if (copyRefBtn) {
+      copyRefBtn.addEventListener('click', function() {
+        const refCode = document.getElementById('referral-code-display').textContent;
+        navigator.clipboard.writeText(refCode).then(() => {
+          this.innerHTML = '<i class="fas fa-check"></i>';
+          setTimeout(() => {
+            this.innerHTML = '<i class="fas fa-copy"></i>';
+          }, 2000);
+        });
+      });
+    }
+  }
+
+  // Utility function to copy referral code
+  window.copyReferralCode = function(event) {
+    // Get the button that was clicked (or find any available copy button)
+    let clickedButton = null;
+    
+    if (event && event.currentTarget) {
+      clickedButton = event.currentTarget;
+    } else {
+      // Try to find any copy button if no event is provided
+      const possibleButtons = [
+        document.getElementById('copy-referral'),
+        document.getElementById('copy-ref-code'),
+        document.querySelector('.copy-referral-btn'),
+        document.querySelector('[onclick*="copyReferralCode"]'),
+        document.querySelector('button[data-action="copy-referral"]')
+      ];
+      
+      clickedButton = possibleButtons.find(btn => btn !== null);
+    }
+
+    // Find the referral code to copy
+    let refCode = null;
+    let refCodeElement = null;
+    
+    // Check for referrals page specific elements first
+    if (clickedButton && (clickedButton.closest('.referral-stats-card') || clickedButton.closest('.referrals-page'))) {
+      // For referrals page, try multiple selectors
+      refCodeElement = document.querySelector('.referral-code-text') || 
+                     document.querySelector('.my-referral-code') ||
+                     document.getElementById('referral-code-display') ||
+                     document.getElementById('my-referral-code');
+    } else if (clickedButton && clickedButton.id === 'copy-referral') {
+      refCodeElement = document.getElementById('referral-code-display');
+    } else if (clickedButton && clickedButton.closest('.profile-value')) {
+      refCodeElement = document.getElementById('profile-referral-code');
+    } else {
+      // Try multiple possible referral code elements
+      const possibleElements = [
+        document.getElementById('user-referral-code'),
+        document.getElementById('referral-code-display'),
+        document.getElementById('profile-referral-code'),
+        document.querySelector('.referral-code-display'),
+        document.querySelector('.user-referral-code')
+      ];
+      
+      refCodeElement = possibleElements.find(el => el && el.textContent && el.textContent.trim());
+    }
+    
+    // Check if element exists and has content
+    if (refCodeElement && refCodeElement.textContent) {
+      refCode = refCodeElement.textContent.trim();
+    }
+    
+    // Additional fallback: check for referral code in various other locations
+    if (!refCode) {
+      const fallbackSelectors = [
+        '.referral-code',
+        '[data-referral-code]',
+        '.my-code',
+        '#my-referral-code-text'
+      ];
+      
+      for (const selector of fallbackSelectors) {
+        const element = document.querySelector(selector);
+        if (element && element.textContent && element.textContent.trim()) {
+          refCode = element.textContent.trim();
+          break;
+        }
+        if (element && element.getAttribute('data-referral-code')) {
+          refCode = element.getAttribute('data-referral-code');
+          break;
+        }
+      }
+    }
+    
+    // Fallback: try to get referral code from currentUser object
+    if (!refCode && currentUser && currentUser.referral_code) {
+      refCode = currentUser.referral_code;
+    }
+    
+    // If still no referral code found, show error
+    if (!refCode) {
+      console.error('Referral code not found');
+      if (typeof showNotification === 'function') {
+        showNotification('Referral code not found', 'error');
+      }
+      return;
+    }
+
+    // Copy to clipboard and show confirmation
+    navigator.clipboard.writeText(refCode).then(() => {
+      // Prevent multiple rapid clicks
+      if (clickedButton.disabled) return;
+      
+      // Disable button temporarily to prevent rapid clicks
+      clickedButton.disabled = true;
+      
+      // Save original button content to restore later
+      // Store original content safely
+      const originalContent = Array.from(clickedButton.childNodes).map(node => node.cloneNode(true));
+
+      // Show confirmation checkmark - Secure DOM manipulation
+      clickedButton.textContent = '';
+      const checkIcon = document.createElement('i');
+      checkIcon.className = 'fas fa-check';
+      clickedButton.appendChild(checkIcon);
+      clickedButton.style.color = '#10b981';
+
+      // Show success notification
+      if (typeof showNotification === 'function') {
+        showNotification(translator.translate('Referral code copied!'), 'success');
+      }
+
+      // Clear any existing timeout for this button
+      if (clickedButton.resetTimeout) {
+        clearTimeout(clickedButton.resetTimeout);
+      }
+
+      // Restore original button after 2 seconds
+      clickedButton.resetTimeout = setTimeout(() => {
+        clickedButton.textContent = '';
+        originalContent.forEach(node => clickedButton.appendChild(node));
+        clickedButton.style.color = '';
+        clickedButton.disabled = false;
+        clickedButton.resetTimeout = null;
+      }, 2000);
+      
+      console.log('Referral code copied:', refCode);
+    }).catch(err => {
+      console.error('Failed to copy referral code:', err);
+      if (clickedButton) {
+        clickedButton.disabled = false; // Re-enable on error
+      }
+      if (typeof showNotification === 'function') {
+        showNotification('Failed to copy referral code', 'error');
+      }
+    });
+  };
+
+
+
+// طھط³ط¬ظٹظ„ ط§ظ„ط®ط±ظˆط¬ ظ…ظ† ط§ظ„طھط·ط¨ظٹظ‚
+  
+   window.logout = function() {
+  const logoutModal = document.createElement('div');
+  logoutModal.className = 'logout-modal';
+  logoutModal.style.display = 'flex';
+  
+  // Secure: Build modal with safe DOM methods
+  const modalContent = document.createElement('div');
+  modalContent.className = 'logout-modal-content';
+  
+  const title = document.createElement('h2');
+  title.className = 'logout-modal-title';
+  title.textContent = translator.translate('Are you sure you want to sign out?');
+  
+  const buttonsDiv = document.createElement('div');
+  buttonsDiv.className = 'logout-modal-buttons';
+  
+  const confirmBtn = document.createElement('button');
+  confirmBtn.id = 'logout-confirm';
+  confirmBtn.className = 'logout-modal-btn logout-confirm-btn';
+  confirmBtn.textContent = translator.translate('Yes');
+  
+  const cancelBtn = document.createElement('button');
+  cancelBtn.id = 'logout-cancel';
+  cancelBtn.className = 'logout-modal-btn logout-cancel-btn';
+  cancelBtn.textContent = translator.translate('No');
+  
+  buttonsDiv.appendChild(confirmBtn);
+  buttonsDiv.appendChild(cancelBtn);
+  modalContent.appendChild(title);
+  modalContent.appendChild(buttonsDiv);
+  logoutModal.appendChild(modalContent);
+
+  document.body.appendChild(logoutModal);
+
+  // ✅ إغلاق النافذة عند الضغط خارجها
+  logoutModal.addEventListener('click', function(event) {
+    if (event.target === logoutModal) {
+      logoutModal.remove();
+    }
+  });
+
+  document.getElementById('logout-confirm').addEventListener('click', async function() {
+    // 📱 Cordova: Do NOT call googleplus.disconnect() - it destroys the Google
+    // session completely and causes profile picture loss on re-login.
+    // We only clear local data. The native Google plugin stays connected.
+    console.log('📱 Logout: Clearing local session only (preserving Google connection)');
+
+    // Clear processing timer if exists
+    if (activityInterval) {
+      clearInterval(activityInterval);
+      activityInterval = null;
+    }
+
+    // Clear all user data except theme and language preferences
+    currentUser = null;
+
+    // ط­ظپط¸ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ ط§ظ„طھظٹ طھط±ظٹط¯ ط§ظ„ط§ط­طھظپط§ط¸ ط¨ظ‡ط§
+    const language = localStorage.getItem('preferredLanguage');
+    const arabicCssEnabled = localStorage.getItem('arabic-css-enabled');
+    const themeMode = localStorage.getItem('themeMode');
+    const themeBrightness = localStorage.getItem('themeBrightness');
+
+    // حذف بيانات المستخدم فقط
+    localStorage.removeItem('accessoireUser');
+    localStorage.removeItem('accessoireUserData');
+    localStorage.removeItem('_pin_active');
+    // Clear QR/wallet cache to prevent cross-account contamination
+    localStorage.removeItem('last_qr_data');
+    localStorage.removeItem('last_qr_addr');
+    sessionStorage.clear();
+    window._qrReady = false;
+    // ظ„ط§ طھظ…ط³ط­ themeMode ظˆ themeBrightness
+
+    // ظ„ط§ طھط³طھط®ط¯ظ… localStorage.clear() ظ„ط£ظ†ظ‡ ظٹظ…ط³ط­ ظƒظ„ ط´ظٹط،
+
+    // ط§ط³طھط¹ط§ط¯ط© ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ ط§ظ„ظ…ط­ظپظˆط¸ط©
+    if (language) {
+      localStorage.setItem('preferredLanguage', language);
+    }
+    if (arabicCssEnabled) {
+      localStorage.setItem('arabic-css-enabled', arabicCssEnabled);
+    }
+    if (themeMode) {
+      localStorage.setItem('themeMode', themeMode);
+    }
+    if (themeBrightness) {
+      localStorage.setItem('themeBrightness', themeBrightness);
+    }
+
+    // ط¥ط²ط§ظ„ط© ظ†ط§ظپط°ط© ط§ظ„طھط£ظƒظٹط¯
+    logoutModal.remove();
+
+    // Use class-based system for auth state - NO direct style manipulation
+    document.documentElement.classList.remove('user-logged-in');
+    document.documentElement.classList.add('user-not-logged-in');
+    document.documentElement.classList.add('app-ready');
+
+    // 📱 Reload to reset all state cleanly after logout
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
+  });
+
+  document.getElementById('logout-cancel').addEventListener('click', function() {
+    logoutModal.remove();
+  });
+};
+
+
+  // Add all page-specific text to translations if not already present
+  function addMissingTranslationsToObject() {
+    // Get all text content from the DOM
+    const allTextNodes = [];
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      { acceptNode: node => node.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT }
+    );
+
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node.parentNode.tagName !== 'SCRIPT' && node.parentNode.tagName !== 'STYLE') {
+        const text = node.textContent.trim();
+        if (text.length > 1) { // Ignore single characters and empty text
+          allTextNodes.push(text);
+        }
+      }
+    }
+
+    //    // Get all button texts
+    const buttonTexts = [];
+    document.querySelectorAll('button').forEach(button => {
+      const buttonText = button.textContent.trim();
+      if (buttonText && !buttonText.startsWith('<i') && buttonText.length > 1) {
+        buttonTexts.push(buttonText);
+      }
+    });
+
+    // Get all input placeholders
+    const placeholders = [];
+    document.querySelectorAll('input[placeholder]').forEach(input => {
+      const placeholder = input.getAttribute('placeholder');
+      if (placeholder && placeholder.length > 1) {
+        placeholders.push(placeholder);
+      }
+    });
+
+    // Add all texts to translation object if not already present
+    const currentLanguage = translator.getCurrentLanguage();
+    const allTexts = [...new Set([...allTextNodes, ...buttonTexts, ...placeholders])];
+
+    allTexts.forEach(text => {
+      // Skip if already in translations
+      if (window.translations[currentLanguage][text]) return;
+
+      // Check if text is already a key in translations
+      let isKey =false;
+      for (const key in window.translations[currentLanguage]) {
+        if (window.translations[currentLanguage][key] === text) {
+          isKey = true;
+          break;
+        }
+      }
+
+      if (!isKey) {
+        // Add text as both key and value in current language
+        window.translations[currentLanguage][text] = text;
+
+        // Add text as key with empty value in other languages
+        Object.keys(window.translations).forEach(lang => {
+          if (lang !== currentLanguage && !window.translations[lang][text]) {
+            window.translations[lang][text] = ""; // Empty string indicates it needs translation
+          }
+        });
+      }
+    });
+  }
+
+  // Call addMissingTranslationsToObject and updateUILanguage when the page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+      addMissingTranslationsToObject();
+      updateUILanguage();
+      // Initialize the observer for referrals changes
+      observeReferralsChanges();
+    }, 500); // Small delay to ensure DOM is fully loaded
+  });
+
+  updateUILanguage();
+
+  // Update UI language based on selected language
+  function updateUILanguage() {
+    // First ensure the Google logo is preserved before any changes
+   
+
+    const lang = translator.getCurrentLanguage();
+    console.log('Language changed to:', lang);
+    document.documentElement.setAttribute('lang', lang); // Update the HTML lang attribute
+
+    // Set the correct language in dropdowns
+    if (languageSelect) {
+      languageSelect.value = lang;
+    }
+    if (profileLanguageSelect) {
+      profileLanguageSelect.value = lang;
+    }
+
+    // Update all text elements with translations
+    const translatableElements = document.querySelectorAll('[data-translate]');
+    translatableElements.forEach(element => {
+      const key = element.getAttribute('data-translate');
+      if (key) {
+        const translatedText = translator.translate(key);
+        if (translatedText) {
+          element.textContent = translatedText;
+        }
+      }
+    });
+    
+    // Make sure to update the "No referrals yet" message if it's showing
+    updateNoReferralsMessage();
+
+    // Update placeholders for inputs
+    const translatablePlaceholders = document.querySelectorAll('[data-translate-placeholder]');
+    translatablePlaceholders.forEach(element => {
+      const key = element.getAttribute('data-translate-placeholder');
+      if (key) {
+        const translatedText = translator.translate(key);
+        if (translatedText) {
+          element.placeholder = translatedText;
+        }
+      }
+    });
+
+    // Update button texts
+    const translatableButtons = document.querySelectorAll('button');
+    translatableButtons.forEach(button => {
+      // First check for data-translate attribute
+      const key = button.getAttribute('data-translate');
+      if (key) {
+        const translatedText = translator.translate(key);
+        if (translatedText) {
+          // Preserve any icons in the button - Secure DOM manipulation
+          const icon = button.querySelector('i');
+          if (icon) {
+            button.textContent = '';
+            button.appendChild(icon.cloneNode(true));
+            button.appendChild(document.createTextNode(' ' + translatedText));
+          } else {
+            button.textContent = translatedText;
+          }
+        }
+      } 
+      // For buttons without data-translate, try to translate their text content
+      else if (button.textContent.trim()) {
+        const originalText = button.textContent.trim();
+        const translatedText = translator.translate(originalText);
+        if (translatedText && translatedText !== originalText) {
+          // Preserve any icons in the button - Secure DOM manipulation
+          const icon = button.querySelector('i');
+          if (icon) {
+            button.textContent = '';
+            button.appendChild(icon.cloneNode(true));
+            button.appendChild(document.createTextNode(' ' + translatedText));
+          } else {
+            button.textContent = translatedText;
+          }
+        }
+      }
+    });
+
+    // Improved navigation item translation for sidebar and mobile menu
+    updateNavigationTranslations();
+    
+    // Update all input labels
+    const labels = document.querySelectorAll('label');
+    labels.forEach(label => {
+      if (label.textContent.trim()) {
+        const originalText = label.textContent.trim();
+        const translatedText = translator.translate(originalText);
+        if (translatedText && translatedText !== originalText) {
+          label.textContent = translatedText;
+        }
+      }
+    });
+
+    // Update all headings
+    const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    headings.forEach(heading => {
+      if (heading.textContent.trim() && !heading.hasAttribute('data-translate')) {
+        const originalText = heading.textContent.trim();
+        const translatedText = translator.translate(originalText);
+        if (translatedText && translatedText !== originalText) {
+          heading.textContent = translatedText;
+        }
+      }
+    });
+
+    // Update all paragraphs
+    const paragraphs = document.querySelectorAll('p');
+    paragraphs.forEach(paragraph => {
+      if (paragraph.textContent.trim() && !paragraph.hasAttribute('data-translate')) {
+        const originalText = paragraph.textContent.trim();
+        const translatedText = translator.translate(originalText);
+        if (translatedText && translatedText !== originalText) {
+          paragraph.textContent = translatedText;
+        }
+      }
+    });
+
+    // Check if KYC page is currently visible and translate it specifically
+   
+
+    // Update specific UI elements with translated content
+    updateSpecificUIElements();
+
+    // Special handling for RTL languages (Arabic) - only add the class but don't change direction
+    if (lang === 'ar') {
+      document.body.classList.add('rtl');
+      // Keep direction as LTR
+      document.documentElement.dir = 'ltr';
+    } else {
+      document.body.classList.remove('rtl');
+      document.documentElement.dir = 'ltr';
+    }
+
+   
+    // Update member since date with current language
+    if (typeof window.updateProfileMemberSinceDate === 'function') {
+      window.updateProfileMemberSinceDate();
+    }
+    
+    // Check if mobile menu exists and update it
+    updateMobileMenu();
+    
+    // CRITICAL: Mark app as ready AFTER all translations are applied
+    // This triggers the smooth fade-in reveal
+    if (!document.body.classList.contains('app-ready')) {
+      document.body.classList.add('app-ready');
+      document.documentElement.classList.add('app-ready');
+    }
+  }
+
+  // Dedicated function for navigation translation
+  function updateNavigationTranslations() {
+    // Get all navigation items, including the logout button
+    const navItems = document.querySelectorAll('.nav-link, .mobile-nav-item');
+    navItems.forEach(item => {
+      // Get the page name from data attribute
+      const pageName = item.getAttribute('data-page');
+      
+      // Mobile navigation items have spans
+      const textSpan = item.querySelector('span');
+      if (textSpan) {
+        if (pageName) {
+          // Special handling for KYC (ensure it translates properly)
+          if (pageName === 'kyc') {
+            const translatedText = translator.translate('KYC');
+            if (translatedText) {
+              textSpan.textContent = translatedText;
+            }
+          } else {
+            // Use page name as translation key for consistency
+            const translatedText = translator.translate(pageName);
+            if (translatedText) {
+              textSpan.textContent = translatedText;
+            }
+          }
+        } else if (textSpan.textContent.trim()) {
+          // Fallback to text content
+          const originalText = textSpan.textContent.trim();
+          const translatedText = translator.translate(originalText);
+          if (translatedText && translatedText !== originalText) {
+            textSpan.textContent = translatedText;
+          }
+        }
+      } 
+      // Sidebar items
+      else if (item.classList.contains('nav-link')) {
+        const icon = item.querySelector('i');
+        
+        // Special handling for logout button
+        if (item.getAttribute('onclick') === 'logout()') {
+          const translatedText = translator.translate('logout');
+          if (translatedText && icon) {
+            // Secure: Clone icon and add text safely
+            item.textContent = '';
+            item.appendChild(icon.cloneNode(true));
+            item.appendChild(document.createTextNode(' ' + translatedText));
+          }
+        }
+        // Special handling for KYC
+        else if (pageName === 'kyc') {
+          // First try getting explicit KYC translation
+          let translatedText = translator.translate('KYC');
+          // If that fails, try lowercase kyc
+          if (!translatedText || translatedText === 'KYC') {
+            translatedText = translator.translate('kyc');
+          }
+          if (translatedText && icon) {
+            // Secure: Clone icon and add text safely
+            item.textContent = '';
+            item.appendChild(icon.cloneNode(true));
+            item.appendChild(document.createTextNode(' ' + translatedText));
+          }
+        }
+        // Regular navigation items
+        else if (pageName) {
+          // Use page name as translation key
+          const translatedText = translator.translate(pageName);
+          if (translatedText && icon) {
+            // Secure: Clone icon and add text safely
+            item.textContent = '';
+            item.appendChild(icon.cloneNode(true));
+            item.appendChild(document.createTextNode(' ' + translatedText));
+          } else if (translatedText) {
+            item.textContent = translatedText;
+          }
+        }
+      }
+    });
+  }
+
+  // Function to update the mobile "More" menu
+  function updateMobileMenu() {
+    const moreMenu = document.getElementById('more-menu');
+    if (moreMenu) {
+      const moreMenuItems = moreMenu.querySelectorAll('.more-menu-item');
+      moreMenuItems.forEach(item => {
+        const textSpan = item.querySelector('span');
+        if (textSpan) {
+          let key = '';
+          // Try to get key based on action attribute
+          if (item.getAttribute('data-action') === 'logout') {
+            key = 'logout';
+          } else if (item.getAttribute('data-page')) {
+            key = item.getAttribute('data-page');
+            // Special handling for KYC
+            if (key === 'kyc') {
+              key = 'KYC';
+            }
+          } else if (textSpan.textContent.trim()) {
+            key = textSpan.textContent.trim().toLowerCase();
+            // Special handling for KYC in the text content
+            if (key === 'kyc') {
+              key = 'KYC';
+            }
+          }
+          
+          if (key) {
+            const translatedText = translator.translate(key);
+            if (translatedText) {
+              textSpan.textContent = translatedText;
+            }
+          }
+        }
+      });
+    }
+  }
+
+
+  
+  
+  // Function to update specific UI elements
+  function updateSpecificUIElements() {
+    // Dashboard
+   
+ 
+
+                       
+
+    // Activity page
+    updateElementText('activityTitle', document.querySelector('#activity-page .activity-card h3'));
+    updateElementText('processingStatus', document.querySelector('#activity-status'));
+    updateElementText('nextProcessing', document.querySelector('.timer-label'));
+    updateElementText('processingInfo1', document.querySelector('.processing-info p:first-child'));
+    // ✅ processingInfo2 - ديناميكي مع المكافأة الحالية من tokenomics
+    const processingInfo2El = document.querySelector('.processing-info p:last-child');
+    if (processingInfo2El) {
+      let info2Text = translator.translate('processingInfo2');
+      const currentReward = window.serverBaseReward || 0.25;
+      info2Text = info2Text.replace('{reward}', formatNumberSmart(currentReward));
+      processingInfo2El.textContent = info2Text;
+    }
+    updateElementText('processingHistory', document.querySelector('.activity-history h3'));
+
+    // Referrals page
+    updateElementText('inviteEarn', document.querySelector('.referral-header h3'));
+    updateElementText('bonusAmount', document.querySelector('.bonus-amount span'));
+    updateElementText('bonusText', document.querySelector('.bonus-text'));
+    updateElementText('yourReferrals', document.querySelector('.referrals-list-container h3'));
+
+    // Profile page - Enhanced translation handling for all elements
+    // Translate save changes button
+    const saveChangesBtn = document.getElementById('save-profile-changes');
+    if (saveChangesBtn) {
+      saveChangesBtn.textContent = translator.translate('Save Changes');
+    }
+
+    // Translate name input placeholder
+    const nameInput = document.getElementById('profile-name-input');
+    if (nameInput) {
+      nameInput.placeholder = translator.translate('Your Name');
+    }
+
+    // Find and translate all profile labels using data-translate attribute
+    const profileLabels = document.querySelectorAll('#profile-page [data-translate]');
+    profileLabels.forEach(label => {
+      const key = label.getAttribute('data-translate');
+      if (key) {
+        const translated = translator.translate(key);
+        if (translated) {
+          label.textContent = translated;
+        }
+      }
+    });
+
+    // Update theme selector options
+    const nightModeSelect = document.getElementById('night-mode-select');
+    if (nightModeSelect) {
+      const lightOption = nightModeSelect.querySelector('option[value="light"]');
+      const darkOption = nightModeSelect.querySelector('option[value="dark"]');
+      const autoOption = nightModeSelect.querySelector('option[value="auto"]');
+
+      if (lightOption) lightOption.textContent = translator.translate('Light');
+      if (darkOption) darkOption.textContent = translator.translate('Dark'); 
+      if (autoOption) autoOption.textContent = translator.translate('Auto (Sunset)');
+    }
+
+   
+    
+  }
+
+  // Helper function to update element text with translation
+  function updateElementText(key, element) {
+    if (element && key) {
+      const translatedText = translator.translate(key);
+      if (translatedText) {
+        element.textContent = translatedText;
+      }
+    }
+  }
+
+ // Create more menu
+  function createMoreMenu() {
+    // Remove any existing more menu to prevent duplicates
+    const existingMenu = document.getElementById('more-menu');
+    if (existingMenu) {
+      existingMenu.remove();
+    }
+
+    // Create more menu element
+    const moreMenu = document.createElement('div');
+    moreMenu.id = 'more-menu';
+    moreMenu.className = 'more-menu';
+
+    // Menu items - use proper capitalization for translation keys
+    const menuItems = [
+       { icon: 'fas fa-cube', text: translator.translate('Network'), page: 'network', key: 'Network' },
+      { icon: 'fas fa-tasks', text: translator.translate('Tasks'), page: 'tasks', key: 'Tasks' },
+      { icon: 'fas fa-coins', text: translator.translate('Point System'), page: 'pointsystem', key: 'Point System' },
+      { icon: 'fas fa-sign-out-alt', text: 'Logout', action: 'logout' }
+    ];
+
+    // Create menu items
+    menuItems.forEach(item => {
+      const menuItem = document.createElement('div');
+      menuItem.className = 'more-menu-item';
+      
+      // Store the page or action as data attribute for easier translation updates
+      if (item.page) {
+        menuItem.setAttribute('data-page', item.page);
+      } else if (item.action) {
+        menuItem.setAttribute('data-action', item.action);
+      }
+
+      // Always force a fresh translation lookup
+      const translatedText = translator.translate(item.text);
+      
+      // Secure: Create the menu item with safe DOM methods
+      const iconElement = document.createElement('i');
+      iconElement.className = item.icon;
+      const textSpan = document.createElement('span');
+      textSpan.textContent = translatedText;
+      
+      menuItem.appendChild(iconElement);
+      menuItem.appendChild(document.createTextNode(' '));
+      menuItem.appendChild(textSpan);
+
+      menuItem.addEventListener('click', function() {
+        if (item.page) {
+          showPage(item.page);
+          moreMenu.style.display = 'none';
+
+          // Update mobile nav active state
+          const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+          mobileNavItems.forEach(navItem => {
+            navItem.classList.remove('active');
+            if (navItem.getAttribute('data-page') === 'more') {
+              navItem.classList.add('active');
+            }
+          });
+        } else if (item.action === 'logout') {
+          logout();
+          moreMenu.style.display = 'none';
+        }
+      });
+
+      moreMenu.appendChild(menuItem);
+    });
+
+    // Append to body
+    document.body.appendChild(moreMenu);
+
+    // Position the menu
+    const mobileNav = document.querySelector('.mobile-nav');
+    const moreButton = document.querySelector('.mobile-nav-item[data-page="more"]');
+
+    if (mobileNav && moreButton) {
+      const moreButtonRect = moreButton.getBoundingClientRect();
+      moreMenu.style.bottom = (window.innerHeight - moreButtonRect.top) + 'px';
+      moreMenu.style.right = '0';
+    }
+
+    // Display the menu
+    moreMenu.style.display = 'block';
+  }
+
+ 
+  // Add function to update lastPayout in the database
+  async function updateLastPayout(userId) {
+    try {
+      const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/users/${userId}/lastpayout`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ timestamp: Date.now() })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        console.log('Last payout updated successfully for user:', userId);
+      } else {
+        throw new Error('Failed to update last payout');
+      }
+    } catch (error) {
+      console.error('Error updating last payout:', error);
+      throw error;
+    }
+  }
+
+  // Function to initialize Firebase with configuration from Replit Secrets
+  function initializeFirebase() {
+    // Check if Firebase is already initialized
+    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+      console.log("Firebase already initialized");
+      return true;
+    }
+
+    // Wait for window.firebaseConfig to be loaded from server secrets
+    if (typeof firebase !== 'undefined' && window.firebaseConfig) {
+      try {
+        // Initialize with the config from window (which comes from Replit Secrets)
+        if (!firebase.apps || !firebase.apps.length) {
+          firebase.initializeApp(window.firebaseConfig);
+        }
+        console.log("Firebase initialized successfully with config from Secrets");
+        return true;
+      } catch (error) {
+        console.error("Firebase initialization error with config from Secrets:", error);
+      }
+    } else {
+      console.log("Firebase config not available yet, retrying...");
+      // Config not available, will be retried by the module initialization
+      return false;
+    }
+  }
+});
+
+// Simple translator class
+class Translator {
+  constructor() {
+    // Use preloaded language from head script, or check localStorage, fallback to 'en'
+    this.currentLanguage = window.__preloadedLang || localStorage.getItem('preferredLanguage') || 'en';
+    this.translations = window.translations || {};
+    this.fallbackLanguage = 'en'; // English as fallback
+  }
+
+  setLanguage(lang) {
+    if (this.translations[lang]) {
+      this.currentLanguage = lang;
+      localStorage.setItem('preferredLanguage', lang);
+      
+      // Update FCM notification language on server
+      if (typeof window.updateFCMLanguage === 'function') {
+        window.updateFCMLanguage(lang);
+      }
+    } else {
+      console.warn(`Language ${lang} not found, falling back to ${this.fallbackLanguage}`);
+      this.currentLanguage = this.fallbackLanguage;
+      localStorage.setItem('preferredLanguage', this.fallbackLanguage);
+      
+      // Update FCM notification language on server
+      if (typeof window.updateFCMLanguage === 'function') {
+        window.updateFCMLanguage(this.fallbackLanguage);
+      }
+    }
+  }
+
+  getCurrentLanguage() {
+    return this.currentLanguage;
+  }
+
+  translate(key) {
+    // Try to get translation from current language
+    const translation = this.translations[this.currentLanguage];
+    if (translation && translation[key]) {
+      return translation[key];
+    }
+
+    // If not found, try from fallback language
+    const fallbackTranslation = this.translations[this.fallbackLanguage];
+    if (fallbackTranslation && fallbackTranslation[key]) {
+      return fallbackTranslation[key];
+    }
+
+    // If still not found, return the key itself
+    return key;
+  }
+}
+
+// ==================== LEADERBOARD FUNCTIONALITY ====================
+
+// Global variable to track current leaderboard period
+var currentLeaderboardPeriod = 'all';
+
+// Function to open leaderboard modal
+function openLeaderboardModal() {
+  const modal = document.getElementById('leaderboardModal');
+  if (modal) {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    
+    // 🔒 إعادة تعيين التحديد إلى "كل الوقت" عند فتح الـ modal
+    currentLeaderboardPeriod = 'all';
+    
+    // 🔒 إعادة تعيين الأزرار - تحديد "كل الوقت" فقط
+    const tabs = document.querySelectorAll('.leaderboard-tab');
+    tabs.forEach(tab => {
+      if (tab.getAttribute('data-period') === 'all') {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+    
+    // Load initial data
+    loadLeaderboardData('all');
+  }
+}
+
+// Function to close leaderboard modal
+function closeLeaderboardModal() {
+  const modal = document.getElementById('leaderboardModal');
+  if (modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = ''; // Restore scrolling
+  }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+  const modal = document.getElementById('leaderboardModal');
+  if (event.target === modal) {
+    closeLeaderboardModal();
+  }
+});
+
+// Close modal with ESC key
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeLeaderboardModal();
+  }
+});
+
+// Function to switch between leaderboard periods
+function switchLeaderboardPeriod(period) {
+  currentLeaderboardPeriod = period;
+  
+  // Update tab active states
+  const tabs = document.querySelectorAll('.leaderboard-tab');
+  tabs.forEach(tab => {
+    if (tab.getAttribute('data-period') === period) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+  
+  // Load data for selected period
+  loadLeaderboardData(period);
+}
+
+// Function to load leaderboard data
+async function loadLeaderboardData(period) {
+  const listContainer = document.getElementById('leaderboardList');
+  const loadingEl = document.getElementById('leaderboardLoading');
+  const emptyEl = document.getElementById('leaderboardEmpty');
+  
+  if (!listContainer) return;
+  
+  // 🔒 إخفاء "No data available" فوراً دائماً في البداية
+  emptyEl.style.display = 'none';
+  
+  // Show loading state
+  loadingEl.style.display = 'block';
+  
+  // Remove existing items
+  const existingItems = listContainer.querySelectorAll('.leaderboard-item');
+  existingItems.forEach(item => item.remove());
+  
+  try {
+    // Fetch leaderboard data from server
+    const response = await fetch(`/api/leaderboard?period=${period}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch leaderboard data');
+    }
+    
+    const data = await response.json();
+    
+    // Hide loading
+    loadingEl.style.display = 'none';
+    
+    // 🔒 حذف جميع العناصر القديمة مرة أخرى قبل الإضافة (للتأكد)
+    const oldItems = listContainer.querySelectorAll('.leaderboard-item');
+    oldItems.forEach(item => item.remove());
+    
+    // 🔒 إخفاء "No data available" فوراً (للتأكد التام)
+    emptyEl.style.display = 'none';
+    
+    if (!data.leaderboard || data.leaderboard.length === 0) {
+      // Show empty state ONLY if truly no data
+      emptyEl.style.display = 'block';
+      return;
+    }
+    
+    // Render leaderboard items
+    data.leaderboard.forEach((user, index) => {
+      const rank = index + 1;
+      const item = createLeaderboardItem(rank, user);
+      listContainer.appendChild(item);
+    });
+    
+    // 🔒 إخفاء نهائي بعد عرض البيانات
+    emptyEl.style.display = 'none';
+    
+  } catch (error) {
+    console.error('Error loading leaderboard:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // Hide loading
+    loadingEl.style.display = 'none';
+    
+    // 🔒 في حالة الخطأ فقط، تحقق إذا هناك بيانات موجودة
+    const existingData = listContainer.querySelectorAll('.leaderboard-item');
+    if (existingData.length === 0) {
+      // Show empty state with error message ONLY if no data displayed
+      emptyEl.style.display = 'block';
+      const emptyText = emptyEl.querySelector('p');
+      if (emptyText) {
+        emptyText.textContent = 'Error loading leaderboard. Please try again.';
+        emptyText.setAttribute('data-translate', 'Error loading leaderboard. Please try again.');
+      }
+    }
+  }
+}
+
+// Function to create a leaderboard item element - 3 Column Layout
+function createLeaderboardItem(rank, user) {
+  const item = document.createElement('div');
+  item.className = 'leaderboard-item';
+  
+  // Column 1: Rank badge (circle)
+  const rankEl = document.createElement('div');
+  rankEl.className = 'leaderboard-rank';
+  rankEl.textContent = rank;
+  rankEl.setAttribute('data-testid', `rank-${rank}`);
+  
+  // Column 2: White capsule with username + invites
+  const userInvitesCapsule = document.createElement('div');
+  userInvitesCapsule.className = 'leaderboard-user-invites';
+  
+  // User info (avatar + username) - left side
+  const userEl = document.createElement('div');
+  userEl.className = 'leaderboard-user';
+  
+  const defaultAvatarLeaderboard = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2M2YzZjNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTIiIHI9IjciIGZpbGw9IiNmZmYiLz48cGF0aCBkPSJNMTAgMzBjMC01IDQtOCAxMC04czEwIDMgMTAgOHYxYzAgMS0xIDItMiAyaC0xNmMtMSAwLTIgLTEtMi0ydi0xeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+  const avatar = document.createElement('img');
+  avatar.className = 'leaderboard-avatar';
+  avatar.src = user.profileImage || user.avatar || defaultAvatarLeaderboard;
+  avatar.alt = user.username || user.email;
+  avatar.onerror = function() {
+    this.src = defaultAvatarLeaderboard;
+  };
+  
+  const username = document.createElement('div');
+  username.className = 'leaderboard-username';
+  username.textContent = user.username || user.email || 'Anonymous';
+  username.setAttribute('data-testid', `username-${rank}`);
+  
+  userEl.appendChild(avatar);
+  userEl.appendChild(username);
+  
+  // Invites count - right side
+  const invitesEl = document.createElement('div');
+  invitesEl.className = 'leaderboard-invites';
+  invitesEl.textContent = user.referralCount || 0;
+  invitesEl.setAttribute('data-testid', `invites-${rank}`);
+  
+  userInvitesCapsule.appendChild(userEl);
+  userInvitesCapsule.appendChild(invitesEl);
+  
+  // Column 3: Rewards
+  const rewardsEl = document.createElement('div');
+  rewardsEl.className = 'leaderboard-rewards';
+  const rewardAmount = user.referralRewards || 0;
+  const formattedReward = rewardAmount.toFixed(2);
+  rewardsEl.innerHTML = `<span class="reward-amount">${formattedReward}</span><img src="access-logo-1ipfs.png" class="reward-logo" alt="ACCESS" />`;
+  rewardsEl.setAttribute('data-testid', `rewards-${rank}`);
+  
+  // Append all 3 columns: [Rank] [White Capsule] [Rewards]
+  item.appendChild(rankEl);
+  item.appendChild(userInvitesCapsule);
+  item.appendChild(rewardsEl);
+  
+  return item;
+}
+
+// Helper function formatNumberSmart is defined at line 202 - no need to redefine here
+
+// Navigate to address details page with the wallet address
+function viewDashboardAddress() {
+  const addressElement = document.getElementById('dashboard-account-address');
+  if (!addressElement) return;
+
+  let fullAddress = addressElement.getAttribute('data-full-address');
+  
+  // If no data attribute, try to get from network page or current user
+  if (!fullAddress) {
+    const networkWalletElement = document.getElementById('user-account-address');
+    if (networkWalletElement && networkWalletElement.textContent && 
+        networkWalletElement.textContent !== 'Generating...' && 
+        networkWalletElement.textContent !== 'Error generating wallet') {
+      fullAddress = networkWalletElement.textContent;
+    } else if (currentUser && currentUser.wallet && currentUser.wallet.publicAddress) {
+      fullAddress = currentUser.wallet.publicAddress;
+    } else if (currentUser && currentUser.wallet_address) {
+      fullAddress = currentUser.wallet_address;
+    }
+  }
+
+  if (fullAddress && fullAddress.length > 10) {
+    // Navigate to address-details.html with the address as a query parameter
+    window.location.href = `address-details.html?address=${encodeURIComponent(fullAddress)}`;
+  } else {
+    console.error('No valid wallet address found');
+    if (typeof showNotification === 'function') {
+      showNotification(translator.translate('Wallet address not available'), 'error');
+    }
+  }
+}
+
+// Make functions globally accessible
+window.openLeaderboardModal = openLeaderboardModal;
+window.closeLeaderboardModal = closeLeaderboardModal;
+window.switchLeaderboardPeriod = switchLeaderboardPeriod;
+window.loadLeaderboardData = loadLeaderboardData;
+window.viewDashboardAddress = viewDashboardAddress;
+
+// ✅ إعادة تهيئة Google Identity Services بعد تحميل script.js
+// هذا يضمن أن handleGoogleSignIn متاحة عند التهيئة
+(function reinitializeGoogleIdentityServices() {
+  if (typeof google !== 'undefined' && google.accounts && google.accounts.id && window.GOOGLE_CLIENT_ID) {
+    console.log('🔄 Re-initializing Google Identity Services with proper callback...');
+    google.accounts.id.initialize({
+      client_id: window.GOOGLE_CLIENT_ID,
+      callback: window.handleGoogleSignIn,
+      auto_select: false,
+      cancel_on_tap_outside: false,
+      use_fedcm_for_prompt: false,
+      context: 'signin',
+      ux_mode: 'popup'
+    });
+    console.log('✅ Google Identity Services re-initialized with handleGoogleSignIn callback');
+  } else {
+    // إذا لم يكن Google جاهزاً، انتظر
+    console.log('⏳ Waiting for Google Identity Services...');
+    setTimeout(reinitializeGoogleIdentityServices, 500);
+  }
+})();

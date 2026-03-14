@@ -883,12 +883,12 @@
 /* Referral Widget - شريط الإحالات العمودي بسيط */
 #dashboard-page .referral-widget {
   position: absolute;
-  margin-top: -10px !important;
+  margin-top: -3px !important;
   right: 0px;
   
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 7px;
   padding: 8px 0px;
   z-index: 1 !important;
 
@@ -1316,6 +1316,25 @@
     );
   }
 
+  .dashboard-activity-timer::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: -21%;
+    left: calc(50% - 2px);
+    width: 4px;
+    height: 71%;
+    background: var(--background-color, #f7fafc);
+    z-index: 1;
+    pointer-events: none;
+    transform-origin: bottom center;
+    transform: rotate(-45deg);
+  }
+
+  .dark-theme .dashboard-activity-timer::after {
+    background: var(--background-color, #252525);
+  }
+
   .dark-theme .dashboard-activity-timer::before {
     background: var(--card-background);
     border: 1px solid var(--border-color);
@@ -1578,7 +1597,7 @@
 .primary-action-buttons {
   display: flex;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   justify-content: center;
   flex-wrap: wrap;
   z-index: 2 !important;
@@ -1770,11 +1789,17 @@ html[dir="rtl"] .action-button,
   }
 
   .secondary-action-buttons {
-    gap: 1.5%;
-    justify-content: space-between;
-    flex-wrap: nowrap;
+    display: grid;
     width: 100% !important;
+    padding: 0 1px;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    column-gap: 4px;
   }
+
+  .secondary-button:nth-child(1) { grid-column: 1; }
+  .secondary-button:nth-child(2) { grid-column: 2; }
+  .secondary-button:nth-child(3) { grid-column: 3; }
+  .secondary-button:nth-child(4) { grid-column: 4; }
 
   .secondary-button {
     flex: 1;
@@ -1894,7 +1919,7 @@ font-size: 1rem !important;
       display: flex;
       justify-content: left !important;
       align-items: left !important;
-      margin-bottom: 20px !important;
+      margin-bottom: 5px !important;
        position: relative; 
       
      
@@ -2937,6 +2962,20 @@ html[lang="ar"] .wallet-header h3 {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.timer-access-logo {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .timer-access-logo {
+    display: block;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    border-radius: 50%;
+  }
 }
 
 @media (max-width: 768px) {
