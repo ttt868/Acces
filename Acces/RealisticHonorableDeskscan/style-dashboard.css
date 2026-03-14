@@ -1466,6 +1466,7 @@
     position: relative;
     width: fit-content;
     margin-left: auto;
+    margin-right: 3px;
   }
 
   .dashboard-countdown {
