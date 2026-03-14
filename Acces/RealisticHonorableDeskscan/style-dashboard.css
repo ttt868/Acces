@@ -2940,39 +2940,6 @@ html[lang="ar"] .wallet-header h3 {
   }
 }
 
-/* Dashboard Social Icons - Timer Card */
-.dashboard-social-icons {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .dashboard-social-icons {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    position: absolute;
-    top: 6px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 20;
-  }
-
-  .dashboard-social-icons .social-media-btn {
-    width: 32px;
-    height: 32px;
-  }
-
-  .dashboard-social-icons .x-btn svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .dashboard-social-icons .telegram-btn svg {
-    width: 32px;
-    height: 32px;
-  }
-}
-
 html[dir="rtl"] .dashboard-timer-header,
 html[lang="ar"] .dashboard-timer-header {
   flex-direction: row;

@@ -2848,42 +2848,96 @@ html[lang="ar"] .wallet-header h3 {
   }
 
 
-/* Dashboard Social Icons - Timer Card */
-.dashboard-social-icons {
+/* ============================================= */
+/* RTL Support for Arabic - Dashboard Timer */
+/* ============================================= */
+/* Dashboard Boost Button - Mobile Only */
+.dashboard-boost-btn {
+  display: none;
+}
+
+.dashboard-timer-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-boost-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    font-family: 'Poppins', 'Inter', sans-serif;
+    white-space: nowrap;
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    z-index: 20;
+  }
+
+  .dashboard-boost-btn i {
+    font-size: 13px;
+  }
+
+  .dashboard-boost-btn:active {
+    opacity: 0.85;
+  }
+}
+
+/* Session AC Earned - Below Countdown */
+.dashboard-session-earned {
   display: none;
 }
 
 @media (max-width: 768px) {
-  .dashboard-social-icons {
+  .dashboard-session-earned {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    gap: 4px;
+    font-family: 'Inter', -apple-system, sans-serif;
     position: absolute;
-    top: 6px;
+    bottom: -14px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 20;
+    white-space: nowrap;
   }
 
-  .dashboard-social-icons .social-media-btn {
-    width: 32px;
-    height: 32px;
+  .session-earned-value {
+    font-size: 11px;
+    font-weight: 700;
+    color: #10b981;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
   }
 
-  .dashboard-social-icons .x-btn svg {
-    width: 16px;
-    height: 16px;
+  .session-earned-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #10b981;
+    opacity: 0.6;
+    line-height: 1;
   }
 
-  .dashboard-social-icons .telegram-btn svg {
-    width: 32px;
-    height: 32px;
+  /* Dark theme */
+  .dark-theme .session-earned-value {
+    color: #34d399;
+  }
+
+  .dark-theme .session-earned-label {
+    color: #34d399;
   }
 }
 
-/* ============================================= */
-/* RTL Support for Arabic - Dashboard Timer */
-/* ============================================= */
 html[dir="rtl"] .dashboard-timer-header,
 html[lang="ar"] .dashboard-timer-header {
   flex-direction: row;

@@ -6925,6 +6925,9 @@ function startGradualAccumulation() {
           currentUser.processing_remaining_seconds = remainingSeconds;
           currentUser.processing_end_time = data.processing_end_time;
           currentUser.processing_start_time = data.processing_start_time;
+          if (data.processing_start_time && !currentUser.processing_start_time_seconds) {
+            currentUser.processing_start_time_seconds = Math.floor(new Date(data.processing_start_time).getTime() / 1000);
+          }
           saveUserSession(currentUser);
           
           //  
@@ -6979,6 +6982,37 @@ function startGradualAccumulation() {
     }
   }
 
+  // Update dashboard session earned display independently
+  function updateDashboardSessionEarned() {
+    const sessionEarnedEl = document.getElementById('session-earned-value');
+    if (!sessionEarnedEl) return;
+    if (!currentUser || currentUser.processing_active !== 1) return;
+
+    const startTimeSec = Math.floor(
+      currentUser.processing_start_time_seconds ||
+      (currentUser.processing_start_time ? new Date(currentUser.processing_start_time).getTime() / 1000 : 0)
+    );
+    if (!startTimeSec) return;
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    const elapsed = Math.max(0, nowSec - startTimeSec);
+    const duration = 86400;
+    const baseReward = window.serverBaseReward || 0.25;
+    const multiplier = (window.localBoostData && window.localBoostData.multiplier) || 1.0;
+    const boostedReward = baseReward * multiplier;
+
+    let accumulated;
+    if (elapsed >= duration) {
+      accumulated = boostedReward;
+    } else {
+      accumulated = (boostedReward / duration) * elapsed;
+    }
+
+    if (accumulated > 0) {
+      sessionEarnedEl.textContent = '+' + formatNumberSmart(accumulated);
+    }
+  }
+
   // Start dashboard countdown independently
   function startDashboardCountdown(initialSeconds) {
     // Clear any existing dashboard interval
@@ -6993,6 +7027,7 @@ function startGradualAccumulation() {
 
     // Update immediately
     updateDashboardProcessingTimer(remainingSeconds);
+    updateDashboardSessionEarned();
     
     // Start interval to update every second
     window.dashboardInterval = setInterval(async () => {
@@ -7000,6 +7035,7 @@ function startGradualAccumulation() {
       
       // Update dashboard displays
       updateDashboardProcessingTimer(remainingSeconds);
+      updateDashboardSessionEarned();
      
       
       // Update hashrate display every 5 seconds (same as processing page)
