@@ -1464,8 +1464,9 @@
   /* هاتف فقط: العداد يمين */
   .dashboard-timer-display {
     position: relative;
-    align-items: flex-end;
-    padding-right: 8px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: 8px;
   }
 
   .dashboard-countdown {
