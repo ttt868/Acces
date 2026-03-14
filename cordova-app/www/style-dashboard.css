@@ -1276,6 +1276,53 @@
   display: none;
 }
 
+/* خط مائل أنيق يقسم بطاقة العداد - قطع حقيقي مع بقاء المحتوى */
+@media (max-width: 768px) {
+  .dashboard-activity-timer {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .dashboard-activity-timer::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 12px;
+    z-index: -1;
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    -webkit-mask-image: linear-gradient(
+      135deg,
+      black calc(50% - 2px),
+      transparent calc(50% - 2px),
+      transparent calc(50% + 2px),
+      black calc(50% + 2px)
+    );
+    mask-image: linear-gradient(
+      135deg,
+      black calc(50% - 2px),
+      transparent calc(50% - 2px),
+      transparent calc(50% + 2px),
+      black calc(50% + 2px)
+    );
+  }
+
+  .dark-theme .dashboard-activity-timer::before {
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+}
+
 .dashboard-activity-timer:hover {
   transform: translateY();
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
@@ -1292,6 +1339,31 @@
 
 .dashboard-timer-title {
   display: none;
+}
+
+@media (max-width: 768px) {
+  .dashboard-timer-title {
+    display: inline-block;
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(calc(-50% - 2px));
+    z-index: 15;
+    font-size: 11px;
+    font-weight: 700;
+    color: #000000;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    font-family: 'Poppins', 'Inter', sans-serif;
+  }
+
+  .dashboard-timer-title .timer-bolt-icon {
+    position: absolute;
+    right: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
 }
 
 /* Timer bolt icon - normal state */

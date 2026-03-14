@@ -91,7 +91,7 @@
   <link rel="canonical" href="https://accesschain.org">
   
   <link href="style.css" rel="stylesheet" type="text/css" />
-  <link rel="stylesheet" href="style-dashboard.css">
+  <link rel="stylesheet" href="style-dashboard.css?v=20260314a">
   <link rel="stylesheet" href="style-missions.css?v=13.9">
    <link rel="stylesheet" href="profile-style.css">
    <link rel="stylesheet" href="network-style.css?v=20260311q">
@@ -1206,7 +1206,6 @@ document.addEventListener('balanceUpdated', function(event) {
               </button>
 
               <div class="dashboard-timer-header">
-                <span class="dashboard-timer-title"><span data-translate="Timer">Timer</span> <i class="fas fa-bolt timer-bolt-icon"></i></span>
                 <div class="dashboard-timer-header-right">
                   <div id="dashboard-hashrate-display" class="dashboard-hashrate-display" style="display: flex; visibility: visible; opacity: 1;">
                     <span class="hashrate-label">XP/s</span>
@@ -1230,6 +1229,7 @@ document.addEventListener('balanceUpdated', function(event) {
                       <div class="pendulum-weight"></div>
                     </div>
                   </div>
+                  <span class="dashboard-timer-title"><span data-translate="Timer">Timer</span> <i class="fas fa-bolt timer-bolt-icon"></i></span>
                   <div class="dashboard-countdown" id="dashboard-countdown-display">00:00:00</div>
                   <div class="dashboard-session-earned" id="dashboard-session-earned">
                     <span class="session-earned-value" id="session-earned-value">+0.0</span>
