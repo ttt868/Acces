@@ -10,7 +10,7 @@
 .stat-card {
   background: var(--card-background);
   background-image: var(--glass-gradient);
-  border-radius: 20px;
+  border-radius: 16px;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(20px);
@@ -761,6 +761,11 @@
 .stat-card:hover {
   transform: none !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Force same border-radius for both cards in profile */
+#profile-page .stat-card {
+  border-radius: 8px !important;
 }
 
 .stat-icons .share-links {
