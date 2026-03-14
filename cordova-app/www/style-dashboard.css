@@ -1344,6 +1344,7 @@
   font-weight: 800;
   color: var(--text-color);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 1px;
   line-height: 1;
   text-align: center;
@@ -1464,7 +1465,7 @@
     position: relative;
     width: fit-content;
     margin-left: auto;
-    margin-right: 10px;
+    margin-right: 8px;
   }
 
   .dashboard-countdown {
