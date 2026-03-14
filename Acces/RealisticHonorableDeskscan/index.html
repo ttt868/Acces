@@ -1199,20 +1199,6 @@ document.addEventListener('balanceUpdated', function(event) {
 
               <!-- العداد فقط -->
               <div class="dashboard-activity-timer" id="dashboard-activity-timer" style="display: block; visibility: visible; opacity: 1;">
-              <!-- ساعة الرقاص الجميلة -->
-              <div class="pendulum-clock">
-                <div class="clock-body">
-                  <div class="clock-face">
-                    <div class="clock-hands">
-                      <div class="hour-hand"></div>
-                      <div class="minute-hand"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="pendulum">
-                  <div class="pendulum-weight"></div>
-                </div>
-              </div>
 
               <div class="dashboard-timer-header">
                 <span class="dashboard-timer-title"><span data-translate="Timer">Timer</span> <i class="fas fa-bolt timer-bolt-icon"></i></span>
@@ -1223,7 +1209,21 @@ document.addEventListener('balanceUpdated', function(event) {
               </div>
 
               <div class="dashboard-timer-display">
-                <div class="dashboard-countdown" id="dashboard-countdown-display">00:00:00</div>
+                  <!-- ساعة الرقاص الجميلة -->
+                  <div class="pendulum-clock">
+                    <div class="clock-body">
+                      <div class="clock-face">
+                        <div class="clock-hands">
+                          <div class="hour-hand"></div>
+                          <div class="minute-hand"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="pendulum">
+                      <div class="pendulum-weight"></div>
+                    </div>
+                  </div>
+                  <div class="dashboard-countdown" id="dashboard-countdown-display">00:00:00</div>
                 <div class="dashboard-timer-status" id="dashboard-timer-status" data-translate="Not Active" style="display: none;">Not Active</div>
               </div>
             </div>
