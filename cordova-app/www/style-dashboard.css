@@ -1345,6 +1345,7 @@
   color: var(--text-color);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
   letter-spacing: 1px;
   line-height: 1;
   text-align: center;
@@ -1352,7 +1353,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  transition: all 0.3s ease;
+  transition: color 0.3s ease, background 0.3s ease;
 
 }
 
@@ -1463,13 +1464,13 @@
   /* هاتف فقط: العداد يمين */
   .dashboard-timer-display {
     position: relative;
-    width: fit-content;
-    margin-left: auto;
-    margin-right: 8px;
+    align-items: flex-end;
+    padding-right: 8px;
   }
 
   .dashboard-countdown {
     text-align: right;
+    min-width: 200px;
   }
 
   /* هاتف فقط: الرقاص يتوسط فوق الأرقام تلقائياً */
