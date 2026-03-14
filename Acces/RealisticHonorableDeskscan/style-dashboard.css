@@ -2903,12 +2903,15 @@ html[lang="ar"] .wallet-header h3 {
   .dashboard-session-earned {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
     font-family: 'Inter', -apple-system, sans-serif;
     position: absolute;
-    bottom: 4px;
-    right: 8px;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 20;
+    white-space: nowrap;
   }
 
   .session-earned-value {
@@ -2934,6 +2937,39 @@ html[lang="ar"] .wallet-header h3 {
 
   .dark-theme .session-earned-label {
     color: #34d399;
+  }
+}
+
+/* Dashboard Social Icons - Timer Card */
+.dashboard-social-icons {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .dashboard-social-icons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+  }
+
+  .dashboard-social-icons .social-media-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .dashboard-social-icons .x-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .dashboard-social-icons .telegram-btn svg {
+    width: 32px;
+    height: 32px;
   }
 }
 
