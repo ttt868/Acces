@@ -9095,7 +9095,13 @@ function initializeGoogleSignIn() {
 
     // Always display the actual user coins from database in the wallet balance
     if (walletBalance && currentUser.coins !== undefined) {
-      walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
+      const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+      if (!isBalanceHidden) {
+        walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
+      } else {
+        walletBalance.textContent = '••••••••';
+        walletBalance.classList.add('balance-hidden');
+      }
     }
 
     // QR container — static HTML handles display, no spinner needed
@@ -9159,7 +9165,10 @@ function initializeGoogleSignIn() {
           walletAddress.textContent = wallet.publicAddress;
         }
         if (walletBalance) {
-          walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
+          const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+          if (!isBalanceHidden) {
+            walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
+          }
         }
 
         // Generate QR code immediately with the address we just set
@@ -9219,7 +9228,10 @@ function initializeGoogleSignIn() {
         }, 100);
       }
       if (walletBalance) {
-        walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
+        const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+        if (!isBalanceHidden) {
+          walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
+        }
       }
 
       // Store in current user object
@@ -10471,7 +10483,10 @@ window.copyAccountAddress = function() {
             }
 
             if (walletBalance) {
-              walletBalance.textContent = formatNumberSmart(parseFloat(importedWallet.balance));
+              const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+              if (!isBalanceHidden) {
+                walletBalance.textContent = formatNumberSmart(parseFloat(importedWallet.balance));
+              }
             }
 
             // Update main UI coins display if available
@@ -10532,7 +10547,10 @@ window.copyAccountAddress = function() {
             }
 
             if (walletBalance) {
-              walletBalance.textContent = formatNumberSmart(parseFloat(importedWallet.balance));
+              const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+              if (!isBalanceHidden) {
+                walletBalance.textContent = formatNumberSmart(parseFloat(importedWallet.balance));
+              }
             }
 
             // Update transaction list
@@ -12136,7 +12154,10 @@ if (totalCost > (currentBalance + precision)) {
       // Update UI to display database balance
       const walletBalance = document.getElementById('network-coins');
       if (walletBalance) {
-        walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
+        const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+        if (!isBalanceHidden) {
+          walletBalance.textContent = formatNumberSmart(parseFloat(currentUser.coins));
+        }
       }
 
       // If wallet exists, ensure its balance matches database
