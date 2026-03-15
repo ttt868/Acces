@@ -4714,7 +4714,6 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
                 const retryData = await retryResp.json();
                 if (retryResp.ok && retryData.success) {
                   showNotification(translator.translate('Point processing started successfully!'), 'success');
-                  localStorage.setItem('dashboard_session_earned', '0');
                   currentUser.processing_active = 1;
                   currentUser.processing_end_time = Date.now() + (retryData.remaining_seconds * 1000);
                   currentUser.processing_start_time_seconds = Math.floor(Date.now() / 1000);
@@ -4768,7 +4767,6 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
               }
               
               // ✅ تصفير العرض فوراً قبل أي شيء آخر
-              localStorage.setItem('dashboard_session_earned', '0');
               const accumulatedCoinsEl = document.getElementById('accumulated-coins');
               if (accumulatedCoinsEl) {
                 accumulatedCoinsEl.textContent = formatNumberSmart(0);
@@ -5709,7 +5707,6 @@ function startGradualAccumulation() {
     const sessionEarnedEl = document.getElementById('session-earned-value');
     if (sessionEarnedEl && calculatedAccumulated > 0) {
       sessionEarnedEl.textContent = '+' + formatNumberSmart(calculatedAccumulated);
-      localStorage.setItem('dashboard_session_earned', calculatedAccumulated.toString());
     }
 
     // ✅ تحديث hashrate في Activity و Dashboard معاً
@@ -6711,12 +6708,12 @@ function startGradualAccumulation() {
       dashboardCountdownDisplay.textContent = '00:00:00';
       dashboardTimerStatus.textContent = translator.translate('Not Active');
       
-      // Show saved session earned instead of resetting
+      // عرض آخر قيمة مجمعة من بيانات المستخدم
       const sessionEarnedEl = document.getElementById('session-earned-value');
       if (sessionEarnedEl) {
-        const saved = localStorage.getItem('dashboard_session_earned');
-        if (saved && parseFloat(saved) > 0) {
-          sessionEarnedEl.textContent = '+' + formatNumberSmart(parseFloat(saved));
+        const lastAccumulated = parseFloat(currentUser?.processing_accumulated || currentUser?.accumulatedReward || 0);
+        if (lastAccumulated > 0) {
+          sessionEarnedEl.textContent = '+' + formatNumberSmart(lastAccumulated);
         } else {
           sessionEarnedEl.textContent = '+0.0';
         }
@@ -6917,11 +6914,11 @@ function startGradualAccumulation() {
     const sessionEarnedEl = document.getElementById('session-earned-value');
     if (!sessionEarnedEl) return;
     
-    // إذا لا يوجد مستخدم نشط، اعرض القيمة المحفوظة
+    // إذا لا يوجد مستخدم نشط، اعرض آخر قيمة مجمعة
     if (!currentUser || currentUser.processing_active !== 1) {
-      const saved = localStorage.getItem('dashboard_session_earned');
-      if (saved && parseFloat(saved) > 0) {
-        sessionEarnedEl.textContent = '+' + formatNumberSmart(parseFloat(saved));
+      const lastAccumulated = parseFloat(currentUser?.processing_accumulated || currentUser?.accumulatedReward || 0);
+      if (lastAccumulated > 0) {
+        sessionEarnedEl.textContent = '+' + formatNumberSmart(lastAccumulated);
       }
       return;
     }
@@ -6948,7 +6945,6 @@ function startGradualAccumulation() {
 
     if (accumulated > 0) {
       sessionEarnedEl.textContent = '+' + formatNumberSmart(accumulated);
-      localStorage.setItem('dashboard_session_earned', accumulated.toString());
     }
   }
 
