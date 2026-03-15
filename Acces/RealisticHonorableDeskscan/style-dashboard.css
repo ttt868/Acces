@@ -1327,27 +1327,11 @@
     border-radius: 12px;
     z-index: 0;
     pointer-events: none;
-    background: conic-gradient(
-      from 0deg at 50% 50%,
-      var(--background-color, #f7fafc) 0deg,
-      var(--background-color, #f7fafc) 44deg,
-      transparent 46deg,
-      transparent 314deg,
-      var(--background-color, #f7fafc) 316deg,
-      var(--background-color, #f7fafc) 360deg
-    );
+    background: transparent;
   }
 
   .dark-theme .dashboard-activity-timer::after {
-    background: conic-gradient(
-      from 0deg at 50% 50%,
-      var(--background-color, #252525) 0deg,
-      var(--background-color, #252525) 44deg,
-      transparent 46deg,
-      transparent 314deg,
-      var(--background-color, #252525) 316deg,
-      var(--background-color, #252525) 360deg
-    );
+    background: transparent;
   }
 
   .dark-theme .dashboard-activity-timer::before {
