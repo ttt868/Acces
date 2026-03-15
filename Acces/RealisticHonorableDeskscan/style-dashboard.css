@@ -2996,10 +2996,11 @@ html[lang="ar"] .wallet-header h3 {
 
   .timer-access-logo {
     display: block;
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     object-fit: contain;
     border-radius: 50%;
+    margin-right: 2px;
   }
 
   .timer-triangle-pulse {
