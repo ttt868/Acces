@@ -3001,7 +3001,7 @@ html[lang="ar"] .wallet-header h3 {
     object-fit: contain;
     border-radius: 50%;
     position: absolute;
-    right: 4px;
+    right: 8px;
     top: 50%;
     transform: translateY(-50%);
   }
