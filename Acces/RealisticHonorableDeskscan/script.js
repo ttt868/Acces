@@ -6909,12 +6909,12 @@ function startGradualAccumulation() {
     }
   }
 
-  // Update dashboard session earned display independently (visual mirror of accumulated)
+  // Update dashboard session earned display (visual mirror of accumulated-coins)
   function updateDashboardSessionEarned() {
     const sessionEarnedEl = document.getElementById('session-earned-value');
     if (!sessionEarnedEl) return;
     
-    // إذا لا يوجد مستخدم نشط، اعرض آخر قيمة مجمعة
+    // إذا لا يوجد مستخدم نشط، اعرض آخر قيمة مجمعة من بيانات المستخدم
     if (!currentUser || currentUser.processing_active !== 1) {
       const lastAccumulated = parseFloat(currentUser?.processing_accumulated || currentUser?.accumulatedReward || 0);
       if (lastAccumulated > 0) {
@@ -6923,28 +6923,13 @@ function startGradualAccumulation() {
       return;
     }
 
-    const startTimeSec = Math.floor(
-      currentUser.processing_start_time_seconds ||
-      (currentUser.processing_start_time ? new Date(currentUser.processing_start_time).getTime() / 1000 : 0)
-    );
-    if (!startTimeSec) return;
-
-    const nowSec = Math.floor(Date.now() / 1000);
-    const elapsed = Math.max(0, nowSec - startTimeSec);
-    const duration = 86400;
-    const baseReward = window.serverBaseReward || 0.25;
-    const multiplier = (window.localBoostData && window.localBoostData.multiplier) || 1.0;
-    const boostedReward = baseReward * multiplier;
-
-    let accumulated;
-    if (elapsed >= duration) {
-      accumulated = boostedReward;
-    } else {
-      accumulated = (boostedReward / duration) * elapsed;
-    }
-
-    if (accumulated > 0) {
-      sessionEarnedEl.textContent = '+' + formatNumberSmart(accumulated);
+    // ✅ نسخة مرئية فقط: نقرأ القيمة مباشرة من accumulated-coins (يحدثه calculateAndDisplayLocally)
+    const accumulatedCoinsEl = document.getElementById('accumulated-coins');
+    if (accumulatedCoinsEl) {
+      const val = accumulatedCoinsEl.textContent;
+      if (val && val !== '0' && val !== '0.0') {
+        sessionEarnedEl.textContent = '+' + val;
+      }
     }
   }
 
