@@ -5619,14 +5619,16 @@ input[type="number"],
     width: 94% !important;
   }
   #ad-boost-modal .modal-buttons {
-    flex-direction: column !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
     gap: 8px !important;
   }
   #ad-boost-modal #watch-ad-button,
   #ad-boost-modal #close-ad-modal-button {
     padding: 10px 16px !important;
     font-size: 14px !important;
-    width: 100% !important;
+    width: auto !important;
+    white-space: nowrap !important;
   }
   #ad-boost-modal #ad-boost-message h3 {
     font-size: 1.1rem !important;
