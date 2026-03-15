@@ -1396,7 +1396,22 @@
   padding: 0 2px;
 }
 
+.countdown-with-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
 
+.countdown-with-label .dashboard-timer-title {
+  font-size: clamp(11px, 2.5vw, 13px);
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  flex-shrink: 0;
+}
 
 .dashboard-countdown {
   font-size: clamp(28px, 7vw, 38px);
@@ -1414,7 +1429,6 @@
   background-clip: text;
   transition: color 0.3s ease, background 0.3s ease;
   padding: 8px 0 6px;
-  width: 100%;
 }
 
 .dashboard-timer-status {
