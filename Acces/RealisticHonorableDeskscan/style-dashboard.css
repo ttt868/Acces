@@ -1788,7 +1788,7 @@ html[dir="rtl"] .action-button,
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .dashboard-action-buttons {
-    margin: 0 auto;
+    margin: -1.5vh auto 0;
     width: 100% !important;
     max-width: 100% !important;
     padding: 0;
@@ -1800,7 +1800,7 @@ html[dir="rtl"] .action-button,
 
   .primary-action-buttons {
     gap: 2%;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
