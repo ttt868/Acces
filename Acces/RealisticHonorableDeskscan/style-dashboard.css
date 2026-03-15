@@ -2710,8 +2710,8 @@ html[lang="ar"] .wallet-header h3 {
   #dashboard-page .wallet-icon {
     display: inline-flex;
     font-size: 12px;
-    color: #6366f1;
-    opacity: 0.6;
+    color: inherit;
+    opacity: 0.8;
   }
 
 #dashboard-page .wallet-icon:hover {
@@ -3040,10 +3040,11 @@ html[lang="ar"] .dashboard-timer-header {
 
 /* Global: balance chart icon styling */
 .balance-chart-icon {
-  opacity: 0.5;
+  color: inherit;
+  opacity: 0.8;
 }
 #dashboard-page .wallet-icon {
   font-size: 12px;
-  color: #6366f1;
-  opacity: 0.6;
+  color: inherit;
+  opacity: 0.8;
 }
