@@ -3000,7 +3000,10 @@ html[lang="ar"] .wallet-header h3 {
     height: 30px;
     object-fit: contain;
     border-radius: 50%;
-    margin-right: 3px;
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   .timer-triangle-pulse {
