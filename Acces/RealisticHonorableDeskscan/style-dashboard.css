@@ -1552,7 +1552,7 @@
     width: 100%;
     max-width: 100vw;
     top: -20px;
-    margin-bottom: 2vh;
+    margin-bottom: 0;
     transition: none;
   }
 
@@ -1609,7 +1609,7 @@
   }
 
   .dashboard-action-buttons {
-    margin: 0 auto;
+    margin: -2vh auto 0;
     width: 100% !important;
     max-width: 100% !important;
     padding: 0;
@@ -1789,7 +1789,6 @@ html[dir="rtl"] .action-button,
 @media (max-width: 768px) {
   .dashboard-action-buttons {
     margin: 0 auto;
-    padding: 0 2.5%;
     width: 100% !important;
     max-width: 100% !important;
     padding: 0;
@@ -1797,10 +1796,7 @@ html[dir="rtl"] .action-button,
     left: 50%;
     transform: translateX(-50%);
     top: 0;
-    
   }
-
-
 
   .primary-action-buttons {
     gap: 2%;
@@ -1811,10 +1807,39 @@ html[dir="rtl"] .action-button,
     width: 100%;
   }
 
+  .action-button {
+    flex: 1;
+    max-width: 49% !important;
+    min-width: 48%;
+    padding: clamp(8px, 2.5vw, 14px) clamp(8px, 3vw, 20px);
+    font-size: clamp(11px, 3vw, 13px);
+    font-weight: 600;
+    justify-content: center;
+    border-radius: 10px !important;
+    gap: 6px;
+    background: #667eea;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    font-family: 'Poppins', 'Inter', sans-serif;
+    box-shadow: none;
+    cursor: pointer;
+    transition: none;
+  }
+
+  .action-button:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .action-button:active {
+    transform: none;
+    opacity: 0.85;
+  }
 
   .action-button i {
-    font-size: 0.7rem;
-    margin-right: 2px;
+    font-size: clamp(11px, 3vw, 14px);
   }
 
   .secondary-action-buttons {
@@ -1834,83 +1859,17 @@ html[dir="rtl"] .action-button,
     flex: 1;
     min-width: 22%;
     max-width: 100% !important;
-    padding: 8px 1vw;
+    padding: clamp(5px, 2vw, 10px) clamp(2px, 1vw, 8px);
     border-radius: 10px !important;
   }
 
-
   .secondary-button i {
-    font-size: 1rem;
+    font-size: clamp(14px, 4vw, 18px);
   }
 
-
-
-
-.primary-action-buttons {
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 2%;
-  width: 100% !important;
-}
-
-  .action-button {
-    flex: 1;
-    max-width: 100% !important;
-    min-width: 48%;
-    padding: 12px 2vw;
-    font-size: 0.8rem;
-    justify-content: center;
-    border-radius: 6px !important;
+  .secondary-button span {
+    font-size: clamp(8px, 2.2vw, 10px);
   }
-
-.action-button i {
-  font-size: 0.7rem;
-  margin-right: 1vw;
-}
-
-
-
-  .action-button {
-    background: #667eea;
-    border: none;
-    border-radius: 12px;
-    padding: 14px 20px;
-    color: white;
-    font-size: 13px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    min-width: 49%;
-    max-width: 100% !important;
-    width: 100% !important;
-    justify-content: center;
-    text-decoration: none;
-    border: 2px solid transparent;
-    font-family: 'Poppins', 'Inter', sans-serif;
-    opacity: 1;
-    visibility: visible;
-    box-shadow: none;
-    flex: 1;
-
-  }
-
-  .action-button:hover {
-    transform: translateY(-1px);
-    box-shadow: none;
-  }
-
-  .action-button:active {
-    transform: translateY(0);
-  }
-
-  .action-button i {
-    font-size: 14px;
-  }
-
-
 }
 
 
