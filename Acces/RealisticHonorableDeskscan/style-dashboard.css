@@ -1400,11 +1400,15 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 6px;
+  position: relative;
   width: 100%;
 }
 
 .countdown-with-label .dashboard-timer-title {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   font-size: clamp(11px, 2.5vw, 13px);
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   -webkit-background-clip: text;
