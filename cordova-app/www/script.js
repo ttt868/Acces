@@ -6944,6 +6944,13 @@ function startGradualAccumulation() {
           if (data.processing_start_time && !currentUser.processing_start_time_seconds) {
             currentUser.processing_start_time_seconds = Math.floor(new Date(data.processing_start_time).getTime() / 1000);
           }
+          
+          // 🔄 HALVING: تحديث المكافأة الأساسية من السيرفر
+          if (data.base_reward) {
+            window.serverBaseReward = parseFloat(data.base_reward);
+            console.log(`🔄 Dashboard HALVING: Base reward updated: ${window.serverBaseReward}`);
+          }
+          
           saveUserSession(currentUser);
           
           //  
@@ -6998,7 +7005,7 @@ function startGradualAccumulation() {
     }
   }
 
-  // Update dashboard session earned display (visual mirror of accumulated-coins)
+  // Update dashboard session earned display (visual mirror of accumulated)
   function updateDashboardSessionEarned() {
     const sessionEarnedEl = document.getElementById('session-earned-value');
     if (!sessionEarnedEl) return;
@@ -7012,13 +7019,45 @@ function startGradualAccumulation() {
       return;
     }
 
-    // ✅ نسخة مرئية فقط: نقرأ القيمة مباشرة من accumulated-coins (يحدثه calculateAndDisplayLocally)
+    // ✅ إذا calculateAndDisplayLocally شغال، نقرأ منه مباشرة
     const accumulatedCoinsEl = document.getElementById('accumulated-coins');
-    if (accumulatedCoinsEl) {
+    if (accumulatedCoinsEl && window.localBoostData) {
       const val = accumulatedCoinsEl.textContent;
       if (val && val !== '0' && val !== '0.0') {
         sessionEarnedEl.textContent = '+' + val;
+        return;
       }
+    }
+
+    // ✅ حساب محلي يطابق calculateAndDisplayLocally بالضبط
+    const startTimeSec = Math.floor(
+      currentUser.processing_start_time_seconds ||
+      (currentUser.processing_start_time ? new Date(currentUser.processing_start_time).getTime() / 1000 : 0)
+    );
+    if (!startTimeSec) return;
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    const elapsed = Math.max(0, nowSec - startTimeSec);
+    if (elapsed <= 0) return;
+
+    const baseReward = window.serverBaseReward || 0.25;
+    const referrals = parseInt(currentUser.session_active_referrals) || 0;
+    let multiplier = referrals > 0 ? (1.0 + referrals * 0.04) : 1.0;
+    if (window.localBoostData && window.localBoostData.multiplier) {
+      multiplier = window.localBoostData.multiplier;
+    }
+    const boostedReward = baseReward * multiplier;
+    const duration = 86400;
+
+    let accumulated;
+    if (elapsed >= duration) {
+      accumulated = boostedReward;
+    } else {
+      accumulated = (boostedReward / duration) * elapsed;
+    }
+
+    if (accumulated > 0) {
+      sessionEarnedEl.textContent = '+' + formatNumberSmart(accumulated);
     }
   }
 
