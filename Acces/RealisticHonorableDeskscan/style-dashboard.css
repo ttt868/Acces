@@ -1566,13 +1566,28 @@
     align-items: center !important;
   }
 
-  /* XP/s يسار متوسط عمودياً */
+  /* XP/s يسار + Boost يمين - كلاهما متوسط عمودياً */
   .dashboard-timer-header {
+    position: static !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .dashboard-timer-header-right {
+    position: static !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .dashboard-hashrate-display {
     position: absolute !important;
     left: 8px !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
-    width: auto !important;
     z-index: 20;
   }
 
