@@ -1342,7 +1342,6 @@
 }
 
 .dashboard-activity-timer:hover {
-  transform: translateY();
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
