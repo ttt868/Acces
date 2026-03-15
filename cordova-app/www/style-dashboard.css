@@ -1317,22 +1317,11 @@
   }
 
   .dashboard-activity-timer::after {
-    content: '';
-    display: block;
-    position: absolute;
-    top: -21%;
-    left: calc(50% - 2px);
-    width: 4px;
-    height: 71%;
-    background: var(--background-color, #f7fafc);
-    z-index: 1;
-    pointer-events: none;
-    transform-origin: bottom center;
-    transform: rotate(-45deg);
+    display: none;
   }
 
   .dark-theme .dashboard-activity-timer::after {
-    background: var(--background-color, #252525);
+    display: none;
   }
 
   .dark-theme .dashboard-activity-timer::before {
@@ -1362,7 +1351,8 @@
 
 @media (max-width: 768px) {
   .dashboard-timer-title {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     position: absolute;
     top: -18px;
     left: 50%;
@@ -2967,11 +2957,65 @@ html[lang="ar"] .wallet-header h3 {
 @media (max-width: 768px) {
   .timer-access-logo {
     display: block;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     object-fit: contain;
     border-radius: 50%;
   }
+}
+
+.timer-triangle-pulse {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .timer-triangle-pulse {
+    display: block;
+    position: absolute;
+    right: -16px;
+    top: 50%;
+    margin-top: -5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    z-index: 5;
+    pointer-events: none;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+    animation: trianglePulse 2s ease-in-out infinite;
+  }
+
+  .timer-triangle-pulse::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.3);
+    animation: trianglePulseRing 2s ease-in-out infinite;
+  }
+}
+
+@keyframes trianglePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+@keyframes trianglePulseRing {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+}
+
+.timer-triangle-pulse.pulse-inactive {
+  background: #ef4444 !important;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6) !important;
+}
+
+.timer-triangle-pulse.pulse-inactive::after {
+  background: rgba(239, 68, 68, 0.3) !important;
 }
 
 @media (max-width: 768px) {

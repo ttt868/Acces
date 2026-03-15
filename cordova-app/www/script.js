@@ -6236,6 +6236,10 @@ function startGradualAccumulation() {
         currentUser.processing_remaining_seconds = 0;
         saveUserSession(currentUser); // ✅ حفظ فوري
         
+        // نقطة النبض حمراء = جلسة انتهت
+        const pulseEnd = document.querySelector('.timer-triangle-pulse');
+        if (pulseEnd) pulseEnd.classList.add('pulse-inactive');
+        
         // ✅ IMMEDIATELY hide "Collecting..." from UI
         const historyContainer = document.querySelector('.history-container');
         if (historyContainer) {
@@ -6509,6 +6513,10 @@ function startGradualAccumulation() {
         currentUser.processing_remaining_seconds = countdownSeconds;
         saveUserSession(currentUser);
       }
+      
+      // نقطة النبض خضراء = جلسة بدأت
+      const pulseStart = document.querySelector('.timer-triangle-pulse');
+      if (pulseStart) pulseStart.classList.remove('pulse-inactive');
 
       // 🚀 LOCAL COUNTDOWN - كل ثانية محلياً بدون طلب سيرفر
       activityInterval = setInterval(() => {
@@ -6788,6 +6796,10 @@ function startGradualAccumulation() {
       dashboardTimer.classList.add('activity-active');
       dashboardTimer.classList.remove('activity-inactive');
       
+      // نقطة النبض خضراء = نشط
+      const pulseActive = document.querySelector('.timer-triangle-pulse');
+      if (pulseActive) pulseActive.classList.remove('pulse-inactive');
+      
       // Update hashrate display - sync with processing page logic
       updateDashboardHashrateDisplay();
     } else {
@@ -6798,6 +6810,10 @@ function startGradualAccumulation() {
       // إيقاف الرقاص - إزالة activity-active class
       dashboardTimer.classList.remove('activity-active');
       dashboardTimer.classList.add('activity-inactive');
+      
+      // نقطة النبض حمراء = غير نشط
+      const pulseInactive = document.querySelector('.timer-triangle-pulse');
+      if (pulseInactive) pulseInactive.classList.add('pulse-inactive');
       
       
       

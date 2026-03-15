@@ -4808,6 +4808,10 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
               // بدء العد التنازلي والتجميع
               startCountdown(data.remaining_seconds * 1000);
               startGradualAccumulation();
+              
+              // نقطة النبض خضراء = جلسة نشطة
+              const pulseStart = document.querySelector('.timer-triangle-pulse');
+              if (pulseStart) pulseStart.classList.remove('pulse-inactive');
             } else if (resp.status === 409) {
               console.log('ℹ️ Session already active - resuming silently');
               if (data.remaining_seconds > 0) startCountdown(data.remaining_seconds * 1000);
@@ -6566,6 +6570,10 @@ function startGradualAccumulation() {
             currentUser.processing_start_time = 0; // ✅ مسح وقت البداية
             saveUserSession(currentUser);
           }
+          
+          // نقطة النبض حمراء = جلسة انتهت
+          const pulseEnd = document.querySelector('.timer-triangle-pulse');
+          if (pulseEnd) pulseEnd.classList.add('pulse-inactive');
 
           // Remove collecting from UI
           if (typeof window.removeCollectingFromUI === 'function') {
@@ -6689,6 +6697,10 @@ function startGradualAccumulation() {
       dashboardTimer.classList.add('activity-active');
       dashboardTimer.classList.remove('activity-inactive');
       
+      // نقطة النبض خضراء = نشط
+      const pulseActive = document.querySelector('.timer-triangle-pulse');
+      if (pulseActive) pulseActive.classList.remove('pulse-inactive');
+      
       // Update hashrate display - sync with processing page logic
       updateDashboardHashrateDisplay();
     } else {
@@ -6703,6 +6715,10 @@ function startGradualAccumulation() {
       // إيقاف الرقاص - إزالة activity-active class
       dashboardTimer.classList.remove('activity-active');
       dashboardTimer.classList.add('activity-inactive');
+      
+      // نقطة النبض حمراء = غير نشط
+      const pulseInactive = document.querySelector('.timer-triangle-pulse');
+      if (pulseInactive) pulseInactive.classList.add('pulse-inactive');
       
       
       
