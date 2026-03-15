@@ -6862,23 +6862,6 @@ function startGradualAccumulation() {
             console.log(`🔄 Dashboard HALVING: Base reward updated: ${window.serverBaseReward}`);
           }
           
-          // ✅ جلب القيمة المجمعة الحقيقية من السيرفر
-          if (isActive) {
-            try {
-              const accResp = await fetch(`/api/processing/accumulated/${currentUser.id}`);
-              if (accResp.ok) {
-                const accData = await accResp.json();
-                if (accData.success && accData.accumulatedReward !== undefined) {
-                  window._dashboardServerAccumulated = parseFloat(accData.accumulatedReward);
-                  window._dashboardServerAccumulatedTime = Math.floor(Date.now() / 1000);
-                  currentUser.processing_accumulated = accData.accumulatedReward;
-                  currentUser.accumulatedReward = accData.accumulatedReward;
-                  console.log(`✅ Dashboard: Server accumulated = ${window._dashboardServerAccumulated}`);
-                }
-              }
-            } catch(e) { console.error('Dashboard accumulated fetch error:', e); }
-          }
-          
           saveUserSession(currentUser);
           
           //  
@@ -6933,23 +6916,14 @@ function startGradualAccumulation() {
     }
   }
 
-  // Update dashboard session earned display (visual mirror of accumulated)
+  // نسخة مرئية فقط من accumulated-coins
   function updateDashboardSessionEarned() {
     const sessionEarnedEl = document.getElementById('session-earned-value');
     if (!sessionEarnedEl) return;
     
-    // إذا لا يوجد مستخدم نشط، اعرض آخر قيمة مجمعة من بيانات المستخدم
-    if (!currentUser || currentUser.processing_active !== 1) {
-      const lastAccumulated = parseFloat(currentUser?.processing_accumulated || currentUser?.accumulatedReward || 0);
-      if (lastAccumulated > 0) {
-        sessionEarnedEl.textContent = '+' + formatNumberSmart(lastAccumulated);
-      }
-      return;
-    }
-
-    // ✅ إذا calculateAndDisplayLocally شغال (صفحة Activity تم زيارتها)، نقرأ منه مباشرة
+    // نقرأ مباشرة من accumulated-coins
     const accumulatedCoinsEl = document.getElementById('accumulated-coins');
-    if (accumulatedCoinsEl && window.localBoostData) {
+    if (accumulatedCoinsEl) {
       const val = accumulatedCoinsEl.textContent;
       if (val && val !== '0' && val !== '0.0') {
         sessionEarnedEl.textContent = '+' + val;
@@ -6957,25 +6931,10 @@ function startGradualAccumulation() {
       }
     }
 
-    // ✅ استخدام القيمة من السيرفر + زيادة ثانية بثانية
-    if (window._dashboardServerAccumulated > 0 && window._dashboardServerAccumulatedTime > 0) {
-      const baseReward = window.serverBaseReward || 0.25;
-      const referrals = parseInt(currentUser.session_active_referrals) || 0;
-      let multiplier = referrals > 0 ? (1.0 + referrals * 0.04) : 1.0;
-      if (window.localBoostData && window.localBoostData.multiplier) {
-        multiplier = window.localBoostData.multiplier;
-      }
-      const rewardPerSecond = (baseReward * multiplier) / 86400;
-      const secondsSinceFetch = Math.floor(Date.now() / 1000) - window._dashboardServerAccumulatedTime;
-      const current = window._dashboardServerAccumulated + (rewardPerSecond * Math.max(0, secondsSinceFetch));
-      sessionEarnedEl.textContent = '+' + formatNumberSmart(current);
-      return;
-    }
-
-    // ✅ fallback: استخدم processing_accumulated من بيانات المستخدم
-    const serverAccumulated = parseFloat(currentUser.processing_accumulated || currentUser.accumulatedReward || 0);
-    if (serverAccumulated > 0) {
-      sessionEarnedEl.textContent = '+' + formatNumberSmart(serverAccumulated);
+    // إذا accumulated-coins فارغ، نقرأ من بيانات المستخدم
+    const acc = parseFloat(currentUser?.processing_accumulated || currentUser?.accumulatedReward || 0);
+    if (acc > 0) {
+      sessionEarnedEl.textContent = '+' + formatNumberSmart(acc);
     }
   }
 
