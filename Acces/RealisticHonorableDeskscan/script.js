@@ -6862,6 +6862,23 @@ function startGradualAccumulation() {
             console.log(`🔄 Dashboard HALVING: Base reward updated: ${window.serverBaseReward}`);
           }
           
+          // ✅ جلب القيمة المجمعة الحقيقية من السيرفر
+          if (isActive) {
+            try {
+              const accResp = await fetch(`/api/processing/accumulated/${currentUser.id}`);
+              if (accResp.ok) {
+                const accData = await accResp.json();
+                if (accData.success && accData.accumulatedReward !== undefined) {
+                  window._dashboardServerAccumulated = parseFloat(accData.accumulatedReward);
+                  window._dashboardServerAccumulatedTime = Math.floor(Date.now() / 1000);
+                  currentUser.processing_accumulated = accData.accumulatedReward;
+                  currentUser.accumulatedReward = accData.accumulatedReward;
+                  console.log(`✅ Dashboard: Server accumulated = ${window._dashboardServerAccumulated}`);
+                }
+              }
+            } catch(e) { console.error('Dashboard accumulated fetch error:', e); }
+          }
+          
           saveUserSession(currentUser);
           
           //  
@@ -6930,7 +6947,7 @@ function startGradualAccumulation() {
       return;
     }
 
-    // ✅ إذا calculateAndDisplayLocally شغال، نقرأ منه مباشرة
+    // ✅ إذا calculateAndDisplayLocally شغال (صفحة Activity تم زيارتها)، نقرأ منه مباشرة
     const accumulatedCoinsEl = document.getElementById('accumulated-coins');
     if (accumulatedCoinsEl && window.localBoostData) {
       const val = accumulatedCoinsEl.textContent;
@@ -6940,37 +6957,25 @@ function startGradualAccumulation() {
       }
     }
 
-    // ✅ حساب محلي يطابق calculateAndDisplayLocally بالضبط
-    const startTimeSec = Math.floor(
-      currentUser.processing_start_time_seconds ||
-      (currentUser.processing_start_time ? new Date(currentUser.processing_start_time).getTime() / 1000 : 0)
-    );
-    if (!startTimeSec) return;
-
-    const nowSec = Math.floor(Date.now() / 1000);
-    const elapsed = Math.max(0, nowSec - startTimeSec);
-    if (elapsed <= 0) return;
-
-    const baseReward = window.serverBaseReward || 0.25;
-    // نفس حساب المضاعف من الإحالات
-    const referrals = parseInt(currentUser.session_active_referrals) || 0;
-    let multiplier = referrals > 0 ? (1.0 + referrals * 0.04) : 1.0;
-    // إذا localBoostData موجود (Activity تم زيارتها)، استخدم مضاعفه الأدق
-    if (window.localBoostData && window.localBoostData.multiplier) {
-      multiplier = window.localBoostData.multiplier;
-    }
-    const boostedReward = baseReward * multiplier;
-    const duration = 86400;
-
-    let accumulated;
-    if (elapsed >= duration) {
-      accumulated = boostedReward;
-    } else {
-      accumulated = (boostedReward / duration) * elapsed;
+    // ✅ استخدام القيمة من السيرفر + زيادة ثانية بثانية
+    if (window._dashboardServerAccumulated > 0 && window._dashboardServerAccumulatedTime > 0) {
+      const baseReward = window.serverBaseReward || 0.25;
+      const referrals = parseInt(currentUser.session_active_referrals) || 0;
+      let multiplier = referrals > 0 ? (1.0 + referrals * 0.04) : 1.0;
+      if (window.localBoostData && window.localBoostData.multiplier) {
+        multiplier = window.localBoostData.multiplier;
+      }
+      const rewardPerSecond = (baseReward * multiplier) / 86400;
+      const secondsSinceFetch = Math.floor(Date.now() / 1000) - window._dashboardServerAccumulatedTime;
+      const current = window._dashboardServerAccumulated + (rewardPerSecond * Math.max(0, secondsSinceFetch));
+      sessionEarnedEl.textContent = '+' + formatNumberSmart(current);
+      return;
     }
 
-    if (accumulated > 0) {
-      sessionEarnedEl.textContent = '+' + formatNumberSmart(accumulated);
+    // ✅ fallback: استخدم processing_accumulated من بيانات المستخدم
+    const serverAccumulated = parseFloat(currentUser.processing_accumulated || currentUser.accumulatedReward || 0);
+    if (serverAccumulated > 0) {
+      sessionEarnedEl.textContent = '+' + formatNumberSmart(serverAccumulated);
     }
   }
 
