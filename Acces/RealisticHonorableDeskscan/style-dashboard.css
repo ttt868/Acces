@@ -1566,6 +1566,13 @@
     align-items: center !important;
   }
 
+  /* XP/s واللوجو على اليسار */
+  .dashboard-timer-header {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    align-self: flex-start !important;
+  }
+
   .dashboard-countdown {
     text-align: center !important;
     font-size: 28px;
