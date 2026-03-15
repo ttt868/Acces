@@ -6708,17 +6708,6 @@ function startGradualAccumulation() {
       dashboardCountdownDisplay.textContent = '00:00:00';
       dashboardTimerStatus.textContent = translator.translate('Not Active');
       
-      // عرض آخر قيمة مجمعة من بيانات المستخدم
-      const sessionEarnedEl = document.getElementById('session-earned-value');
-      if (sessionEarnedEl) {
-        const lastAccumulated = parseFloat(currentUser?.processing_accumulated || currentUser?.accumulatedReward || 0);
-        if (lastAccumulated > 0) {
-          sessionEarnedEl.textContent = '+' + formatNumberSmart(lastAccumulated);
-        } else {
-          sessionEarnedEl.textContent = '+0.0';
-        }
-      }
-      
       // إيقاف الرقاص - إزالة activity-active class
       dashboardTimer.classList.remove('activity-active');
       dashboardTimer.classList.add('activity-inactive');
@@ -6920,21 +6909,11 @@ function startGradualAccumulation() {
   function updateDashboardSessionEarned() {
     const sessionEarnedEl = document.getElementById('session-earned-value');
     if (!sessionEarnedEl) return;
-    
-    // نقرأ مباشرة من accumulated-coins
     const accumulatedCoinsEl = document.getElementById('accumulated-coins');
-    if (accumulatedCoinsEl) {
-      const val = accumulatedCoinsEl.textContent;
-      if (val && val !== '0' && val !== '0.0') {
-        sessionEarnedEl.textContent = '+' + val;
-        return;
-      }
-    }
-
-    // إذا accumulated-coins فارغ، نقرأ من بيانات المستخدم
-    const acc = parseFloat(currentUser?.processing_accumulated || currentUser?.accumulatedReward || 0);
-    if (acc > 0) {
-      sessionEarnedEl.textContent = '+' + formatNumberSmart(acc);
+    if (!accumulatedCoinsEl) return;
+    const val = accumulatedCoinsEl.textContent;
+    if (val && val !== '0' && val !== '0.0') {
+      sessionEarnedEl.textContent = '+' + val;
     }
   }
 

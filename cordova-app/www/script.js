@@ -7009,21 +7009,11 @@ function startGradualAccumulation() {
   function updateDashboardSessionEarned() {
     const sessionEarnedEl = document.getElementById('session-earned-value');
     if (!sessionEarnedEl) return;
-    
-    // نقرأ مباشرة من accumulated-coins
     const accumulatedCoinsEl = document.getElementById('accumulated-coins');
-    if (accumulatedCoinsEl) {
-      const val = accumulatedCoinsEl.textContent;
-      if (val && val !== '0' && val !== '0.0') {
-        sessionEarnedEl.textContent = '+' + val;
-        return;
-      }
-    }
-
-    // إذا accumulated-coins فارغ، نقرأ من بيانات المستخدم
-    const acc = parseFloat(currentUser?.processing_accumulated || currentUser?.accumulatedReward || 0);
-    if (acc > 0) {
-      sessionEarnedEl.textContent = '+' + formatNumberSmart(acc);
+    if (!accumulatedCoinsEl) return;
+    const val = accumulatedCoinsEl.textContent;
+    if (val && val !== '0' && val !== '0.0') {
+      sessionEarnedEl.textContent = '+' + val;
     }
   }
 
