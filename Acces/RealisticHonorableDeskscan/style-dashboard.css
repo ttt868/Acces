@@ -1566,11 +1566,15 @@
     align-items: center !important;
   }
 
-  /* XP/s يسار - الصورة يمين */
+  /* XP/s يسار متوسط + Boost يمين */
   .dashboard-timer-header {
     width: 100% !important;
     justify-content: space-between !important;
     align-self: flex-start !important;
+    height: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   #dashboard-hashrate-display {
