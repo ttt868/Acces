@@ -1562,10 +1562,10 @@
     align-items: center !important;
   }
 
-  /* XP/s واللوجو على اليسار */
+  /* XP/s يسار - الصورة يمين */
   .dashboard-timer-header {
     width: 100% !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
     align-self: flex-start !important;
   }
 
@@ -2981,12 +2981,21 @@ html[lang="ar"] .wallet-header h3 {
 }
 
 @media (max-width: 768px) {
+  .dashboard-timer-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .timer-access-logo {
     display: block;
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     object-fit: contain;
     border-radius: 50%;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 
 }
