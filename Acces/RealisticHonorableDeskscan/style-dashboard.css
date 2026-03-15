@@ -13,7 +13,7 @@
 
 /* Page Content */
 #dashboard-page.page-content {
-    margin: px !important;
+    margin: 0 !important;
     max-width: 1200px !important;
     margin-left: -3px;
     margin-right: -3px;
@@ -248,7 +248,7 @@
   .network-selector-container {
     display: flex;
     justify-content: left;
-    margin-bottom: px;
+    margin-bottom: 0;
     
     z-index: 3;
     margin-top: 10px !important;
@@ -1609,14 +1609,14 @@
   }
 
   .dashboard-action-buttons {
-    margin: vh auto 0;
+    margin: 0 auto;
     width: 100% !important;
     max-width: 100% !important;
     padding: 0;
     position: relative;
     left: 50%;
     transform: translateX(-50%);
-    top: vh;
+    top: 0;
     z-index: 2 !important;
   }
 
@@ -1788,7 +1788,7 @@ html[dir="rtl"] .action-button,
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .dashboard-action-buttons {
-    margin: -2.5vh auto 0;
+    margin: 0 auto;
     padding: 0 2.5%;
     width: 100% !important;
     max-width: 100% !important;
@@ -1796,7 +1796,7 @@ html[dir="rtl"] .action-button,
     position: relative;
     left: 50%;
     transform: translateX(-50%);
-    top: vh;
+    top: 0;
     
   }
 
@@ -1804,7 +1804,7 @@ html[dir="rtl"] .action-button,
 
   .primary-action-buttons {
     gap: 2%;
-    margin-bottom: vh;
+    margin-bottom: 8px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -1814,7 +1814,7 @@ html[dir="rtl"] .action-button,
 
   .action-button i {
     font-size: 0.7rem;
-    margin-right: px;
+    margin-right: 2px;
   }
 
   .secondary-action-buttons {
@@ -1865,7 +1865,7 @@ html[dir="rtl"] .action-button,
 
 .action-button i {
   font-size: 0.7rem;
-  margin-right: vw;
+  margin-right: 1vw;
 }
 
 
@@ -2009,7 +2009,7 @@ font-size: 1rem !important;
     .network-selector-container {
       display: flex;
       justify-content: center;
-      margin-bottom: px;
+      margin-bottom: 0;
       width: 100%;
       z-index: 3 !important;
       margin-top: 35px !important;
@@ -2069,7 +2069,7 @@ visibility: visible;
 
 
 .dashboard-action-buttons {
-    margin: vh auto 0;
+    margin: 0 auto;
     width: 100%;
     max-width: 100%;
     padding: 0;
@@ -2169,7 +2169,7 @@ visibility: visible;
     border-radius: 0 !important;
     box-shadow: none !important;
     padding: 0 25px !important;
-    margin-bottom: px !important;
+    margin-bottom: 0 !important;
     justify-content: space-between !important;
     align-items: center !important;
     pointer-events: none !important;
@@ -2235,7 +2235,7 @@ visibility: visible;
     border-radius: 0 !important;
     box-shadow: none !important;
     padding: 0 25px !important;
-    margin-bottom: px !important;
+    margin-bottom: 0 !important;
     justify-content: space-between !important;
     align-items: center !important;
     pointer-events: none !important;
@@ -2281,7 +2281,7 @@ visibility: visible;
   .network-selector-container {
     display: flex;
     justify-content: center;
-    margin-bottom: px;
+    margin-bottom: 0;
     width: 100%;
     z-index: 3 !important;
     margin-top: 30px !important;
@@ -2433,7 +2433,7 @@ visibility: visible;
   
   }
   .dashboard-action-buttons {
-      margin: vh auto 0;
+      margin: 0 auto;
       width: 100%;
       max-width: 100%;
       padding: 0;
@@ -3154,7 +3154,7 @@ html[lang="ar"] .dashboard-timer-header {
   }
 
   .dashboard-timer-title {
-    font-size: 11px;
+    font-size: 9px;
   }
 
   .dashboard-timer-status {
@@ -3162,26 +3162,45 @@ html[lang="ar"] .dashboard-timer-header {
   }
 
   .dashboard-boost-btn {
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: 5px 10px;
+    font-size: 11px;
   }
 
   .dashboard-boost-btn i {
-    font-size: 12px;
-  }
-
-  .primary-action-buttons .action-btn,
-  .secondary-buttons-grid .secondary-button {
     font-size: 11px;
-    padding: 8px 6px;
   }
 
-  .action-btn .btn-icon {
-    font-size: 16px;
+  #dashboard-hashrate-display {
+    font-size: 10px;
+    padding: 3px 6px;
   }
 
-  .secondary-button .btn-icon {
-    font-size: 14px;
+  .action-button {
+    padding: 10px 8px !important;
+    font-size: 12px !important;
+    min-width: 47% !important;
+  }
+
+  .secondary-button {
+    padding: 6px 2px !important;
+    min-width: 22% !important;
+  }
+
+  .secondary-button i {
+    font-size: 14px !important;
+  }
+
+  .secondary-button span {
+    font-size: 9px !important;
+  }
+
+  .primary-action-buttons {
+    gap: 2% !important;
+    margin-bottom: 6px !important;
+  }
+
+  .secondary-action-buttons {
+    column-gap: 3px !important;
   }
 
   .balance-value #user-coins {
@@ -3192,16 +3211,51 @@ html[lang="ar"] .dashboard-timer-header {
     font-size: 10px;
   }
 
-  .hashrate-value {
-    font-size: 11px;
-  }
-
   .session-earned-value {
     font-size: 13px;
   }
 
   .session-earned-label {
     font-size: 9px;
+  }
+}
+
+/* === شاشات صغيرة جداً === */
+@media (max-width: 340px) {
+  .dashboard-countdown {
+    font-size: 20px;
+  }
+
+  .action-button {
+    padding: 8px 6px !important;
+    font-size: 11px !important;
+    gap: 4px !important;
+  }
+
+  .secondary-button {
+    padding: 5px 1px !important;
+  }
+
+  .secondary-button span {
+    font-size: 8px !important;
+  }
+
+  .secondary-button i {
+    font-size: 13px !important;
+  }
+
+  .dashboard-boost-btn {
+    padding: 4px 8px !important;
+    font-size: 10px !important;
+  }
+
+  #dashboard-hashrate-display {
+    font-size: 9px !important;
+    padding: 2px 5px !important;
+  }
+
+  .balance-value #user-coins {
+    font-size: 20px !important;
   }
 }
 }
