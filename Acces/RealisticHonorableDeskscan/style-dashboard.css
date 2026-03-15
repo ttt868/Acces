@@ -250,9 +250,11 @@
     justify-content: flex-start;
     margin-bottom: 0;
     z-index: 3;
-    margin-top: 6px !important;
+    margin-top: 4px !important;
+    margin-bottom: 20px !important;
     width: 100%;
     padding-left: 0;
+    margin-left: -4px;
   }
 }
   .network-selector {
@@ -1091,8 +1093,8 @@
   position: relative;
   overflow: visible;
   width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   transition: none;
   display: flex;
   flex-direction: column;
@@ -1471,7 +1473,7 @@
 
 .dashboard-container {
   margin: 62px auto 2vh auto;
-  padding: 0 12px;
+  padding: 0 16px;
   width: 100%;
   max-width: 540px;
   box-sizing: border-box;
@@ -1481,7 +1483,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 12px;
+  gap: 0;
   width: 100%;
   padding: 0;
   margin: 0;
@@ -1552,7 +1554,7 @@
   }
 
   .dashboard-action-buttons {
-    margin: 12px auto 0;
+    margin: 24px auto 0;
     width: 100%;
     max-width: 100%;
     padding: 0;
@@ -1576,10 +1578,10 @@
 .action-button {
   background: #667eea;
   border: none;
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 16px 24px;
   color: white;
-  font-size: clamp(14px, 3.2vw, 16px);
+  font-size: 15px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -1597,6 +1599,7 @@
   box-shadow: none;
   flex: 1;
   letter-spacing: 0.3px;
+  height: 52px;
 }
 
 .action-button:hover {
@@ -1697,7 +1700,7 @@ html[dir="rtl"] .action-button,
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .dashboard-action-buttons {
-    margin: 12px auto 0;
+    margin: 24px auto 0;
     width: 100%;
     max-width: 100%;
     padding: 0;
@@ -1716,7 +1719,7 @@ html[dir="rtl"] .action-button,
   .action-button {
     flex: 1;
     padding: 14px 16px;
-    font-size: clamp(13px, 3.5vw, 15px);
+    font-size: 14px;
     font-weight: 700;
     justify-content: center;
     border-radius: 14px !important;
@@ -1731,6 +1734,7 @@ html[dir="rtl"] .action-button,
     cursor: pointer;
     transition: none;
     letter-spacing: 0.3px;
+    height: 50px;
   }
 
   .action-button:hover {
@@ -1767,8 +1771,8 @@ html[dir="rtl"] .action-button,
 
    .dashboard-activity-timer {
     width: 100%;
-      max-width: 480px;
-         margin: 0 auto;
+      max-width: 100%;
+         margin: 0;
        }
 
 .dashboard-container {
@@ -1783,7 +1787,7 @@ html[dir="rtl"] .action-button,
       display: flex;
       justify-content: center !important;
       align-items: center !important;
-      margin-bottom: 8px !important;
+      margin-bottom: 24px !important;
        position: relative; 
     }
 
@@ -1830,10 +1834,11 @@ html[dir="rtl"] .action-button,
     .network-selector-container {
       display: flex;
       justify-content: flex-start;
-      margin-bottom: 0;
+      margin-bottom: 20px;
       width: 100%;
       z-index: 3 !important;
       margin-top: 20px !important;
+      margin-left: -4px;
     }
 
     .secondary-action-buttons {
@@ -1841,13 +1846,11 @@ html[dir="rtl"] .action-button,
     }
 
     .action-button {
-      min-width: 48% !important;
       background: #667eea;
       box-shadow: none;
       font-size: 16px !important;
       flex: 1 !important;
-      max-width: 50% !important;
-      border-radius: 16px !important;
+      border-radius: 14px !important;
       border: none;
       visibility: visible;
       font-family: 'Poppins', 'Inter', sans-serif;
@@ -1859,6 +1862,7 @@ html[dir="rtl"] .action-button,
       transition: none;
       padding: 16px 24px;
       letter-spacing: 0.3px;
+      height: 52px;
     }
 
     .action-button:hover {
@@ -1875,9 +1879,9 @@ html[dir="rtl"] .action-button,
     }
 
     .dashboard-action-buttons {
-      margin: 16px auto 0;
+      margin: 24px auto 0;
       width: 100%;
-      max-width: 480px;
+      max-width: 100%;
       padding: 0;
     }
 
@@ -2082,10 +2086,11 @@ html[dir="rtl"] .action-button,
   .network-selector-container {
     display: flex;
     justify-content: flex-start;
-    margin-bottom: 0;
+    margin-bottom: 20px;
     width: 100%;
     z-index: 3 !important;
     margin-top: 30px !important;
+    margin-left: -4px;
   }
 
 
@@ -2094,7 +2099,7 @@ html[dir="rtl"] .action-button,
     position: relative;
     justify-content: center !important;
     align-items: center !important;
-    margin-bottom: 12px;
+    margin-bottom: 24px;
     width: 100% !important;
   }
   
@@ -2178,16 +2183,15 @@ html[dir="rtl"] .action-button,
   }
 
   .action-button {
-    min-width: 48% !important;
-    max-width: 50% !important;
     background: #667eea !important;
     font-size: 16px !important;
     flex: 1 !important;
-    border-radius: 16px !important;
+    border-radius: 14px !important;
     border: none;
     font-weight: 700;
     padding: 16px 24px;
     letter-spacing: 0.3px;
+    height: 52px;
   }
 
   .action-button i {
@@ -2195,9 +2199,9 @@ html[dir="rtl"] .action-button,
   }
 
   .dashboard-action-buttons {
-    margin: 16px auto 0;
+    margin: 24px auto 0;
     width: 100%;
-    max-width: 480px;
+    max-width: 100%;
     padding: 0;
   }
 
@@ -2589,7 +2593,7 @@ html[lang="ar"] .wallet-header h3 {
   position: relative;
   justify-content: center !important;
   align-items: center !important;
-  margin-bottom: 4px;
+  margin-bottom: 24px;
   top: 0;
   width: 100%;
 }
