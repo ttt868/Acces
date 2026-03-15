@@ -1083,12 +1083,12 @@
 
 /* بطاقة العداد الحديثة */
 .dashboard-activity-timer {
-  background: linear-gradient(145deg, rgba(99,102,241,0.04) 0%, rgba(139,92,246,0.06) 100%);
+  background: var(--card-background, #ffffff);
   backdrop-filter: none;
-  border: 1px solid rgba(99,102,241,0.12);
+  border: 1px solid rgba(226, 232, 240, 0.6);
   border-radius: 14px;
   padding: 14px 16px 12px;
-  box-shadow: 0 1px 3px rgba(99,102,241,0.06);
+  box-shadow: none;
   position: relative;
   overflow: hidden;
   width: 100%;
@@ -1262,10 +1262,10 @@
 /* Mobile timer card */
 @media (max-width: 768px) {
   .dashboard-activity-timer {
-    background: linear-gradient(145deg, rgba(99,102,241,0.04) 0%, rgba(139,92,246,0.06) 100%);
-    border: 1px solid rgba(99,102,241,0.12);
+    background: var(--card-background, #ffffff);
+    border: 1px solid rgba(226, 232, 240, 0.6);
     border-radius: 14px;
-    box-shadow: 0 1px 3px rgba(99,102,241,0.06);
+    box-shadow: none;
     backdrop-filter: none;
   }
 
@@ -1278,8 +1278,8 @@
   }
 
   .dark-theme .dashboard-activity-timer {
-    background: linear-gradient(145deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.1) 100%);
-    border: 1px solid rgba(99,102,241,0.15);
+    background: var(--card-background, #1e293b);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -1423,9 +1423,9 @@
 
 /* للوضع المظلم */
 .dark-theme .dashboard-activity-timer {
-  background: linear-gradient(145deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.1) 100%);
-  border: 1px solid rgba(99,102,241,0.15);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  background: var(--card-background, #1e293b);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: none;
   backdrop-filter: none;
 }
 
