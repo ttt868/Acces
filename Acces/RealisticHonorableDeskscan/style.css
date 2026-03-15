@@ -5585,6 +5585,41 @@ input[type="number"],
   }
 }
 
+/* Boost Modal - Responsive for narrow screens */
+@media (max-width: 400px) {
+  #ad-boost-modal .modal-content {
+    padding: 20px 15px !important;
+    width: 94% !important;
+  }
+  #ad-boost-modal .modal-buttons {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  #ad-boost-modal #watch-ad-button,
+  #ad-boost-modal #close-ad-modal-button {
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    width: 100% !important;
+  }
+  #ad-boost-modal #ad-boost-message h3 {
+    font-size: 1.1rem !important;
+  }
+  #ad-boost-modal #ad-boost-message p {
+    font-size: 0.85rem !important;
+  }
+  #ad-boost-modal #ad-boost-message > div:first-child {
+    font-size: 36px !important;
+  }
+}
+
+@media (max-width: 340px) {
+  #ad-boost-modal #watch-ad-button,
+  #ad-boost-modal #close-ad-modal-button {
+    padding: 9px 12px !important;
+    font-size: 13px !important;
+  }
+}
+
 @keyframes slideUp {
   from {
     transform: translateY(30px);
