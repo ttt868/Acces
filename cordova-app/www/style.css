@@ -5620,8 +5620,10 @@ input[type="number"],
   }
   #ad-boost-modal .modal-buttons {
     flex-direction: column !important;
-    align-items: center !important;
+    align-items: stretch !important;
     gap: 8px !important;
+    width: fit-content !important;
+    margin: 25px auto 0 !important;
   }
   #ad-boost-modal #watch-ad-button,
   #ad-boost-modal #close-ad-modal-button {
@@ -5629,6 +5631,7 @@ input[type="number"],
     font-size: 14px !important;
     width: auto !important;
     white-space: nowrap !important;
+    justify-content: center !important;
   }
   #ad-boost-modal #ad-boost-message h3 {
     font-size: 1.1rem !important;
