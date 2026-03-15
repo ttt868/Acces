@@ -1200,18 +1200,16 @@ document.addEventListener('balanceUpdated', function(event) {
               <!-- العداد فقط -->
               <div class="dashboard-activity-timer" id="dashboard-activity-timer" style="display: block; visibility: visible; opacity: 1;">
 
-              <button id="dashboard-boost-btn" class="dashboard-boost-btn" onclick="showActivityBoost()">
-                <i class="fas fa-rocket"></i>
-                <span data-translate="Boost">Boost</span>
-              </button>
-
               <div class="dashboard-timer-header">
                 <div class="dashboard-timer-header-right">
                   <div id="dashboard-hashrate-display" class="dashboard-hashrate-display" style="display: flex; visibility: visible; opacity: 1;">
                     <span class="hashrate-label">XP/s</span>
                     <span id="dashboard-hashrate-value">10.0</span>
                   </div>
-                  <img src="access-logo-1.png" alt="Access" class="timer-access-logo">
+                  <button id="dashboard-boost-btn" class="dashboard-boost-btn" onclick="showActivityBoost()">
+                    <i class="fas fa-rocket"></i>
+                    <span data-translate="Boost">Boost</span>
+                  </button>
                 </div>
               </div>
 
