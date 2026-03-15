@@ -1286,16 +1286,21 @@
 .dashboard-activity-timer:hover {
   box-shadow: none;
 }
-/* صف العنوان: ساعة + Timer */
+/* صف العنوان: Boost يسار - XP/s وسط - ساعة+Timer يمين */
 .timer-header-row {
   display: flex;
   align-items: center;
-  gap: 5px;
-  align-self: flex-start;
-  padding-bottom: 2px;
+  justify-content: space-between;
+  padding-bottom: 4px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.3);
   width: 100%;
   margin-bottom: 2px;
+}
+
+.timer-title-clock {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 /* رأس العداد */
