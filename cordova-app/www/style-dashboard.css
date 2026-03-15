@@ -1553,6 +1553,11 @@
     transition: none;
   }
 
+  .dashboard-activity-timer:hover {
+    transform: none !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+  }
+
   /* هاتف فقط: العداد في الوسط */
   .dashboard-timer-display {
     position: relative;

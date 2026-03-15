@@ -1548,13 +1548,17 @@
   @media (max-width: 768px) {
 
   
-  .dashboard-activity-timer {
-    margin: 0 auto;
+  .dashboard-activity-timer {\n    margin: 0 auto;
     width: 100%;
     max-width: 100vw;
     top: -20px;
     margin-bottom: 2vh;
     transition: none;
+  }
+
+  .dashboard-activity-timer:hover {
+    transform: none !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
   }
 
   /* هاتف فقط: العداد في الوسط */
