@@ -383,41 +383,38 @@
 
   /* Network Dropdown */
   .network-dropdown {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 80%;
-    transform: translateX(-50%);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background: var(--card-background, #fff);
     border: 1px solid rgba(226, 232, 240, 0.6);
-    border-radius: 14px;
-    padding: 20px;
+    border-radius: 18px;
+    padding: 24px;
     backdrop-filter: none;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     z-index: 1000 !important;
     display: none;
-    animation: dropdownExpandFromCenter 0.3s ease;
-    min-width: 320px;
-    max-width: 400px;
-    width: auto;
-    transform-origin: center top;
-  }
-
-  .network-dropdown.show {
-    transform: translateX(-50%);
+    animation: dropdownFadeIn 0.2s ease;
+    min-width: 300px;
+    max-width: 380px;
+    width: calc(100vw - 40px);
+    transform-origin: center center;
   }
 
   .network-dropdown.show {
     display: block;
+    transform: translate(-50%, -50%);
   }
 
-  @keyframes dropdownExpandFromCenter {
+  @keyframes dropdownFadeIn {
     from {
       opacity: 0;
-      transform: none;
+      transform: translate(-50%, -48%);
     }
     to {
       opacity: 1;
-      transform: none;
+      transform: translate(-50%, -50%);
     }
   }
 
@@ -568,8 +565,9 @@
   }
 
   .dark-theme .network-dropdown {
-    background: rgba(42, 42, 42, 0.98);
-    border-color: transparent;
+    background: var(--card-background, rgba(42, 42, 42, 0.98));
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
 
   .dark-theme .account-address-label {
@@ -1273,54 +1271,27 @@
   display: none;
 }
 
-/* خط مائل أنيق يقسم بطاقة العداد - قطع حقيقي مع بقاء المحتوى */
+/* Mobile timer card - solid background */
 @media (max-width: 768px) {
   .dashboard-activity-timer {
-    background: transparent !important;
-    border: none !important;
+    background: var(--card-background, #fff);
+    border: 1px solid rgba(226, 232, 240, 0.35);
+    border-radius: 20px;
     box-shadow: none;
     backdrop-filter: none;
   }
 
-  .dashboard-activity-timer::before {\n    content: '';\n    display: block;\n    position: absolute;\n    top: 0;\n    left: 0;\n    right: 0;\n    bottom: 0;\n    border-radius: 18px;\n    z-index: -1;\n    pointer-events: none;\n    background: var(--card-background, #fff);\n    backdrop-filter: none;\n    border: 1px solid rgba(226, 232, 240, 0.5);\n    box-shadow: none;
-    -webkit-mask-image: linear-gradient(
-      135deg,
-      black calc(50% - 2px),
-      transparent calc(50% - 2px),
-      transparent calc(50% + 2px),
-      black calc(50% + 2px)
-    );
-    mask-image: linear-gradient(
-      135deg,
-      black calc(50% - 2px),
-      transparent calc(50% - 2px),
-      transparent calc(50% + 2px),
-      black calc(50% + 2px)
-    );
+  .dashboard-activity-timer::before {
+    display: none;
   }
 
   .dashboard-activity-timer::after {
-    content: '';
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: 12px;
-    z-index: 0;
-    pointer-events: none;
-    background: transparent;
+    display: none;
   }
 
-  .dark-theme .dashboard-activity-timer::after {
-    background: transparent;
-  }
-
-  .dark-theme .dashboard-activity-timer::before {
+  .dark-theme .dashboard-activity-timer {
     background: var(--card-background);
-    border: 1px solid var(--card-background);
-    box-shadow: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 }
 
@@ -1512,29 +1483,32 @@
 /* يجب تعديل هذا هنا   */
 
 
-  .dashboard-container {
-    margin: 62px 0 2vh 0;
-    padding: 0 16px;
-    width: 100%;
-  }
+.dashboard-container {
+  margin: 62px auto 2vh auto;
+  padding: 0 16px;
+  width: 100%;
+  max-width: 540px;
+  box-sizing: border-box;
+}
 
-  .dashboard-timer-balance-row {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    width: 100%;
-    padding: 0;
-    margin: 0;
-  }
+.dashboard-timer-balance-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
 
   @media (max-width: 768px) {
 
   
-  .dashboard-activity-timer {\n    margin: 0 auto;
+  .dashboard-activity-timer {
+    margin: 0 auto;
     width: 100%;
-    max-width: 100vw;
-    top: -20px;
+    max-width: 100%;
+    top: 0;
     margin-bottom: 0;
     transition: none;
   }
@@ -1592,14 +1566,10 @@
   }
 
   .dashboard-action-buttons {
-    margin: 0 auto;
-    width: 100% !important;
-    max-width: 100% !important;
+    margin: 6px auto 0;
+    width: 100%;
+    max-width: 100%;
     padding: 0;
-    position: relative;
-    left: 0;
-    transform: none;
-    top: 0;
     z-index: 2 !important;
   }
 
@@ -1630,9 +1600,9 @@
   gap: 8px;
   cursor: pointer;
   transition: none;
-  min-width: 48%;
-  max-width: 100% !important;
-  width: 100% !important;
+  min-width: 0;
+  max-width: none;
+  width: auto;
   justify-content: center;
   text-decoration: none;
   font-family: 'Poppins', 'Inter', sans-serif;
@@ -1741,14 +1711,10 @@ html[dir="rtl"] .action-button,
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .dashboard-action-buttons {
-    margin: 0 auto;
-    width: 100% !important;
-    max-width: 100% !important;
+    margin: 6px auto 0;
+    width: 100%;
+    max-width: 100%;
     padding: 0;
-    position: relative;
-    left: 0;
-    transform: none;
-    top: 0;
     z-index: 2 !important;
   }
 
@@ -1763,8 +1729,6 @@ html[dir="rtl"] .action-button,
 
   .action-button {
     flex: 1;
-    max-width: 50% !important;
-    min-width: 45%;
     padding: 14px 16px;
     font-size: clamp(13px, 3.5vw, 15px);
     font-weight: 700;
@@ -1814,9 +1778,6 @@ html[dir="rtl"] .action-button,
 
 
   @media (min-width: 769px), (min-width: 820px), (min-width: 1024px), (min-width: 1180px) {
-.secondary-button span {
-font-size: 1rem !important;
-}
 
    .dashboard-activity-timer {
     width: 100%;
@@ -1825,9 +1786,11 @@ font-size: 1rem !important;
        }
 
 .dashboard-container {
-   margin: 50px 0 0 0 !important;
+   margin: 50px auto 0 auto !important;
    padding: 0 16px;
    width: 100%;
+   max-width: 540px;
+   box-sizing: border-box;
  }
 
     .center-balance-display {
