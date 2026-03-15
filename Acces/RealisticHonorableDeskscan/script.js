@@ -4714,6 +4714,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
                 const retryData = await retryResp.json();
                 if (retryResp.ok && retryData.success) {
                   showNotification(translator.translate('Point processing started successfully!'), 'success');
+                  localStorage.setItem('dashboard_session_earned', '0');
                   currentUser.processing_active = 1;
                   currentUser.processing_end_time = Date.now() + (retryData.remaining_seconds * 1000);
                   currentUser.processing_start_time_seconds = Math.floor(Date.now() / 1000);
@@ -4767,6 +4768,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
               }
               
               // ✅ تصفير العرض فوراً قبل أي شيء آخر
+              localStorage.setItem('dashboard_session_earned', '0');
               const accumulatedCoinsEl = document.getElementById('accumulated-coins');
               if (accumulatedCoinsEl) {
                 accumulatedCoinsEl.textContent = formatNumberSmart(0);
@@ -5707,6 +5709,7 @@ function startGradualAccumulation() {
     const sessionEarnedEl = document.getElementById('session-earned-value');
     if (sessionEarnedEl && calculatedAccumulated > 0) {
       sessionEarnedEl.textContent = '+' + formatNumberSmart(calculatedAccumulated);
+      localStorage.setItem('dashboard_session_earned', calculatedAccumulated.toString());
     }
 
     // ✅ تحديث hashrate في Activity و Dashboard معاً
@@ -6708,9 +6711,16 @@ function startGradualAccumulation() {
       dashboardCountdownDisplay.textContent = '00:00:00';
       dashboardTimerStatus.textContent = translator.translate('Not Active');
       
-      // Reset session earned XP display
+      // Show saved session earned instead of resetting
       const sessionEarnedEl = document.getElementById('session-earned-value');
-      if (sessionEarnedEl) sessionEarnedEl.textContent = '+0.0';
+      if (sessionEarnedEl) {
+        const saved = localStorage.getItem('dashboard_session_earned');
+        if (saved && parseFloat(saved) > 0) {
+          sessionEarnedEl.textContent = '+' + formatNumberSmart(parseFloat(saved));
+        } else {
+          sessionEarnedEl.textContent = '+0.0';
+        }
+      }
       
       // إيقاف الرقاص - إزالة activity-active class
       dashboardTimer.classList.remove('activity-active');
@@ -6906,7 +6916,15 @@ function startGradualAccumulation() {
   function updateDashboardSessionEarned() {
     const sessionEarnedEl = document.getElementById('session-earned-value');
     if (!sessionEarnedEl) return;
-    if (!currentUser || currentUser.processing_active !== 1) return;
+    
+    // إذا لا يوجد مستخدم نشط، اعرض القيمة المحفوظة
+    if (!currentUser || currentUser.processing_active !== 1) {
+      const saved = localStorage.getItem('dashboard_session_earned');
+      if (saved && parseFloat(saved) > 0) {
+        sessionEarnedEl.textContent = '+' + formatNumberSmart(parseFloat(saved));
+      }
+      return;
+    }
 
     const startTimeSec = Math.floor(
       currentUser.processing_start_time_seconds ||
@@ -6930,6 +6948,7 @@ function startGradualAccumulation() {
 
     if (accumulated > 0) {
       sessionEarnedEl.textContent = '+' + formatNumberSmart(accumulated);
+      localStorage.setItem('dashboard_session_earned', accumulated.toString());
     }
   }
 
