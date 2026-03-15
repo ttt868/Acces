@@ -1566,33 +1566,11 @@
     align-items: center !important;
   }
 
-  /* XP/s جنب الساعة يسار */
+  /* XP/s يسار - الصورة يمين */
   .dashboard-timer-header {
-    position: static !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  .dashboard-timer-header-right {
-    position: static !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: visible !important;
-  }
-
-  .timer-access-logo {
-    display: none !important;
-  }
-
-  .dashboard-hashrate-display {
-    position: absolute !important;
-    left: 8px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    z-index: 20;
+    width: 100% !important;
+    justify-content: space-between !important;
+    align-self: flex-start !important;
   }
 
   .dashboard-countdown {
@@ -3017,7 +2995,15 @@ html[lang="ar"] .wallet-header h3 {
   }
 
   .timer-access-logo {
-    display: none !important;
+    display: block;
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    border-radius: 50%;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   .timer-triangle-pulse {
@@ -3086,9 +3072,8 @@ html[lang="ar"] .wallet-header h3 {
     white-space: nowrap;
     margin-top: 0;
     position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: 4px;
+    left: 8px;
     z-index: 20;
   }
 
