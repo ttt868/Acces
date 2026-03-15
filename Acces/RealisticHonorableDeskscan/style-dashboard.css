@@ -1267,7 +1267,7 @@
     background: var(--card-background, #ffffff);
     border: none;
     border-radius: 14px;
-    box-shadow: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     backdrop-filter: none;
   }
 
@@ -1282,11 +1282,12 @@
   .dark-theme .dashboard-activity-timer {
     background: var(--card-background, #1e293b);
     border: none;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
   }
 }
 
 .dashboard-activity-timer:hover {
-  box-shadow: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 /* صف العنوان: Boost يسار - XP/s وسط - ساعة+Timer يمين */
 .timer-header-row {
@@ -1548,7 +1549,7 @@
 
   .dashboard-activity-timer:hover {
     transform: none !important;
-    box-shadow: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   }
 
   /* هاتف فقط: العداد في الوسط */
