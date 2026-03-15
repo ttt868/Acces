@@ -1554,6 +1554,7 @@
     max-width: 100vw;
     top: -20px;
     margin-bottom: 2vh;
+    transition: none;
   }
 
   /* هاتف فقط: العداد في الوسط */
@@ -3083,6 +3084,7 @@ html[lang="ar"] .wallet-header h3 {
 
   .dashboard-boost-btn:active {
     opacity: 0.85;
+    transform: translateY(-50%) !important;
   }
 }
 
