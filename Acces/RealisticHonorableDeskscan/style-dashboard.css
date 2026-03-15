@@ -1085,7 +1085,7 @@
 .dashboard-activity-timer {
   background: var(--card-background, #ffffff);
   backdrop-filter: none;
-  border: 1px solid rgba(226, 232, 240, 0.6);
+  border: none;
   border-radius: 14px;
   padding: 14px 16px 12px;
   box-shadow: none;
@@ -1263,7 +1263,7 @@
 @media (max-width: 768px) {
   .dashboard-activity-timer {
     background: var(--card-background, #ffffff);
-    border: 1px solid rgba(226, 232, 240, 0.6);
+    border: none;
     border-radius: 14px;
     box-shadow: none;
     backdrop-filter: none;
@@ -1279,7 +1279,7 @@
 
   .dark-theme .dashboard-activity-timer {
     background: var(--card-background, #1e293b);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: none;
   }
 }
 
@@ -1293,7 +1293,7 @@
   gap: 5px;
   align-self: flex-start;
   padding-bottom: 2px;
-  border-bottom: 1px solid rgba(99,102,241,0.08);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.3);
   width: 100%;
   margin-bottom: 2px;
 }
@@ -1317,7 +1317,7 @@
   z-index: 15;
   font-size: 11px;
   font-weight: 700;
-  color: #6366f1;
+  color: var(--text-color, #1f2937);
   text-transform: uppercase;
   letter-spacing: 1.2px;
   white-space: nowrap;
@@ -1424,7 +1424,7 @@
 /* للوضع المظلم */
 .dark-theme .dashboard-activity-timer {
   background: var(--card-background, #1e293b);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: none;
   box-shadow: none;
   backdrop-filter: none;
 }
@@ -1464,11 +1464,11 @@
 }
 
 .dark-theme .dashboard-timer-title {
-  color: #818cf8;
+  color: var(--text-color, #e2e8f0);
 }
 
 .dark-theme .timer-header-row {
-  border-bottom-color: rgba(99,102,241,0.12);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 .dark-theme .dashboard-countdown {
