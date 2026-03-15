@@ -3090,6 +3090,11 @@ html[lang="ar"] .wallet-header h3 {
     opacity: 0.85;
     transform: translateY(-50%) !important;
   }
+
+  .dashboard-boost-btn:hover {
+    transform: translateY(-50%) !important;
+    box-shadow: none !important;
+  }
 }
 
 /* Session AC Earned - Below Countdown */
