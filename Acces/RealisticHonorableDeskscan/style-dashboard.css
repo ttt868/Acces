@@ -1566,11 +1566,14 @@
     align-items: center !important;
   }
 
-  /* XP/s يسار - الصورة يمين */
+  /* XP/s يسار متوسط عمودياً */
   .dashboard-timer-header {
-    width: 100% !important;
-    justify-content: space-between !important;
-    align-self: flex-start !important;
+    position: absolute !important;
+    left: 8px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: auto !important;
+    z-index: 20;
   }
 
   .dashboard-countdown {
