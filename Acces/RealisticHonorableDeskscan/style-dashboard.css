@@ -2767,36 +2767,27 @@ html[lang="ar"] .wallet-header h3 {
   }
 
   .balance-label-container {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0;
-    position: relative;
+    gap: 5px;
     width: 100%;
   }
 
   .balance-label-container .balance-label {
     text-align: center;
-    width: 100%;
-  }
-
-  .balance-label-container .balance-privacy-toggle,
-  .balance-label-container .wallet-icon,
-  .balance-label-container .balance-chart-icon {
-    position: absolute;
-    right: 0;
   }
 
   .balance-label-container .balance-privacy-toggle {
-    right: 36px;
-  }
-
-  .balance-label-container .wallet-icon {
-    right: 18px;
-  }
-
-  .balance-label-container .balance-chart-icon {
-    right: -10px;
+    padding: 0;
+    background: none;
+    border: none;
+    font-size: 11px;
+    color: inherit;
+    opacity: 0.45;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
   }
 
 
