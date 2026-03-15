@@ -1557,16 +1557,16 @@
     margin-bottom: 2vh;
   }
 
-  /* هاتف فقط: العداد يمين */
+  /* هاتف فقط: العداد في الوسط */
   .dashboard-timer-display {
     position: relative;
     width: fit-content;
     margin-left: auto;
-    margin-right: 4px;
+    margin-right: auto;
   }
 
   .dashboard-countdown {
-    text-align: right;
+    text-align: center;
     font-size: 28px;
   }
 
