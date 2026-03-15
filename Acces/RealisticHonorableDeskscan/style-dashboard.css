@@ -1568,6 +1568,22 @@
 
   /* XP/s جنب الساعة يسار */
   .dashboard-timer-header {
+    position: static !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .dashboard-timer-header-right {
+    position: static !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .timer-access-logo {
     display: none !important;
   }
 
