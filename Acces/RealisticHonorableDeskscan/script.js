@@ -6905,15 +6905,57 @@ function startGradualAccumulation() {
     }
   }
 
-  // نسخة مرئية فقط من accumulated-coins
+  // نسخة مرئية من accumulated-coins - تعمل فوراً من الداشبورد
   function updateDashboardSessionEarned() {
     const sessionEarnedEl = document.getElementById('session-earned-value');
     if (!sessionEarnedEl) return;
+    
+    // ✅ إذا calculateAndDisplayLocally شغال (بعد زيارة Activity)، نقرأ منه
     const accumulatedCoinsEl = document.getElementById('accumulated-coins');
-    if (!accumulatedCoinsEl) return;
-    const val = accumulatedCoinsEl.textContent;
-    if (val && val !== '0' && val !== '0.0') {
-      sessionEarnedEl.textContent = '+' + val;
+    if (accumulatedCoinsEl) {
+      const val = accumulatedCoinsEl.textContent;
+      if (val && val !== '0' && val !== '0.0' && val !== '') {
+        sessionEarnedEl.textContent = '+' + val;
+        return;
+      }
+    }
+    
+    // ✅ قبل زيارة Activity: نحسب بنفس طريقة calculateAndDisplayLocally بالضبط
+    if (!currentUser || currentUser.processing_active !== 1) return;
+    
+    const startTimeSec = Math.floor(
+      currentUser.processing_start_time_seconds ||
+      (currentUser.processing_start_time ? new Date(currentUser.processing_start_time).getTime() / 1000 : 0)
+    );
+    if (!startTimeSec) return;
+    
+    const nowSec = Math.floor(Date.now() / 1000);
+    const elapsed = Math.max(0, nowSec - startTimeSec);
+    if (elapsed <= 0) return;
+    
+    const baseReward = window.serverBaseReward || 0.25;
+    const referrals = parseInt(currentUser.session_active_referrals) || 0;
+    let multiplier = referrals > 0 ? (1.0 + referrals * 0.04) : 1.0;
+    if (window.localBoostData && window.localBoostData.multiplier) {
+      multiplier = window.localBoostData.multiplier;
+    }
+    const boostedReward = baseReward * multiplier;
+    const duration = 86400;
+    
+    let accumulated;
+    if (elapsed >= duration) {
+      accumulated = boostedReward;
+    } else {
+      accumulated = (boostedReward / duration) * elapsed;
+    }
+    
+    if (accumulated > 0) {
+      const formatted = formatNumberSmart(accumulated);
+      sessionEarnedEl.textContent = '+' + formatted;
+      // نكتب أيضاً في accumulated-coins ليبقيا متطابقين
+      if (accumulatedCoinsEl) {
+        accumulatedCoinsEl.textContent = formatted;
+      }
     }
   }
 
