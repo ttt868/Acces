@@ -2767,10 +2767,10 @@ html[lang="ar"] .wallet-header h3 {
   }
 
   .balance-label-container {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    position: relative;
     width: 100%;
   }
 
@@ -2779,6 +2779,8 @@ html[lang="ar"] .wallet-header h3 {
   }
 
   .balance-label-container .balance-privacy-toggle {
+    position: absolute;
+    left: calc(50% + 52px);
     padding: 0;
     background: none;
     border: none;
