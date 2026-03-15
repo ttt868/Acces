@@ -251,9 +251,9 @@
     margin-bottom: 14px !important;
     z-index: 3;
     margin-top: 12px !important;
-    width: calc(100% + 13px);
+    width: 100%;
     padding-left: 0;
-    margin-left: -13px;
+    margin-left: 0;
   }
 }
   .network-selector {
@@ -1493,7 +1493,7 @@
 
 .dashboard-container {
   margin: 62px auto 2vh auto;
-  padding: 0 16px;
+  padding: 0 6px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -1814,7 +1814,7 @@ html[dir="rtl"] .action-button,
 
 .dashboard-container {
    margin: 50px auto 0 auto !important;
-   padding: 0 16px;
+   padding: 0 6px;
    width: 100%;
    max-width: 100%;
    box-sizing: border-box;
@@ -1872,11 +1872,11 @@ html[dir="rtl"] .action-button,
       display: flex;
       justify-content: flex-start;
       margin-bottom: 14px;
-      width: calc(100% + 13px);
+      width: 100%;
       z-index: 3 !important;
       margin-top: 20px !important;
       padding-left: 0;
-      margin-left: -13px;
+      margin-left: 0;
     }
 
     .secondary-action-buttons {
@@ -2125,11 +2125,11 @@ html[dir="rtl"] .action-button,
     display: flex;
     justify-content: flex-start;
     margin-bottom: 14px;
-    width: calc(100% + 13px);
+    width: 100%;
     z-index: 3 !important;
     margin-top: 30px !important;
     padding-left: 0;
-    margin-left: -13px;
+    margin-left: 0;
   }
 
 
