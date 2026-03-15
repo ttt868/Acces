@@ -1566,29 +1566,11 @@
     align-items: center !important;
   }
 
-  /* XP/s يسار + Boost يمين - كلاهما متوسط عمودياً */
+  /* XP/s يسار - الصورة يمين */
   .dashboard-timer-header {
-    position: static !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  .dashboard-timer-header-right {
-    position: static !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: visible !important;
-  }
-
-  .dashboard-hashrate-display {
-    position: absolute !important;
-    left: 8px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    z-index: 20;
+    width: 100% !important;
+    justify-content: space-between !important;
+    align-self: flex-start !important;
   }
 
   .dashboard-countdown {
@@ -3013,7 +2995,15 @@ html[lang="ar"] .wallet-header h3 {
   }
 
   .timer-access-logo {
-    display: none !important;
+    display: block;
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    border-radius: 50%;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   .timer-triangle-pulse {
@@ -3069,21 +3059,21 @@ html[lang="ar"] .wallet-header h3 {
   .dashboard-boost-btn {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
+    gap: 8px;
+    padding: 8px 16px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    font-size: 12px;
+    font-size: 13px;
     font-family: 'Poppins', 'Inter', sans-serif;
     white-space: nowrap;
+    margin-top: 0;
     position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: 4px;
+    left: 8px;
     z-index: 20;
   }
 
