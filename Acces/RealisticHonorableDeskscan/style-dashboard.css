@@ -2708,11 +2708,14 @@ html[lang="ar"] .wallet-header h3 {
 
   /* Chart Icon Styling */
   #dashboard-page .wallet-icon {
-    display: none;
+    display: inline-flex;
+    font-size: 12px;
+    color: #6366f1;
+    opacity: 0.6;
   }
 
 #dashboard-page .wallet-icon:hover {
-    display: none;
+    opacity: 0.8;
   }
 
   /* Dark Theme Support */
@@ -2767,31 +2770,24 @@ html[lang="ar"] .wallet-header h3 {
   }
 
   .balance-label-container {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
     align-items: center;
+    justify-content: center;
+    gap: 8px;
     width: 100%;
-  }
-
-  .balance-label-container::before {
-    content: '';
   }
 
   .balance-label-container .balance-label {
     text-align: center;
-    grid-column: 2;
   }
 
   .balance-label-container .balance-privacy-toggle {
-    grid-column: 3;
-    justify-self: start;
-    margin-left: 5px;
     padding: 0;
     background: none;
     border: none;
-    font-size: 11px;
+    font-size: 12px;
     color: inherit;
-    opacity: 0.45;
+    opacity: 0.5;
     line-height: 1;
     display: inline-flex;
     align-items: center;
@@ -3042,8 +3038,12 @@ html[lang="ar"] .dashboard-timer-header {
   }
 }
 
-/* Global: hide chart icon and wallet icon from balance */
-.balance-chart-icon,
+/* Global: balance chart icon styling */
+.balance-chart-icon {
+  opacity: 0.5;
+}
 #dashboard-page .wallet-icon {
-  display: none !important;
+  font-size: 12px;
+  color: #6366f1;
+  opacity: 0.6;
 }
