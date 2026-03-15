@@ -1577,7 +1577,7 @@
   #dashboard-hashrate-display {
     position: absolute !important;
     left: 8px !important;
-    top: 50% !important;
+    top: calc(50% + 10px) !important;
     transform: translateY(-50%) !important;
     z-index: 20;
   }
