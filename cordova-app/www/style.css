@@ -5619,8 +5619,8 @@ input[type="number"],
     width: 94% !important;
   }
   #ad-boost-modal .modal-buttons {
-    flex-wrap: wrap !important;
-    justify-content: center !important;
+    flex-direction: column !important;
+    align-items: center !important;
     gap: 8px !important;
   }
   #ad-boost-modal #watch-ad-button,
