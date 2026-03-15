@@ -1052,8 +1052,8 @@
 
 
   #dashboard-page .dashboard-user-avatar {
-    width: 42px !important;
-    height: 42px !important;
+    width: 48px !important;
+    height: 48px !important;
     border-width: 2px;
     flex-shrink: 0;
     align-self: center;
@@ -1579,6 +1579,7 @@
 
   .dashboard-countdown {
     text-align: right;
+    font-size: 24px;
   }
 
   /* هاتف فقط: الرقاص يتوسط فوق الأرقام تلقائياً */
@@ -2988,6 +2989,7 @@ html[lang="ar"] .wallet-header h3 {
     object-fit: contain;
     border-radius: 50%;
   }
+
 }
 
 .timer-triangle-pulse {
@@ -3060,7 +3062,7 @@ html[lang="ar"] .wallet-header h3 {
     font-family: 'Poppins', 'Inter', sans-serif;
     white-space: nowrap;
     position: absolute;
-    bottom: 8px;
+    bottom: 4px;
     left: 8px;
     z-index: 20;
   }

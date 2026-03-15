@@ -1052,8 +1052,8 @@
 
 
   #dashboard-page .dashboard-user-avatar {
-    width: 42px !important;
-    height: 42px !important;
+    width: 48px !important;
+    height: 48px !important;
     border-width: 2px;
     flex-shrink: 0;
     align-self: center;
@@ -1583,6 +1583,12 @@
 
   .dashboard-countdown {
     text-align: right;
+    font-size: 24px;
+  }
+
+  .dashboard-timer-title {
+    font-size: 10px;
+    letter-spacing: 0.8px;
   }
 
   /* هاتف فقط: الرقاص يتوسط فوق الأرقام تلقائياً */
@@ -1922,7 +1928,7 @@ font-size: 1rem !important;
     width: 100%;
       max-width: 100vw;
          margin: 0 auto;
-         margin-top:  -4vh;
+         margin-top: -2vh;
        }
 
 .dashboard-container {
@@ -3061,8 +3067,9 @@ html[lang="ar"] .wallet-header h3 {
     font-size: 13px;
     font-family: 'Poppins', 'Inter', sans-serif;
     white-space: nowrap;
+    margin-top: 0;
     position: absolute;
-    bottom: 8px;
+    bottom: 4px;
     left: 8px;
     z-index: 20;
   }
@@ -3125,4 +3132,62 @@ html[lang="ar"] .wallet-header h3 {
 html[dir="rtl"] .dashboard-timer-header,
 html[lang="ar"] .dashboard-timer-header {
   flex-direction: row;
+
+/* === شاشات صغيرة (هواتف صغيرة) === */
+@media (max-width: 380px) {
+  .dashboard-countdown {
+    font-size: 22px;
+  }
+
+  .dashboard-timer-title {
+    font-size: 11px;
+  }
+
+  .dashboard-timer-status {
+    font-size: 10px;
+  }
+
+  .dashboard-boost-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .dashboard-boost-btn i {
+    font-size: 12px;
+  }
+
+  .primary-action-buttons .action-btn,
+  .secondary-buttons-grid .secondary-button {
+    font-size: 11px;
+    padding: 8px 6px;
+  }
+
+  .action-btn .btn-icon {
+    font-size: 16px;
+  }
+
+  .secondary-button .btn-icon {
+    font-size: 14px;
+  }
+
+  .balance-value #user-coins {
+    font-size: 22px;
+  }
+
+  .balance-label {
+    font-size: 10px;
+  }
+
+  .hashrate-value {
+    font-size: 11px;
+  }
+
+  .session-earned-value {
+    font-size: 13px;
+  }
+
+  .session-earned-label {
+    font-size: 9px;
+  }
+}
 }
