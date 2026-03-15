@@ -1567,6 +1567,15 @@
     width: 100% !important;
     justify-content: space-between !important;
     align-self: flex-start !important;
+    min-height: 30px;
+  }
+
+  #dashboard-hashrate-display {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
   }
 
   .dashboard-countdown {
@@ -2987,15 +2996,7 @@ html[lang="ar"] .wallet-header h3 {
   }
 
   .timer-access-logo {
-    display: block;
-    width: 30px;
-    height: 30px;
-    object-fit: contain;
-    border-radius: 50%;
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
+    display: none !important;
   }
 
 }
@@ -3058,20 +3059,21 @@ html[lang="ar"] .wallet-header h3 {
   .dashboard-boost-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
+    gap: 6px;
+    padding: 6px 12px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 12px;
     font-family: 'Poppins', 'Inter', sans-serif;
     white-space: nowrap;
     position: absolute;
-    bottom: 4px;
-    left: 8px;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 20;
   }
 
