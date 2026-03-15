@@ -3226,432 +3226,486 @@ html[lang="ar"] .dashboard-timer-header {
 
 /* ================================================================
    MODERN DASHBOARD REDESIGN 2026
-   Clean, flat, modern mining app — no glow, no blur, no 2010 style
-   Same colors, only layout + formatting change
+   Applies to ALL screen sizes — desktop, tablet, mobile
+   Same colors, zero effects, pure clean modern layout
    ================================================================ */
 
+/* ─── BASE OVERRIDES (ALL SCREENS) ─── */
+
+/* Container */
+.dashboard-container {
+  padding: 0 16px !important;
+}
+
+.dashboard-unified-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.dashboard-timer-balance-row {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+/* ─── NETWORK SELECTOR — Clean Pill ─── */
+.network-selector {
+  background: var(--card-background, #fff) !important;
+  border: 1px solid rgba(226, 232, 240, 0.6) !important;
+  border-radius: 24px !important;
+  padding: 6px 14px 6px 10px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: border-color 0.2s ease !important;
+}
+
+.network-selector:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: rgba(102, 126, 234, 0.4) !important;
+}
+
+.chain-pulse {
+  display: none !important;
+}
+
+.chain-icon {
+  animation: none !important;
+  filter: none !important;
+}
+
+.chain-icon:hover {
+  transform: none !important;
+  filter: none !important;
+}
+
+.dark-theme .network-selector {
+  background: var(--card-background, #1a1a2e) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ─── BALANCE — Centered, Bold, Clean ─── */
+.center-balance-display {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin-bottom: 4px !important;
+  top: 0 !important;
+}
+
+.balance-showcase {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  backdrop-filter: none !important;
+  gap: 0 !important;
+}
+
+.balance-info {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  gap: 2px !important;
+  width: 100% !important;
+}
+
+.balance-label-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.balance-label {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1.5px !important;
+  color: #6366f1 !important;
+  margin: 0 !important;
+}
+
+.dark-theme .balance-label {
+  color: #818cf8 !important;
+}
+
+.balance-value {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: baseline !important;
+  width: 100% !important;
+}
+
+.balance-amount-container {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: baseline !important;
+  gap: 6px !important;
+}
+
+.balance-value #user-coins {
+  font-size: clamp(28px, 6vw, 42px) !important;
+  font-weight: 800 !important;
+  margin: 0 !important;
+  text-align: center !important;
+  letter-spacing: -0.5px !important;
+}
+
+.balance-currency-unit {
+  font-size: clamp(11px, 2vw, 14px) !important;
+  font-weight: 500 !important;
+  color: #9ca3af !important;
+  top: 0 !important;
+}
+
+.balance-chart-icon {
+  display: none !important;
+}
+
+#dashboard-page .wallet-icon {
+  display: none !important;
+}
+
+/* ─── TIMER CARD — Flat Modern ─── */
+.dashboard-activity-timer {
+  background: var(--card-background, #fff) !important;
+  border: 1px solid rgba(226, 232, 240, 0.5) !important;
+  border-radius: 18px !important;
+  padding: 24px 16px 20px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: none !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+  max-width: 440px !important;
+}
+
+.dashboard-activity-timer:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.dashboard-activity-timer::before {
+  display: none !important;
+}
+
+.dashboard-activity-timer::after {
+  display: none !important;
+}
+
+.dark-theme .dashboard-activity-timer {
+  background: var(--card-background, #1a1a2e) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+}
+
+.dark-theme .dashboard-activity-timer:hover {
+  background: var(--card-background, #1a1a2e) !important;
+  box-shadow: none !important;
+}
+
+/* Timer header */
+.dashboard-timer-header {
+  min-height: 30px !important;
+}
+
+/* Countdown */
+.dashboard-countdown {
+  font-size: clamp(30px, 7vw, 42px) !important;
+  font-weight: 800 !important;
+  letter-spacing: 2px !important;
+}
+
+/* XP/s */
+#dashboard-hashrate-display {
+  background: rgba(56, 178, 172, 0.08) !important;
+  border: 1px solid rgba(56, 178, 172, 0.15) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+/* Boost button */
+.dashboard-boost-btn {
+  background: #667eea !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+
+.dashboard-boost-btn:hover {
+  box-shadow: none !important;
+}
+
+/* Pendulum clock - cleaner */
+.clock-body {
+  box-shadow: none !important;
+}
+
+.pendulum-weight {
+  box-shadow: none !important;
+}
+
+.clock-body::before {
+  box-shadow: none !important;
+}
+
+/* ─── ACTION BUTTONS — Flat Clean ─── */
+.dashboard-action-buttons {
+  margin: 10px auto 0 !important;
+  width: 100% !important;
+  max-width: 440px !important;
+}
+
+.primary-action-buttons {
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.action-button {
+  background: #667eea !important;
+  border: none !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  transition: none !important;
+  color: white !important;
+}
+
+.action-button:hover,
+.action-button:active {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.dark-theme .action-button {
+  background: #667eea !important;
+}
+
+.dark-theme .action-button:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.secondary-action-buttons {
+  gap: 6px !important;
+}
+
+.secondary-button {
+  background: var(--card-background, #fff) !important;
+  border: 1px solid rgba(226, 232, 240, 0.5) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  transition: none !important;
+}
+
+.secondary-button:hover,
+.secondary-button:active {
+  transform: none !important;
+  box-shadow: none !important;
+  background: var(--card-background, #fff) !important;
+}
+
+.dark-theme .secondary-button {
+  background: var(--card-background, #1a1a2e) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark-theme .secondary-button:hover {
+  background: var(--card-background, #1a1a2e) !important;
+}
+
+/* ─── HEADER — Clean Flat ─── */
+#dashboard-page .dashboard-header {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+#dashboard-page .action-icon {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  border: 1px solid rgba(226, 232, 240, 0.4) !important;
+}
+
+#dashboard-page .action-icon:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.dark-theme #dashboard-page .action-icon {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+
+#dashboard-page .dashboard-user-avatar {
+  box-shadow: none !important;
+  border: 2px solid rgba(226, 232, 240, 0.4) !important;
+}
+
+#dashboard-page .dashboard-user-avatar:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.dark-theme #dashboard-page .dashboard-user-avatar {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+
+/* Network dropdown clean */
+.network-dropdown {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(226, 232, 240, 0.6) !important;
+  border-radius: 14px !important;
+}
+
+.dark-theme .network-dropdown {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Referral widget clean */
+#dashboard-page .referral-stats-item:hover,
+#dashboard-page .referral-invite-item:hover {
+  transform: none !important;
+}
+
+/* Global cleanup */
+.dashboard-activity-timer *,
+.center-balance-display *,
+.dashboard-action-buttons * {
+  text-shadow: none !important;
+}
+
+/* ─── MOBILE TWEAKS (≤768px) ─── */
 @media (max-width: 768px) {
-
-  /* === CONTAINER === */
   .dashboard-container {
-    margin: 68px 0 2vh 0 !important;
-    padding: 0 14px !important;
-    width: 100% !important;
+    margin-top: 66px !important;
+    padding: 0 12px !important;
   }
 
-  .dashboard-unified-card {
-    background: none !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  .dashboard-timer-balance-row {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    gap: 8px !important;
-    width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  /* === NETWORK SELECTOR — Compact Centered Pill === */
   .network-selector-container {
     justify-content: center !important;
     margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    width: 100% !important;
   }
 
-  .network-selector {
-    background: var(--card-background, #ffffff) !important;
-    border: 1px solid rgba(226, 232, 240, 0.6) !important;
-    border-radius: 24px !important;
-    padding: 6px 14px 6px 10px !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    min-width: 0 !important;
-    width: auto !important;
-  }
-
-  .network-selector:hover {
-    transform: none !important;
-    box-shadow: none !important;
-  }
-
-  .chain-pulse {
-    display: none !important;
-  }
-
-  .chain-icon {
-    animation: none !important;
-    filter: none !important;
-  }
-
-  /* === BALANCE — Centered, Prominent, Clean === */
-  .center-balance-display {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    width: 100% !important;
-    margin-bottom: 0 !important;
-    top: 0 !important;
-    position: relative !important;
-  }
-
-  .balance-showcase {
-    width: 100% !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    backdrop-filter: none !important;
-    border-radius: 0 !important;
-    gap: 0 !important;
-  }
-
-  .balance-info {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    text-align: center !important;
-    gap: 2px !important;
-    width: 100% !important;
-  }
-
-  .balance-label-container {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 8px !important;
-  }
-
-  .balance-label {
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 1.5px !important;
-    color: #6366f1 !important;
-    margin: 0 !important;
-  }
-
-  .dark-theme .balance-label {
-    color: #818cf8 !important;
-  }
-
-  .balance-value {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: baseline !important;
-    width: 100% !important;
-  }
-
-  .balance-amount-container {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: baseline !important;
-    gap: 6px !important;
-  }
-
-  .balance-value #user-coins {
-    font-size: 34px !important;
-    font-weight: 800 !important;
-    margin: 0 !important;
-    text-align: center !important;
-    letter-spacing: -0.5px !important;
-  }
-
-  .balance-currency-unit {
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    color: #9ca3af !important;
-    top: 0 !important;
-  }
-
-  /* Balance chart icon */
-  .balance-chart-icon {
-    display: none !important;
-  }
-
-  .wallet-icon {
-    display: none !important;
-  }
-
-  /* === TIMER CARD — Clean Flat Modern === */
   .dashboard-activity-timer {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    border-radius: 16px !important;
-    padding: 22px 14px 18px !important;
-    margin: 0 auto !important;
-    top: 0 !important;
-    width: 100% !important;
     max-width: 100% !important;
-    transition: none !important;
-    overflow: visible !important;
+    border: none !important;
+    background: transparent !important;
   }
 
   .dashboard-activity-timer::before {
-    border-radius: 16px !important;
+    display: block !important;
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    border-radius: 18px !important;
+    z-index: -1 !important;
+    pointer-events: none !important;
+    background: var(--card-background, #fff) !important;
+    border: 1px solid rgba(226, 232, 240, 0.5) !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    border: 1px solid rgba(226, 232, 240, 0.5) !important;
-    background: var(--card-background, #ffffff) !important;
+    -webkit-mask-image: linear-gradient(
+      135deg,
+      black calc(50% - 2px),
+      transparent calc(50% - 2px),
+      transparent calc(50% + 2px),
+      black calc(50% + 2px)
+    ) !important;
+    mask-image: linear-gradient(
+      135deg,
+      black calc(50% - 2px),
+      transparent calc(50% - 2px),
+      transparent calc(50% + 2px),
+      black calc(50% + 2px)
+    ) !important;
+  }
+
+  .dark-theme .dashboard-activity-timer {
+    background: transparent !important;
   }
 
   .dark-theme .dashboard-activity-timer::before {
     background: var(--card-background) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: none !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
   }
 
-  .dashboard-activity-timer::after {
-    display: none !important;
-  }
-
-  .dashboard-activity-timer:hover {
-    transform: none !important;
-    box-shadow: none !important;
-  }
-
-  .dark-theme .dashboard-activity-timer:hover {
-    background: transparent !important;
-    box-shadow: none !important;
-  }
-
-  /* XP/s badge - clean */
-  #dashboard-hashrate-display {
-    background: rgba(56, 178, 172, 0.08) !important;
-    border: 1px solid rgba(56, 178, 172, 0.15) !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-  }
-
-  /* Boost button - clean */
-  .dashboard-boost-btn {
-    background: #667eea !important;
-    border-radius: 10px !important;
-    box-shadow: none !important;
-  }
-
-  /* Countdown - prominent centered */
-  .dashboard-countdown {
-    font-size: 38px !important;
-    font-weight: 800 !important;
-    letter-spacing: 2px !important;
-  }
-
-  /* Session earned */
-  .dashboard-session-earned {
-    bottom: -12px !important;
-  }
-
-  /* Pendulum clock - cleaner */
-  .pendulum-clock {
-    top: -60px !important;
-  }
-
-  .clock-body {
-    box-shadow: none !important;
-  }
-
-  .pendulum-weight {
-    box-shadow: none !important;
-  }
-
-  .clock-body::before {
-    box-shadow: none !important;
-  }
-
-  /* Timer title label */
-  .dashboard-timer-title {
-    top: -16px !important;
-  }
-
-  /* === ACTION BUTTONS — Clean Flat Modern === */
   .dashboard-action-buttons {
-    margin: 10px auto 0 !important;
-    padding: 0 !important;
+    max-width: 100% !important;
+    margin-top: 6px !important;
   }
 
-  .primary-action-buttons {
-    gap: 8px !important;
-    margin-bottom: 8px !important;
-  }
-
-  .action-button {
-    background: #667eea !important;
-    border: none !important;
-    border-radius: 14px !important;
-    padding: 14px 16px !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    box-shadow: none !important;
-    transition: none !important;
-    color: white !important;
-  }
-
-  .action-button:hover,
-  .action-button:active {
-    transform: none !important;
-    box-shadow: none !important;
-    opacity: 0.92;
-  }
-
-  .dark-theme .action-button {
-    background: #667eea !important;
-  }
-
-  .secondary-action-buttons {
-    gap: 6px !important;
-    column-gap: 6px !important;
-  }
-
-  .secondary-button {
-    background: var(--card-background, #ffffff) !important;
-    border: 1px solid rgba(226, 232, 240, 0.5) !important;
-    border-radius: 14px !important;
-    padding: 10px 6px !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    transition: none !important;
-  }
-
-  .secondary-button:hover,
-  .secondary-button:active {
-    transform: none !important;
-    box-shadow: none !important;
-    background: var(--card-background, #ffffff) !important;
-  }
-
-  .dark-theme .secondary-button {
-    background: var(--card-background) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  }
-
-  .dark-theme .secondary-button:hover {
-    background: var(--card-background) !important;
-  }
-
-  /* === REFERRAL WIDGET — Clean === */
-  #dashboard-page .referral-widget {
-    z-index: 1 !important;
-  }
-
-  #dashboard-page .referral-stats-item:hover,
-  #dashboard-page .referral-invite-item:hover {
-    transform: none !important;
-  }
-
-  #dashboard-page .referral-icon-container,
-  #dashboard-page .invite-icon-container {
-    backdrop-filter: none !important;
-  }
-
-  /* === GLOBAL CLEANUP — Remove ALL glow/shadow/blur from dashboard === */
-  .dashboard-activity-timer *,
-  .center-balance-display *,
-  .dashboard-action-buttons * {
-    text-shadow: none !important;
-  }
-
-  /* Network dropdown - clean */
-  .network-dropdown {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
-    backdrop-filter: none !important;
-    border: 1px solid rgba(226, 232, 240, 0.6) !important;
-    border-radius: 14px !important;
-  }
-
-  .dark-theme .network-dropdown {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  }
-
-  /* Header cleanup */
   #dashboard-page .dashboard-header {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    box-shadow: none !important;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.4) !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.3) !important;
   }
 
   .dark-theme #dashboard-page .dashboard-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
-  }
-
-  /* Action icons - flat */
-  #dashboard-page .action-icon {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    box-shadow: none !important;
-    border: 1px solid rgba(226, 232, 240, 0.4) !important;
-  }
-
-  #dashboard-page .action-icon:hover {
-    transform: none !important;
-    box-shadow: none !important;
-  }
-
-  .dark-theme #dashboard-page .action-icon {
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  }
-
-  /* User avatar - flat */
-  #dashboard-page .dashboard-user-avatar {
-    box-shadow: none !important;
-    border: 2px solid rgba(226, 232, 240, 0.4) !important;
-  }
-
-  #dashboard-page .dashboard-user-avatar:hover {
-    transform: none !important;
-    box-shadow: none !important;
-  }
-
-  .dark-theme #dashboard-page .dashboard-user-avatar {
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
   }
 }
 
-/* === SMALL SCREENS OVERRIDE === */
-@media (max-width: 380px) {
-  .balance-value #user-coins {
-    font-size: 28px !important;
+/* ─── DESKTOP TWEAKS (≥769px) ─── */
+@media (min-width: 769px) {
+  .dashboard-timer-balance-row {
+    align-items: center !important;
+    gap: 16px !important;
   }
 
-  .dashboard-countdown {
-    font-size: 30px !important;
+  .center-balance-display {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .dashboard-activity-timer {
+    max-width: 480px !important;
+  }
+
+  .dashboard-action-buttons {
+    max-width: 480px !important;
+    margin-top: 14px !important;
   }
 
   .action-button {
+    padding: 14px 24px !important;
+    font-size: 14px !important;
+  }
+
+  .secondary-button {
     padding: 12px 10px !important;
-    font-size: 12px !important;
+  }
+}
+
+/* ─── SMALL SCREENS ─── */
+@media (max-width: 380px) {
+  .action-button {
     border-radius: 12px !important;
   }
 
   .secondary-button {
-    padding: 8px 4px !important;
     border-radius: 12px !important;
   }
 }
 
 @media (max-width: 340px) {
-  .balance-value #user-coins {
-    font-size: 24px !important;
-  }
-
-  .dashboard-countdown {
-    font-size: 26px !important;
-  }
-
   .action-button {
-    padding: 10px 8px !important;
     font-size: 11px !important;
   }
-}
 }
