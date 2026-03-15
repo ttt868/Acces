@@ -248,12 +248,13 @@
   .network-selector-container {
     display: flex;
     justify-content: flex-start;
-    margin-bottom: 20px !important;
+    margin-bottom: 24px !important;
     z-index: 3;
     margin-top: 4px !important;
     width: 100%;
     padding-left: 0;
-    margin-left: 0;
+    margin-left: -16px;
+    padding-left: 0;
   }
 }
   .network-selector {
@@ -1087,7 +1088,7 @@
   backdrop-filter: none;
   border: 1px solid rgba(226, 232, 240, 0.35);
   border-radius: 20px;
-  padding: 20px;
+  padding: 32px 20px 28px;
   box-shadow: none;
   position: relative;
   overflow: visible;
@@ -1098,7 +1099,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
   z-index: 2 !important;
 }
 
@@ -1345,11 +1346,11 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 12px;
   color: #38b2ac;
   font-weight: 700;
   background: rgba(56, 178, 172, 0.08);
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 10px;
   border: 1px solid rgba(56, 178, 172, 0.15);
   font-family: 'Inter', 'Raleway', sans-serif !important;
@@ -1367,19 +1368,27 @@
 /* عرض العداد الرئيسي */
 .dashboard-timer-display {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0;
+  gap: 8px;
   width: 100%;
   z-index: 2 !important;
   position: relative;
 }
 
+/* صف XP/s و Boost */
+.timer-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
 
 
 .dashboard-countdown {
-  font-size: clamp(36px, 9vw, 56px);
+  font-size: clamp(38px, 10vw, 60px);
   font-weight: 800;
   color: var(--text-color);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -1393,9 +1402,8 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   transition: color 0.3s ease, background 0.3s ease;
-  padding: 12px 0;
-  flex: 1;
-  min-width: 0;
+  padding: 16px 0;
+  width: 100%;
 }
 
 .dashboard-timer-status {
@@ -1478,7 +1486,7 @@
   margin: 62px auto 2vh auto;
   padding: 0 16px;
   width: 100%;
-  max-width: 600px;
+  max-width: 100%;
   box-sizing: border-box;
 }
 
@@ -1514,15 +1522,21 @@
     position: relative;
     width: 100% !important;
     display: flex !important;
-    flex-direction: row !important;
+    flex-direction: column !important;
     align-items: center !important;
-    justify-content: center !important;
-    gap: 0 !important;
+    gap: 8px !important;
   }
 
   /* XP/s يسار */
   .dashboard-timer-header {
     display: none !important;
+  }
+
+  .timer-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
   }
 
   #dashboard-hashrate-display {
@@ -1534,9 +1548,9 @@
 
   .dashboard-countdown {
     text-align: center !important;
-    font-size: clamp(32px, 9vw, 48px);
-    flex: 1;
-    min-width: 0;
+    font-size: clamp(36px, 10vw, 52px);
+    width: 100%;
+    padding: 12px 0;
   }
 
   .dashboard-timer-title {
@@ -1553,10 +1567,10 @@
   }
 
   .dashboard-session-earned {
-    position: absolute;
-    bottom: -14px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
   }
 
   }
@@ -1787,7 +1801,7 @@ html[dir="rtl"] .action-button,
    margin: 50px auto 0 auto !important;
    padding: 0 16px;
    width: 100%;
-   max-width: 600px;
+   max-width: 100%;
    box-sizing: border-box;
  }
 
@@ -1795,7 +1809,7 @@ html[dir="rtl"] .action-button,
       display: flex;
       justify-content: center !important;
       align-items: center !important;
-      margin-bottom: 24px !important;
+      margin-bottom: 28px !important;
        position: relative; 
     }
 
@@ -1842,11 +1856,11 @@ html[dir="rtl"] .action-button,
     .network-selector-container {
       display: flex;
       justify-content: flex-start;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
       width: 100%;
       z-index: 3 !important;
       margin-top: 20px !important;
-      margin-left: -4px;
+      margin-left: -16px;
     }
 
     .secondary-action-buttons {
@@ -2094,11 +2108,11 @@ html[dir="rtl"] .action-button,
   .network-selector-container {
     display: flex;
     justify-content: flex-start;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     width: 100%;
     z-index: 3 !important;
     margin-top: 30px !important;
-    margin-left: -4px;
+    margin-left: -16px;
   }
 
 
@@ -2107,7 +2121,7 @@ html[dir="rtl"] .action-button,
     position: relative;
     justify-content: center !important;
     align-items: center !important;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
     width: 100% !important;
   }
   
@@ -2601,7 +2615,7 @@ html[lang="ar"] .wallet-header h3 {
   position: relative;
   justify-content: center !important;
   align-items: center !important;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   top: 0;
   width: 100%;
 }
@@ -2748,7 +2762,34 @@ html[lang="ar"] .wallet-header h3 {
 /* ============================================= */
 /* Dashboard Boost Button - Mobile Only */
 .dashboard-boost-btn {
-  display: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+  font-family: 'Poppins', 'Inter', sans-serif;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+.dashboard-boost-btn i {
+  font-size: 12px;
+}
+
+.dashboard-boost-btn:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.dashboard-boost-btn:active {
+  opacity: 0.85;
 }
 
 .dashboard-timer-header-right {
@@ -2765,7 +2806,7 @@ html[lang="ar"] .wallet-header h3 {
 
 @media (max-width: 768px) {
   .dashboard-timer-header-right {
-    display: contents;
+    display: none;
   }
 
   .timer-access-logo {
@@ -2822,40 +2863,7 @@ html[lang="ar"] .wallet-header h3 {
 }
 
 @media (max-width: 768px) {
-  .dashboard-boost-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 11px;
-    font-family: 'Poppins', 'Inter', sans-serif;
-    white-space: nowrap;
-    position: static;
-    transform: none;
-    z-index: 20;
-    letter-spacing: 0.3px;
-    flex-shrink: 0;
-  }
-
-  .dashboard-boost-btn i {
-    font-size: 12px;
-  }
-
-  .dashboard-boost-btn:active {
-    opacity: 0.85;
-    transform: none !important;
-  }
-
-  .dashboard-boost-btn:hover {
-    transform: none !important;
-    box-shadow: none;
-  }
+  /* boost styles handled in base */
 }
 
 /* Session XP Earned - Below Countdown */
@@ -2870,10 +2878,10 @@ html[lang="ar"] .wallet-header h3 {
     justify-content: center;
     gap: 4px;
     font-family: 'Inter', -apple-system, sans-serif;
-    position: absolute;
-    bottom: -14px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
     z-index: 20;
     white-space: nowrap;
   }
