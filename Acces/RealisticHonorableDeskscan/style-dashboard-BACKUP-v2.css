@@ -247,11 +247,11 @@
   /* Network Selector Styles */
   .network-selector-container {
     display: flex;
-    justify-content: flex-start;
+    justify-content: left;
     margin-bottom: 0;
+    
     z-index: 3;
-    margin-top: 6px !important;
-    width: 100%;
+    margin-top: 10px !important;
   }
 }
   .network-selector {
@@ -1100,20 +1100,20 @@
 .dashboard-activity-timer {
   background: var(--card-background, #fff);
   backdrop-filter: none;
-  border: 1px solid rgba(226, 232, 240, 0.35);
-  border-radius: 20px;
-  padding: 28px 20px 24px;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 18px;
+  padding: 24px 16px 20px;
   box-shadow: none;
   position: relative;
   overflow: visible;
   width: 100%;
-  max-width: 480px;
+  max-width: 440px;
   margin: 0 auto;
   transition: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   z-index: 2 !important;
 }
 
@@ -1387,16 +1387,15 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 12px;
   color: #38b2ac;
-  font-weight: 700;
+  font-weight: 600;
   background: rgba(56, 178, 172, 0.08);
-  padding: 6px 12px;
-  border-radius: 10px;
+  padding: 4px 8px;
+  border-radius: 8px;
   border: 1px solid rgba(56, 178, 172, 0.15);
-  font-family: 'Inter', 'Raleway', sans-serif !important;
-  font-variant-numeric: tabular-nums !important;
-  letter-spacing: 0.5px;
+  font-family: 'Raleway', sans-serif !important;
+  font-variant-numeric: oldstyle-nums !important;
 }
 
 .hashrate-label {
@@ -1419,13 +1418,13 @@
 
 
 .dashboard-countdown {
-  font-size: clamp(34px, 8vw, 52px);
+  font-size: clamp(30px, 7vw, 42px);
   font-weight: 800;
   color: var(--text-color);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   line-height: 1;
   text-align: center;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
@@ -1433,7 +1432,7 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   transition: color 0.3s ease, background 0.3s ease;
-  padding: 8px 0;
+
 }
 
 .dashboard-timer-status {
@@ -1513,8 +1512,8 @@
 
 
   .dashboard-container {
-    margin: 62px 0 2vh 0;
-    padding: 0 16px;
+    margin: 68px 0 2vh 0;
+    padding: 0 14px;
     width: 100%;
   }
 
@@ -1522,7 +1521,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
     width: 100%;
     padding: 0;
     margin: 0;
@@ -1571,7 +1570,7 @@
 
   .dashboard-countdown {
     text-align: center !important;
-    font-size: clamp(30px, 8vw, 42px);
+    font-size: 28px;
     margin-left: auto !important;
     margin-right: auto !important;
   }
@@ -1592,13 +1591,13 @@
   }
 
   .dashboard-action-buttons {
-    margin: 0 auto;
+    margin: -2vh auto 0;
     width: 100% !important;
     max-width: 100% !important;
     padding: 0;
     position: relative;
-    left: 0;
-    transform: none;
+    left: 50%;
+    transform: translateX(-50%);
     top: 0;
     z-index: 2 !important;
   }
@@ -1609,28 +1608,29 @@
 .primary-action-buttons {
   display: flex;
   gap: 12px;
-  margin-bottom: 0;
+  margin-bottom: 12px;
   justify-content: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   z-index: 2 !important;
-  width: 100%;
+
+
 }
 
 
 .action-button {
   background: #667eea;
   border: none;
-  border-radius: 16px;
-  padding: 16px 24px;
+  border-radius: 14px;
+  padding: 14px 20px;
   color: white;
-  font-size: clamp(14px, 3.2vw, 16px);
-  font-weight: 700;
+  font-size: clamp(13px, 3vw, 15px);
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   cursor: pointer;
   transition: none;
-  min-width: 48%;
+  min-width: 49%;
   max-width: 100% !important;
   width: 100% !important;
   justify-content: center;
@@ -1640,7 +1640,6 @@
   visibility: visible;
   box-shadow: none;
   flex: 1;
-  letter-spacing: 0.3px;
 }
 
 .action-button:hover {
@@ -1683,13 +1682,39 @@ html[dir="rtl"] .action-button,
 
 
 
-/* Secondary Action Buttons - HIDDEN (removed from interface) */
+/* Secondary Action Buttons (Bottom Row) - منع الفوضى */
 .secondary-action-buttons {
-  display: none !important;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: nowrap;
+  z-index: 2 !important;
 }
 
 .secondary-button {
-  display: none !important;
+  background: var(--card-background, #fff);
+  backdrop-filter: none;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 14px;
+  padding: 10px 8px;
+  color: var(--text-color);
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: none;
+  min-width: 100%;
+  max-width: 100%;
+  text-decoration: none;
+  font-family: 'Poppins', 'Inter', sans-serif;
+  box-shadow: none;
+  flex: 1;
+  opacity: 1;
+  visibility: visible;
+  z-index: 2 !important;
 }
 
 .secondary-button:hover {
@@ -1741,36 +1766,35 @@ html[dir="rtl"] .action-button,
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .dashboard-action-buttons {
-    margin: 0 auto;
+    margin: -1.5vh auto 0;
     width: 100% !important;
     max-width: 100% !important;
     padding: 0;
     position: relative;
-    left: 0;
-    transform: none;
+    left: 50%;
+    transform: translateX(-50%);
     top: 0;
-    z-index: 2 !important;
   }
 
   .primary-action-buttons {
-    gap: 10px;
-    margin-bottom: 0;
+    gap: 2%;
+    margin-bottom: 5px;
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: space-between;
     width: 100%;
   }
 
   .action-button {
     flex: 1;
-    max-width: 50% !important;
-    min-width: 45%;
-    padding: 14px 16px;
-    font-size: clamp(13px, 3.5vw, 15px);
-    font-weight: 700;
+    max-width: 49% !important;
+    min-width: 48%;
+    padding: clamp(8px, 2.5vw, 14px) clamp(8px, 3vw, 20px);
+    font-size: clamp(11px, 3vw, 13px);
+    font-weight: 600;
     justify-content: center;
-    border-radius: 14px !important;
-    gap: 8px;
+    border-radius: 10px !important;
+    gap: 6px;
     background: #667eea;
     color: white;
     border: none;
@@ -1780,7 +1804,6 @@ html[dir="rtl"] .action-button,
     box-shadow: none;
     cursor: pointer;
     transition: none;
-    letter-spacing: 0.3px;
   }
 
   .action-button:hover {
@@ -1794,13 +1817,40 @@ html[dir="rtl"] .action-button,
   }
 
   .action-button i {
-    font-size: clamp(13px, 3.5vw, 15px);
+    font-size: clamp(11px, 3vw, 14px);
   }
 
   .secondary-action-buttons {
-    display: none !important;
+    display: grid;
+    width: 100% !important;
+    padding: 0 1px;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    column-gap: 4px;
+  }
+
+  .secondary-button:nth-child(1) { grid-column: 1; }
+  .secondary-button:nth-child(2) { grid-column: 2; }
+  .secondary-button:nth-child(3) { grid-column: 3; }
+  .secondary-button:nth-child(4) { grid-column: 4; }
+
+  .secondary-button {
+    flex: 1;
+    min-width: 22%;
+    max-width: 100% !important;
+    padding: clamp(5px, 2vw, 10px) clamp(2px, 1vw, 8px);
+    border-radius: 10px !important;
+  }
+
+  .secondary-button i {
+    font-size: clamp(14px, 4vw, 18px);
+  }
+
+  .secondary-button span {
+    font-size: clamp(8px, 2.2vw, 10px);
   }
 }
+
+
 
 
 
@@ -1859,7 +1909,7 @@ font-size: 1rem !important;
     }
 
     .balance-value #user-coins {
-      font-size: 46px;
+      font-size: 42px;
       font-weight: 800;
       color: #1f2937;
       line-height: 1;
@@ -1880,66 +1930,37 @@ font-size: 1rem !important;
     /* Network Selector Styles */
     .network-selector-container {
       display: flex;
-      justify-content: flex-start;
+      justify-content: center;
       margin-bottom: 0;
       width: 100%;
       z-index: 3 !important;
       margin-top: 20px !important;
     }
 
-    .secondary-action-buttons {
-      display: none !important;
-    }
 
-    .action-button {
-      min-width: 48% !important;
-      background: #667eea;
-      box-shadow: none;
-      font-size: 16px !important;
-      flex: 1 !important;
-      max-width: 50% !important;
-      border-radius: 16px !important;
-      border: none;
-      visibility: visible;
-      font-family: 'Poppins', 'Inter', sans-serif;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: none;
-      padding: 16px 24px;
-      letter-spacing: 0.3px;
-    }
+.secondary-button {
+min-width: 22% !important;
+max-width: 24% !important;
+ 
+flex: 1 !important;
+border-radius: 10px !important;
+  width: 90%;
+  max-width: 90% !important;
 
-    .action-button:hover {
-      transform: none;
-      box-shadow: none;
-    }
+}
 
-    .action-button:active {
-      transform: none;
-    }
+.secondary-button i {
+font-size: 14px !important;
+}
 
-    .action-button i {
-      font-size: 15px;
-    }
+.action-button {\nmin-width: 48% !important;\nbackground: #667eea;\nbox-shadow: none;\nfont-size: 15px !important;\nflex: 1 !important;\nmax-width: 49% !important;\nborder-radius: 14px !important;\n  border: none;\nvisibility: visible;\n  font-family: 'Poppins', 'Inter', sans-serif;\n  font-weight: 600;\n  display: flex;\n  align-items: center;\n  gap: 7px;\n  cursor: pointer;\n  transition: none;\n}\n\n\n    .action-button:hover {\n      transform: none;\n      box-shadow: none;\n    }\n\n    .action-button:active {\n      transform: none;\n    }\n\n    .action-button i {\n      font-size: 14px;\n    }\n\n\n.dashboard-action-buttons {\n    margin: 14px auto 0;\n    width: 100%;\n    max-width: 480px;\n    padding: 0;\n    position: relative;\n    left: 50%;\n    transform: translateX(-50%);\n  }
 
-    .dashboard-action-buttons {
-      margin: 16px auto 0;
-      width: 100%;
-      max-width: 480px;
-      padding: 0;
-    }
 
-    .primary-action-buttons {
-      gap: 12px;
-      margin-bottom: 0;
-    }
+    
 
     #dashboard-page .referral-widget {
       position: absolute !important;
-      margin-top: 0% !important;
+      margin-top:   0% !important;
       right: 10px !important;
       z-index: 998;
       display: flex;
@@ -1947,6 +1968,8 @@ font-size: 1rem !important;
       gap: 16px;
       padding: 8px 0px;
       overflow: auto !important;
+
+
     }
 
   }
@@ -2132,11 +2155,14 @@ font-size: 1rem !important;
   /* Network Selector Styles */
   .network-selector-container {
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
     margin-bottom: 0;
     width: 100%;
     z-index: 3 !important;
     margin-top: 30px !important;
+
+
+
   }
 
 
@@ -2146,26 +2172,30 @@ font-size: 1rem !important;
     justify-content: center !important;
     align-items: center !important;
     margin-bottom: 12px;
-    width: 100% !important;
+      width: 100% !important;
   }
   
 
   .balance-showcase {
+
      border-radius: 0 !important;
+     
      box-shadow: none;
      display: flex;
      justify-content: center !important;
      align-items: center !important;
      gap: 0;
      width: 100%;
+    
      backdrop-filter: none;
      user-select: none;
      font-family: 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
    }
 
  
   .balance-value #user-coins {
-    font-size: 48px;
+    font-size: 42px;
     font-weight: 800;
     color: #1f2937;
     line-height: 1;
@@ -2202,60 +2232,89 @@ font-size: 1rem !important;
     flex-direction: row;
   }
 
+
+  balance-currency-unit {
+    font-size: 14px;
+    color: #9ca3af;
+    font-weight: 500;
+    margin-left: 6px;
+  }
+
   .balance-hidden {
       font-family: monospace !important;
       letter-spacing: 2px !important;
       color: var(--text-color) !important;
       opacity: 0.7 !important;
-  }
+    }
 
   /* Chart Icon Styling */
   .balance-chart-icon {
     display: none;
   }
 
-  #dashboard-page .referral-widget {
+  .balance-chart-icon:hover {
+    display: none;
+  }
+
+ #dashboard-page .referral-widget {
       position: absolute;
-      margin-top: 0% !important;
+      margin-top:   0% !important;
       right: 50px !important;
       z-index: 998;
+      
       flex-direction: column;
       gap: 16px;
       padding: 8px 0px;
+
+
+    }
+
+
+  .secondary-button {
+  min-width: 22% !important;
+  max-width: 24% !important;
+ 
+  flex: 1 !important;
+  border-radius: 10px !important;
+    width: 90%;
+    max-width: 90% !important;
+
   }
 
-  .secondary-action-buttons {
-    display: none !important;
+  .secondary-button i {
+  font-size: 14px !important;
   }
 
   .action-button {
-    min-width: 48% !important;
-    max-width: 50% !important;
-    background: #667eea !important;
-    font-size: 16px !important;
-    flex: 1 !important;
-    border-radius: 16px !important;
-    border: none;
-    font-weight: 700;
-    padding: 16px 24px;
-    letter-spacing: 0.3px;
+  min-width: 49% !important;
+    max-width: 100% !important;
+  background: #667eea !important;
+  background: -webkit-linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  font-size: 16px !important;
+  flex: 1 !important;
+
+  border-radius: 10px !important;
+
   }
 
   .action-button i {
-    font-size: 15px;
+  font-size: 14px;
+  
   }
-
   .dashboard-action-buttons {
-    margin: 16px auto 0;
-    width: 100%;
-    max-width: 480px;
-    padding: 0;
-  }
+      margin: 0 auto;
+      width: 100%;
+      max-width: 100%;
+      padding: 0;
+      position: relative;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-top: 20px;
 
-  .primary-action-buttons {
-    gap: 12px;
-    margin-bottom: 0;
-  }
+    }
+
+
 
 }
 
@@ -2688,7 +2747,7 @@ html[lang="ar"] .wallet-header h3 {
 }
 
 .balance-value #user-coins {
-  font-size: clamp(30px, 8vw, 42px);
+  font-size: clamp(28px, 7vw, 38px);
   font-weight: 800;
   color: #1f2937;
   line-height: 1;
@@ -2868,13 +2927,13 @@ html[lang="ar"] .wallet-header h3 {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 14px;
+    padding: 6px 12px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 12px;
     font-family: 'Poppins', 'Inter', sans-serif;
     white-space: nowrap;
@@ -2883,7 +2942,6 @@ html[lang="ar"] .wallet-header h3 {
     top: 50%;
     transform: translateY(-50%);
     z-index: 20;
-    letter-spacing: 0.3px;
   }
 
   .dashboard-boost-btn i {
@@ -2950,12 +3008,11 @@ html[lang="ar"] .wallet-header h3 {
 html[dir="rtl"] .dashboard-timer-header,
 html[lang="ar"] .dashboard-timer-header {
   flex-direction: row;
-}
 
 /* === شاشات صغيرة (هواتف صغيرة) === */
 @media (max-width: 380px) {
   .dashboard-countdown {
-    font-size: 26px;
+    font-size: 22px;
   }
 
   .dashboard-timer-title {
@@ -2981,19 +3038,35 @@ html[lang="ar"] .dashboard-timer-header {
   }
 
   .action-button {
-    padding: 12px 10px !important;
+    padding: 10px 8px !important;
     font-size: 12px !important;
-    min-width: 45% !important;
-    border-radius: 12px !important;
+    min-width: 47% !important;
+  }
+
+  .secondary-button {
+    padding: 6px 2px !important;
+    min-width: 22% !important;
+  }
+
+  .secondary-button i {
+    font-size: 14px !important;
+  }
+
+  .secondary-button span {
+    font-size: 9px !important;
   }
 
   .primary-action-buttons {
-    gap: 8px !important;
-    margin-bottom: 0 !important;
+    gap: 2% !important;
+    margin-bottom: 6px !important;
+  }
+
+  .secondary-action-buttons {
+    column-gap: 3px !important;
   }
 
   .balance-value #user-coins {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .balance-label {
@@ -3012,13 +3085,25 @@ html[lang="ar"] .dashboard-timer-header {
 /* === شاشات صغيرة جداً === */
 @media (max-width: 340px) {
   .dashboard-countdown {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .action-button {
-    padding: 10px 8px !important;
+    padding: 8px 6px !important;
     font-size: 11px !important;
-    gap: 5px !important;
+    gap: 4px !important;
+  }
+
+  .secondary-button {
+    padding: 5px 1px !important;
+  }
+
+  .secondary-button span {
+    font-size: 8px !important;
+  }
+
+  .secondary-button i {
+    font-size: 13px !important;
   }
 
   .dashboard-boost-btn {
