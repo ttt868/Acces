@@ -91,7 +91,7 @@
   <link rel="canonical" href="https://accesschain.org">
   
   <link href="style.css" rel="stylesheet" type="text/css" />
-  <link rel="stylesheet" href="style-dashboard.css?v=20260316z23">
+  <link rel="stylesheet" href="style-dashboard.css?v=20260316z24">
   <link rel="stylesheet" href="style-missions.css">
    <link rel="stylesheet" href="profile-style.css">
    <link rel="stylesheet" href="network-style.css">
@@ -1217,19 +1217,6 @@ document.addEventListener('balanceUpdated', function(event) {
                 </div>
               </div>
 
-              <!-- صف واحد: Boost يسار - XP/s وسط - ساعة+Timer يمين -->
-              <div class="timer-header-row">
-                <button id="dashboard-boost-btn" class="dashboard-boost-btn" onclick="showActivityBoost()">
-                  <i class="fas fa-rocket"></i>
-                  <span data-translate="Boost">Boost</span>
-                </button>
-                <div class="timer-title-clock"></div>
-                <div id="dashboard-hashrate-display" class="dashboard-hashrate-display" style="display: flex; visibility: visible; opacity: 1;">
-                  <span class="hashrate-label">XP/s</span>
-                  <span id="dashboard-hashrate-value">10.0</span>
-                </div>
-              </div>
-
               <!-- العد التنازلي الكبير -->
               <div class="dashboard-timer-display">
                 <div class="countdown-with-label">
@@ -1241,6 +1228,18 @@ document.addEventListener('balanceUpdated', function(event) {
                   <span class="session-earned-label">AC</span>
                 </div>
                 <div class="dashboard-timer-status" id="dashboard-timer-status" data-translate="Not Active" style="display: none;">Not Active</div>
+              </div>
+
+              <!-- Boost يسار - XP/s يمين تحت خط فاصل -->
+              <div class="timer-bottom-row">
+                <button id="dashboard-boost-btn" class="dashboard-boost-btn" onclick="showActivityBoost()">
+                  <i class="fas fa-rocket"></i>
+                  <span data-translate="Boost">Boost</span>
+                </button>
+                <div id="dashboard-hashrate-display" class="dashboard-hashrate-display" style="display: flex; visibility: visible; opacity: 1;">
+                  <span class="hashrate-label">XP/s</span>
+                  <span id="dashboard-hashrate-value">10.0</span>
+                </div>
               </div>
             </div>
             </div>
