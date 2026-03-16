@@ -91,7 +91,7 @@
   <link rel="canonical" href="https://accesschain.org">
   
   <link href="style.css" rel="stylesheet" type="text/css" />
-  <link rel="stylesheet" href="style-dashboard.css?v=20260316z22">
+  <link rel="stylesheet" href="style-dashboard.css?v=20260316z23">
   <link rel="stylesheet" href="style-missions.css">
    <link rel="stylesheet" href="profile-style.css">
    <link rel="stylesheet" href="network-style.css">
@@ -1195,8 +1195,11 @@ document.addEventListener('balanceUpdated', function(event) {
                 </div>
               </div>
 
-              <!-- الساعة المعلقة على حافة الكارت -->
-              <div class="hanging-clock-container">
+              <!-- العداد فقط -->
+              <div class="dashboard-activity-timer" id="dashboard-activity-timer" style="display: block; visibility: visible; opacity: 1;">
+
+              <!-- الساعة داخل المربع على اليمين -->
+              <div class="timer-clock-inline">
                 <div class="pendulum-clock">
                   <div class="clock-body">
                     <div class="clock-face">
@@ -1213,9 +1216,6 @@ document.addEventListener('balanceUpdated', function(event) {
                   </div>
                 </div>
               </div>
-
-              <!-- العداد فقط -->
-              <div class="dashboard-activity-timer" id="dashboard-activity-timer" style="display: block; visibility: visible; opacity: 1;">
 
               <!-- صف واحد: Boost يسار - XP/s وسط - ساعة+Timer يمين -->
               <div class="timer-header-row">

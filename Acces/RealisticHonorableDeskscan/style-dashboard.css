@@ -4,7 +4,7 @@
 .main-content {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 2px;
+  padding: 8px;
 }
 
 
@@ -15,8 +15,8 @@
 #dashboard-page.page-content {
     margin: 0 !important;
     max-width: 1200px !important;
-    margin-left: -8px;
-    margin-right: -8px;
+    margin-left: -3px;
+    margin-right: -3px;
     
 }
 
@@ -1115,36 +1115,28 @@
 
 
 
-/* === الساعة المعلقة على حافة الكارت === */
-.hanging-clock-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  height: 0;
+/* === الساعة داخل المربع على اليمين === */
+.timer-clock-inline {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 10;
-  pointer-events: none;
 }
 
-.hanging-clock-container .pendulum-clock {
-  pointer-events: auto;
-}
-
-/* ساعة الرقاص - معلقة على حافة الكارت */
+/* ساعة الرقاص */
 .pendulum-clock {
   position: relative;
-  width: 44px;
+  width: 36px;
   height: auto;
   z-index: 15;
   flex-shrink: 0;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
-  margin-bottom: -37px;
 }
 
 .clock-body {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   background: linear-gradient(145deg, #d4d4d4, #f0f0f0, #b8b8b8);
   border-radius: 50%;
   position: relative;
@@ -1161,8 +1153,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   background: radial-gradient(circle at 40% 35%, #ffffff 0%, #fafafa 30%, #f0f0f0 70%, #e8e8e8 100%);
   border-radius: 50%;
   border: 1px solid #ccc;
@@ -1228,8 +1220,8 @@
 }
 
 .hour-hand {
-  width: 2.5px;
-  height: 9px;
+  width: 2px;
+  height: 7px;
   margin-left: -1.25px;
   background: #2d2d2d;
   border-radius: 2px 2px 0 0;
@@ -1239,7 +1231,7 @@
 
 .minute-hand {
   width: 1.5px;
-  height: 12px;
+  height: 9px;
   margin-left: -0.75px;
   background: #444;
   border-radius: 1.5px 1.5px 0 0;
@@ -1249,7 +1241,7 @@
 
 .second-hand {
   width: 1px;
-  height: 13px;
+  height: 10px;
   margin-left: -0.5px;
   background: #ef4444;
   border-radius: 1px 1px 0 0;
@@ -1270,7 +1262,7 @@
 
 .pendulum-rod {
   width: 1.5px;
-  height: 18px;
+  height: 10px;
   background: linear-gradient(180deg, #b0b0b0, #888, #b0b0b0);
   border-radius: 1px;
 }
@@ -1288,8 +1280,8 @@
 }
 
 .pendulum-weight {
-  width: 10px;
-  height: 10px;
+  width: 7px;
+  height: 7px;
   background: radial-gradient(circle at 35% 35%, #e8e8e8, #bbb, #888);
   border-radius: 50%;
   border: 1px solid #999;
@@ -1646,7 +1638,7 @@
 
 .dashboard-container {
   margin: 72px auto 2vh auto;
-  padding: 0 5px !important;
+  padding: 0;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
