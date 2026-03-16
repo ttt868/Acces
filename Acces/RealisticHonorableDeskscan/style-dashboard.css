@@ -1468,12 +1468,13 @@
 .timer-card-wrapper {
   position: relative;
   width: 100%;
+  padding-top: 20px;
 }
 
 .dashboard-hashrate-above {
   position: absolute;
   right: 6px;
-  top: -8px;
+  top: 0;
   z-index: 25;
 }
 
@@ -1718,7 +1719,7 @@
   #dashboard-hashrate-display {
     position: absolute;
     right: 6px;
-    top: -8px;
+    top: 0;
     transform: none;
     z-index: 25;
     flex-shrink: 0;
