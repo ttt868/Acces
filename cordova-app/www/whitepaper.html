@@ -630,10 +630,14 @@
                 var isCordova = typeof window.cordova !== 'undefined' || typeof window.IS_CORDOVA_APP !== 'undefined';
                 
                 if (isCordova) {
-                    // Cordova WebView doesn't support window.print() or window.open
-                    // Open the whitepaper on the web server in the system browser (Chrome)
-                    // where the user can use Print/Share/Save as PDF normally
-                    window.open('https://accesschain.org/whitepaper.html', '_system');
+                    // Open in system browser via Android Intent URI
+                    // allow-intent in config.xml handles https:// links
+                    var externalUrl = 'https://accesschain.org/whitepaper.html';
+                    
+                    // Try multiple methods to open external browser
+                    // Method 1: Android Intent URI (most reliable)
+                    var intentUrl = 'intent://' + externalUrl.replace('https://', '') + '#Intent;scheme=https;action=android.intent.action.VIEW;end';
+                    window.location.href = intentUrl;
                     return;
                 }
 
