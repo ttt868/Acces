@@ -1302,7 +1302,7 @@
   align-items: center;
   justify-content: space-between;
   padding-bottom: 4px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+  border-bottom: none;
   width: 100%;
   margin-bottom: 2px;
 }
@@ -1501,7 +1501,7 @@
 }
 
 .dark-theme .timer-header-row {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
+  border-bottom: none;
 }
 
 .dark-theme .dashboard-countdown {
