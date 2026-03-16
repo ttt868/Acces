@@ -1465,7 +1465,7 @@
   font-weight: 700;
   background: rgba(56, 178, 172, 0.06);
   padding: 4px 10px;
-  border-radius: 20px;
+  border-radius: 8px;
   border: 1px solid rgba(56, 178, 172, 0.12);
   font-family: 'Inter', 'Raleway', sans-serif !important;
   font-variant-numeric: tabular-nums !important;
@@ -2974,10 +2974,10 @@ html[lang="ar"] .wallet-header h3 {
   align-items: center;
   gap: 4px;
   padding: 4px 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 20px;
+  background: none;
+  color: var(--text-color, #1f2937);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 700;
   font-size: 11px;
@@ -2985,6 +2985,13 @@ html[lang="ar"] .wallet-header h3 {
   white-space: nowrap;
   letter-spacing: 0.3px;
   flex-shrink: 0;
+  box-shadow: none;
+  transition: none;
+}
+
+.dark-theme .dashboard-boost-btn {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .dashboard-boost-btn i {
