@@ -1887,14 +1887,31 @@ html[dir="rtl"] .action-button,
   text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   font-size: 16px;
+  position: relative;
+}
+
+.dashboard-social-btn::after {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  content: none !important;
+}
+
+.dashboard-social-btn:hover::after {
+  display: none !important;
+  width: 0 !important;
 }
 
 .dashboard-social-btn:hover {
   transform: translateY(-2px);
+  color: #fff;
 }
 
-.dashboard-social-btn:active {
-  transform: translateY(0);
+.dashboard-social-btn:active,
+.dashboard-social-btn:focus,
+.dashboard-social-btn:visited {
+  outline: none;
+  color: #fff;
 }
 
 .telegram-social {
