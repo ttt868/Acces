@@ -1519,7 +1519,7 @@
 
 .dashboard-container {
   margin: 62px auto 2vh auto;
-  padding: 0 6px;
+  padding: 0 3px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -1840,7 +1840,7 @@ html[dir="rtl"] .action-button,
 
 .dashboard-container {
    margin: 50px auto 0 auto !important;
-   padding: 0 6px;
+   padding: 0 3px;
    width: 100%;
    max-width: 100%;
    box-sizing: border-box;
