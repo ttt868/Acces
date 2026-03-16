@@ -1464,20 +1464,6 @@
   
 }
 
-/* XP/s فوق مربع العداد على اليمين */
-.timer-card-wrapper {
-  position: relative;
-  width: 100%;
-  padding-top: 20px;
-}
-
-.dashboard-hashrate-above {
-  position: absolute;
-  right: 6px;
-  top: 0;
-  z-index: 25;
-}
-
 /* عرض العداد الرئيسي */
 .dashboard-timer-display {
   display: flex;
@@ -1717,11 +1703,9 @@
   }
 
   #dashboard-hashrate-display {
-    position: absolute;
-    right: 6px;
-    top: 0;
+    font-size: 11px;
     transform: none;
-    z-index: 25;
+    z-index: 20;
     flex-shrink: 0;
   }
 
