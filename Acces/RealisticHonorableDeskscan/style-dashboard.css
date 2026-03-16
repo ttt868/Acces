@@ -703,15 +703,15 @@
     cursor: pointer;
     transition: all 0.3s ease;
     backdrop-filter: none;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    box-shadow: none;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 100%);
+    border: 1px solid rgba(226, 232, 240, 0.4);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: var(--card-background, #fff);
     color: #2196F3;
   }
 
   #dashboard-page .language-icon:hover {
     transform: none;
-    box-shadow: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     color: #1976D2;
   }
 
