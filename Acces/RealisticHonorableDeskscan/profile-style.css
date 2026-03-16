@@ -78,7 +78,7 @@
   border-radius: 20px;
   padding: 20px 25px 15px;
   background: var(--card-background);
-  border: 1px solid var(--border-color);
+  border: none;
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(20px);
   display: flex;
