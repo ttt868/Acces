@@ -1494,17 +1494,17 @@
 }
 
 .countdown-with-label .dashboard-timer-title {
-  position: relative;
-  left: auto;
-  top: auto;
-  transform: none;
+  position: absolute;
+  right: calc(50% + 75px);
+  top: 50%;
+  transform: translateY(-50%);
   font-size: clamp(11px, 2.5vw, 13px);
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   flex-shrink: 0;
-  margin-right: 4px;
+  margin-right: 0;
 }
 
 .dashboard-countdown {
