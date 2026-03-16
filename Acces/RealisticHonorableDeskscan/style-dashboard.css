@@ -1711,7 +1711,9 @@
   }
 
   #dashboard-hashrate-display {
-    position: static;
+    position: absolute;
+    right: 0;
+    top: -22px;
     transform: none;
     z-index: 20;
     flex-shrink: 0;
