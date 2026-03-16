@@ -35,39 +35,28 @@ class StateProcessingManager {
 
   // Download whitepaper function
   downloadWhitepaper() {
+    console.log('downloadWhitepaper called');
+    
+    // Method 1: navigator.share (works on Android)
     try {
-      console.log('Downloading whitepaper...');
-
-      // Navigate to whitepaper.html - window.print() works there on both web and Android WebView
-      window.location.href = './whitepaper.html';
-      return;
-
-      // Legacy web fallback (kept for reference)
-      const whitepaperWindow = window.open('./whitepaper.html', '_blank');
-
-      if (whitepaperWindow) {
-        console.log('Whitepaper opened in new tab');
-
-        // Show notification about whitepaper access
-        if (typeof showNotification === 'function') {
-          const message = (typeof translator !== 'undefined' && translator.translate) 
-            ? translator.translate('Whitepaper opened in new tab. You can view, print, or save it from there.')
-            : 'Whitepaper opened in new tab. You can view, print, or save it from there.';
-          showNotification(message, 'success');
-        }
-      } else {
-        // Fallback: direct navigation if popup blocked
-        console.log('Popup blocked, using direct navigation');
-        window.location.href = whitepaperUrl;
+      if (navigator.share) {
+        navigator.share({
+          title: 'AccessNetwork Whitepaper',
+          text: 'AccessNetwork Technical Whitepaper',
+          url: 'https://accesschain.org/whitepaper.html'
+        }).catch(function() {});
+        return;
       }
-
-    } catch (error) {
-      console.error('Error accessing whitepaper:', error);
-
-      if (typeof showNotification === 'function') {
-        showNotification('Error accessing whitepaper. Please try again.', 'error');
-      }
-    }
+    } catch(e) { console.log('share failed:', e); }
+    
+    // Method 2: open whitepaper.html in new tab (web)
+    try {
+      var w = window.open('./whitepaper.html', '_blank');
+      if (w) return;
+    } catch(e) {}
+    
+    // Method 3: navigate to whitepaper.html
+    window.location.href = './whitepaper.html';
   }
 
   // Open whitepaper in modal or new window
