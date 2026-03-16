@@ -1201,61 +1201,7 @@ bodyObserver.observe(document.body, {
 
 
 
-// Download whitepaper function (copied from point system page)
-  function downloadWhitepaper() {
-    try {
-      // Create a simple whitepaper document
-      const whitepaperContent = `
-AccessRewards Technical Documentation
-
-1. Introduction
-AccessRewards is a revolutionary fitness platform designed for the future of wellness rewards.
-
-2. Technology
-- Custom Mainnet Chain
-- Proof of Activity Consensus
-- 15-second block time
-- Low transaction fees (0.00002 Points)
-
-3. Point System
-- Total Supply: 100,000,000 Points
-- Activity Benefits: 45%
-- Platform Development: 25%
-- Community Benefits: 15%
-- Team & Advisors: 10%
-- Reserve Fund: 5%
-
-4. Activity System
-Users can process once every 24 hours to collect Points (reward halves based on circulation).
-
-5. Security
-Enterprise-grade security with encrypted user accounts and secure benefit processing.
-
-For more information, visit our platform at: ${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}
-      `.trim();
-
-      // Create and download the file
-      const blob = new Blob([whitepaperContent], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'AccessRewards_Documentation.txt';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      // Show success notification
-      if (typeof showNotification === 'function') {
-        showNotification(translator.translate('Whitepaper downloaded successfully!'), 'success');
-      }
-    } catch (error) {
-      console.error('Error downloading whitepaper:', error);
-      if (typeof showNotification === 'function') {
-        showNotification(translator.translate('Error downloading whitepaper'), 'error');
-      }
-    }
-  }
+// downloadWhitepaper() is handled by state-activity.js (navigates to whitepaper.html)
 
   // Navigation function for dashboard action buttons
   function navigateToPage(pageName) {
