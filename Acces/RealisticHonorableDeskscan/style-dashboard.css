@@ -1933,8 +1933,16 @@ html[dir="rtl"] .action-button,
 }
 
 .explorer-social {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  background: transparent;
+  padding: 0;
+  overflow: hidden;
+}
+
+.explorer-social img {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .explorer-social:hover {
