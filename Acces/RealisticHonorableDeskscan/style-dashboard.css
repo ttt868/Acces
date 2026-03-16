@@ -1878,8 +1878,8 @@ html[dir="rtl"] .action-button,
 }
 
 .dashboard-social-btn {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1917,8 +1917,8 @@ html[dir="rtl"] .action-button,
 }
 
 .telegram-social svg {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
 }
 
 .telegram-social:hover {
@@ -1931,8 +1931,8 @@ html[dir="rtl"] .action-button,
 }
 
 .x-social svg {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   fill: #fff;
 }
 
@@ -1950,8 +1950,8 @@ html[dir="rtl"] .action-button,
 }
 
 .explorer-social img {
-  width: 44px !important;
-  height: 44px !important;
+  width: 34px !important;
+  height: 34px !important;
   object-fit: cover;
   border-radius: 50% !important;
   display: block;
