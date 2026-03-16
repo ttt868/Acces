@@ -630,12 +630,10 @@
                 var isCordova = typeof window.cordova !== 'undefined' || typeof window.IS_CORDOVA_APP !== 'undefined';
                 
                 if (isCordova) {
-                    // Cordova: print current page directly (hide button temporarily)
-                    var btn = document.querySelector('.download-btn');
-                    if (btn) btn.style.display = 'none';
-                    document.title = 'AccessoireDigital-Whitepaper-v2.0';
-                    window.print();
-                    if (btn) setTimeout(function() { btn.style.display = ''; }, 1000);
+                    // Cordova WebView doesn't support window.print() or window.open
+                    // Open the whitepaper on the web server in the system browser (Chrome)
+                    // where the user can use Print/Share/Save as PDF normally
+                    window.open('https://accesschain.org/whitepaper.html', '_system');
                     return;
                 }
 
