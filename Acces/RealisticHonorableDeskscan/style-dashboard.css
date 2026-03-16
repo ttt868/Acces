@@ -2789,7 +2789,7 @@ html[lang="ar"] .wallet-header h3 {
   margin-bottom: 16px;
   top: 0;
   width: 100%;
-  margin-left: 0;
+  margin-left: 3px;
 }
 
 .balance-showcase {
