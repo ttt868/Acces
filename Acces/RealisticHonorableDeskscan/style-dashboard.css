@@ -1104,7 +1104,7 @@
   width: 100%;
   max-width: 100%;
   margin: 0;
-  margin-top: 4px;
+  margin-top: 12px;
   transition: none;
   display: flex;
   flex-direction: column;
@@ -1139,7 +1139,7 @@
   z-index: 15;
   flex-shrink: 0;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
-  margin-bottom: -37px;
+  margin-bottom: -24px;
 }
 
 .clock-body {
@@ -1270,7 +1270,7 @@
 
 .pendulum-rod {
   width: 1.5px;
-  height: 18px;
+  height: 10px;
   background: linear-gradient(180deg, #b0b0b0, #888, #b0b0b0);
   border-radius: 1px;
 }
@@ -1288,8 +1288,8 @@
 }
 
 .pendulum-weight {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   background: radial-gradient(circle at 35% 35%, #e8e8e8, #bbb, #888);
   border-radius: 50%;
   border: 1px solid #999;
