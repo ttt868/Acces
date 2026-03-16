@@ -1855,6 +1855,7 @@ html[dir="rtl"] .action-button,
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  box-shadow: var(--shadow-lg);
 }
 
 .dashboard-social-header h4 {
