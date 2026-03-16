@@ -1115,39 +1115,20 @@
 
 
 
-/* الساعة داخل المربع على اليمين */
-.timer-clock-inline {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+/* === الساعة المعلقة على حافة الكارت === */
+.hanging-clock-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 0;
   z-index: 10;
   pointer-events: none;
 }
 
-.timer-clock-inline .pendulum-clock {
-  width: 36px;
-  margin-bottom: 0;
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.1));
-}
-
-.timer-clock-inline .clock-body {
-  width: 32px;
-  height: 32px;
-}
-
-.timer-clock-inline .clock-face {
-  width: 26px;
-  height: 26px;
-}
-
-.timer-clock-inline .pendulum-rod {
-  height: 8px;
-}
-
-.timer-clock-inline .pendulum-weight {
-  width: 6px;
-  height: 6px;
+.hanging-clock-container .pendulum-clock {
+  pointer-events: auto;
 }
 
 /* ساعة الرقاص - معلقة على حافة الكارت */
@@ -1158,6 +1139,7 @@
   z-index: 15;
   flex-shrink: 0;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+  margin-bottom: -37px;
 }
 
 .clock-body {
@@ -1288,7 +1270,7 @@
 
 .pendulum-rod {
   width: 1.5px;
-  height: 10px;
+  height: 18px;
   background: linear-gradient(180deg, #b0b0b0, #888, #b0b0b0);
   border-radius: 1px;
 }
@@ -1306,8 +1288,8 @@
 }
 
 .pendulum-weight {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   background: radial-gradient(circle at 35% 35%, #e8e8e8, #bbb, #888);
   border-radius: 50%;
   border: 1px solid #999;
@@ -1395,24 +1377,14 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 /* صف العنوان: Boost يسار - XP/s وسط - ساعة+Timer يمين */
-/* صف Boost و XP/s تحت العداد */
-.timer-bottom-row {
+.timer-header-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  border-bottom: none;
   width: 100%;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.dark-theme .timer-bottom-row {
-  border-top-color: rgba(255, 255, 255, 0.08);
-}
-
-.timer-header-row {
-  display: none;
+  margin-bottom: 2px;
 }
 
 .timer-title-clock {
@@ -1731,7 +1703,7 @@
   }
 
   #dashboard-hashrate-display {
-    font-size: 11px;
+    position: static;
     transform: none;
     z-index: 20;
     flex-shrink: 0;
