@@ -1375,7 +1375,7 @@
   align-items: center;
   justify-content: center;
   padding-top: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
   width: 100%;
   margin-top: 6px;
 }
@@ -1388,7 +1388,7 @@
 }
 
 .dark-theme .timer-bottom-row {
-  border-top-color: rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(255, 255, 255, 0.05);
 }
 
 /* صف العنوان القديم - غير مستخدم */
@@ -2974,9 +2974,9 @@ html[lang="ar"] .wallet-header h3 {
   align-items: center;
   gap: 4px;
   padding: 4px 12px;
-  background: none;
-  color: var(--text-color, #1f2937);
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 700;
@@ -2987,11 +2987,17 @@ html[lang="ar"] .wallet-header h3 {
   flex-shrink: 0;
   box-shadow: none;
   transition: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  outline: none;
 }
 
 .dark-theme .dashboard-boost-btn {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.15);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
 }
 
 .dashboard-boost-btn i {
@@ -3001,10 +3007,15 @@ html[lang="ar"] .wallet-header h3 {
 .dashboard-boost-btn:hover {
   transform: none;
   box-shadow: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.dashboard-boost-btn:active {
+.dashboard-boost-btn:active,
+.dashboard-boost-btn:focus {
   opacity: 0.85;
+  outline: none;
+  box-shadow: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .dashboard-timer-header-right {
