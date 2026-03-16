@@ -1464,6 +1464,13 @@
   
 }
 
+/* XP/s فوق مربع العداد على اليمين */
+.dashboard-hashrate-above {
+  align-self: flex-end;
+  margin-bottom: 2px;
+  z-index: 5;
+}
+
 /* عرض العداد الرئيسي */
 .dashboard-timer-display {
   display: flex;

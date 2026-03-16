@@ -91,7 +91,7 @@
   <link rel="canonical" href="https://accesschain.org">
   
   <link href="style.css" rel="stylesheet" type="text/css" />
-  <link rel="stylesheet" href="style-dashboard.css?v=20260316z9">
+  <link rel="stylesheet" href="style-dashboard.css?v=20260316z10">
   <link rel="stylesheet" href="style-missions.css">
    <link rel="stylesheet" href="profile-style.css">
    <link rel="stylesheet" href="network-style.css">
@@ -1195,6 +1195,12 @@ document.addEventListener('balanceUpdated', function(event) {
                 </div>
               </div>
 
+              <!-- XP/s فوق مربع العداد على اليمين -->
+              <div id="dashboard-hashrate-display" class="dashboard-hashrate-display dashboard-hashrate-above" style="display: flex; visibility: visible; opacity: 1;">
+                <span class="hashrate-label">XP/s</span>
+                <span id="dashboard-hashrate-value">10.0</span>
+              </div>
+
               <!-- الساعة المعلقة على حافة الكارت -->
               <div class="hanging-clock-container">
                 <div class="pendulum-clock">
@@ -1224,10 +1230,6 @@ document.addEventListener('balanceUpdated', function(event) {
                   <span data-translate="Boost">Boost</span>
                 </button>
                 <div class="timer-title-clock"></div>
-                <div id="dashboard-hashrate-display" class="dashboard-hashrate-display" style="display: flex; visibility: visible; opacity: 1;">
-                  <span class="hashrate-label">XP/s</span>
-                  <span id="dashboard-hashrate-value">10.0</span>
-                </div>
               </div>
 
               <!-- العد التنازلي الكبير -->
