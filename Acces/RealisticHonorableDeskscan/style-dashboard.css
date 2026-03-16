@@ -1466,8 +1466,9 @@
 
 /* XP/s فوق مربع العداد على اليمين */
 .dashboard-hashrate-above {
-  align-self: flex-end;
-  margin-bottom: 2px;
+  position: absolute;
+  right: 0;
+  top: -22px;
   z-index: 5;
 }
 
