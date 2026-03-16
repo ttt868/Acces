@@ -249,7 +249,7 @@
     display: flex;
     justify-content: flex-start;
     margin-bottom: 14px !important;
-    z-index: 3;
+    z-index: 20;
     margin-top: 12px !important;
     width: calc(100% + 10px);
     padding-left: 0;
@@ -1899,7 +1899,7 @@ html[dir="rtl"] .action-button,
       justify-content: flex-start;
       margin-bottom: 14px;
       width: calc(100% + 10px);
-      z-index: 3 !important;
+      z-index: 20 !important;
       margin-top: 20px !important;
       padding-left: 0;
       margin-left: -10px;
@@ -2152,7 +2152,7 @@ html[dir="rtl"] .action-button,
     justify-content: flex-start;
     margin-bottom: 14px;
     width: calc(100% + 10px);
-    z-index: 3 !important;
+    z-index: 20 !important;
     margin-top: 30px !important;
     padding-left: 0;
     margin-left: -10px;
@@ -2660,7 +2660,8 @@ html[lang="ar"] .wallet-header h3 {
   align-items: flex-start !important;
   margin-bottom: 16px;
   top: 0;
-  width: 100%;
+  width: calc(100% + 10px);
+  margin-left: -10px;
 }
 
 .balance-showcase {
