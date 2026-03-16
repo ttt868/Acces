@@ -2190,7 +2190,12 @@ html[dir="rtl"] .action-button,
     transition: none !important;
   }
 
-
+  /* الوضع الليلي للكمبيوتر - بدون خلفية */
+  .dark-theme #dashboard-page .dashboard-header {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
 
 
   #dashboard-page .dashboard-header > * {
@@ -2256,7 +2261,12 @@ html[dir="rtl"] .action-button,
     transition: none !important;
   }
 
-
+  /* الوضع الليلي للكمبيوتر - بدون خلفية */
+  .dark-theme #dashboard-page .dashboard-header {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
 
 
   #dashboard-page .dashboard-header > * {
