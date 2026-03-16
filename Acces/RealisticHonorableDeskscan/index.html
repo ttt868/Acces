@@ -91,7 +91,7 @@
   <link rel="canonical" href="https://accesschain.org">
   
   <link href="style.css" rel="stylesheet" type="text/css" />
-  <link rel="stylesheet" href="style-dashboard.css?v=20260316z17">
+  <link rel="stylesheet" href="style-dashboard.css?v=20260316z18">
   <link rel="stylesheet" href="style-missions.css">
    <link rel="stylesheet" href="profile-style.css">
    <link rel="stylesheet" href="network-style.css">
@@ -1195,25 +1195,6 @@ document.addEventListener('balanceUpdated', function(event) {
                 </div>
               </div>
 
-              <!-- الساعة المعلقة على حافة الكارت -->
-              <div class="hanging-clock-container">
-                <div class="pendulum-clock">
-                  <div class="clock-body">
-                    <div class="clock-face">
-                      <div class="clock-hands">
-                        <div class="hour-hand" id="real-hour-hand"></div>
-                        <div class="minute-hand" id="real-minute-hand"></div>
-                        <div class="second-hand" id="real-second-hand"></div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="pendulum">
-                    <div class="pendulum-rod"></div>
-                    <div class="pendulum-weight"></div>
-                  </div>
-                </div>
-              </div>
-
               <!-- العداد فقط -->
               <div class="dashboard-activity-timer" id="dashboard-activity-timer" style="display: block; visibility: visible; opacity: 1;">
 
@@ -1222,6 +1203,25 @@ document.addEventListener('balanceUpdated', function(event) {
                 <div class="countdown-with-label">
                   <span class="dashboard-timer-title"><span data-translate="Timer">Timer</span></span>
                   <div class="dashboard-countdown" id="dashboard-countdown-display">00:00:00</div>
+                </div>
+
+                <!-- الساعة داخل المربع على اليمين -->
+                <div class="timer-clock-inline">
+                  <div class="pendulum-clock">
+                    <div class="clock-body">
+                      <div class="clock-face">
+                        <div class="clock-hands">
+                          <div class="hour-hand" id="real-hour-hand"></div>
+                          <div class="minute-hand" id="real-minute-hand"></div>
+                          <div class="second-hand" id="real-second-hand"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="pendulum">
+                      <div class="pendulum-rod"></div>
+                      <div class="pendulum-weight"></div>
+                    </div>
+                  </div>
                 </div>
                 <div class="dashboard-session-earned" id="dashboard-session-earned">
                   <span class="session-earned-value" id="session-earned-value">+0.0</span>
@@ -1263,6 +1263,7 @@ document.addEventListener('balanceUpdated', function(event) {
             </div>
           </div>
         </div>
+      </div> <!-- close dashboard-page -->
 
 
 

@@ -1104,7 +1104,7 @@
   width: 100%;
   max-width: 100%;
   margin: 0;
-  margin-top: 12px;
+  margin-top: 4px;
   transition: none;
   display: flex;
   flex-direction: column;
@@ -1115,20 +1115,39 @@
 
 
 
-/* === الساعة المعلقة على حافة الكارت === */
-.hanging-clock-container {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  height: 0;
+/* الساعة داخل المربع على اليمين */
+.timer-clock-inline {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 10;
   pointer-events: none;
 }
 
-.hanging-clock-container .pendulum-clock {
-  pointer-events: auto;
+.timer-clock-inline .pendulum-clock {
+  width: 36px;
+  margin-bottom: 0;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.1));
+}
+
+.timer-clock-inline .clock-body {
+  width: 32px;
+  height: 32px;
+}
+
+.timer-clock-inline .clock-face {
+  width: 26px;
+  height: 26px;
+}
+
+.timer-clock-inline .pendulum-rod {
+  height: 8px;
+}
+
+.timer-clock-inline .pendulum-weight {
+  width: 6px;
+  height: 6px;
 }
 
 /* ساعة الرقاص - معلقة على حافة الكارت */
@@ -1139,7 +1158,6 @@
   z-index: 15;
   flex-shrink: 0;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
-  margin-bottom: -24px;
 }
 
 .clock-body {
