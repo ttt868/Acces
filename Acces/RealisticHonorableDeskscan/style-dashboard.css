@@ -1511,18 +1511,18 @@
 .dashboard-countdown {
   font-size: clamp(28px, 7vw, 38px);
   font-weight: 800;
-  color: var(--text-color);
+  color: #1a1a1a;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   letter-spacing: 3px;
   line-height: 1;
   text-align: center;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  transition: color 0.3s ease, background 0.3s ease;
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: #1a1a1a;
+  background-clip: unset;
+  transition: color 0.3s ease;
   padding: 8px 0 6px;
 }
 
@@ -1625,11 +1625,11 @@
 }
 
 .dark-theme .dashboard-countdown {
-  color: #6ba5e7;
-  background: linear-gradient(135deg, #6ba5e7, #4a90e2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #ffffff;
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: #ffffff;
+  background-clip: unset;
 }
 
 
