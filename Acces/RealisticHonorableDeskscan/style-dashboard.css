@@ -633,7 +633,7 @@
   overflow: hidden;
   border: 2px solid rgba(226, 232, 240, 0.4);
   backdrop-filter: none;
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: none;
   flex-shrink: 0;
 }
@@ -684,7 +684,7 @@
   transition: none;
   backdrop-filter: none;
   border: 1px solid rgba(226, 232, 240, 0.4);
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 #dashboard-page .fire-icon {
@@ -815,6 +815,7 @@
 /* للوضع المظلم */
 .dark-theme #dashboard-page .dashboard-user-avatar {
   border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .dark-theme #dashboard-page .dashboard-user-name {
@@ -826,6 +827,7 @@
 
 .dark-theme #dashboard-page .action-icon {
   border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .dark-theme #dashboard-page .settings-icon {
@@ -1518,7 +1520,7 @@
 
 
 .dashboard-container {
-  margin: 62px auto 2vh auto;
+  margin: 72px auto 2vh auto;
   padding: 0 5px !important;
   width: 100%;
   max-width: 100%;
