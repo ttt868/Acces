@@ -91,7 +91,7 @@
   <link rel="canonical" href="https://accesschain.org">
   
   <link href="style.css" rel="stylesheet" type="text/css" />
-  <link rel="stylesheet" href="style-dashboard.css?v=20260316z12">
+  <link rel="stylesheet" href="style-dashboard.css?v=20260316z13">
   <link rel="stylesheet" href="style-missions.css">
    <link rel="stylesheet" href="profile-style.css">
    <link rel="stylesheet" href="network-style.css">
@@ -1214,14 +1214,15 @@ document.addEventListener('balanceUpdated', function(event) {
                 </div>
               </div>
 
+              <!-- XP/s فوق مربع العداد على اليمين -->
+              <div class="timer-card-wrapper">
+                <div id="dashboard-hashrate-display" class="dashboard-hashrate-display dashboard-hashrate-above" style="display: flex; visibility: visible; opacity: 1;">
+                  <span class="hashrate-label">XP/s</span>
+                  <span id="dashboard-hashrate-value">10.0</span>
+                </div>
+
               <!-- العداد فقط -->
               <div class="dashboard-activity-timer" id="dashboard-activity-timer" style="display: block; visibility: visible; opacity: 1;">
-
-              <!-- XP/s فوق مربع العداد على اليمين -->
-              <div id="dashboard-hashrate-display" class="dashboard-hashrate-display dashboard-hashrate-above" style="display: flex; visibility: visible; opacity: 1;">
-                <span class="hashrate-label">XP/s</span>
-                <span id="dashboard-hashrate-value">10.0</span>
-              </div>
 
               <!-- صف واحد: Boost يسار - XP/s وسط - ساعة+Timer يمين -->
               <div class="timer-header-row">
@@ -1245,7 +1246,7 @@ document.addEventListener('balanceUpdated', function(event) {
                 <div class="dashboard-timer-status" id="dashboard-timer-status" data-translate="Not Active" style="display: none;">Not Active</div>
               </div>
             </div>
-            </div>
+            </div> <!-- close timer-card-wrapper -->
 
                 <!-- Dashboard Action Buttons -->
             <div class="dashboard-action-buttons">
