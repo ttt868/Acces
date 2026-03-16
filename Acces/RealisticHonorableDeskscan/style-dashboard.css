@@ -1570,21 +1570,21 @@
   box-shadow: inset 0 1px 4px rgba(0,0,0,0.3);
 }
 
-/* علامات الساعة في الوضع الداكن */
+/* علامات الساعة في الوضع الداكن - محسوبة لوجه 21px */
 .dark-theme .clock-face::before {
   background: #999;
   box-shadow:
-    0 24px 0 #999,
-    -12px 12px 0 #999,
-    12px 12px 0 #999,
-    -6px 1.6px 0 0.3px #555,
-    6px 1.6px 0 0.3px #555,
-    -11px 6px 0 0.3px #555,
-    11px 6px 0 0.3px #555,
-    -11px 18px 0 0.3px #555,
-    11px 18px 0 0.3px #555,
-    -6px 22.4px 0 0.3px #555,
-    6px 22.4px 0 0.3px #555;
+    0 16px 0 #999,
+    -8px 8px 0 #999,
+    8px 8px 0 #999,
+    -4px 1px 0 0.3px #555,
+    4px 1px 0 0.3px #555,
+    -7.5px 4px 0 0.3px #555,
+    7.5px 4px 0 0.3px #555,
+    -7.5px 12px 0 0.3px #555,
+    7.5px 12px 0 0.3px #555,
+    -4px 15px 0 0.3px #555,
+    4px 15px 0 0.3px #555;
 }
 
 .dark-theme .clock-face::after {
