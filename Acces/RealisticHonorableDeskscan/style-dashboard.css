@@ -1418,7 +1418,7 @@
 }
 
 .dashboard-timer-title {
-  display: inline-flex;
+  display: none;
   align-items: center;
   position: relative;
   top: 0;
