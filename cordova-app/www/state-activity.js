@@ -38,21 +38,28 @@ class StateProcessingManager {
     try {
       console.log('Downloading whitepaper...');
 
-      // Create a link to the whitepaper HTML file
-      const whitepaperUrl = './whitepaper.html';
-
-      // In Cordova, use location.href with history entry so back button returns to app
-      // window.open in Cordova WebView has inconsistent behavior
       const isCordova = typeof window.cordova !== 'undefined' || typeof window.IS_CORDOVA_APP !== 'undefined';
       
       if (isCordova) {
-        // Navigate with history — back button will return to index.html
-        window.location.href = whitepaperUrl;
+        // In Cordova: use navigator.share() to let user open in Chrome/save/share
+        // We do this HERE (not in whitepaper.html) because cordova.js is loaded here
+        if (navigator.share) {
+          navigator.share({
+            title: 'AccessNetwork Whitepaper',
+            text: 'AccessNetwork Technical Whitepaper',
+            url: 'https://accesschain.org/whitepaper.html'
+          }).catch(function(err) {
+            console.log('Share dismissed:', err);
+          });
+        } else {
+          // Fallback: show link to copy
+          prompt('Open this link in your browser:', 'https://accesschain.org/whitepaper.html');
+        }
         return;
       }
 
       // Web: open in new tab
-      const whitepaperWindow = window.open(whitepaperUrl, '_blank');
+      const whitepaperWindow = window.open('./whitepaper.html', '_blank');
 
       if (whitepaperWindow) {
         console.log('Whitepaper opened in new tab');
