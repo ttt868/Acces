@@ -1939,9 +1939,10 @@ html[dir="rtl"] .action-button,
 }
 
 .explorer-social img {
-  width: 22px !important;
-  height: 22px !important;
+  width: 28px !important;
+  height: 28px !important;
   object-fit: contain;
+  border-radius: 0 !important;
 }
 
 .explorer-social:hover {
