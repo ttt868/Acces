@@ -1920,6 +1920,8 @@ html[dir="rtl"] .action-button,
     flex-direction: row;
     justify-content: center;
     width: 100%;
+    padding: 0 3px;
+    box-sizing: border-box;
   }
 
   .action-button {
