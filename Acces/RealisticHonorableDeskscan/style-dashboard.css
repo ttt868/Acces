@@ -1933,14 +1933,15 @@ html[dir="rtl"] .action-button,
 }
 
 .explorer-social {
-  background: transparent;
+  background: var(--card-background);
   padding: 0;
   overflow: hidden;
+  border: 1px solid var(--border-color);
 }
 
 .explorer-social img {
-  width: 38px !important;
-  height: 38px !important;
+  width: 20px !important;
+  height: 20px !important;
   border-radius: 50%;
   object-fit: cover;
 }
