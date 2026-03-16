@@ -835,6 +835,11 @@
     color: #ffffff;
   }
 
+  .dark-theme #dashboard-page .theme-icon {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+    color: #ffffff;
+  }
+
   .dark-theme #dashboard-page .language-icon {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
     border-color: rgba(255, 255, 255, 0.1);
@@ -842,7 +847,7 @@
   }
 
   .dark-theme #dashboard-page .language-icon:hover {
-    color: #4a90e2;    box-shadow: none;
+    color: #4a90e2;    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
   .dark-theme .language-code {
