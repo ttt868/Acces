@@ -1933,17 +1933,15 @@ html[dir="rtl"] .action-button,
 }
 
 .explorer-social {
-  background: transparent;
+  background: #1a1a2e;
   padding: 0;
   overflow: hidden;
-  border: none;
 }
 
 .explorer-social img {
-  width: 38px !important;
-  height: 38px !important;
-  border-radius: 50%;
-  object-fit: cover;
+  width: 22px !important;
+  height: 22px !important;
+  object-fit: contain;
 }
 
 .explorer-social:hover {
