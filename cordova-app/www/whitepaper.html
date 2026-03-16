@@ -620,26 +620,42 @@
         </div>
     </div>
 
+    <!-- Download button -->
     <button class="download-btn" onclick="downloadPDF()">
         <i class="fas fa-download"></i> Download PDF
     </button>
 
     <script>
         function downloadPDF() {
-            try {
-                var isCordova = typeof window.cordova !== 'undefined' || typeof window.IS_CORDOVA_APP !== 'undefined';
-                
-                if (isCordova) {
-                    // Open in system browser via Android Intent URI
-                    // allow-intent in config.xml handles https:// links
-                    var externalUrl = 'https://accesschain.org/whitepaper.html';
-                    
-                    // Try multiple methods to open external browser
-                    // Method 1: Android Intent URI (most reliable)
-                    var intentUrl = 'intent://' + externalUrl.replace('https://', '') + '#Intent;scheme=https;action=android.intent.action.VIEW;end';
-                    window.location.href = intentUrl;
-                    return;
+            var isCordova = typeof window.cordova !== 'undefined' || typeof window.IS_CORDOVA_APP !== 'undefined';
+            
+            if (isCordova) {
+                // In Cordova: use Web Share API (works on Android WebView)
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'AccessNetwork Whitepaper',
+                        text: 'AccessNetwork Technical Whitepaper - View and download',
+                        url: 'https://accesschain.org/whitepaper.html'
+                    }).catch(function(err) {
+                        console.log('Share cancelled or failed:', err);
+                    });
+                } else {
+                    // Fallback: copy link to clipboard
+                    var url = 'https://accesschain.org/whitepaper.html';
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(url).then(function() {
+                            alert('Link copied! Open in your browser to download:\n' + url);
+                        });
+                    } else {
+                        // Last fallback: show alert with link
+                        prompt('Copy this link and open in your browser:', url);
+                    }
                 }
+                return;
+            }
+
+            // Web version: open in new window for print/save
+            try {
 
                 // Web: open in new window for print/save
                 var printWindow = window.open('', '_blank');
