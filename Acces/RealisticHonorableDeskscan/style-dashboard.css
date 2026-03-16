@@ -1877,6 +1877,19 @@ html[dir="rtl"] .action-button,
   align-items: center;
 }
 
+/* RTL / Arabic support for social media section */
+html[lang="ar"] .dashboard-social-media,
+html[dir="rtl"] .dashboard-social-media,
+[data-lang="ar"] .dashboard-social-media {
+  flex-direction: row-reverse;
+}
+
+html[lang="ar"] .dashboard-social-header,
+html[dir="rtl"] .dashboard-social-header,
+[data-lang="ar"] .dashboard-social-header {
+  text-align: right;
+}
+
 .dashboard-social-btn {
   width: 34px;
   height: 34px;
