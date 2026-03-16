@@ -814,6 +814,7 @@ processingTransaction: "Traitement de la transaction en cours...",
 "Circulating Supply": "Offre en circulation",
 "Next Halving At": "Prochain halving à",
 "Remaining": "Restant",
+"NOW": "ACTUEL",
     
 
 
@@ -1569,6 +1570,7 @@ processingTransaction: "Procesando transacción...",
     "Circulating Supply": "Oferta circulante",
     "Next Halving At": "Próximo halving en",
     "Remaining": "Restante",
+    "NOW": "AHORA",
 
 
 
@@ -2270,6 +2272,7 @@ processingTransaction: "Elaborazione della transazione in corso...",
 "Circulating Supply": "Offerta circolante",
 "Next Halving At": "Prossimo halving a",
 "Remaining": "Rimanente",
+"NOW": "ORA",
     
 
 
@@ -3013,6 +3016,7 @@ processingTransaction: "İşlem işleniyor...",
 "Circulating Supply": "Dolaşımdaki arz",
 "Next Halving At": "Sonraki halving",
 "Remaining": "Kalan",
+"NOW": "ŞİMDİ",
 
 
     "Close": "Kapat",
@@ -3800,6 +3804,7 @@ processingTransaction: "İşlem işleniyor...",
 "Circulating Supply": "परिचालित आपूर्ति",
 "Next Halving At": "अगला हॉल्विंग",
 "Remaining": "शेष",
+"NOW": "अभी",
 
 
 
@@ -4552,6 +4557,7 @@ processingTransaction: "İşlem işleniyor...",
 "Circulating Supply": "流通供应量",
 "Next Halving At": "下次减半",
 "Remaining": "剩余",
+"NOW": "当前",
     
     
     
@@ -5260,6 +5266,7 @@ processingTransaction: "İşlem işleniyor...",
 "Circulating Supply": "流通供給量",
 "Next Halving At": "次の半減期",
 "Remaining": "残り",
+"NOW": "現在",
     
     
     
@@ -6009,6 +6016,7 @@ processingTransaction: "İşlem işleniyor...",
 "Circulating Supply": "유통 공급량",
 "Next Halving At": "다음 반감기",
 "Remaining": "남은",
+"NOW": "현재",
     
 
     
@@ -6764,6 +6772,7 @@ processingTransaction: "İşlem işleniyor...",
 "Circulating Supply": "Oferta circulante",
 "Next Halving At": "Próximo halving em",
 "Remaining": "Restante",
+"NOW": "AGORA",
     
 
     "Close": "Fechar",
@@ -7513,6 +7522,7 @@ insufficientBalance: "Недостаточно средств для этой т
 "Circulating Supply": "Оборотное предложение",
 "Next Halving At": "Следующий халвинг",
 "Remaining": "Осталось",
+"NOW": "СЕЙЧАС",
 
 
 
@@ -8321,6 +8331,7 @@ insufficientBalance: "Недостаточно средств для этой т
 "Circulating Supply": "Umlaufversorgung",
 "Next Halving At": "Nächstes Halving bei",
 "Remaining": "Verbleibend",
+"NOW": "JETZT",
 
 
 
@@ -9128,6 +9139,7 @@ insufficientBalance: "Недостаточно средств для этой т
     "Circulating Supply": "العرض المتداول",
     "Next Halving At": "التنصيف التالي عند",
     "Remaining": "المتبقي",
+    "NOW": "الآن",
   
 
 
@@ -9839,6 +9851,7 @@ insufficientBalance: "Недостаточно средств для этой т
     "Circulating Supply": "Pasokan beredar",
     "Next Halving At": "Halving berikutnya",
     "Remaining": "Sisa",
+    "NOW": "SAAT INI",
 
 
     
@@ -10612,6 +10625,7 @@ insufficientBalance: "Недостаточно средств для этой т
     "Circulating Supply": "Podaż w obiegu",
     "Next Halving At": "Następny halving",
     "Remaining": "Pozostało",
+    "NOW": "TERAZ",
 
 
 

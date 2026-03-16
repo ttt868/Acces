@@ -148,7 +148,8 @@ function updateHalvingMilestones(circulatingSupply) {
       if (!nowTag) {
         var tag = document.createElement('div');
         tag.className = 'milestone-now-tag';
-        tag.textContent = 'NOW';
+        tag.setAttribute('data-translate', 'NOW');
+        tag.textContent = (window.translations && window.currentLang && window.translations[window.currentLang] && window.translations[window.currentLang]['NOW']) || 'NOW';
         el.querySelector('.milestone-node').appendChild(tag);
       }
       if (!glow) {
