@@ -33,29 +33,8 @@ class StateProcessingManager {
     console.log('Whitepaper functionality initialized');
   }
 
-  // Download whitepaper function
+  // View whitepaper - simply navigate to whitepaper.html
   downloadWhitepaper() {
-    console.log('downloadWhitepaper called');
-    
-    // Method 1: navigator.share (works on Android)
-    try {
-      if (navigator.share) {
-        navigator.share({
-          title: 'AccessNetwork Whitepaper',
-          text: 'AccessNetwork Technical Whitepaper',
-          url: 'https://accesschain.org/whitepaper.html'
-        }).catch(function() {});
-        return;
-      }
-    } catch(e) { console.log('share failed:', e); }
-    
-    // Method 2: open whitepaper.html in new tab (web)
-    try {
-      var w = window.open('./whitepaper.html', '_blank');
-      if (w) return;
-    } catch(e) {}
-    
-    // Method 3: navigate to whitepaper.html
     window.location.href = './whitepaper.html';
   }
 

@@ -620,126 +620,12 @@
         </div>
     </div>
 
-    <!-- Download button -->
-    <button class="download-btn" onclick="downloadPDF()">
-        <i class="fas fa-download"></i> Download PDF
-    </button>
-
     <script>
-        function downloadPDF() {
-            // Try navigator.share first (works on mobile browsers and some WebViews)
-            try {
-                if (navigator.share) {
-                    navigator.share({
-                        title: 'AccessNetwork Whitepaper',
-                        text: 'AccessNetwork Technical Whitepaper',
-                        url: 'https://accesschain.org/whitepaper.html'
-                    }).then(function() {
-                        console.log('Shared successfully');
-                    }).catch(function(err) {
-                        console.log('Share failed/cancelled:', err);
-                        fallbackDownload();
-                    });
-                    return;
-                }
-            } catch(e) {
-                console.log('Share API error:', e);
-            }
-            fallbackDownload();
-        }
-        
-        function fallbackDownload() {
-            // Try window.print (works on desktop and some Android WebViews)
-            try {
-                document.title = 'AccessNetwork-Whitepaper-v2.0';
-                window.print();
-            } catch(e) {
-                console.log('Print failed:', e);
-                // Last resort: tell user to screenshot or open in browser
-                alert('To save this whitepaper:\n\n1. Take a screenshot\n2. Or open https://accesschain.org/whitepaper.html in Chrome');
-            }
-        }
-
-        function createDownloadableFile() {
-            try {
-                // Create a clean version of the document for download
-                const docClone = document.documentElement.cloneNode(true);
-                const downloadBtn = docClone.querySelector('.download-btn');
-                if (downloadBtn) {
-                    downloadBtn.remove();
-                }
-
-                // Create the HTML content
-                const htmlContent = `<!DOCTYPE html>\n${docClone.outerHTML}`;
-
-                // Create blob and download link
-                const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-
-                // Create temporary download link
-                const downloadLink = document.createElement('a');
-                downloadLink.href = url;
-                downloadLink.download = 'AccessoireDigital-Whitepaper-v2.0.html';
-                downloadLink.style.display = 'none';
-
-                // Add to document, click, and remove
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
-                // Clean up the blob URL
-                setTimeout(() => {
-                    URL.revokeObjectURL(url);
-                }, 1000);
-
-                // Show success message
-                showDownloadNotification();
-
-            } catch (error) {
-                console.error('Error creating downloadable file:', error);
-            }
-        }
-
-        function showDownloadNotification() {
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.innerHTML = `
-                <div style="
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: #4CAF50;
-                    color: white;
-                    padding: 15px 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                    z-index: 10000;
-                    font-family: Arial, sans-serif;
-                    font-size: 14px;
-                    max-width: 300px;
-                ">
-                    <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
-                    <span data-translate="whitepaper_download_success">Whitepaper downloaded successfully!</span>
-                </div>
-            `;
-
-            document.body.appendChild(notification);
-
-            // Remove notification after 3 seconds
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 3000);
-        }
-
         // Add FontAwesome for icons
         const fontAwesome = document.createElement('link');
         fontAwesome.rel = 'stylesheet';
         fontAwesome.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css';
         document.head.appendChild(fontAwesome);
-
-        // Clean whitepaper experience - no ads for better technical documentation reading
     </script>
 </body>
 </html>
