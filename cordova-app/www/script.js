@@ -104,6 +104,118 @@ function updateRewardText() {
   }
 }
 
+// ═══════════════════════════════════════════════════
+// Halving Milestones — Dashboard Widget
+// ═══════════════════════════════════════════════════
+const HALVING_PHASES = [
+  { phase: 1, reward: 0.25,    from: 0,        to: 5000000,  label: '0 - 5M' },
+  { phase: 2, reward: 0.125,   from: 5000000,  to: 15000000, label: '5M - 15M' },
+  { phase: 3, reward: 0.0625,  from: 15000000, to: 20000000, label: '15M - 20M' },
+  { phase: 4, reward: 0.03125, from: 20000000, to: 22500000, label: '20M - 22.5M' },
+  { phase: 5, reward: 0.015625,from: 22500000, to: 23750000, label: '22.5M+' }
+];
+
+function updateHalvingMilestones(circulatingSupply) {
+  if (typeof circulatingSupply !== 'number' || isNaN(circulatingSupply)) circulatingSupply = 0;
+
+  var activePhase = 1;
+  for (var i = HALVING_PHASES.length - 1; i >= 0; i--) {
+    if (circulatingSupply >= HALVING_PHASES[i].from) {
+      activePhase = HALVING_PHASES[i].phase;
+      break;
+    }
+  }
+
+  var phaseData = HALVING_PHASES[activePhase - 1];
+  var nextHalving = phaseData.to;
+  var phaseStart = phaseData.from;
+  var phaseProgress = (circulatingSupply - phaseStart) / (nextHalving - phaseStart);
+  phaseProgress = Math.max(0, Math.min(1, phaseProgress));
+
+  var phaseNum = document.getElementById('halving-phase-num');
+  if (phaseNum) phaseNum.textContent = activePhase;
+
+  var milestones = document.querySelectorAll('.halving-milestone');
+  milestones.forEach(function(el) {
+    var p = parseInt(el.getAttribute('data-phase'));
+    el.classList.remove('active', 'completed');
+    if (p === activePhase) el.classList.add('active');
+    else if (p < activePhase) el.classList.add('completed');
+
+    var nowTag = el.querySelector('.milestone-now-tag');
+    var glow = el.querySelector('.milestone-glow');
+    if (p === activePhase) {
+      if (!nowTag) {
+        var tag = document.createElement('div');
+        tag.className = 'milestone-now-tag';
+        tag.textContent = 'NOW';
+        el.querySelector('.milestone-node').appendChild(tag);
+      }
+      if (!glow) {
+        var g = document.createElement('div');
+        g.className = 'milestone-glow';
+        el.querySelector('.milestone-node').insertBefore(g, el.querySelector('.milestone-circle'));
+      }
+    } else {
+      if (nowTag) nowTag.remove();
+      if (glow) glow.remove();
+    }
+  });
+
+  var globalProgress = ((activePhase - 1) / HALVING_PHASES.length) + (phaseProgress / HALVING_PHASES.length);
+  var trackFill = document.getElementById('halving-track-fill');
+  if (trackFill) trackFill.style.width = (globalProgress * 100).toFixed(1) + '%';
+
+  var circVal = document.getElementById('halving-circulating-value');
+  if (circVal) circVal.textContent = Number(circulatingSupply.toFixed(2)).toLocaleString() + ' AC';
+
+  var progressInner = document.getElementById('halving-progress-inner');
+  if (progressInner) {
+    var phasePercent = phaseProgress * 100;
+    if (circulatingSupply > 0 && phasePercent < 2) phasePercent = 2;
+    progressInner.style.width = phasePercent.toFixed(2) + '%';
+  }
+
+  var nextVal = document.getElementById('halving-next-value');
+  if (nextVal) nextVal.textContent = Number(nextHalving).toLocaleString() + ' AC';
+
+  var remaining = Math.max(0, nextHalving - circulatingSupply);
+  var remainEl = document.getElementById('halving-remaining-value');
+  if (remainEl) remainEl.textContent = Number(remaining.toFixed(2)).toLocaleString() + ' AC';
+}
+
+function fetchHalvingData() {
+  var baseUrl = window.ACCESS_BASE_URL || 'https://access-chain.net';
+  fetch(baseUrl + '/api/network/network-info')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var supply = 0;
+      if (data.success && data.network) {
+        supply = parseFloat(data.network.circulatingSupply) || 0;
+      } else if (data.circulatingSupply) {
+        supply = parseFloat(data.circulatingSupply) || 0;
+      }
+      window._halvingCirculatingSupply = supply;
+      try { localStorage.setItem('_halvingSupply', supply.toString()); } catch(e) {}
+      updateHalvingMilestones(supply);
+    })
+    .catch(function() {
+      updateHalvingMilestones(window._halvingCirculatingSupply || 0);
+    });
+}
+
+(function() {
+  try {
+    var cached = parseFloat(localStorage.getItem('_halvingSupply'));
+    if (cached > 0) {
+      window._halvingCirculatingSupply = cached;
+      updateHalvingMilestones(cached);
+    }
+  } catch(e) {}
+})();
+setTimeout(fetchHalvingData, 1500);
+setInterval(fetchHalvingData, 60 * 1000);
+
 // 🔔 Push Notifications Registration Function
 async function registerPushNotifications(userId) {
   console.log('🔔 registerPushNotifications called with userId:', userId);
@@ -4831,6 +4943,7 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
                 window.serverBaseReward = parseFloat(data.base_reward);
                 console.log('🔄 Updated serverBaseReward from start:', window.serverBaseReward);
                 updateRewardText();
+                if (typeof fetchHalvingData === 'function') fetchHalvingData();
               }
               // يتحقق من كلا الاسمين: reward_transferred (server.js) و previous_reward_transferred (simplifier)
               const transferredReward = data.reward_transferred || data.previous_reward_transferred || 0;

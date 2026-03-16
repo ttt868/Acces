@@ -26,7 +26,7 @@ import { getCurrentBaseReward, splitReward, validateSupplyLimit, roundReward, FO
 // ════════════════════════════════════════════════════════════════
 let _cachedCirculatingSupply = 0;
 let _lastSupplyCheck = 0;
-const SUPPLY_CACHE_TTL = 5 * 60 * 1000; // 5 دقائق
+const SUPPLY_CACHE_TTL = 60 * 1000; // 1 دقيقة
 
 /**
  * الحصول على المعروض المتداول الموحّد (مع cache)

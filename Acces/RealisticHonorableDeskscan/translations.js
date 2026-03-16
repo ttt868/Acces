@@ -809,6 +809,11 @@ processingTransaction: "Traitement de la transaction en cours...",
 "Connect Wallet": "Connecter le portefeuille",
 "Social Media": "Réseaux sociaux",
 "Follow us": "Suivez-nous",
+"Halving Milestones": "Étapes du Halving",
+"Phase": "Phase",
+"Circulating Supply": "Offre en circulation",
+"Next Halving At": "Prochain halving à",
+"Remaining": "Restant",
     
 
 
@@ -1559,6 +1564,11 @@ processingTransaction: "Procesando transacción...",
     "Connect Wallet": "Conectar billetera",
     "Social Media": "Redes sociales",
     "Follow us": "Síguenos",
+    "Halving Milestones": "Hitos del Halving",
+    "Phase": "Fase",
+    "Circulating Supply": "Oferta circulante",
+    "Next Halving At": "Próximo halving en",
+    "Remaining": "Restante",
 
 
 
@@ -2255,6 +2265,11 @@ processingTransaction: "Elaborazione della transazione in corso...",
 "Connect Wallet": "Connetti portafoglio",
 "Social Media": "Social media",
 "Follow us": "Seguici",
+"Halving Milestones": "Tappe dell'Halving",
+"Phase": "Fase",
+"Circulating Supply": "Offerta circolante",
+"Next Halving At": "Prossimo halving a",
+"Remaining": "Rimanente",
     
 
 
@@ -2993,6 +3008,11 @@ processingTransaction: "İşlem işleniyor...",
 "Connect Wallet": "Cüzdan bağla",
 "Social Media": "Sosyal medya",
 "Follow us": "Bizi takip edin",
+"Halving Milestones": "Halving Kilometre Taşları",
+"Phase": "Aşama",
+"Circulating Supply": "Dolaşımdaki arz",
+"Next Halving At": "Sonraki halving",
+"Remaining": "Kalan",
 
 
     "Close": "Kapat",
@@ -3775,6 +3795,11 @@ processingTransaction: "İşlem işleniyor...",
 "Connect Wallet": "वॉलेट कनेक्ट करें",
 "Social Media": "सोशल मीडिया",
 "Follow us": "हमें फॉलो करें",
+"Halving Milestones": "हॉल्विंग मील के पत्थर",
+"Phase": "चरण",
+"Circulating Supply": "परिचालित आपूर्ति",
+"Next Halving At": "अगला हॉल्विंग",
+"Remaining": "शेष",
 
 
 
@@ -4522,6 +4547,11 @@ processingTransaction: "İşlem işleniyor...",
 "Connect Wallet": "连接钱包",
 "Social Media": "社交媒体",
 "Follow us": "关注我们",
+"Halving Milestones": "减半里程碑",
+"Phase": "阶段",
+"Circulating Supply": "流通供应量",
+"Next Halving At": "下次减半",
+"Remaining": "剩余",
     
     
     
@@ -5225,6 +5255,11 @@ processingTransaction: "İşlem işleniyor...",
 "Connect Wallet": "ウォレットを接続",
 "Social Media": "ソーシャルメディア",
 "Follow us": "フォローしてください",
+"Halving Milestones": "半減期マイルストーン",
+"Phase": "フェーズ",
+"Circulating Supply": "流通供給量",
+"Next Halving At": "次の半減期",
+"Remaining": "残り",
     
     
     
@@ -5969,6 +6004,11 @@ processingTransaction: "İşlem işleniyor...",
 "Connect Wallet": "지갑 연결",
 "Social Media": "소셜 미디어",
 "Follow us": "팔로우하세요",
+"Halving Milestones": "반감기 이정표",
+"Phase": "단계",
+"Circulating Supply": "유통 공급량",
+"Next Halving At": "다음 반감기",
+"Remaining": "남은",
     
 
     
@@ -6719,6 +6759,11 @@ processingTransaction: "İşlem işleniyor...",
 "Connect Wallet": "Conectar carteira",
 "Social Media": "Redes sociais",
 "Follow us": "Siga-nos",
+"Halving Milestones": "Marcos do Halving",
+"Phase": "Fase",
+"Circulating Supply": "Oferta circulante",
+"Next Halving At": "Próximo halving em",
+"Remaining": "Restante",
     
 
     "Close": "Fechar",
@@ -7463,6 +7508,11 @@ insufficientBalance: "Недостаточно средств для этой т
 "Connect Wallet": "Подключить кошелек",
 "Social Media": "Социальные сети",
 "Follow us": "Подписывайтесь на нас",
+"Halving Milestones": "Вехи халвинга",
+"Phase": "Фаза",
+"Circulating Supply": "Оборотное предложение",
+"Next Halving At": "Следующий халвинг",
+"Remaining": "Осталось",
 
 
 
@@ -8266,6 +8316,11 @@ insufficientBalance: "Недостаточно средств для этой т
 "Connect Wallet": "Wallet verbinden",
 "Social Media": "Soziale Medien",
 "Follow us": "Folgen Sie uns",
+"Halving Milestones": "Halving-Meilensteine",
+"Phase": "Phase",
+"Circulating Supply": "Umlaufversorgung",
+"Next Halving At": "Nächstes Halving bei",
+"Remaining": "Verbleibend",
 
 
 
@@ -9068,6 +9123,11 @@ insufficientBalance: "Недостаточно средств для этой т
     "Connect Wallet": "ربط المحفظة",
     "Social Media": "وسائل التواصل الإجتماعي",
     "Follow us": "تابعنا",
+    "Halving Milestones": "مراحل التنصيف",
+    "Phase": "المرحلة",
+    "Circulating Supply": "العرض المتداول",
+    "Next Halving At": "التنصيف التالي عند",
+    "Remaining": "المتبقي",
   
 
 
@@ -9774,6 +9834,11 @@ insufficientBalance: "Недостаточно средств для этой т
     "Connect Wallet": "Hubungkan dompet",
     "Social Media": "Media sosial",
     "Follow us": "Ikuti kami",
+    "Halving Milestones": "Tonggak Halving",
+    "Phase": "Fase",
+    "Circulating Supply": "Pasokan beredar",
+    "Next Halving At": "Halving berikutnya",
+    "Remaining": "Sisa",
 
 
     
@@ -10542,6 +10607,11 @@ insufficientBalance: "Недостаточно средств для этой т
     "Connect Wallet": "Połącz portfel",
     "Social Media": "Media społecznościowe",
     "Follow us": "Obserwuj nas",
+    "Halving Milestones": "Kamienie milowe halvingu",
+    "Phase": "Faza",
+    "Circulating Supply": "Podaż w obiegu",
+    "Next Halving At": "Następny halving",
+    "Remaining": "Pozostało",
 
 
 

@@ -1355,6 +1355,113 @@ document.addEventListener('balanceUpdated', function(event) {
               </div>
             </div>
 
+            <!-- Halving Milestones Section -->
+            <div class="dashboard-halving-card">
+              <div class="halving-card-header">
+                <div class="halving-title-row">
+                  <svg class="halving-gem-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 9l10 13L22 9 12 2z" fill="url(#gemGradC)" stroke="url(#gemStrokeC)" stroke-width="1.5"/>
+                    <path d="M2 9h20M12 2l-3 7h6l-3-7M9 9l3 13 3-13" stroke="url(#gemStrokeC)" stroke-width="1" opacity="0.5"/>
+                    <defs>
+                      <linearGradient id="gemGradC" x1="2" y1="2" x2="22" y2="22">
+                        <stop offset="0%" stop-color="#a78bfa"/>
+                        <stop offset="100%" stop-color="#6366f1"/>
+                      </linearGradient>
+                      <linearGradient id="gemStrokeC" x1="2" y1="2" x2="22" y2="22">
+                        <stop offset="0%" stop-color="#c4b5fd"/>
+                        <stop offset="100%" stop-color="#818cf8"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <h4 data-translate="Halving Milestones">Halving Milestones</h4>
+                </div>
+                <div class="halving-current-badge" id="halving-current-badge">
+                  <span data-translate="Phase">Phase</span> <span id="halving-phase-num">1</span>
+                </div>
+              </div>
+
+              <div class="halving-milestones-track" id="halving-milestones-track">
+                <div class="halving-track-line">
+                  <div class="halving-track-fill" id="halving-track-fill"></div>
+                </div>
+
+                <div class="halving-milestone active" data-phase="1">
+                  <div class="milestone-node">
+                    <div class="milestone-glow"></div>
+                    <div class="milestone-circle">
+                      <span class="milestone-reward-val">0.25</span>
+                    </div>
+                    <div class="milestone-now-tag">NOW</div>
+                  </div>
+                  <div class="milestone-label">
+                    <span class="milestone-supply">0 - 5M</span>
+                  </div>
+                </div>
+
+                <div class="halving-milestone" data-phase="2">
+                  <div class="milestone-node">
+                    <div class="milestone-circle">
+                      <span class="milestone-reward-val">0.125</span>
+                    </div>
+                  </div>
+                  <div class="milestone-label">
+                    <span class="milestone-supply">5M - 15M</span>
+                  </div>
+                </div>
+
+                <div class="halving-milestone" data-phase="3">
+                  <div class="milestone-node">
+                    <div class="milestone-circle">
+                      <span class="milestone-reward-val">0.0625</span>
+                    </div>
+                  </div>
+                  <div class="milestone-label">
+                    <span class="milestone-supply">15M - 20M</span>
+                  </div>
+                </div>
+
+                <div class="halving-milestone" data-phase="4">
+                  <div class="milestone-node">
+                    <div class="milestone-circle">
+                      <span class="milestone-reward-val">0.03125</span>
+                    </div>
+                  </div>
+                  <div class="milestone-label">
+                    <span class="milestone-supply">20M - 22.5M</span>
+                  </div>
+                </div>
+
+                <div class="halving-milestone" data-phase="5">
+                  <div class="milestone-node">
+                    <div class="milestone-circle">
+                      <span class="milestone-reward-val">0.0156</span>
+                    </div>
+                  </div>
+                  <div class="milestone-label">
+                    <span class="milestone-supply">22.5M+</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="halving-supply-bar">
+                <div class="halving-supply-row">
+                  <span class="halving-supply-label" data-translate="Circulating Supply">Circulating Supply</span>
+                  <span class="halving-supply-value" id="halving-circulating-value">--</span>
+                </div>
+                <div class="halving-progress-outer">
+                  <div class="halving-progress-inner" id="halving-progress-inner"></div>
+                </div>
+                <div class="halving-supply-row halving-next-row">
+                  <span class="halving-next-label" data-translate="Next Halving At">Next Halving At</span>
+                  <span class="halving-next-value" id="halving-next-value">5,000,000 AC</span>
+                </div>
+                <div class="halving-supply-row halving-next-row">
+                  <span class="halving-next-label" data-translate="Remaining">Remaining</span>
+                  <span class="halving-next-value" id="halving-remaining-value">--</span>
+                </div>
+              </div>
+            </div>
+
             </div>
           </div>
         </div>

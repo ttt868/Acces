@@ -3380,3 +3380,340 @@ html[lang="ar"] .dashboard-timer-header {
   color: #6366f1 !important;
   opacity: 1;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Halving Milestones Card
+   ═══════════════════════════════════════════════════════════════ */
+
+.dashboard-halving-card {
+  background: var(--card-background);
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 12px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.halving-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.halving-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.halving-gem-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.halving-title-row h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.halving-current-badge {
+  background: linear-gradient(135deg, #6366f1, #a78bfa);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+/* Milestones Track */
+.halving-milestones-track {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px 0 0;
+  margin-bottom: 16px;
+}
+
+.halving-track-line {
+  position: absolute;
+  top: 27px;
+  left: 20px;
+  right: 20px;
+  height: 2.5px;
+  background: var(--border-color, #e5e7eb);
+  border-radius: 2px;
+  z-index: 0;
+}
+
+.halving-track-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #6366f1, #a78bfa);
+  width: 0%;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Individual Milestone */
+.halving-milestone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+}
+
+.milestone-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 34px;
+}
+
+.milestone-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  color: #b0b0b0;
+  background: var(--card-background);
+  border: 2px solid var(--border-color, #e5e7eb);
+  position: relative;
+  z-index: 2;
+  transition: all 0.4s ease;
+}
+
+.milestone-reward-val {
+  line-height: 1;
+}
+
+.milestone-glow {
+  display: none;
+}
+
+.milestone-now-tag {
+  display: none;
+}
+
+.milestone-label {
+  margin-top: 5px;
+  text-align: center;
+}
+
+.milestone-supply {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--text-light, #9ca3af);
+  white-space: nowrap;
+}
+
+/* ── Active Milestone ── */
+.halving-milestone.active .milestone-circle {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 2px 8px rgba(99, 102, 241, 0.35);
+  animation: halvingNodeBreath 3s ease-in-out infinite;
+}
+
+@keyframes halvingNodeBreath {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 2px 8px rgba(99, 102, 241, 0.35); }
+  50% { box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.12), 0 2px 12px rgba(99, 102, 241, 0.45); }
+}
+
+.halving-milestone.active .milestone-glow {
+  display: none;
+}
+
+.halving-milestone.active .milestone-now-tag {
+  display: block;
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #6366f1, #a78bfa);
+  color: #fff;
+  font-size: 7px;
+  font-weight: 800;
+  padding: 1.5px 6px;
+  border-radius: 6px;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  z-index: 3;
+  line-height: 1.4;
+}
+
+.halving-milestone.active .milestone-supply {
+  color: #6366f1;
+  font-weight: 700;
+}
+
+/* ── Completed Milestone ── */
+.halving-milestone.completed .milestone-circle {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 1px 6px rgba(16, 185, 129, 0.2);
+}
+
+.halving-milestone.completed .milestone-supply {
+  color: #10b981;
+}
+
+/* Supply Progress Bar */
+.halving-supply-bar {
+  background: rgba(99, 102, 241, 0.06);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.halving-supply-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.halving-supply-label {
+  font-size: 10px;
+  color: var(--text-light, #9ca3af);
+  font-weight: 500;
+}
+
+.halving-supply-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.halving-progress-outer {
+  width: 100%;
+  height: 5px;
+  background: var(--border-color, #e5e7eb);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.halving-progress-inner {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #6366f1, #a78bfa, #c4b5fd);
+  width: 0%;
+  transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.halving-progress-inner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+  animation: halvingShimmer 2s ease-in-out infinite;
+}
+
+@keyframes halvingShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.halving-next-row {
+  margin-bottom: 0;
+}
+
+.halving-next-label {
+  font-size: 9px;
+  color: var(--text-light, #9ca3af);
+  font-weight: 500;
+}
+
+.halving-next-value {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+/* Dark Theme */
+.dark-theme .dashboard-halving-card {
+  background: var(--card-background);
+}
+
+.dark-theme .halving-supply-bar {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.dark-theme .halving-track-line {
+  background: #3f3f46;
+}
+
+.dark-theme .milestone-circle {
+  background: var(--card-background);
+  border-color: #3f3f46;
+  color: #71717a;
+}
+
+.dark-theme .halving-progress-outer {
+  background: #3f3f46;
+}
+
+/* RTL Support */
+html[lang="ar"] .halving-card-header,
+html[dir="rtl"] .halving-card-header,
+[data-lang="ar"] .halving-card-header {
+  flex-direction: row-reverse;
+}
+
+html[lang="ar"] .halving-title-row,
+html[dir="rtl"] .halving-title-row,
+[data-lang="ar"] .halving-title-row {
+  flex-direction: row-reverse;
+}
+
+html[lang="ar"] .halving-milestones-track,
+html[dir="rtl"] .halving-milestones-track,
+[data-lang="ar"] .halving-milestones-track {
+  flex-direction: row-reverse;
+}
+
+html[lang="ar"] .halving-track-fill,
+html[dir="rtl"] .halving-track-fill,
+[data-lang="ar"] .halving-track-fill {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+html[lang="ar"] .halving-supply-row,
+html[dir="rtl"] .halving-supply-row,
+[data-lang="ar"] .halving-supply-row {
+  flex-direction: row-reverse;
+}
+
+/* Responsive */
+@media (max-width: 360px) {
+  .milestone-circle {
+    width: 26px;
+    height: 26px;
+    font-size: 7px;
+  }
+  .milestone-supply {
+    font-size: 7px;
+  }
+  .halving-milestone.active .milestone-now-tag {
+    font-size: 6px;
+    padding: 1px 5px;
+    top: -14px;
+  }
+}
