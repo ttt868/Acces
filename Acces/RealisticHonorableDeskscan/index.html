@@ -91,7 +91,7 @@
   <link rel="canonical" href="https://accesschain.org">
   
   <link href="style.css" rel="stylesheet" type="text/css" />
-  <link rel="stylesheet" href="style-dashboard.css?v=20260316z33">
+  <link rel="stylesheet" href="style-dashboard.css?v=20260316z35">
   <link rel="stylesheet" href="style-missions.css">
    <link rel="stylesheet" href="profile-style.css">
    <link rel="stylesheet" href="network-style.css">
@@ -2850,9 +2850,8 @@ Access-Network is a digital rewards platform combining innovation, community fea
     </script>
 
     <!-- Ad Boost Modal -->
-    <div id="ad-boost-modal" class="modal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);" onclick="closeAdBoostModalOnOutsideClick(event)">
-      <div class="modal-content" style="background-color: var(--card-background); margin: 10% auto; padding: 30px; border: 1px solid var(--border-color); width: 90%; max-width: 500px; border-radius: 15px; box-shadow: var(--shadow-lg); text-align: center; position: relative;" onclick="event.stopPropagation()">
-        <button onclick="closeAdBoostModal()" style="position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; padding: 4px 8px; line-height: 1; z-index: 1;">
+    <div id="ad-boost-modal" class="modal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);" onclick="closeAdBoostModalOnOutsideClick(event)      <div class="modal-content" style="background-color: var(--card-background); margin: 10% auto; padding: 30px; border: 1px solid var(--border-color); width: 90%; max-width: 500px; border-radius: 15px; box-shadow: var(--shadow-lg); text-align: center; position: relative;" onclick="event.stopPropagation()">
+        <button onclick="document.getElementById('ad-boost-modal').style.display='none'" style="position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; padding: 4px 8px; line-height: 1; z-index: 1;">
           <i class="fas fa-times"></i>
         </button>
         <div id="ad-boost-message" style="margin-bottom: 20px;">
