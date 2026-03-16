@@ -627,29 +627,38 @@
     <script>
         function downloadPDF() {
             try {
-                // Create a print-friendly version for PDF conversion
-                const printWindow = window.open('', '_blank');
-                const documentClone = document.documentElement.cloneNode(true);
+                var isCordova = typeof window.cordova !== 'undefined' || typeof window.IS_CORDOVA_APP !== 'undefined';
+                
+                if (isCordova) {
+                    // Cordova: print current page directly (hide button temporarily)
+                    var btn = document.querySelector('.download-btn');
+                    if (btn) btn.style.display = 'none';
+                    document.title = 'AccessoireDigital-Whitepaper-v2.0';
+                    window.print();
+                    if (btn) setTimeout(function() { btn.style.display = ''; }, 1000);
+                    return;
+                }
+
+                // Web: open in new window for print/save
+                var printWindow = window.open('', '_blank');
+                if (!printWindow) {
+                    // Popup blocked — fallback to direct print
+                    var btn2 = document.querySelector('.download-btn');
+                    if (btn2) btn2.style.display = 'none';
+                    window.print();
+                    if (btn2) setTimeout(function() { btn2.style.display = ''; }, 1000);
+                    return;
+                }
+                var documentClone = document.documentElement.cloneNode(true);
 
                 // Remove the download button from the clone
-                const downloadBtn = documentClone.querySelector('.download-btn');
+                var downloadBtn = documentClone.querySelector('.download-btn');
                 if (downloadBtn) {
                     downloadBtn.remove();
                 }
 
                 // Add print styles for better PDF output
-                const printStyles = `
-                    <style>
-                        @media print {
-                            body { background: white !important; }
-                            .container { box-shadow: none !important; }
-                            .header { break-inside: avoid; }
-                            .section { break-inside: avoid; }
-                            .page-break { page-break-after: always; }
-                        }
-                        @page { margin: 1in; }
-                    </style>
-                `;
+                var printStyles = '<style>@media print { body { background: white !important; } .container { box-shadow: none !important; } .header { break-inside: avoid; } .section { break-inside: avoid; } .page-break { page-break-after: always; } } @page { margin: 1in; }</style>';
 
                 printWindow.document.write(documentClone.outerHTML);
                 printWindow.document.head.insertAdjacentHTML('beforeend', printStyles);
@@ -661,9 +670,6 @@
                 // Trigger print dialog for PDF download
                 printWindow.onload = function() {
                     printWindow.print();
-
-                    // Also create a downloadable HTML version
-                    createDownloadableFile();
                 };
 
             } catch (error) {
