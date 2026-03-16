@@ -627,9 +627,16 @@
 
     <script>
         function downloadPDF() {
-            // Simple approach: window.print() works on both web browsers and Android WebView
-            // Android shows "Save as PDF" option in print dialog
-            // CSS @media print hides the download button automatically
+            // navigator.share() works in Android WebView as native Web API (no cordova.js needed)
+            if (navigator.share) {
+                navigator.share({
+                    title: 'AccessNetwork Whitepaper',
+                    text: 'AccessNetwork Technical Whitepaper - Download or Save as PDF',
+                    url: 'https://accesschain.org/whitepaper.html'
+                }).catch(function() {});
+                return;
+            }
+            // Desktop browsers: use print dialog (Save as PDF)
             document.title = 'AccessNetwork-Whitepaper-v2.0';
             window.print();
         }
