@@ -1914,7 +1914,7 @@ html[dir="rtl"] .action-button,
   }
 
   .primary-action-buttons {
-    gap: 12px;
+    gap: 8px;
     margin-bottom: 0;
     display: flex;
     flex-direction: row;
