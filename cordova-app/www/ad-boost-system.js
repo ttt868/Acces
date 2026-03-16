@@ -200,7 +200,6 @@
         hashrateValue.textContent = newValue.toFixed(1);
         hashrateValue.setAttribute('data-ad-boost-active', 'true');
         hashrateValue.setAttribute('data-ad-boost-value', boostValue);
-        hashrateValue.style.color = '#4ade80';
       }
     }
 
