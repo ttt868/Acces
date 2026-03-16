@@ -627,73 +627,11 @@
 
     <script>
         function downloadPDF() {
-            var isCordova = typeof window.cordova !== 'undefined' || typeof window.IS_CORDOVA_APP !== 'undefined';
-            
-            if (isCordova) {
-                // In Cordova: use Web Share API (works on Android WebView)
-                if (navigator.share) {
-                    navigator.share({
-                        title: 'AccessNetwork Whitepaper',
-                        text: 'AccessNetwork Technical Whitepaper - View and download',
-                        url: 'https://accesschain.org/whitepaper.html'
-                    }).catch(function(err) {
-                        console.log('Share cancelled or failed:', err);
-                    });
-                } else {
-                    // Fallback: copy link to clipboard
-                    var url = 'https://accesschain.org/whitepaper.html';
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        navigator.clipboard.writeText(url).then(function() {
-                            alert('Link copied! Open in your browser to download:\n' + url);
-                        });
-                    } else {
-                        // Last fallback: show alert with link
-                        prompt('Copy this link and open in your browser:', url);
-                    }
-                }
-                return;
-            }
-
-            // Web version: open in new window for print/save
-            try {
-
-                // Web: open in new window for print/save
-                var printWindow = window.open('', '_blank');
-                if (!printWindow) {
-                    // Popup blocked — fallback to direct print
-                    var btn2 = document.querySelector('.download-btn');
-                    if (btn2) btn2.style.display = 'none';
-                    window.print();
-                    if (btn2) setTimeout(function() { btn2.style.display = ''; }, 1000);
-                    return;
-                }
-                var documentClone = document.documentElement.cloneNode(true);
-
-                // Remove the download button from the clone
-                var downloadBtn = documentClone.querySelector('.download-btn');
-                if (downloadBtn) {
-                    downloadBtn.remove();
-                }
-
-                // Add print styles for better PDF output
-                var printStyles = '<style>@media print { body { background: white !important; } .container { box-shadow: none !important; } .header { break-inside: avoid; } .section { break-inside: avoid; } .page-break { page-break-after: always; } } @page { margin: 1in; }</style>';
-
-                printWindow.document.write(documentClone.outerHTML);
-                printWindow.document.head.insertAdjacentHTML('beforeend', printStyles);
-                printWindow.document.close();
-
-                // Set the document title for the PDF filename
-                printWindow.document.title = 'AccessoireDigital-Whitepaper-v2.0';
-
-                // Trigger print dialog for PDF download
-                printWindow.onload = function() {
-                    printWindow.print();
-                };
-
-            } catch (error) {
-                console.error('Error generating PDF:', error);
-                alert(document.querySelector('[data-translate="pdf_generation_error"]')?.textContent || 'An error occurred while generating PDF. Please try again.');
-            }
+            // Simple approach: window.print() works on both web browsers and Android WebView
+            // Android shows "Save as PDF" option in print dialog
+            // CSS @media print hides the download button automatically
+            document.title = 'AccessNetwork-Whitepaper-v2.0';
+            window.print();
         }
 
         function createDownloadableFile() {

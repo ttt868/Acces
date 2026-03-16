@@ -38,27 +38,11 @@ class StateProcessingManager {
     try {
       console.log('Downloading whitepaper...');
 
-      const isCordova = typeof window.cordova !== 'undefined' || typeof window.IS_CORDOVA_APP !== 'undefined';
-      
-      if (isCordova) {
-        // In Cordova: use navigator.share() to let user open in Chrome/save/share
-        // We do this HERE (not in whitepaper.html) because cordova.js is loaded here
-        if (navigator.share) {
-          navigator.share({
-            title: 'AccessNetwork Whitepaper',
-            text: 'AccessNetwork Technical Whitepaper',
-            url: 'https://accesschain.org/whitepaper.html'
-          }).catch(function(err) {
-            console.log('Share dismissed:', err);
-          });
-        } else {
-          // Fallback: show link to copy
-          prompt('Open this link in your browser:', 'https://accesschain.org/whitepaper.html');
-        }
-        return;
-      }
+      // Navigate to whitepaper.html - window.print() works there on both web and Android WebView
+      window.location.href = './whitepaper.html';
+      return;
 
-      // Web: open in new tab
+      // Legacy web fallback (kept for reference)
       const whitepaperWindow = window.open('./whitepaper.html', '_blank');
 
       if (whitepaperWindow) {
