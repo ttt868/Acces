@@ -1103,7 +1103,7 @@
   width: 100%;
   max-width: 100%;
   margin: 0;
-  margin-top: 22px;
+  margin-top: 12px;
   transition: none;
   display: flex;
   flex-direction: column;
@@ -1138,7 +1138,7 @@
   z-index: 15;
   flex-shrink: 0;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
-  margin-bottom: -22px;
+  margin-bottom: -30px;
 }
 
 .clock-body {
@@ -1354,7 +1354,7 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     backdrop-filter: none;
     overflow: visible;
-    margin-top: 22px;
+    margin-top: 12px;
   }
 
   .dashboard-activity-timer::before {
@@ -1664,7 +1664,7 @@
 
   
   .dashboard-activity-timer {
-    margin: 22px auto 0;
+    margin: 12px auto 0;
     width: 100%;
     max-width: 100%;
     top: 0;
@@ -1961,7 +1961,7 @@ html[dir="rtl"] .action-button,
    .dashboard-activity-timer {
     width: 100%;
       max-width: 100%;
-         margin: 22px 0 0;
+         margin: 12px 0 0;
          overflow: visible;
        }
 
