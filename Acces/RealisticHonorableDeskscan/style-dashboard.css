@@ -1950,8 +1950,8 @@ html[dir="rtl"] .action-button,
 }
 
 .explorer-social img {
-  width: 30px !important;
-  height: 30px !important;
+  width: 26px !important;
+  height: 26px !important;
   object-fit: cover;
   border-radius: 50% !important;
   display: block;
