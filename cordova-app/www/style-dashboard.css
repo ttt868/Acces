@@ -1845,7 +1845,138 @@ html[dir="rtl"] .action-button,
   box-shadow: none;
 }
 
+/* ─── Dashboard Social Media Section ─── */
+.dashboard-social-media {
+  background: var(--card-background);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: var(--shadow-lg);
+}
 
+.dashboard-social-header h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.dashboard-social-header p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--text-light, #718096);
+}
+
+.dashboard-social-links {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* RTL / Arabic support for social media section */
+html[lang="ar"] .dashboard-social-media,
+html[dir="rtl"] .dashboard-social-media,
+[data-lang="ar"] .dashboard-social-media {
+  flex-direction: row-reverse;
+}
+
+html[lang="ar"] .dashboard-social-header,
+html[dir="rtl"] .dashboard-social-header,
+[data-lang="ar"] .dashboard-social-header {
+  text-align: right;
+}
+
+.dashboard-social-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-social-btn::after {
+  display: none !important;
+  content: none !important;
+}
+
+.dashboard-social-btn:hover::after {
+  display: none !important;
+}
+
+.dashboard-social-btn:hover {
+  transform: translateY(-2px);
+  color: #fff;
+}
+
+.dashboard-social-btn:active,
+.dashboard-social-btn:focus,
+.dashboard-social-btn:visited {
+  outline: none;
+  color: #fff;
+}
+
+.telegram-social {
+  background: #0088cc;
+  color: #fff;
+}
+
+.telegram-social svg {
+  width: 20px;
+  height: 20px;
+}
+
+.telegram-social:hover {
+  box-shadow: 0 4px 12px rgba(0, 136, 204, 0.4);
+}
+
+.x-social {
+  background: #000;
+  color: #fff;
+}
+
+.x-social svg {
+  width: 20px;
+  height: 20px;
+  fill: #fff;
+}
+
+.x-social svg path {
+  fill: #fff !important;
+}
+
+.x-social:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.explorer-social {
+  background: none;
+  padding: 0;
+}
+
+.explorer-social img {
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: cover;
+  border-radius: 50% !important;
+  display: block;
+}
+
+.explorer-social:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.dark-theme .dashboard-social-media {
+  background: var(--card-background);
+}
 
 
 /* Secondary Action Buttons - HIDDEN (removed from interface) */
