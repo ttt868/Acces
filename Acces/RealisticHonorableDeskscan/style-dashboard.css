@@ -2660,8 +2660,8 @@ html[lang="ar"] .wallet-header h3 {
   align-items: flex-start !important;
   margin-bottom: 16px;
   top: 0;
-  width: calc(100% + 10px);
-  margin-left: -10px;
+  width: calc(100% + 4px);
+  margin-left: -4px;
 }
 
 .balance-showcase {
