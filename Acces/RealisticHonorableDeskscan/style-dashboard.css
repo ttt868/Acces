@@ -1878,8 +1878,8 @@ html[dir="rtl"] .action-button,
 }
 
 .dashboard-social-btn {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1888,11 +1888,6 @@ html[dir="rtl"] .action-button,
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
   overflow: hidden;
-}
-
-.dashboard-social-btn svg {
-  width: 18px;
-  height: 18px;
 }
 
 .dashboard-social-btn::after {
@@ -1921,6 +1916,11 @@ html[dir="rtl"] .action-button,
   color: #fff;
 }
 
+.telegram-social svg {
+  width: 44px;
+  height: 44px;
+}
+
 .telegram-social:hover {
   box-shadow: 0 4px 12px rgba(0, 136, 204, 0.4);
 }
@@ -1928,6 +1928,16 @@ html[dir="rtl"] .action-button,
 .x-social {
   background: #000;
   color: #fff;
+}
+
+.x-social svg {
+  width: 28px;
+  height: 28px;
+  fill: #fff;
+}
+
+.x-social svg path {
+  fill: #fff !important;
 }
 
 .x-social:hover {
@@ -1940,8 +1950,8 @@ html[dir="rtl"] .action-button,
 }
 
 .explorer-social img {
-  width: 36px !important;
-  height: 36px !important;
+  width: 44px !important;
+  height: 44px !important;
   object-fit: cover;
   border-radius: 50% !important;
   display: block;
