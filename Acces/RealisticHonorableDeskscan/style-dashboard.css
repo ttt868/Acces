@@ -1103,6 +1103,7 @@
   width: 100%;
   max-width: 100%;
   margin: 0;
+  margin-top: 22px;
   transition: none;
   display: flex;
   flex-direction: column;
@@ -1113,52 +1114,31 @@
 
 
 
-/* === الساعة المعلقة من السقف === */
+/* === الساعة المعلقة على حافة الكارت === */
 .hanging-clock-container {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  margin-top: -8px;
-  margin-bottom: -2px;
+  height: 0;
   z-index: 10;
+  pointer-events: none;
 }
 
-/* السلسلة المعلقة من السقف */
-.hanging-chain {
-  width: 2px;
-  height: 10px;
-  background: linear-gradient(180deg, #c0c0c0, #999, #c0c0c0, #999);
-  background-size: 2px 4px;
-  border-radius: 1px;
-  position: relative;
+.hanging-clock-container .pendulum-clock {
+  pointer-events: auto;
 }
 
-.hanging-chain::before {
-  content: '';
-  position: absolute;
-  top: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 4px;
-  background: linear-gradient(180deg, #bbb, #999);
-  border-radius: 4px 4px 0 0;
-  border: 0.5px solid #aaa;
-}
-
-/* ساعة الرقاص - حجم أكبر وواقعي */
+/* ساعة الرقاص - معلقة على حافة الكارت */
 .pendulum-clock {
   position: relative;
-  top: 0;
-  left: 0;
-  transform: none;
   width: 44px;
   height: auto;
   z-index: 15;
   flex-shrink: 0;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+  margin-bottom: -22px;
 }
 
 .clock-body {
@@ -1373,6 +1353,8 @@
     border-radius: 14px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     backdrop-filter: none;
+    overflow: visible;
+    margin-top: 22px;
   }
 
   .dashboard-activity-timer::before {
@@ -1624,16 +1606,6 @@
   background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 100%);
 }
 
-.dark-theme .hanging-chain {
-  background: linear-gradient(180deg, #666, #555, #666, #555);
-  background-size: 2px 4px;
-}
-
-.dark-theme .hanging-chain::before {
-  background: linear-gradient(180deg, #555, #444);
-  border-color: #666;
-}
-
 .dark-theme .pendulum-clock {
   filter: drop-shadow(0 2px 5px rgba(0,0,0,0.4));
 }
@@ -1692,12 +1664,13 @@
 
   
   .dashboard-activity-timer {
-    margin: 0 auto;
+    margin: 22px auto 0;
     width: 100%;
     max-width: 100%;
     top: 0;
     margin-bottom: 0;
     transition: none;
+    overflow: visible;
   }
 
   .dashboard-activity-timer:hover {
@@ -1988,7 +1961,8 @@ html[dir="rtl"] .action-button,
    .dashboard-activity-timer {
     width: 100%;
       max-width: 100%;
-         margin: 0;
+         margin: 22px 0 0;
+         overflow: visible;
        }
 
 .dashboard-container {
