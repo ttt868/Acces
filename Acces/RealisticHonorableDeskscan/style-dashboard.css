@@ -251,7 +251,8 @@
     margin-bottom: 14px !important;
     z-index: 20;
     margin-top: 12px !important;
-    width: 100%;
+    width: auto;
+    max-width: calc(100% - 60px);
     padding-left: 0;
     margin-left: 0;
   }
@@ -271,7 +272,7 @@
     position: relative;
     min-width: 0;
     width: auto;
-    max-width: 90vw;
+    max-width: calc(100vw - 80px);
     justify-content: space-between;
     z-index: 3;
   }
