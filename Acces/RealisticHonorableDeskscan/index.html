@@ -91,7 +91,7 @@
   <link rel="canonical" href="https://accesschain.org">
   
   <link href="style.css" rel="stylesheet" type="text/css" />
-  <link rel="stylesheet" href="style-dashboard.css?v=20260316v">
+  <link rel="stylesheet" href="style-dashboard.css?v=20260316w">
   <link rel="stylesheet" href="style-missions.css">
    <link rel="stylesheet" href="profile-style.css">
    <link rel="stylesheet" href="network-style.css">
@@ -1204,24 +1204,30 @@ document.addEventListener('balanceUpdated', function(event) {
                   <i class="fas fa-rocket"></i>
                   <span data-translate="Boost">Boost</span>
                 </button>
-                <div class="timer-title-clock">
-                  <div class="pendulum-clock">
-                    <div class="clock-body">
-                      <div class="clock-face">
-                        <div class="clock-hands">
-                          <div class="hour-hand"></div>
-                          <div class="minute-hand"></div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="pendulum">
-                      <div class="pendulum-weight"></div>
-                    </div>
-                  </div>
-                </div>
+                <div class="timer-title-clock"></div>
                 <div id="dashboard-hashrate-display" class="dashboard-hashrate-display" style="display: flex; visibility: visible; opacity: 1;">
                   <span class="hashrate-label">XP/s</span>
                   <span id="dashboard-hashrate-value">10.0</span>
+                </div>
+              </div>
+
+              <!-- الساعة المعلقة من السقف -->
+              <div class="hanging-clock-container">
+                <div class="hanging-chain"></div>
+                <div class="pendulum-clock">
+                  <div class="clock-body">
+                    <div class="clock-face">
+                      <div class="clock-hands">
+                        <div class="hour-hand" id="real-hour-hand"></div>
+                        <div class="minute-hand" id="real-minute-hand"></div>
+                        <div class="second-hand" id="real-second-hand"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="pendulum">
+                    <div class="pendulum-rod"></div>
+                    <div class="pendulum-weight"></div>
+                  </div>
                 </div>
               </div>
 
@@ -3422,6 +3428,39 @@ Access-Network is a digital rewards platform combining innovation, community fea
 </div>
 
 <script src="pin-lock-system.js"></script>
+
+<!-- ساعة حقيقية بالوقت الفعلي -->
+<script>
+(function() {
+  function updateRealClock() {
+    var now = new Date();
+    var h = now.getHours() % 12;
+    var m = now.getMinutes();
+    var s = now.getSeconds();
+    var ms = now.getMilliseconds();
+    
+    var secDeg = (s + ms / 1000) * 6;
+    var minDeg = (m + s / 60) * 6;
+    var hourDeg = (h + m / 60) * 30;
+    
+    var sh = document.getElementById('real-second-hand');
+    var mh = document.getElementById('real-minute-hand');
+    var hh = document.getElementById('real-hour-hand');
+    
+    if (sh) sh.style.transform = 'rotate(' + secDeg + 'deg)';
+    if (mh) mh.style.transform = 'rotate(' + minDeg + 'deg)';
+    if (hh) hh.style.transform = 'rotate(' + hourDeg + 'deg)';
+    
+    requestAnimationFrame(updateRealClock);
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateRealClock);
+  } else {
+    updateRealClock();
+  }
+})();
+</script>
 
 </body>
 </html>

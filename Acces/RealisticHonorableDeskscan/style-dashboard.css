@@ -1099,7 +1099,7 @@
   padding: 14px 16px 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   width: 100%;
   max-width: 100%;
   margin: 0;
@@ -1113,28 +1113,66 @@
 
 
 
-/* ساعة الرقاص الجميلة */
+/* === الساعة المعلقة من السقف === */
+.hanging-clock-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: -8px;
+  margin-bottom: -2px;
+  z-index: 10;
+}
+
+/* السلسلة المعلقة من السقف */
+.hanging-chain {
+  width: 2px;
+  height: 10px;
+  background: linear-gradient(180deg, #c0c0c0, #999, #c0c0c0, #999);
+  background-size: 2px 4px;
+  border-radius: 1px;
+  position: relative;
+}
+
+.hanging-chain::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 4px;
+  background: linear-gradient(180deg, #bbb, #999);
+  border-radius: 4px 4px 0 0;
+  border: 0.5px solid #aaa;
+}
+
+/* ساعة الرقاص - حجم أكبر وواقعي */
 .pendulum-clock {
   position: relative;
   top: 0;
   left: 0;
   transform: none;
-  width: 26px;
-  height: 36px;
+  width: 44px;
+  height: auto;
   z-index: 15;
   flex-shrink: 0;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.12));
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
 }
 
 .clock-body {
-  width: 22px;
-  height: 22px;
-  background: linear-gradient(145deg, #c0c0c0, #e8e8e8, #a8a8a8);
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(145deg, #d4d4d4, #f0f0f0, #b8b8b8);
   border-radius: 50%;
   position: relative;
   margin: 0 auto;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.6);
-  border: 1.5px solid #999;
+  box-shadow: 
+    0 2px 6px rgba(0,0,0,0.2),
+    inset 0 2px 4px rgba(255,255,255,0.7),
+    inset 0 -1px 3px rgba(0,0,0,0.1);
+  border: 2px solid #aaa;
 }
 
 .clock-face {
@@ -1142,102 +1180,124 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 17px;
-  height: 17px;
-  background: radial-gradient(circle at 40% 35%, #ffffff 0%, #f8f8f8 40%, #eee 100%);
+  width: 32px;
+  height: 32px;
+  background: radial-gradient(circle at 40% 35%, #ffffff 0%, #fafafa 30%, #f0f0f0 70%, #e8e8e8 100%);
   border-radius: 50%;
-  border: 0.5px solid #ccc;
+  border: 1px solid #ccc;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 0 3px rgba(0,0,0,0.06);
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
 }
 
-/* علامات الساعة الصغيرة */
+/* علامات الساعات 12 نقطة */
 .clock-face::before {
   content: '';
   position: absolute;
-  width: 1px;
-  height: 2px;
-  background: #888;
-  top: 1px;
+  width: 2px;
+  height: 3px;
+  background: #555;
+  top: 2px;
   left: 50%;
   transform: translateX(-50%);
+  border-radius: 1px;
   box-shadow:
-    0 13px 0 #888,
-    -6.5px 6.5px 0 #888,
-    6.5px 6.5px 0 #888;
+    0 24px 0 #555,
+    -12px 12px 0 #555,
+    12px 12px 0 #555,
+    -6px 1.6px 0 0.3px #bbb,
+    6px 1.6px 0 0.3px #bbb,
+    -11px 6px 0 0.3px #bbb,
+    11px 6px 0 0.3px #bbb,
+    -11px 18px 0 0.3px #bbb,
+    11px 18px 0 0.3px #bbb,
+    -6px 22.4px 0 0.3px #bbb,
+    6px 22.4px 0 0.3px #bbb;
 }
 
 /* نقطة المركز */
 .clock-face::after {
   content: '';
   position: absolute;
-  width: 2.5px;
-  height: 2.5px;
+  width: 4px;
+  height: 4px;
   background: radial-gradient(circle, #6366f1, #4f46e5);
   border-radius: 50%;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 3;
+  z-index: 5;
+  box-shadow: 0 0 3px rgba(99,102,241,0.4);
 }
 
 .clock-hands {
-  position: relative;
+  position: absolute;
   width: 100%;
   height: 100%;
+  top: 0;
+  left: 0;
 }
 
-.hour-hand, .minute-hand {
+.hour-hand, .minute-hand, .second-hand {
   position: absolute;
-  background: #2d2d2d;
-  border-radius: 1px;
-  transform-origin: bottom center;
+  transform-origin: 50% 100%;
   left: 50%;
+  bottom: 50%;
 }
 
 .hour-hand {
-  width: 1.5px;
-  height: 5px;
-  margin-left: -0.75px;
-  top: 5px;
-  background: #333;
-  border-radius: 1px 1px 0 0;
-  animation: clockHour 43200s linear infinite;
+  width: 2.5px;
+  height: 9px;
+  margin-left: -1.25px;
+  background: #2d2d2d;
+  border-radius: 2px 2px 0 0;
+  z-index: 2;
+  animation: none;
 }
 
 .minute-hand {
-  width: 1px;
-  height: 7px;
-  margin-left: -0.5px;
-  top: 3px;
-  background: #555;
-  border-radius: 1px 1px 0 0;
-  animation: clockMinute 3600s linear infinite;
+  width: 1.5px;
+  height: 12px;
+  margin-left: -0.75px;
+  background: #444;
+  border-radius: 1.5px 1.5px 0 0;
+  z-index: 3;
+  animation: none;
 }
 
-.pendulum {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+.second-hand {
   width: 1px;
-  height: 11px;
-  background: linear-gradient(180deg, #b0b0b0 0%, #888 100%);
+  height: 13px;
+  margin-left: -0.5px;
+  background: #ef4444;
+  border-radius: 1px 1px 0 0;
+  z-index: 4;
+  transition: none;
+}
+
+/* الرقاص الطويل */
+.pendulum {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   transform-origin: top center;
   animation: pendulumSwing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite alternate;
+  margin-top: -1px;
+}
+
+.pendulum-rod {
+  width: 1.5px;
+  height: 30px;
+  background: linear-gradient(180deg, #b0b0b0, #888, #b0b0b0);
+  border-radius: 1px;
 }
 
 /* الرقاص متوقف افتراضيًا */
 .dashboard-activity-timer .pendulum {
   animation: none;
-  transform: translateX(-50%) rotate(0deg);
-}
-
-.dashboard-activity-timer .hour-hand,
-.dashboard-activity-timer .minute-hand {
-  animation: none;
+  transform: rotate(0deg);
 }
 
 /* الرقاص يتحرك فقط عندما يكون العداد نشطًا */
@@ -1246,31 +1306,20 @@
   transform-origin: top center;
 }
 
-.dashboard-activity-timer.activity-active .hour-hand {
-  animation: clockHour 43200s linear infinite !important;
-}
-
-.dashboard-activity-timer.activity-active .minute-hand {
-  animation: clockMinute 3600s linear infinite !important;
-}
-
 .pendulum-weight {
-  position: absolute;
-  bottom: -3px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
-  background: radial-gradient(circle at 35% 35%, #e0e0e0, #999, #777);
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle at 35% 35%, #e8e8e8, #bbb, #888);
   border-radius: 50%;
-  border: 0.5px solid #888;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  border: 1px solid #999;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 2px rgba(255,255,255,0.5);
+  margin-top: -1px;
 }
 
-/* حركات الساعة */
+/* حركة الرقاص */
 @keyframes pendulumSwing {
-  0% { transform: translateX(-50%) rotate(-15deg); }
-  100% { transform: translateX(-50%) rotate(15deg); }
+  0% { transform: rotate(-12deg); }
+  100% { transform: rotate(12deg); }
 }
 
 @keyframes clockHour {
@@ -1287,25 +1336,26 @@
 .clock-body::before {
   content: '';
   position: absolute;
-  top: -3px;
+  top: -5px;
   left: 50%;
   transform: translateX(-50%);
-  width: 6px;
-  height: 4px;
-  background: linear-gradient(180deg, #d0d0d0, #aaa);
-  border-radius: 2px 2px 0 0;
-  border: 0.5px solid #999;
-  box-shadow: 0 -1px 1px rgba(0,0,0,0.1);
+  width: 10px;
+  height: 6px;
+  background: linear-gradient(180deg, #d0d0d0, #b0b0b0);
+  border-radius: 3px 3px 0 0;
+  border: 1px solid #aaa;
+  border-bottom: none;
+  box-shadow: 0 -1px 2px rgba(0,0,0,0.1);
 }
 
 /* انعكاس زجاجي على وجه الساعة */
 .clock-body::after {
   content: '';
   position: absolute;
-  top: 3px;
-  left: 5px;
-  width: 8px;
-  height: 5px;
+  top: 5px;
+  left: 8px;
+  width: 14px;
+  height: 8px;
   background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 100%);
   border-radius: 50%;
   pointer-events: none;
@@ -1512,41 +1562,57 @@
 .dark-theme .clock-body {
   background: linear-gradient(145deg, #555, #3a3a3a, #4a4a4a);
   border-color: #666;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -1px 3px rgba(0,0,0,0.3);
 }
 
 .dark-theme .clock-face {
-  background: radial-gradient(circle at 40% 35%, #1e1e2e 0%, #16162a 40%, #111 100%);
+  background: radial-gradient(circle at 40% 35%, #1e1e2e 0%, #16162a 30%, #111 70%, #0a0a15 100%);
   border-color: #444;
-  box-shadow: inset 0 0 3px rgba(0,0,0,0.3);
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.3);
 }
 
 /* علامات الساعة في الوضع الداكن */
 .dark-theme .clock-face::before {
-  background: #888;
+  background: #999;
   box-shadow:
-    0 13px 0 #888,
-    -6.5px 6.5px 0 #888,
-    6.5px 6.5px 0 #888;
+    0 24px 0 #999,
+    -12px 12px 0 #999,
+    12px 12px 0 #999,
+    -6px 1.6px 0 0.3px #555,
+    6px 1.6px 0 0.3px #555,
+    -11px 6px 0 0.3px #555,
+    11px 6px 0 0.3px #555,
+    -11px 18px 0 0.3px #555,
+    11px 18px 0 0.3px #555,
+    -6px 22.4px 0 0.3px #555,
+    6px 22.4px 0 0.3px #555;
 }
 
 .dark-theme .clock-face::after {
   background: radial-gradient(circle, #818cf8, #6366f1);
+  box-shadow: 0 0 5px rgba(129,140,248,0.5);
 }
 
-.dark-theme .hour-hand,
-.dark-theme .minute-hand {
+.dark-theme .hour-hand {
   background: #e0e0e0;
 }
 
-.dark-theme .pendulum {
-  background: linear-gradient(180deg, #666 0%, #555 100%);
+.dark-theme .minute-hand {
+  background: #ccc;
+}
+
+.dark-theme .second-hand {
+  background: #f87171;
+}
+
+.dark-theme .pendulum-rod {
+  background: linear-gradient(180deg, #666, #555, #666);
 }
 
 .dark-theme .pendulum-weight {
   background: radial-gradient(circle at 35% 35%, #666, #444, #333);
   border-color: #555;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.1);
 }
 
 .dark-theme .clock-body::before {
@@ -1555,11 +1621,21 @@
 }
 
 .dark-theme .clock-body::after {
-  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 100%);
+}
+
+.dark-theme .hanging-chain {
+  background: linear-gradient(180deg, #666, #555, #666, #555);
+  background-size: 2px 4px;
+}
+
+.dark-theme .hanging-chain::before {
+  background: linear-gradient(180deg, #555, #444);
+  border-color: #666;
 }
 
 .dark-theme .pendulum-clock {
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.4));
 }
 
 .dark-theme .dashboard-activity-timer:hover {
