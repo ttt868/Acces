@@ -1939,8 +1939,8 @@ html[dir="rtl"] .action-button,
 }
 
 .explorer-social img {
-  width: 22px !important;
-  height: 22px !important;
+  width: 38px !important;
+  height: 38px !important;
   border-radius: 50%;
   object-fit: cover;
 }
