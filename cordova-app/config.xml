@@ -137,6 +137,12 @@
         <config-file parent="/manifest/application" target="AndroidManifest.xml">
             <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
             <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/cdv_splashscreen_background" />
+            <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="access_network_notifications" />
+        </config-file>
+        
+        <!-- ✅ Override Firebase default channel label to show "Access Network" -->
+        <config-file parent="/resources" target="app/src/main/res/values/strings.xml">
+            <string name="fcm_fallback_notification_channel_label">Access Network</string>
         </config-file>
         <resource-file src="res/xml/network_security_config.xml" target="app/src/main/res/xml/network_security_config.xml" />
         
