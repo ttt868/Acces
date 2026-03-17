@@ -63,6 +63,17 @@ public class FirebaseMessagingPluginService extends FirebaseMessagingService {
         }
         // On Android O or greater we need to create a new notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Delete old "Firebase" channel if it exists
+            try {
+                NotificationChannel oldChannel = notificationManager.getNotificationChannel("default");
+                if (oldChannel != null) {
+                    notificationManager.deleteNotificationChannel("default");
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Could not delete old notification channel", e);
+            }
+
+            // Create new "Access Network" channel
             NotificationChannel defaultChannel = notificationManager.getNotificationChannel(defaultNotificationChannel);
             if (defaultChannel == null) {
                 notificationManager.createNotificationChannel(
