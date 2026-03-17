@@ -153,8 +153,8 @@
     
     <!-- Preferences -->
     <preference name="DisallowOverscroll" value="true" />
-    <preference name="BackgroundColor" value="0xff1a1a2e" />
-    <preference name="StatusBarBackgroundColor" value="#1a1a2e" />
+    <preference name="BackgroundColor" value="0xff000000" />
+    <preference name="StatusBarBackgroundColor" value="#000000" />
     <preference name="StatusBarStyle" value="lightcontent" />
     <preference name="StatusBarOverlaysWebView" value="false" />
     <preference name="Orientation" value="portrait" />
