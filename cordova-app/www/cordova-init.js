@@ -167,10 +167,49 @@ document.addEventListener('deviceready', function() {
         }
     }
     
-    // StatusBar
+    // StatusBar + NavigationBar: dynamic colors based on theme
     if (window.StatusBar) {
-        StatusBar.backgroundColorByHexString('#1a1a2e');
-        StatusBar.styleLightContent();
+        window.updateSystemBarsColor = function() {
+            var isDark = document.body.classList.contains('dark-theme');
+            var isLogin = document.getElementById('login-container') && 
+                          document.getElementById('login-container').style.display !== 'none' &&
+                          !document.documentElement.classList.contains('user-logged-in');
+            var isPinScreen = document.getElementById('pin-lock-screen') &&
+                              (document.getElementById('pin-lock-screen').style.display === 'flex' ||
+                               document.documentElement.classList.contains('pin-required'));
+            
+            if (isPinScreen) {
+                // PIN screen: dark blue gradient top color
+                StatusBar.backgroundColorByHexString('#0f0f1e');
+                StatusBar.styleLightContent();
+                if (window.NavigationBar) {
+                    NavigationBar.backgroundColorByHexString('#0d0d2b', false);
+                }
+            } else if (isLogin) {
+                // Login screen: gradient top color
+                StatusBar.backgroundColorByHexString('#2980b9');
+                StatusBar.styleLightContent();
+                if (window.NavigationBar) {
+                    NavigationBar.backgroundColorByHexString('#9b59b6', false);
+                }
+            } else if (isDark) {
+                // Dark mode: match bottom nav bar color
+                StatusBar.backgroundColorByHexString('#2a2a2a');
+                StatusBar.styleLightContent();
+                if (window.NavigationBar) {
+                    NavigationBar.backgroundColorByHexString('#2a2a2a', false);
+                }
+            } else {
+                // Light mode: white
+                StatusBar.backgroundColorByHexString('#ffffff');
+                StatusBar.styleDefault();
+                if (window.NavigationBar) {
+                    NavigationBar.backgroundColorByHexString('#ffffff', true);
+                }
+            }
+        };
+        // Apply initial colors
+        window.updateSystemBarsColor();
     }
     
     // ✅ Setup Native Local Notifications

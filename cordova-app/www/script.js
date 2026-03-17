@@ -4610,6 +4610,11 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
       body.classList.add('light-theme');
       html.classList.add('light-theme');
     }
+    
+    // Update Cordova status bar and navigation bar colors
+    if (typeof window.updateSystemBarsColor === 'function') {
+      window.updateSystemBarsColor();
+    }
   }
 
   function updateDashboardThemeIcon(themeMode) {
@@ -8022,6 +8027,9 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         document.documentElement.classList.add('user-logged-in');
         document.documentElement.classList.add('auth-ready');
 
+        // Update system bars after login
+        if (typeof window.updateSystemBarsColor === 'function') window.updateSystemBarsColor();
+
         // Update UI with user information
         updateUserInfo(currentUser);
 
@@ -8610,6 +8618,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     document.documentElement.classList.remove('user-logged-in');
     document.documentElement.classList.add('user-not-logged-in');
     document.documentElement.classList.add('app-ready');
+    // Update system bars for login screen
+    if (typeof window.updateSystemBarsColor === 'function') window.updateSystemBarsColor();
     // Show notification then reload
     const t = (key) => window.translator ? window.translator.translate(key) : key;
     if (window.showNotification) {

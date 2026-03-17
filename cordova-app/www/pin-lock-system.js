@@ -728,6 +728,8 @@
 
     lockScreen.style.display = 'flex';
     document.body.classList.add('pin-lock-active');
+    // Update system bars for PIN screen
+    if (typeof window.updateSystemBarsColor === 'function') window.updateSystemBarsColor();
     // If already visible from CSS pin-required, skip opacity flash
     var alreadyVisible = document.documentElement.classList.contains('pin-required');
     if (!alreadyVisible && !_instantShow) {
@@ -788,6 +790,8 @@
           lockScreen.style.opacity = '';
           lockScreen.style.transition = '';
           document.body.classList.remove('pin-lock-active');
+          // Update system bars after PIN dismissed
+          if (typeof window.updateSystemBarsColor === 'function') window.updateSystemBarsColor();
 
           // Show any notifications that were queued during lock screen
           if (typeof window._flushNotificationQueue === 'function') {
