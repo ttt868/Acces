@@ -875,8 +875,8 @@
 /* Referral Widget - شريط الإحالات العمودي بسيط */
 #dashboard-page .referral-widget {
   position: absolute;
-  margin-top: -3px !important;
-  right: 0px;
+  top: 2px;
+  right: -6px;
   
   display: flex;
   flex-direction: column;
@@ -924,9 +924,9 @@
 
 
 #dashboard-page .referral-emoji {
-  width: 24px;
-  height: 24px;
-  margin-bottom: 0px;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 6px;
   object-fit: contain;
 }
 
@@ -957,9 +957,6 @@
 }
 
 /* الوضع الداكن */
-.dark-theme #dashboard-page .referral-emoji {
-  filter: brightness(0) invert(1);
-}
 .dark-theme #dashboard-page .referral-count-text,
 .dark-theme #dashboard-page .referral-label-text,
 .dark-theme #dashboard-page .invite-label-text,
@@ -1661,6 +1658,7 @@
 
 
 .dashboard-container {
+  position: relative;
   margin: 72px auto 2vh auto;
   padding: 0;
   width: 100%;
@@ -2216,8 +2214,8 @@ html[dir="rtl"] .dashboard-social-header,
 
     #dashboard-page .referral-widget {
       position: absolute !important;
-      margin-top: 0% !important;
-      right: 10px !important;
+      top: 0;
+      right: 0px !important;
       z-index: 998;
       display: flex;
       flex-direction: column;
@@ -2505,8 +2503,8 @@ html[dir="rtl"] .dashboard-social-header,
 
   #dashboard-page .referral-widget {
       position: absolute;
-      margin-top: 0% !important;
-      right: 50px !important;
+      top: 0;
+      right: 0px !important;
       z-index: 998;
       flex-direction: column;
       gap: 16px;
