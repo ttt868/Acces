@@ -200,11 +200,11 @@ document.addEventListener('deviceready', function() {
                     NavigationBar.backgroundColorByHexString('#121212', false);
                 }
             } else {
-                // Light mode: black top, pure white bottom
+                // Light mode: black top, dark gray bottom (buttons visible)
                 StatusBar.backgroundColorByHexString('#000000');
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
-                    NavigationBar.backgroundColorByHexString('#ffffff', true);
+                    NavigationBar.backgroundColorByHexString('#2c2c2c', false);
                 }
             }
         };
