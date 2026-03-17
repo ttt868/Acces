@@ -924,8 +924,10 @@
 
 
 #dashboard-page .referral-emoji {
-  font-size: 24px;
+  width: 24px;
+  height: 24px;
   margin-bottom: 0px;
+  object-fit: contain;
 }
 
 #dashboard-page .referral-count-text {
@@ -955,7 +957,9 @@
 }
 
 /* الوضع الداكن */
-.dark-theme #dashboard-page .referral-emoji,
+.dark-theme #dashboard-page .referral-emoji {
+  filter: brightness(0) invert(1);
+}
 .dark-theme #dashboard-page .referral-count-text,
 .dark-theme #dashboard-page .referral-label-text,
 .dark-theme #dashboard-page .invite-label-text,
