@@ -1203,29 +1203,32 @@ document.addEventListener('balanceUpdated', function(event) {
               <div class="dashboard-timer-display">
                 <div class="countdown-with-label">
                   <span class="dashboard-timer-title"><span data-translate="Timer">Timer</span></span>
-                  <div class="dashboard-countdown" id="dashboard-countdown-display">00:00:00</div>
-                  <!-- الساعة على يمين سطر Timer -->
-                  <div class="timer-clock-inline">
-                    <div class="pendulum-clock">
-                      <div class="clock-body">
-                        <div class="clock-face">
-                          <div class="clock-hands">
-                            <div class="hour-hand" id="real-hour-hand"></div>
-                            <div class="minute-hand" id="real-minute-hand"></div>
-                            <div class="second-hand" id="real-second-hand"></div>
+                  <div class="countdown-clock-row">
+                    <div class="timer-clock-inline">
+                      <div class="pendulum-clock">
+                        <div class="clock-body">
+                          <div class="clock-face">
+                            <div class="clock-hands">
+                              <div class="hour-hand" id="real-hour-hand"></div>
+                              <div class="minute-hand" id="real-minute-hand"></div>
+                              <div class="second-hand" id="real-second-hand"></div>
+                            </div>
                           </div>
                         </div>
+                        <div class="pendulum">
+                          <div class="pendulum-rod"></div>
+                          <div class="pendulum-weight"></div>
+                        </div>
                       </div>
-                      <div class="pendulum">
-                        <div class="pendulum-rod"></div>
-                        <div class="pendulum-weight"></div>
+                    </div>
+                    <div class="countdown-earned-wrapper">
+                      <div class="dashboard-countdown" id="dashboard-countdown-display">00:00:00</div>
+                      <div class="dashboard-session-earned" id="dashboard-session-earned">
+                        <span class="session-earned-value" id="session-earned-value">+0.0</span>
+                        <span class="session-earned-label">AC</span>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div class="dashboard-session-earned" id="dashboard-session-earned">
-                  <span class="session-earned-value" id="session-earned-value">+0.0</span>
-                  <span class="session-earned-label">AC</span>
                 </div>
                 <div class="dashboard-timer-status" id="dashboard-timer-status" data-translate="Not Active" style="display: none;">Not Active</div>
               </div>

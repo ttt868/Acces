@@ -1115,13 +1115,10 @@
 
 
 
-/* === الساعة على يمين سطر Timer === */
+/* === الساعة جنب العداد === */
 .timer-clock-inline {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
   z-index: 10;
+  flex-shrink: 0;
 }
 
 /* ساعة الرقاص */
@@ -1347,7 +1344,7 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     backdrop-filter: none;
     overflow: visible;
-    margin-top: 4px;
+    margin-top: 0;
   }
 
   .dashboard-activity-timer::before {
@@ -1681,7 +1678,7 @@
 
   
   .dashboard-activity-timer {
-    margin: 4px auto 0;
+    margin: 0 auto 0;
     width: 100%;
     max-width: 100%;
     top: 0;
@@ -1738,22 +1735,6 @@
 
   .timer-header-row {
     align-self: flex-start;
-  }
-
-  /* هاتف فقط: الرقاص داخل البطاقة */
-  .pendulum-clock {
-    position: relative !important;
-    left: 0 !important;
-    right: auto !important;
-    transform: none !important;
-    top: 0 !important;
-  }
-
-  .dashboard-session-earned {
-    position: relative;
-    bottom: auto;
-    left: auto;
-    transform: none;
   }
 
   }
@@ -3233,6 +3214,20 @@ html[lang="ar"] .wallet-header h3 {
   /* boost styles handled in base */
 }
 
+/* صف العداد + الساعة */
+.countdown-clock-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* wrapper: عداد + تجميع */
+.countdown-earned-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* Session XP Earned - Below Countdown */
 .dashboard-session-earned {
   display: none;
@@ -3245,10 +3240,6 @@ html[lang="ar"] .wallet-header h3 {
     justify-content: center;
     gap: 4px;
     font-family: 'Inter', -apple-system, sans-serif;
-    position: relative;
-    bottom: auto;
-    left: auto;
-    transform: none;
     z-index: 20;
     white-space: nowrap;
   }
@@ -3269,13 +3260,48 @@ html[lang="ar"] .wallet-header h3 {
     line-height: 1;
   }
 
-  /* Dark theme */
   .dark-theme .session-earned-value {
     color: #34d399;
   }
 
   .dark-theme .session-earned-label {
     color: #34d399;
+  }
+
+  .countdown-earned-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .dashboard-session-earned {
+    justify-content: center;
+  }
+
+  .countdown-with-label {
+    justify-content: flex-end;
+  }
+
+  .dashboard-countdown {
+    text-align: right !important;
+    margin-right: 0;
+  }
+
+  .countdown-with-label .dashboard-timer-title {
+    right: auto;
+    left: calc(50% + 30px);
+  }
+
+  .dashboard-timer-display {
+    align-items: flex-end !important;
+  }
+
+  .timer-bottom-row {
+    justify-content: flex-end;
+  }
+
+  .timer-bottom-center {
+    justify-content: flex-end;
   }
 }
 
