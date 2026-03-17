@@ -79,7 +79,7 @@
   padding: 20px 25px 15px;
   background: var(--card-background);
   border: none;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
   backdrop-filter: blur(20px);
   display: flex;
   flex-direction: column;
