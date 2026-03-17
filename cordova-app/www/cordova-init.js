@@ -193,18 +193,18 @@ document.addEventListener('deviceready', function() {
                     NavigationBar.backgroundColorByHexString('#9b59b6', false);
                 }
             } else if (isDark) {
-                // Dark mode: match bottom nav bar color
-                StatusBar.backgroundColorByHexString('#2a2a2a');
+                // Dark mode: strong dark (close to black, like Chrome)
+                StatusBar.backgroundColorByHexString('#121212');
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
-                    NavigationBar.backgroundColorByHexString('#000000', false);
+                    NavigationBar.backgroundColorByHexString('#121212', false);
                 }
             } else {
-                // Light mode: white
-                StatusBar.backgroundColorByHexString('#ffffff');
-                StatusBar.styleDefault();
+                // Light mode: black top, pure white bottom
+                StatusBar.backgroundColorByHexString('#000000');
+                StatusBar.styleLightContent();
                 if (window.NavigationBar) {
-                    NavigationBar.backgroundColorByHexString('#000000', false);
+                    NavigationBar.backgroundColorByHexString('#ffffff', true);
                 }
             }
         };
