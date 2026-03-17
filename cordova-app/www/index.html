@@ -43,6 +43,32 @@
     // انتظار Cordova
     document.addEventListener('deviceready', function() {
       console.log('✅ Cordova جاهز!');
+      
+      // طلب إذن الإشعارات الأصلي من النظام (Android 13+)
+      try {
+        var permissions = cordova.plugins.permissions;
+        if (permissions) {
+          permissions.checkPermission('android.permission.POST_NOTIFICATIONS', function(status) {
+            if (!status.hasPermission) {
+              permissions.requestPermission('android.permission.POST_NOTIFICATIONS', function(status) {
+                if (status.hasPermission) {
+                  console.log('✅ Notification permission granted');
+                } else {
+                  console.log('⚠️ Notification permission denied');
+                }
+              }, function() {
+                console.log('⚠️ Notification permission request error');
+              });
+            } else {
+              console.log('✅ Notification permission already granted');
+            }
+          }, function() {
+            console.log('⚠️ Could not check notification permission');
+          });
+        }
+      } catch(e) {
+        console.log('Notification permission check skipped:', e.message);
+      }
     }, false);
   </script>
   <style>
