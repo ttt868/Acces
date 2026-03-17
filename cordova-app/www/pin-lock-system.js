@@ -405,6 +405,14 @@
 
     modal.style.display = 'flex';
     document.body.classList.add('pin-lock-active');
+    // Update system bars to match PIN modal (black)
+    if (window.StatusBar) {
+      StatusBar.backgroundColorByHexString('#000000');
+      StatusBar.styleLightContent();
+    }
+    if (window.NavigationBar) {
+      NavigationBar.backgroundColorByHexString('#000000', false);
+    }
     setTimeout(() => {
       modal.classList.add('active');
       // Auto-trigger biometric when disabling PIN
@@ -483,6 +491,8 @@
       setTimeout(() => {
         modal.style.display = 'none';
         document.body.classList.remove('pin-lock-active');
+        // Restore system bars to normal
+        if (window.updateSystemBarsColor) window.updateSystemBarsColor();
       }, 300);
     }
     // Reset toggle if user cancelled setup
