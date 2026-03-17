@@ -186,7 +186,7 @@ function updateHalvingMilestones(circulatingSupply) {
 }
 
 function fetchHalvingData() {
-  var baseUrl = window.ACCESS_BASE_URL || 'https://access-chain.net';
+  var baseUrl = (typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin);
   fetch(baseUrl + '/api/network/network-info')
     .then(function(r) { return r.json(); })
     .then(function(data) {
