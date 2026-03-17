@@ -197,14 +197,14 @@ document.addEventListener('deviceready', function() {
                 StatusBar.backgroundColorByHexString('#2a2a2a');
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
-                    NavigationBar.backgroundColorByHexString('#2a2a2a', false);
+                    NavigationBar.backgroundColorByHexString('#000000', false);
                 }
             } else {
                 // Light mode: white
                 StatusBar.backgroundColorByHexString('#ffffff');
                 StatusBar.styleDefault();
                 if (window.NavigationBar) {
-                    NavigationBar.backgroundColorByHexString('#ffffff', true);
+                    NavigationBar.backgroundColorByHexString('#000000', false);
                 }
             }
         };
