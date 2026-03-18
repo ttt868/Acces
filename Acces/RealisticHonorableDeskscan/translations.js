@@ -8351,7 +8351,7 @@ insufficientBalance: "Недостаточно средств для этой т
    
 
     // Navigation
-    dashboard: "Dashboard",
+    dashboard: "Startseite",
     processing: "Point Processing",
     referrals: "Empfehlungen",
     chat: "Chat",
