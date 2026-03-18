@@ -436,3 +436,107 @@ html[lang="ar"] #referrals-page .empty-message p {
   width: 100% !important;
   display: block !important;
 }
+
+/* === أجهزة ضيقة أفقياً (≤ 380px) === */
+@media (max-width: 380px) {
+  .referral-card {
+    padding: 14px 10px;
+  }
+
+  .referral-header h3 {
+    font-size: 15px;
+  }
+
+  .referral-bonus-info {
+    padding: 14px 10px;
+  }
+
+  .bonusamount {
+    font-size: 13px !important;
+  }
+
+  .bonusamount .bonus-value {
+    font-size: 13px !important;
+  }
+
+  .referral-bonus-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .bonus-text {
+    font-size: 12px;
+  }
+
+  .share-label {
+    font-size: 12px;
+  }
+
+  .share-code {
+    font-size: 14px;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .copy-btn {
+    width: 34px !important;
+    height: 34px !important;
+    padding: 6px !important;
+    margin-left: 6px !important;
+  }
+
+  .copy-btn i {
+    font-size: 13px !important;
+  }
+
+  .referrals-list-container {
+    padding: 14px 10px;
+  }
+
+  .referrals-list-container h3 {
+    font-size: 15px;
+  }
+
+  .referrals-list-container .leaderboard-btn {
+    font-size: 12px;
+    padding: 6px 10px;
+    margin-right: 0;
+  }
+
+  .referrals-list li {
+    font-size: 13px;
+    padding: 10px 0;
+    gap: 6px;
+  }
+
+  .referral-avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .referral-user {
+    gap: 8px;
+  }
+
+  .referral-name {
+    font-size: 13px;
+  }
+
+  .referral-email, .referral-date {
+    font-size: 0.7rem;
+  }
+
+  .referral-info {
+    min-width: 80px;
+  }
+
+  .status-text,
+  .activity-status-text {
+    font-size: 0.62rem;
+  }
+
+  .referral-reward-value,
+  .referral-earnings {
+    font-size: 12px !important;
+  }
+}
