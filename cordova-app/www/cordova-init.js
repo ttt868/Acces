@@ -193,8 +193,8 @@ document.addEventListener('deviceready', function() {
                     NavigationBar.backgroundColorByHexString('#9b59b6', false);
                 }
             } else if (isDark) {
-                // Dark mode: light black top, page background bottom
-                StatusBar.backgroundColorByHexString('#1a1a1a');
+                // Dark mode: same color for both bars
+                StatusBar.backgroundColorByHexString('#252525');
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
                     NavigationBar.backgroundColorByHexString('#252525', false);
