@@ -8675,7 +8675,7 @@ insufficientBalance: "Недостаточно средств для этой т
     "logout": "Abmelden",
 
     // Sidebar navigation items
-    "Dashboard": "Dashboard",
+    "Dashboard": "Startseite",
     "Processing": "Point Processing",
     "Referrals": "Empfehlungen",
     "Chat": "Chat",
