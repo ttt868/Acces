@@ -1659,11 +1659,24 @@
 
 .dashboard-container {
   position: relative;
-  margin: 72px auto 2vh auto;
+  margin: 62px auto 2vh auto;
   padding: 0;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* حماية للأجهزة القصيرة - عدم التصاق المحتوى بالشريط */
+@media (max-height: 600px) {
+  .dashboard-container {
+    margin-top: 58px;
+  }
+}
+
+@media (max-height: 500px) {
+  .dashboard-container {
+    margin-top: 52px;
+  }
 }
 
 .dashboard-timer-balance-row {
@@ -2099,7 +2112,7 @@ html[dir="rtl"] .dashboard-social-header,
        }
 
 .dashboard-container {
-   margin: 50px auto 0 auto !important;
+   margin: 15px auto 0 auto !important;
    padding: 0 5px !important;
    width: 100%;
    max-width: 100%;
