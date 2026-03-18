@@ -2227,7 +2227,7 @@ html[dir="rtl"] .dashboard-social-header,
 
     #dashboard-page .referral-widget {
       position: absolute !important;
-      top: 0;
+      top: 45px;
       right: 0px !important;
       z-index: 998;
       display: flex;
@@ -2516,7 +2516,7 @@ html[dir="rtl"] .dashboard-social-header,
 
   #dashboard-page .referral-widget {
       position: absolute;
-      top: 0;
+      top: 45px;
       right: 0px !important;
       z-index: 998;
       flex-direction: column;
