@@ -405,13 +405,15 @@
 
     modal.style.display = 'flex';
     document.body.classList.add('pin-lock-active');
-    // Update system bars to match PIN modal (black)
+    // Update system bars to match PIN modal background
     if (window.StatusBar) {
-      StatusBar.backgroundColorByHexString('#000000');
+      var isDark = document.body.classList.contains('dark-theme');
+      StatusBar.backgroundColorByHexString(isDark ? '#1a1a1a' : '#141414');
       StatusBar.styleLightContent();
     }
     if (window.NavigationBar) {
-      NavigationBar.backgroundColorByHexString('#000000', false);
+      var isDark2 = document.body.classList.contains('dark-theme');
+      NavigationBar.backgroundColorByHexString(isDark2 ? '#1a1a1a' : '#141414', false);
     }
     setTimeout(() => {
       modal.classList.add('active');
