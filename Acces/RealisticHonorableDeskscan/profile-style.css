@@ -2277,6 +2277,63 @@ body.pin-lock-active {
     height: 42px;
     font-size: 15px;
   }
+
+  /* Delete Account Modal Content */
+  #deleteAccountModal .modal-content,
+  #deleteWarningModal .modal-content,
+  #deleteFinalModal .modal-content {
+    padding: 20px !important;
+    width: 92% !important;
+  }
+
+  #deleteAccountModal .modal-content h3,
+  #deleteWarningModal .modal-content h3,
+  #deleteFinalModal .modal-content h3 {
+    font-size: 1.05rem !important;
+  }
+
+  .delete-warning-box,
+  .delete-warning-box-2 {
+    padding: 12px !important;
+  }
+
+  .delete-warning-box p,
+  .delete-warning-box-2 p {
+    font-size: 13px !important;
+  }
+
+  .delete-warning-box-2 ul {
+    padding-left: 16px !important;
+  }
+
+  .delete-warning-box-2 li {
+    font-size: 12px !important;
+  }
+
+  .delete-question-text {
+    font-size: 13px !important;
+  }
+
+  .delete-reason-select {
+    font-size: 13px !important;
+    padding: 10px !important;
+  }
+
+  .delete-reason-textarea {
+    font-size: 13px !important;
+    padding: 10px !important;
+  }
+
+  .delete-final-text {
+    font-size: 14px !important;
+  }
+
+  #deleteAccountModal button,
+  #deleteWarningModal button,
+  #deleteFinalModal button {
+    font-size: 13px !important;
+    padding: 10px 18px !important;
+  }
 }
 
 @media (max-width: 340px) {

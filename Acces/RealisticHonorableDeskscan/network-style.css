@@ -1373,6 +1373,64 @@ account-title-container
   .copy-btn {
     font-size: 0.85rem;
   }
+
+  /* Send button */
+  .send-btn-wrapper {
+    margin: 12px 0 !important;
+  }
+
+  #new-transaction {
+    padding: 12px 20px !important;
+    font-size: 13px !important;
+    gap: 5px !important;
+  }
+
+  #new-transaction i {
+    font-size: 14px !important;
+  }
+
+  /* Send / Transaction Modal */
+  .modal-content {
+    padding: 18px;
+    margin: 12% auto;
+    width: 92%;
+  }
+
+  .modal-content h3 {
+    font-size: 1.1rem;
+  }
+
+  .close-modal {
+    font-size: 24px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+  }
+
+  .form-group input {
+    font-size: 0.9rem;
+    padding: 9px;
+  }
+
+  .address-action-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .transaction-fee {
+    font-size: 0.8rem;
+  }
+
+  .network-select {
+    font-size: 13px;
+    padding: 9px;
+  }
+
+  .form-actions button {
+    font-size: 13px;
+    padding: 9px 16px;
+  }
 }
 
 .dark-theme .account-balance {
