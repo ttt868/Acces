@@ -2154,7 +2154,7 @@ html[dir="rtl"] .dashboard-social-header,
     /* Network Selector Styles */
     .network-selector-container {
       display: flex;
-      justify-content: flex-start;
+      justify-content: center;
       margin-bottom: 14px;
       width: 100%;
       z-index: 20 !important;
@@ -2417,7 +2417,7 @@ html[dir="rtl"] .dashboard-social-header,
   /* Network Selector Styles */
   .network-selector-container {
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
     margin-bottom: 14px;
     width: 100%;
     z-index: 20 !important;
