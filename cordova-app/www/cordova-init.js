@@ -204,7 +204,7 @@ document.addEventListener('deviceready', function() {
                 StatusBar.backgroundColorByHexString('#f7fafc');
                 StatusBar.styleDefault();
                 if (window.NavigationBar) {
-                    NavigationBar.backgroundColorByHexString('#f5fafd', true);
+                    NavigationBar.backgroundColorByHexString('#f7fafc', true);
                 }
             }
         };
