@@ -2275,3 +2275,63 @@ body.pin-lock-active {
     max-width: 240px;
   }
 }
+
+/* === أجهزة ضيقة أفقياً (≤ 380px) === */
+@media (max-width: 380px) {
+  .profile-avatar {
+    width: 60px;
+    height: 60px;
+  }
+
+  .profile-name-display {
+    font-size: 1.05rem;
+  }
+
+  .profile-member-since {
+    font-size: 0.6rem;
+  }
+
+  .stat-content h3 {
+    font-size: 0.78rem;
+  }
+
+  #profile-page .stat-value {
+    font-size: 1.4rem;
+  }
+
+  .currency {
+    font-size: 0.85rem;
+  }
+
+  #profile-coins {
+    font-size: 1rem;
+  }
+
+  #profile-referral-code {
+    font-size: 0.85rem;
+  }
+
+  .section-title {
+    font-size: 1.15rem;
+  }
+
+  .setting-content h4 {
+    font-size: 13px;
+  }
+
+  .setting-content p {
+    font-size: 11px;
+  }
+
+  .modern-select {
+    font-size: 0.85rem;
+    padding: 10px 14px;
+    min-width: 120px;
+  }
+
+  .theme-toggle-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 15px;
+  }
+}

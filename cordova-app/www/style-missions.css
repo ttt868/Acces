@@ -1180,3 +1180,97 @@ html[lang="ar"] .ms-section:not(#ms-daily-section):not(#ms-bonus-section) {
   direction: ltr;
   text-align: left;
 }
+
+/* === أجهزة ضيقة أفقياً (≤ 380px) === */
+@media (max-width: 380px) {
+  .ms-header {
+    padding: 12px;
+  }
+
+  .ms-title-section h2 {
+    font-size: 17px;
+  }
+
+  .ms-subtitle {
+    font-size: 11px;
+  }
+
+  .ms-streak-badge {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .ms-streak-badge i {
+    font-size: 13px;
+  }
+
+  .ms-day-circle {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
+
+  .ms-day-reward {
+    font-size: 9px;
+  }
+
+  .ms-claim-daily-btn {
+    padding: 10px 30px;
+    font-size: 13px;
+  }
+
+  .ms-section-header {
+    padding: 10px 12px;
+  }
+
+  .ms-section-header h3 {
+    font-size: 13px;
+  }
+
+  .ms-section-bonus {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .ms-item {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .ms-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+    border-radius: 8px;
+  }
+
+  .ms-title {
+    font-size: 12px;
+  }
+
+  .ms-desc {
+    font-size: 10px;
+  }
+
+  .ms-reward {
+    font-size: 12px;
+  }
+
+  .ms-reward-icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .ms-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .ms-bonus-info span:first-child {
+    font-size: 11px;
+  }
+
+  .ms-bonus-amount {
+    font-size: 12px;
+  }
+}

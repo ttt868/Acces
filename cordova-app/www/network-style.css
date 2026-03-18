@@ -1315,6 +1315,66 @@ account-title-container
   background-color: rgba(255, 255, 255, 0.05);
 }
 
+/* === أجهزة ضيقة أفقياً (≤ 380px) === */
+@media (max-width: 380px) {
+  .community-container {
+    padding: 14px;
+  }
+
+  .chain-description {
+    font-size: 0.78rem;
+  }
+
+  .account-card {
+    padding: 14px;
+  }
+
+  .account-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .wallet-balance {
+    font-size: 1.2rem;
+  }
+
+  .wallet-currency-logo {
+    width: 24px;
+    height: 24px;
+  }
+
+  .qrcode-label {
+    font-size: 8px;
+  }
+
+  .account-address {
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+
+  .action-btn {
+    font-size: 0.75rem;
+    padding: 7px 10px;
+  }
+
+  .action-bts {
+    font-size: 12px !important;
+    padding: 6px 10px;
+  }
+
+  .network-logo {
+    width: 28px;
+    height: 28px;
+  }
+
+  .account-address-container label {
+    font-size: 0.78rem;
+  }
+
+  .copy-btn {
+    font-size: 0.85rem;
+  }
+}
+
 .dark-theme .account-balance {
   
 }

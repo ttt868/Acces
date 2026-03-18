@@ -1115,3 +1115,108 @@ html[lang="ar"] .leaderboard-title {
     transform: translateX(9px) !important;
   }
 }
+
+/* === أجهزة ضيقة أفقياً (≤ 380px) === */
+@media (max-width: 380px) {
+  .leaderboard-header {
+    padding: 14px;
+  }
+
+  .leaderboard-title {
+    font-size: 18px;
+  }
+
+  .leaderboard-title i {
+    font-size: 22px;
+  }
+
+  .leaderboard-close-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+  }
+
+  .leaderboard-tab {
+    font-size: 11px;
+    padding: 7px 8px;
+  }
+
+  #leaderboard-btn-alltime,
+  #leaderboard-btn-weekly,
+  #leaderboard-btn-today {
+    font-size: 11px;
+    padding: 7px 8px;
+  }
+
+  .leaderboard-table-header {
+    font-size: 10px;
+    padding: 8px 4px 8px 6px;
+    grid-template-columns: 36px 1fr 90px;
+  }
+
+  .leaderboard-item {
+    grid-template-columns: 36px minmax(140px, 180px) 95px;
+    padding: 5px 0px 5px 2px;
+    gap: 4px;
+  }
+
+  .leaderboard-rank {
+    font-size: 13px;
+    min-width: 20px;
+    margin-left: 4px;
+  }
+
+  .leaderboard-item:nth-child(1) .leaderboard-rank {
+    font-size: 16px;
+  }
+
+  .leaderboard-item:nth-child(2) .leaderboard-rank {
+    font-size: 15px;
+  }
+
+  .leaderboard-item:nth-child(3) .leaderboard-rank {
+    font-size: 15px;
+  }
+
+  .leaderboard-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .leaderboard-username {
+    font-size: 11px;
+    max-width: 120px;
+  }
+
+  .leaderboard-invites {
+    font-size: 12px;
+    margin-left: 4px;
+  }
+
+  .leaderboard-user-invites {
+    padding: 5px 6px;
+    gap: 5px;
+  }
+
+  .leaderboard-rewards {
+    font-size: 12px;
+    padding: 5px 4px;
+    min-width: auto;
+    max-width: 95px;
+  }
+
+  .reward-logo {
+    width: 18px;
+    height: 18px;
+    margin-left: 4px;
+  }
+
+  .leaderboard-empty i {
+    font-size: 44px;
+  }
+
+  .leaderboard-empty p {
+    font-size: 13px;
+  }
+}
+}
