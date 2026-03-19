@@ -11329,81 +11329,6 @@ if (totalCost > (currentBalance + precision)) {
         return recipientWallet;
       })
       .then(recipientWallet => {
-        // ⚡ Server will generate hash - no client-side hash to prevent duplicates
-        // Create transaction object for sender (hash will be added by server)
-        const transaction = {
-          from: currentUser.wallet.publicAddress,
-          to: recipientAddress,
-          amount: amount,
-
-          fee: gasFee,
-          timestamp: timestamp,
-          hash: null, // ⭐ Server will generate this
-          status: 'pending' // Will be confirmed by server
-        };
-
-        // Add transaction to local wallet without modifying balance
-        // The server will handle all balance updates to prevent double deduction
-        currentUser.wallet.transactions = currentUser.wallet.transactions || [];
-        currentUser.wallet.transactions.unshift(transaction);
-
-        // Save updated sender wallet to localStorage (transactions only)
-        localStorage.setItem(`wallet_${currentUser.id}`, JSON.stringify(currentUser.wallet));
-
-        // Create corresponding transaction for recipient
-        const recipientTransaction = {
-          from: currentUser.wallet.publicAddress,
-          to: recipientAddress,
-          amount: amount,
-
-          fee: 0, // Recipient doesn't pay the fee
-          timestamp: timestamp,
-          hash: null, // ⭐ Server will generate this
-          status: 'pending' // Will be confirmed by server
-        };
-
-        // Update recipient wallet data
-        recipientWallet.transactions = recipientWallet.transactions || [];
-        recipientWallet.transactions.unshift(recipientTransaction);
-
-        // Update recipient's balance
-        recipientWallet.balance = (parseFloat(recipientWallet.balance) || 0) + amount;
-
-        console.log(`Transaction processed: ${amount} coins sent from ${abbreviateAddress(currentUser.wallet.publicAddress)} to ${abbreviateAddress(recipientAddress)}`);
-        console.log(`Recipient wallet updated with new balance: ${recipientWallet.balance}`);
-
-        // Save updated recipient wallet to localStorage if not external
-        if (!recipientWallet.isExternal) {
-          localStorage.setItem(`wallet_${recipientWallet.userId}`, JSON.stringify(recipientWallet));
-        }
-
-        // Critical: Update recipient balance in server database
-        if (recipientWallet.userId && !recipientWallet.isExternal) {
-          // Get recipient's current server balance first
-          fetchUserById(recipientWallet.userId)
-            .then(userData => {
-              if (userData && userData.success && userData.user) {
-                const currentCoins = userData.user.coins || 0;
-                const newCoins = currentCoins + amount;
-
-                // Update user's coins in the server database
-                updateUserCoinsOnServer(recipientWallet.userId, newCoins)
-                  .then(response => {
-                    console.log('Updated recipient coins in server database:', response);
-                  })
-                  .catch(err => console.error('Error updating recipient coins on server:', err));
-              }
-            })
-            .catch(err => console.error('Error fetching recipient data from server:', err));
-        } else if (recipientWallet.isExternalAccessWallet) {
-          // For external Access network wallets, just log the transaction
-          console.log(`Transaction sent to external Access wallet: ${recipientWallet.publicAddress}`);
-          console.log(`Amount sent: ${amount} ACCESS`);
-        }
-
-        // Record transaction in server database and update balance from server response
-        console.log(`Sending transaction data to server: ${amount} coins from ${currentUser.wallet.publicAddress} to ${recipientAddress}`);
-        
         // Determine transaction type and recipient info
         const transactionData = {
           sender: currentUser.id,
@@ -11412,45 +11337,48 @@ if (totalCost > (currentBalance + precision)) {
           recipientAddress: recipientAddress,
           amount: amount,
           timestamp: timestamp,
-          // ⭐ No hash - server will generate it
           description: recipientWallet.isExternalAccessWallet ? 'External Access Wallet Transfer' : 'Wallet Transfer',
           network: 'Access',
           isExternalRecipient: recipientWallet.isExternalAccessWallet || false
         };
 
-        recordTransactionOnServer(transactionData).then(response => {
-          console.log('Transaction successfully recorded on server:', response);
+        // ⭐ Send to server FIRST - only update UI after server confirms
+        return recordTransactionOnServer(transactionData).then(response => {
+          console.log('Transaction confirmed by server:', response);
 
-          // Update balance from server response to prevent double deduction
-          if (response && response.senderBalance !== undefined) {
-            const serverBalance = parseFloat(response.senderBalance);
+          // ✅ Server confirmed - now update local state
+          const transaction = {
+            from: currentUser.wallet.publicAddress,
+            to: recipientAddress,
+            amount: amount,
+            fee: gasFee,
+            timestamp: timestamp,
+            hash: (response && response.transaction_hash) || null,
+            status: 'confirmed'
+          };
+
+          currentUser.wallet.transactions = currentUser.wallet.transactions || [];
+          currentUser.wallet.transactions.unshift(transaction);
+          localStorage.setItem(`wallet_${currentUser.id}`, JSON.stringify(currentUser.wallet));
+
+          // Update balance from server response
+          if (response && response.sender_balance_new !== undefined) {
+            const serverBalance = parseFloat(response.sender_balance_new);
             currentUser.coins = serverBalance;
             currentUser.wallet.balance = serverBalance;
-
-            // Update UI with server-confirmed balance
             updateUserCoins(serverBalance);
 
             const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
             if (!isBalanceHidden) {
               const walletBalanceElement = document.getElementById('network-coins');
-              if (walletBalanceElement) {
-                walletBalanceElement.textContent = formatNumberSmart(serverBalance);
-              }
-
+              if (walletBalanceElement) walletBalanceElement.textContent = formatNumberSmart(serverBalance);
               const userCoinsElement = document.getElementById('user-coins');
-              if (userCoinsElement) {
-                userCoinsElement.textContent = formatNumberSmart(serverBalance);
-              }
-
+              if (userCoinsElement) userCoinsElement.textContent = formatNumberSmart(serverBalance);
               const profileCoinsElement = document.getElementById('profile-coins');
-              if (profileCoinsElement) {
-                profileCoinsElement.textContent = formatNumberSmart(serverBalance);
-              }
+              if (profileCoinsElement) profileCoinsElement.textContent = formatNumberSmart(serverBalance);
             }
-
             saveUserSession(currentUser);
           } else {
-            // Fallback: refresh user data from server
             checkIfUserExists(currentUser.email).then(userData => {
               if (userData && userData.coins !== undefined) {
                 currentUser.coins = userData.coins;
@@ -11460,9 +11388,100 @@ if (totalCost > (currentBalance + precision)) {
               }
             });
           }
-        }).catch(err => {
-          console.error('Error recording transaction on server:', err);
-          // On error, refresh balance from server to ensure accuracy
+
+          // ✅ Display in recent transactions AFTER server confirmation
+          const transactionList = document.getElementById('transaction-list');
+          const emptyTransactions = document.getElementById('empty-transactions');
+
+          if (transactionList) {
+            if (emptyTransactions) emptyTransactions.style.display = 'none';
+
+            const loadingIndicator = transactionList.querySelector('.loading-indicator');
+            if (loadingIndicator) transactionList.removeChild(loadingIndicator);
+            const errorMessage = transactionList.querySelector('.error-message');
+            if (errorMessage) transactionList.removeChild(errorMessage);
+
+            const item = document.createElement('div');
+            item.className = 'transaction-item new-transaction';
+            item.setAttribute('data-tx-hash', transaction.hash || `tx_${timestamp}`);
+
+            const formattedDate = formatDateConsistently(timestamp);
+            const formattedAmount = formatTransactionAmount(amount);
+
+            item.innerHTML = `
+              <div class="transaction-icon">
+                <i class="fas fa-arrow-up" style="color: #f44336;"></i>
+              </div>
+              <div class="transaction-details">
+                <div class="transaction-addresses">
+                  <div class="transaction-from">From: ${abbreviateAddress(currentUser.wallet.publicAddress)}</div>
+                  <div class="transaction-to">To: ${abbreviateAddress(recipientAddress)}</div>
+                </div>
+                <div class="transaction-meta">
+                  <div class="transaction-amount outgoing">
+                    - <span class="amount-value">${formattedAmount}</span> Access Points
+                  </div>
+                  <div class="transaction-info">
+                    <span class="transaction-date">${formattedDate}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+
+            item.style.cursor = 'pointer';
+            item.onclick = function() { navigateToTransactionDetails(this); };
+
+            if (transactionList.firstChild) {
+              transactionList.insertBefore(item, transactionList.firstChild);
+            } else {
+              transactionList.appendChild(item);
+            }
+
+            setTimeout(() => {
+              item.classList.add('highlight');
+              setTimeout(() => {
+                item.classList.remove('highlight');
+                item.classList.remove('new-transaction');
+              }, 2000);
+            }, 10);
+
+            const totalTransactionsElement = document.getElementById('total-transactions');
+            if (totalTransactionsElement) {
+              const currentCount = parseInt(totalTransactionsElement.textContent || '0');
+              totalTransactionsElement.textContent = (currentCount + 1).toString();
+            }
+          }
+
+          setTimeout(() => { updateTransactionList(); }, 2000);
+
+          if (sendButton) {
+            sendButton.innerHTML = originalText;
+            sendButton.disabled = false;
+          }
+
+          closeTransactionModal();
+          const recipientInput = document.getElementById('recipient-address');
+          const amountInput2 = document.getElementById('transaction-amount');
+          if (recipientInput) recipientInput.value = '';
+          if (amountInput2) amountInput2.value = '';
+
+          showNotification(translator.translate('Transaction completed successfully'), 'success');
+
+          return { success: true, transaction: transaction };
+        });
+      })
+      .catch(error => {
+        console.error('Transaction error:', error);
+        if (sendButton) {
+          sendButton.innerHTML = originalText;
+          sendButton.disabled = false;
+        }
+        // Show the actual server error message to the user
+        const errorMsg = error.message || translator.translate('Please try again');
+        showNotification(translator.translate('Transaction failed') + ': ' + errorMsg, 'error');
+
+        // Refresh balance from server to ensure accuracy
+        if (currentUser && currentUser.email) {
           checkIfUserExists(currentUser.email).then(userData => {
             if (userData && userData.coins !== undefined) {
               currentUser.coins = userData.coins;
@@ -11471,128 +11490,7 @@ if (totalCost > (currentBalance + precision)) {
               saveUserSession(currentUser);
             }
           });
-        });
-
-        // UI will be updated after server confirms the transaction
-        // to prevent double deduction issues
-
-        // Create and display the transaction immediately without waiting for server
-        const transactionList = document.getElementById('transaction-list');
-        const emptyTransactions = document.getElementById('empty-transactions');
-
-        if (transactionList) {
-          // Hide empty state if it was visible
-          if (emptyTransactions) emptyTransactions.style.display = 'none';
-
-          // Remove any loading indicators or error messages
-          const loadingIndicator = transactionList.querySelector('.loading-indicator');
-          if (loadingIndicator) {
-            transactionList.removeChild(loadingIndicator);
-          }
-
-          const errorMessage = transactionList.querySelector('.error-message');
-          if (errorMessage) {
-            transactionList.removeChild(errorMessage);
-          }
-
-          // Create a new transaction item with animation
-          const item = document.createElement('div');
-          item.className = 'transaction-item new-transaction';
-          item.setAttribute('data-tx-hash', transaction.hash || `temp_${timestamp}`);
-
-          // Format date using consistent formatting function
-          const formattedDate = formatDateConsistently(timestamp);
-
-          // Format amount with full precision before displaying it
-          const formattedAmount = formatTransactionAmount(amount);
-
-          // Set HTML content with transaction details
-          item.innerHTML = `
-            <div class="transaction-icon">
-              <i class="fas fa-arrow-up" style="color: #f44336;"></i>
-            </div>
-            <div class="transaction-details">
-              <div class="transaction-addresses">
-                <div class="transaction-from">From: ${abbreviateAddress(currentUser.wallet.publicAddress)}</div>
-                <div class="transaction-to">To: ${abbreviateAddress(recipientAddress)}</div>
-              </div>
-              <div class="transaction-meta">
-                <div class="transaction-amount outgoing">
-                  - <span class="amount-value">${formattedAmount}</span> Access Points
-                </div>
-                <div class="transaction-info">
-                  <span class="transaction-date">${formattedDate}</span>
-                </div>
-              </div>
-            </div>
-          `;
-
-          // Make transaction clickable
-          item.style.cursor = 'pointer';
-          item.onclick = function() { navigateToTransactionDetails(this); };
-
-          // Add the new transaction at the top of the list
-          if (transactionList.firstChild) {
-            transactionList.insertBefore(item, transactionList.firstChild);
-          } else {
-            transactionList.appendChild(item);
-          }
-
-          // Add highlight animation
-          setTimeout(() => {
-            item.classList.add('highlight');
-
-            // Remove highlight after animation completes
-            setTimeout(() => {
-              item.classList.remove('highlight');
-              item.classList.remove('new-transaction');
-            }, 2000);
-          }, 10);
-
-          // Balance will be updated from server response to prevent double deduction
-
-          // Also update total transactions count if it exists
-          const totalTransactionsElement = document.getElementById('total-transactions');
-          if (totalTransactionsElement) {
-            const currentCount = parseInt(totalTransactionsElement.textContent || '0');
-            totalTransactionsElement.textContent = (currentCount + 1).toString();
-          }
         }
-
-        // We'll also update the transaction list in the background to ensure consistency
-        // but the transaction is already visible to the user
-        setTimeout(() => {
-          updateTransactionList();
-        }, 2000);
-
-        // Reset send button
-        if (sendButton) {
-          sendButton.innerHTML = originalText;
-          sendButton.disabled = false;
-        }
-
-        closeTransactionModal();
-        const recipientInput = document.getElementById('recipient-address');
-        const amountInput = document.getElementById('transaction-amount');
-        if (recipientInput) recipientInput.value = '';
-        if (amountInput) amountInput.value = '';
-
-        showNotification(translator.translate('Transaction completed successfully'), 'success');
-
-        return {
-          success: true,
-          transaction: transaction,
-          senderUpdated: true,
-          recipientUpdated: true
-        };
-      })
-      .catch(error => {
-        console.error('Transaction error:', error);
-        if (sendButton) {
-          sendButton.innerHTML = originalText;
-          sendButton.disabled = false;
-        }
-        showNotification(translator.translate('Transaction failed') + ': ' + (error.message || translator.translate('Please try again')), 'error');
       });
   };
 
@@ -11660,12 +11558,10 @@ if (totalCost > (currentBalance + precision)) {
   // Record transaction on server 
   async function recordTransactionOnServer(transactionData) {
     try {
-      // Add some logging to debug the transaction data
       console.log('Recording transaction:', {
         sender: transactionData.sender,
         recipient: transactionData.recipient,
-        amount: transactionData.amount,
-        hash: transactionData.hash?.substring(0, 10) + '...'
+        amount: transactionData.amount
       });
 
       const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/transaction/record`, {
@@ -11674,32 +11570,19 @@ if (totalCost > (currentBalance + precision)) {
         body: JSON.stringify(transactionData)
       });
 
-      if (!response.ok) {
-        console.error(`Server error ${response.status}:`, await response.text());
+      const result = await response.json().catch(() => null);
 
-        // Return a fallback success response to avoid breaking the client experience
-        // This ensures the transaction completes locally even if server sync fails
-        return { 
-          success: true, 
-          message: 'Transaction recorded locally',
-          server_sync: false,
-          transaction_hash: transactionData.hash
-        };
+      if (!response.ok) {
+        const serverError = (result && result.error) ? result.error : `Server error ${response.status}`;
+        console.error('Transaction rejected by server:', serverError);
+        throw new Error(serverError);
       }
 
-      const result = await response.json();
       console.log('Transaction recorded successfully on server:', result);
       return result;
     } catch (error) {
       console.error('Error recording transaction on server:', error);
-
-      // Return fallback response instead of throwing to maintain app functionality
-      return { 
-        success: true, 
-        message: 'Transaction recorded locally only',
-        server_sync: false,
-        transaction_hash: transactionData.hash || 'unknown'
-      };
+      throw error;
     }
   }
 

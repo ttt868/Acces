@@ -5826,10 +5826,14 @@ function startGradualAccumulation() {
       accumulatedCoinsElement.textContent = formatNumberSmart(calculatedAccumulated);
     }
 
-    // ✅ تحديث Session XP في Dashboard
-    const sessionEarnedEl = document.getElementById('session-earned-value');
-    if (sessionEarnedEl && calculatedAccumulated > 0) {
-      sessionEarnedEl.textContent = '+' + formatNumberSmart(calculatedAccumulated);
+    // ✅ نسخة مباشرة: نفس القيمة من Activity تظهر في Dashboard
+    const dashSessionEl = document.getElementById('session-earned-value');
+    if (dashSessionEl) {
+      if (calculatedAccumulated > 0) {
+        dashSessionEl.textContent = '+' + formatNumberSmart(calculatedAccumulated);
+      } else {
+        dashSessionEl.textContent = '+0.0';
+      }
     }
 
     // ✅ تحديث hashrate في Activity و Dashboard معاً
@@ -6943,6 +6947,58 @@ function startGradualAccumulation() {
 
     console.log('Initializing dashboard timer for user:', currentUser.id);
 
+    // ✅ جلب boost data من السيرفر مباشرة — لا تحتاج Activity
+    try {
+      const boostResp = await fetch(`/api/processing/accumulated/${currentUser.id}?st=${encodeURIComponent(currentUser.sessionToken || currentUser.session_token || '')}`);
+      if (boostResp.ok) {
+        const boostData = await boostResp.json();
+        if (boostData.success) {
+          const refs = boostData.activeReferrals || 0;
+          const adBoost = boostData.adBoostActive || false;
+          let multiplier = 1.0;
+          if (refs > 0) multiplier += refs * 0.04;
+          if (adBoost) multiplier += 0.12;
+
+          if (!window.localBoostData) {
+            window.localBoostData = {
+              startTimeSec: Math.floor(currentUser.processing_start_time_seconds || Date.now() / 1000),
+              multiplier: multiplier,
+              activeReferrals: refs,
+              adBoostActive: adBoost,
+              startTimeFixed: false
+            };
+          } else {
+            window.localBoostData.multiplier = multiplier;
+            window.localBoostData.activeReferrals = refs;
+            window.localBoostData.adBoostActive = adBoost;
+          }
+
+          // ✅ حفظ القيمة المتجمعة من السيرفر — تظهر حتى لو الجلسة مكتملة
+          if (boostData.accumulatedReward !== undefined) {
+            currentUser.processing_accumulated = boostData.accumulatedReward;
+            currentUser.accumulatedReward = boostData.accumulatedReward;
+          }
+          // ✅ تحديث base_reward من السيرفر
+          if (boostData.base_reward) {
+            window.serverBaseReward = parseFloat(boostData.base_reward);
+          }
+
+          // ✅ عرض القيمة المتجمعة فوراً في Dashboard
+          const accReward = boostData.accumulatedReward || currentUser.processing_accumulated || 0;
+          if (accReward > 0) {
+            const sessionEarnedEl = document.getElementById('session-earned-value');
+            if (sessionEarnedEl) {
+              sessionEarnedEl.textContent = '+' + formatNumberSmart(accReward);
+            }
+          }
+
+          console.log(`✅ Dashboard boost data loaded: multiplier=${multiplier}, refs=${refs}, adBoost=${adBoost}, accumulated=${boostData.accumulatedReward || 0}`);
+        }
+      }
+    } catch (e) {
+      console.error('Dashboard boost fetch error:', e);
+    }
+
     try {
       //  processing page 
       const response = await fetch('/api/processing/status', {
@@ -6968,6 +7024,11 @@ function startGradualAccumulation() {
             currentUser.processing_start_time_seconds = Math.floor(new Date(data.processing_start_time).getTime() / 1000);
           }
           saveUserSession(currentUser);
+          
+          // ✅ تحديث base_reward من السيرفر
+          if (data.base_reward) {
+            window.serverBaseReward = parseFloat(data.base_reward);
+          }
           
           //  
           updateDashboardProcessingTimer(remainingSeconds);
@@ -7021,38 +7082,64 @@ function startGradualAccumulation() {
     }
   }
 
-  // Update dashboard session earned display independently
+  // ✅ نسخة من accumulated-coins — يحسب بنفسه + يقرأ من المصدر
   function updateDashboardSessionEarned() {
     const sessionEarnedEl = document.getElementById('session-earned-value');
     if (!sessionEarnedEl) return;
-    
-    if (!currentUser || currentUser.processing_active !== 1) {
-      sessionEarnedEl.textContent = '+0.0';
-      return;
+
+    // إذا accumulated-coins فيه قيمة (Activity شغال) → انسخها فوراً
+    const accEl = document.getElementById('accumulated-coins');
+    if (accEl) {
+      const val = accEl.textContent.trim();
+      const num = parseFloat(val);
+      if (!isNaN(num) && num > 0) {
+        sessionEarnedEl.textContent = '+' + val;
+        return;
+      }
     }
 
-    const startTimeSec = Math.floor(
-      currentUser.processing_start_time_seconds ||
-      (currentUser.processing_start_time ? new Date(currentUser.processing_start_time).getTime() / 1000 : 0)
-    );
-    if (!startTimeSec) return;
+    if (!currentUser) return;
 
-    const nowSec = Math.floor(Date.now() / 1000);
-    const elapsed = Math.max(0, nowSec - startTimeSec);
-    const duration = 86400;
-    const baseReward = window.serverBaseReward || 0.25;
-    const multiplier = (window.localBoostData && window.localBoostData.multiplier) || 1.0;
-    const boostedReward = baseReward * multiplier;
+    // إذا الجلسة نشطة → احسب نفس calculateAndDisplayLocally بالضبط
+    if (currentUser.processing_active === 1) {
+      const startTimeSec = Math.floor(
+        currentUser.processing_start_time_seconds ||
+        (currentUser.processing_start_time ? new Date(currentUser.processing_start_time).getTime() / 1000 : 0)
+      );
+      if (startTimeSec) {
+        const nowSec = Math.floor(Date.now() / 1000);
+        const elapsed = Math.max(0, nowSec - startTimeSec);
 
-    let accumulated;
-    if (elapsed >= duration) {
-      accumulated = boostedReward;
-    } else {
-      accumulated = (boostedReward / duration) * elapsed;
+        var processingDuration = 86400;
+        if (currentUser.processing_end_time && currentUser.processing_start_time) {
+          var actualDuration = Math.floor((parseInt(currentUser.processing_end_time) - parseInt(currentUser.processing_start_time)) / 1000);
+          if (actualDuration > 0 && actualDuration <= 86400) {
+            processingDuration = actualDuration;
+          }
+        }
+
+        const baseReward = window.serverBaseReward || 0.25;
+        const multiplier = (window.localBoostData && window.localBoostData.multiplier) || 1.0;
+        const boostedReward = baseReward * multiplier;
+
+        let accumulated;
+        if (elapsed >= processingDuration) {
+          accumulated = boostedReward;
+        } else {
+          accumulated = (boostedReward / processingDuration) * elapsed;
+        }
+
+        if (accumulated > 0) {
+          sessionEarnedEl.textContent = '+' + formatNumberSmart(accumulated);
+          return;
+        }
+      }
     }
 
-    if (accumulated > 0) {
-      sessionEarnedEl.textContent = '+' + formatNumberSmart(accumulated);
+    // إذا الجلسة مكتملة → القيمة المحفوظة
+    const saved = currentUser.processing_accumulated || currentUser.accumulatedReward || 0;
+    if (saved > 0) {
+      sessionEarnedEl.textContent = '+' + formatNumberSmart(saved);
     }
   }
 
@@ -7092,24 +7179,61 @@ function startGradualAccumulation() {
         
         // Update to show processing completed
         updateDashboardProcessingTimer(0);
+
+        // ✅ عرض القيمة النهائية الكاملة
+        const baseReward = window.serverBaseReward || 0.25;
+        const finalMult = (window.localBoostData && window.localBoostData.multiplier) || 1.0;
+        const finalReward = baseReward * finalMult;
+        const sessionEarnedEl = document.getElementById('session-earned-value');
+        if (sessionEarnedEl) {
+          sessionEarnedEl.textContent = '+' + formatNumberSmart(finalReward);
+        }
         
-        console.log('Dashboard countdown completed');
+        console.log('Dashboard countdown completed, final reward:', finalReward);
       }
       
-      // Sync with server every 30 seconds
-      if (remainingSeconds % 30 === 0) {
+      // ✅ جلب boost data كل 5 ثواني — نفس Activity بالضبط
+      if (remainingSeconds % 5 === 0 && remainingSeconds > 0) {
         try {
-          const response = await fetch(`/api/processing/countdown/status/${currentUser.id}`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.remaining_seconds !== undefined) {
-              remainingSeconds = data.remaining_seconds;
-              console.log('Dashboard timer synced with server:', remainingSeconds);
+          const boostResp = await fetch(`/api/processing/accumulated/${currentUser.id}?st=${encodeURIComponent(currentUser.sessionToken || currentUser.session_token || '')}`);
+          if (boostResp.ok) {
+            const bData = await boostResp.json();
+            if (bData.success) {
+              const refs = bData.activeReferrals || 0;
+              const adBoost = bData.adBoostActive || false;
+              let mult = 1.0;
+              if (refs > 0) mult += refs * 0.04;
+              if (adBoost) mult += 0.12;
+
+              if (!window.localBoostData) {
+                window.localBoostData = { startTimeSec: Math.floor(currentUser.processing_start_time_seconds || Date.now() / 1000), multiplier: mult, activeReferrals: refs, adBoostActive: adBoost, startTimeFixed: false };
+              } else {
+                window.localBoostData.multiplier = mult;
+                window.localBoostData.activeReferrals = refs;
+                window.localBoostData.adBoostActive = adBoost;
+              }
+              if (bData.base_reward) {
+                window.serverBaseReward = parseFloat(bData.base_reward);
+              }
             }
           }
-        } catch (error) {
-          console.error('Error syncing dashboard timer:', error);
-        }
+        } catch (e) {}
+      }
+
+      // مزامنة timer مع السيرفر كل 30 ثانية
+      if (remainingSeconds % 30 === 0 && remainingSeconds > 0) {
+        try {
+          const timerResp = await fetch(`/api/processing/countdown/status/${currentUser.id}`);
+          if (timerResp.ok) {
+            const data = await timerResp.json();
+            if (data.success && data.remaining_seconds !== undefined) {
+              remainingSeconds = data.remaining_seconds;
+            }
+            if (data.base_reward) {
+              window.serverBaseReward = parseFloat(data.base_reward);
+            }
+          }
+        } catch (error) {}
       }
     }, 1000);
   }
@@ -11039,81 +11163,6 @@ if (totalCost > (currentBalance + precision)) {
         return recipientWallet;
       })
       .then(recipientWallet => {
-        // ⚡ Server will generate hash - no client-side hash to prevent duplicates
-        // Create transaction object for sender (hash will be added by server)
-        const transaction = {
-          from: currentUser.wallet.publicAddress,
-          to: recipientAddress,
-          amount: amount,
-
-          fee: gasFee,
-          timestamp: timestamp,
-          hash: null, // ⭐ Server will generate this
-          status: 'pending' // Will be confirmed by server
-        };
-
-        // Add transaction to local wallet without modifying balance
-        // The server will handle all balance updates to prevent double deduction
-        currentUser.wallet.transactions = currentUser.wallet.transactions || [];
-        currentUser.wallet.transactions.unshift(transaction);
-
-        // Save updated sender wallet to localStorage (transactions only)
-        localStorage.setItem(`wallet_${currentUser.id}`, JSON.stringify(currentUser.wallet));
-
-        // Create corresponding transaction for recipient
-        const recipientTransaction = {
-          from: currentUser.wallet.publicAddress,
-          to: recipientAddress,
-          amount: amount,
-
-          fee: 0, // Recipient doesn't pay the fee
-          timestamp: timestamp,
-          hash: null, // ⭐ Server will generate this
-          status: 'pending' // Will be confirmed by server
-        };
-
-        // Update recipient wallet data
-        recipientWallet.transactions = recipientWallet.transactions || [];
-        recipientWallet.transactions.unshift(recipientTransaction);
-
-        // Update recipient's balance
-        recipientWallet.balance = (parseFloat(recipientWallet.balance) || 0) + amount;
-
-        console.log(`Transaction processed: ${amount} coins sent from ${abbreviateAddress(currentUser.wallet.publicAddress)} to ${abbreviateAddress(recipientAddress)}`);
-        console.log(`Recipient wallet updated with new balance: ${recipientWallet.balance}`);
-
-        // Save updated recipient wallet to localStorage if not external
-        if (!recipientWallet.isExternal) {
-          localStorage.setItem(`wallet_${recipientWallet.userId}`, JSON.stringify(recipientWallet));
-        }
-
-        // Critical: Update recipient balance in server database
-        if (recipientWallet.userId && !recipientWallet.isExternal) {
-          // Get recipient's current server balance first
-          fetchUserById(recipientWallet.userId)
-            .then(userData => {
-              if (userData && userData.success && userData.user) {
-                const currentCoins = userData.user.coins || 0;
-                const newCoins = currentCoins + amount;
-
-                // Update user's coins in the server database
-                updateUserCoinsOnServer(recipientWallet.userId, newCoins)
-                  .then(response => {
-                    console.log('Updated recipient coins in server database:', response);
-                  })
-                  .catch(err => console.error('Error updating recipient coins on server:', err));
-              }
-            })
-            .catch(err => console.error('Error fetching recipient data from server:', err));
-        } else if (recipientWallet.isExternalAccessWallet) {
-          // For external Access network wallets, just log the transaction
-          console.log(`Transaction sent to external Access wallet: ${recipientWallet.publicAddress}`);
-          console.log(`Amount sent: ${amount} ACCESS`);
-        }
-
-        // Record transaction in server database and update balance from server response
-        console.log(`Sending transaction data to server: ${amount} coins from ${currentUser.wallet.publicAddress} to ${recipientAddress}`);
-        
         // Determine transaction type and recipient info
         const transactionData = {
           sender: currentUser.id,
@@ -11122,45 +11171,48 @@ if (totalCost > (currentBalance + precision)) {
           recipientAddress: recipientAddress,
           amount: amount,
           timestamp: timestamp,
-          // ⭐ No hash - server will generate it
           description: recipientWallet.isExternalAccessWallet ? 'External Access Wallet Transfer' : 'Wallet Transfer',
           network: 'Access',
           isExternalRecipient: recipientWallet.isExternalAccessWallet || false
         };
 
-        recordTransactionOnServer(transactionData).then(response => {
-          console.log('Transaction successfully recorded on server:', response);
+        // ⭐ Send to server FIRST - only update UI after server confirms
+        return recordTransactionOnServer(transactionData).then(response => {
+          console.log('Transaction confirmed by server:', response);
 
-          // Update balance from server response to prevent double deduction
+          // ✅ Server confirmed - now update local state
+          const transaction = {
+            from: currentUser.wallet.publicAddress,
+            to: recipientAddress,
+            amount: amount,
+            fee: gasFee,
+            timestamp: timestamp,
+            hash: (response && response.transaction_hash) || null,
+            status: 'confirmed'
+          };
+
+          currentUser.wallet.transactions = currentUser.wallet.transactions || [];
+          currentUser.wallet.transactions.unshift(transaction);
+          localStorage.setItem(`wallet_${currentUser.id}`, JSON.stringify(currentUser.wallet));
+
+          // Update balance from server response
           if (response && response.sender_balance_new !== undefined) {
             const serverBalance = parseFloat(response.sender_balance_new);
             currentUser.coins = serverBalance;
             currentUser.wallet.balance = serverBalance;
-
-            // Update UI with server-confirmed balance
             updateUserCoins(serverBalance);
 
             const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
             if (!isBalanceHidden) {
               const walletBalanceElement = document.getElementById('network-coins');
-              if (walletBalanceElement) {
-                walletBalanceElement.textContent = formatNumberSmart(serverBalance);
-              }
-
+              if (walletBalanceElement) walletBalanceElement.textContent = formatNumberSmart(serverBalance);
               const userCoinsElement = document.getElementById('user-coins');
-              if (userCoinsElement) {
-                userCoinsElement.textContent = formatNumberSmart(serverBalance);
-              }
-
+              if (userCoinsElement) userCoinsElement.textContent = formatNumberSmart(serverBalance);
               const profileCoinsElement = document.getElementById('profile-coins');
-              if (profileCoinsElement) {
-                profileCoinsElement.textContent = formatNumberSmart(serverBalance);
-              }
+              if (profileCoinsElement) profileCoinsElement.textContent = formatNumberSmart(serverBalance);
             }
-
             saveUserSession(currentUser);
           } else {
-            // Fallback: refresh user data from server
             checkIfUserExists(currentUser.email).then(userData => {
               if (userData && userData.coins !== undefined) {
                 currentUser.coins = userData.coins;
@@ -11170,9 +11222,100 @@ if (totalCost > (currentBalance + precision)) {
               }
             });
           }
-        }).catch(err => {
-          console.error('Error recording transaction on server:', err);
-          // On error, refresh balance from server to ensure accuracy
+
+          // ✅ Display in recent transactions AFTER server confirmation
+          const transactionList = document.getElementById('transaction-list');
+          const emptyTransactions = document.getElementById('empty-transactions');
+
+          if (transactionList) {
+            if (emptyTransactions) emptyTransactions.style.display = 'none';
+
+            const loadingIndicator = transactionList.querySelector('.loading-indicator');
+            if (loadingIndicator) transactionList.removeChild(loadingIndicator);
+            const errorMessage = transactionList.querySelector('.error-message');
+            if (errorMessage) transactionList.removeChild(errorMessage);
+
+            const item = document.createElement('div');
+            item.className = 'transaction-item new-transaction';
+            item.setAttribute('data-tx-hash', transaction.hash || `tx_${timestamp}`);
+
+            const formattedDate = formatDateConsistently(timestamp);
+            const formattedAmount = formatTransactionAmount(amount);
+
+            item.innerHTML = `
+              <div class="transaction-icon">
+                <i class="fas fa-arrow-up" style="color: #f44336;"></i>
+              </div>
+              <div class="transaction-details">
+                <div class="transaction-addresses">
+                  <div class="transaction-from">From: ${abbreviateAddress(currentUser.wallet.publicAddress)}</div>
+                  <div class="transaction-to">To: ${abbreviateAddress(recipientAddress)}</div>
+                </div>
+                <div class="transaction-meta">
+                  <div class="transaction-amount outgoing">
+                    - <span class="amount-value">${formattedAmount}</span> Access Points
+                  </div>
+                  <div class="transaction-info">
+                    <span class="transaction-date">${formattedDate}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+
+            item.style.cursor = 'pointer';
+            item.onclick = function() { navigateToTransactionDetails(this); };
+
+            if (transactionList.firstChild) {
+              transactionList.insertBefore(item, transactionList.firstChild);
+            } else {
+              transactionList.appendChild(item);
+            }
+
+            setTimeout(() => {
+              item.classList.add('highlight');
+              setTimeout(() => {
+                item.classList.remove('highlight');
+                item.classList.remove('new-transaction');
+              }, 2000);
+            }, 10);
+
+            const totalTransactionsElement = document.getElementById('total-transactions');
+            if (totalTransactionsElement) {
+              const currentCount = parseInt(totalTransactionsElement.textContent || '0');
+              totalTransactionsElement.textContent = (currentCount + 1).toString();
+            }
+          }
+
+          setTimeout(() => { updateTransactionList(); }, 2000);
+
+          if (sendButton) {
+            sendButton.innerHTML = originalText;
+            sendButton.disabled = false;
+          }
+
+          closeTransactionModal();
+          const recipientInput = document.getElementById('recipient-address');
+          const amountInput2 = document.getElementById('transaction-amount');
+          if (recipientInput) recipientInput.value = '';
+          if (amountInput2) amountInput2.value = '';
+
+          showNotification(translator.translate('Transaction completed successfully'), 'success');
+
+          return { success: true, transaction: transaction };
+        });
+      })
+      .catch(error => {
+        console.error('Transaction error:', error);
+        if (sendButton) {
+          sendButton.innerHTML = originalText;
+          sendButton.disabled = false;
+        }
+        // Show the actual server error message to the user
+        const errorMsg = error.message || translator.translate('Please try again');
+        showNotification(translator.translate('Transaction failed') + ': ' + errorMsg, 'error');
+
+        // Refresh balance from server to ensure accuracy
+        if (currentUser && currentUser.email) {
           checkIfUserExists(currentUser.email).then(userData => {
             if (userData && userData.coins !== undefined) {
               currentUser.coins = userData.coins;
@@ -11181,128 +11324,7 @@ if (totalCost > (currentBalance + precision)) {
               saveUserSession(currentUser);
             }
           });
-        });
-
-        // UI will be updated after server confirms the transaction
-        // to prevent double deduction issues
-
-        // Create and display the transaction immediately without waiting for server
-        const transactionList = document.getElementById('transaction-list');
-        const emptyTransactions = document.getElementById('empty-transactions');
-
-        if (transactionList) {
-          // Hide empty state if it was visible
-          if (emptyTransactions) emptyTransactions.style.display = 'none';
-
-          // Remove any loading indicators or error messages
-          const loadingIndicator = transactionList.querySelector('.loading-indicator');
-          if (loadingIndicator) {
-            transactionList.removeChild(loadingIndicator);
-          }
-
-          const errorMessage = transactionList.querySelector('.error-message');
-          if (errorMessage) {
-            transactionList.removeChild(errorMessage);
-          }
-
-          // Create a new transaction item with animation
-          const item = document.createElement('div');
-          item.className = 'transaction-item new-transaction';
-          item.setAttribute('data-tx-hash', transaction.hash || `temp_${timestamp}`);
-
-          // Format date using consistent formatting function
-          const formattedDate = formatDateConsistently(timestamp);
-
-          // Format amount with full precision before displaying it
-          const formattedAmount = formatTransactionAmount(amount);
-
-          // Set HTML content with transaction details
-          item.innerHTML = `
-            <div class="transaction-icon">
-              <i class="fas fa-arrow-up" style="color: #f44336;"></i>
-            </div>
-            <div class="transaction-details">
-              <div class="transaction-addresses">
-                <div class="transaction-from">From: ${abbreviateAddress(currentUser.wallet.publicAddress)}</div>
-                <div class="transaction-to">To: ${abbreviateAddress(recipientAddress)}</div>
-              </div>
-              <div class="transaction-meta">
-                <div class="transaction-amount outgoing">
-                  - <span class="amount-value">${formattedAmount}</span> Access Points
-                </div>
-                <div class="transaction-info">
-                  <span class="transaction-date">${formattedDate}</span>
-                </div>
-              </div>
-            </div>
-          `;
-
-          // Make transaction clickable
-          item.style.cursor = 'pointer';
-          item.onclick = function() { navigateToTransactionDetails(this); };
-
-          // Add the new transaction at the top of the list
-          if (transactionList.firstChild) {
-            transactionList.insertBefore(item, transactionList.firstChild);
-          } else {
-            transactionList.appendChild(item);
-          }
-
-          // Add highlight animation
-          setTimeout(() => {
-            item.classList.add('highlight');
-
-            // Remove highlight after animation completes
-            setTimeout(() => {
-              item.classList.remove('highlight');
-              item.classList.remove('new-transaction');
-            }, 2000);
-          }, 10);
-
-          // Balance will be updated from server response to prevent double deduction
-
-          // Also update total transactions count if it exists
-          const totalTransactionsElement = document.getElementById('total-transactions');
-          if (totalTransactionsElement) {
-            const currentCount = parseInt(totalTransactionsElement.textContent || '0');
-            totalTransactionsElement.textContent = (currentCount + 1).toString();
-          }
         }
-
-        // We'll also update the transaction list in the background to ensure consistency
-        // but the transaction is already visible to the user
-        setTimeout(() => {
-          updateTransactionList();
-        }, 2000);
-
-        // Reset send button
-        if (sendButton) {
-          sendButton.innerHTML = originalText;
-          sendButton.disabled = false;
-        }
-
-        closeTransactionModal();
-        const recipientInput = document.getElementById('recipient-address');
-        const amountInput = document.getElementById('transaction-amount');
-        if (recipientInput) recipientInput.value = '';
-        if (amountInput) amountInput.value = '';
-
-        showNotification(translator.translate('Transaction completed successfully'), 'success');
-
-        return {
-          success: true,
-          transaction: transaction,
-          senderUpdated: true,
-          recipientUpdated: true
-        };
-      })
-      .catch(error => {
-        console.error('Transaction error:', error);
-        if (sendButton) {
-          sendButton.innerHTML = originalText;
-          sendButton.disabled = false;
-        }
-        showNotification(translator.translate('Transaction failed') + ': ' + (error.message || translator.translate('Please try again')), 'error');
       });
   };
 
@@ -11370,12 +11392,10 @@ if (totalCost > (currentBalance + precision)) {
   // Record transaction on server 
   async function recordTransactionOnServer(transactionData) {
     try {
-      // Add some logging to debug the transaction data
       console.log('Recording transaction:', {
         sender: transactionData.sender,
         recipient: transactionData.recipient,
-        amount: transactionData.amount,
-        hash: transactionData.hash?.substring(0, 10) + '...'
+        amount: transactionData.amount
       });
 
       const response = await fetch(`${window.location.origin}/api/transaction/record`, {
@@ -11384,32 +11404,19 @@ if (totalCost > (currentBalance + precision)) {
         body: JSON.stringify(transactionData)
       });
 
-      if (!response.ok) {
-        console.error(`Server error ${response.status}:`, await response.text());
+      const result = await response.json().catch(() => null);
 
-        // Return a fallback success response to avoid breaking the client experience
-        // This ensures the transaction completes locally even if server sync fails
-        return { 
-          success: true, 
-          message: 'Transaction recorded locally',
-          server_sync: false,
-          transaction_hash: transactionData.hash
-        };
+      if (!response.ok) {
+        const serverError = (result && result.error) ? result.error : `Server error ${response.status}`;
+        console.error('Transaction rejected by server:', serverError);
+        throw new Error(serverError);
       }
 
-      const result = await response.json();
       console.log('Transaction recorded successfully on server:', result);
       return result;
     } catch (error) {
       console.error('Error recording transaction on server:', error);
-
-      // Return fallback response instead of throwing to maintain app functionality
-      return { 
-        success: true, 
-        message: 'Transaction recorded locally only',
-        server_sync: false,
-        transaction_hash: transactionData.hash || 'unknown'
-      };
+      throw error;
     }
   }
 
@@ -12704,6 +12711,13 @@ if (totalCost > (currentBalance + precision)) {
         preloadActivityData(currentUser.id);
         // 🔒 Start single-device session guard
         startSessionGuard();
+
+        // ✅ تهيئة Dashboard timer + session earned فوراً بعد تسجيل الدخول
+        checkProcessingStatus().then(() => {
+          initializeDashboardTimer();
+        }).catch(() => {
+          initializeDashboardTimer();
+        });
         
         // Pre-generate QR code in background so it's ready before visiting Network
         initializeUserWallet().then(function() {
