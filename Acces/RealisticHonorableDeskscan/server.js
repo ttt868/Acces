@@ -1540,6 +1540,7 @@ const RATE_LIMITS = {
   pin:     { windowMs: 60000, maxRequests: 15 },  // 15 req/min for PIN verify
   api:     { windowMs: 60000, maxRequests: 120 },  // 120 req/min general
   system:  { windowMs: 60000, maxRequests: 5 },    // 5 req/min for system status
+  transaction: { windowMs: 60000, maxRequests: 10 }, // 10 transactions/min per IP
 };
 
 function checkRateLimit(ip, category) {
@@ -7662,6 +7663,22 @@ const server = http.createServer(async (req, res) => {
     // Enhanced transaction record API - دعم حقيقي للمحافظ الخارجية مع منع التكرار وتوحيد العناوين
     if (pathname === '/api/transaction/record' && req.method === 'POST') {
       try {
+        // 🛡️ Rate limit: transactions
+        if (!checkRateLimit(getClientIP(req), 'transaction')) {
+          res.writeHead(429, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Too many transactions. Please wait.' }));
+          return;
+        }
+
+        // 🔒 Authentication: verify token and match sender
+        const authToken = req.headers.authorization?.replace('Bearer ', '');
+        const decoded = await verifyToken(authToken);
+        if (!decoded) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+
         const data = await parseRequestBody(req);
         let { 
           sender, 
@@ -7676,6 +7693,13 @@ const server = http.createServer(async (req, res) => {
           isExternalRecipient = false,
           isExternalSender = false
         } = data;
+
+        // 🔒 Verify sender matches authenticated user
+        if (sender && parseInt(sender) !== decoded.userId) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Cannot send from another account' }));
+          return;
+        }
 
         // توحيد العناوين فوراً لمنع التصادم
         if (senderAddress && typeof senderAddress === 'string') {

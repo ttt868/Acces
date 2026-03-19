@@ -11438,7 +11438,10 @@ if (totalCost > (currentBalance + precision)) {
 
       const response = await fetch(`${window.location.origin}/api/transaction/record`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (currentUser?.token || '')
+        },
         body: JSON.stringify(transactionData)
       });
 
