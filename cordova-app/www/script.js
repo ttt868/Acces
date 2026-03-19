@@ -5919,6 +5919,16 @@ function startGradualAccumulation() {
       accumulatedCoinsElement.textContent = formatNumberSmart(calculatedAccumulated);
     }
 
+    // ✅ نسخة مباشرة: نفس القيمة من Activity تظهر في Dashboard
+    const dashSessionEl = document.getElementById('session-earned-value');
+    if (dashSessionEl) {
+      if (calculatedAccumulated > 0) {
+        dashSessionEl.textContent = '+' + formatNumberSmart(calculatedAccumulated);
+      } else {
+        dashSessionEl.textContent = '+0.0';
+      }
+    }
+
     // ✅ تحديث hashrate في Activity و Dashboard معاً
     const totalHashrate = 10.0 * localBoostData.multiplier;
     
@@ -12975,6 +12985,14 @@ if (totalCost > (currentBalance + precision)) {
         
         // ⚡ PRELOAD: تحميل بيانات صفحة Activity مسبقاً
         preloadActivityData(currentUser.id);
+
+        // ✅ تهيئة Dashboard timer + session earned فوراً بعد تسجيل الدخول
+        checkProcessingStatus().then(() => {
+          initializeDashboardTimer();
+        }).catch(() => {
+          initializeDashboardTimer();
+        });
+
         // 🔒 Start single-device session guard
         startSessionGuard();
         
