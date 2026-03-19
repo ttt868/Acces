@@ -11310,8 +11310,19 @@ if (totalCost > (currentBalance + precision)) {
           sendButton.innerHTML = originalText;
           sendButton.disabled = false;
         }
-        // Show the actual server error message to the user
-        const errorMsg = error.message || translator.translate('Please try again');
+        // Translate server error message using known translation keys
+        const serverErrorMap = {
+          'Insufficient balance to complete transaction': 'insufficientBalance',
+          'Invalid amount': 'invalidAmount',
+          'Sender not found': 'Sender not found',
+          'Recipient not found': 'Recipient not found',
+          'Transaction already processed': 'Transaction already processed',
+          'Missing required transaction parameters': 'Missing required transaction parameters',
+          'Server error while processing transaction': 'Server error while processing transaction'
+        };
+        const rawMsg = error.message || '';
+        const translationKey = serverErrorMap[rawMsg];
+        const errorMsg = translationKey ? translator.translate(translationKey) : (rawMsg || translator.translate('Please try again'));
         showNotification(translator.translate('Transaction failed') + ': ' + errorMsg, 'error');
 
         // Refresh balance from server to ensure accuracy
