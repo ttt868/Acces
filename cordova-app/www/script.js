@@ -11213,7 +11213,7 @@ window.sendTransaction = function() {
   }
 
   if (network !== 'points') {
-    showNotification(translator.translate('onlyAccesNetwork'), 'warning');
+    // Only Access network is supported - no need to notify, just continue
   }
 
 
@@ -11276,6 +11276,8 @@ if (totalCost > (currentBalance + precision)) {
 
   // Show processing notification
   showNotification(translator.translate('processingTransaction'), 'info');
+  // Store reference to dismiss it later
+  const processingNotif = document.body.querySelector('.notification.info:last-of-type');
 
   // First check if the recipient wallet exists in the server database
   fetchRecipientFromServer(recipientAddress)
@@ -11465,13 +11467,26 @@ if (totalCost > (currentBalance + precision)) {
           if (recipientInput) recipientInput.value = '';
           if (amountInput2) amountInput2.value = '';
 
-          showNotification(translator.translate('Transaction completed successfully'), 'success');
+          // Dismiss processing notification before showing success
+          if (processingNotif) {
+            processingNotif.classList.remove('show');
+            setTimeout(() => { processingNotif.remove(); }, 300);
+          }
+
+          setTimeout(() => {
+            showNotification(translator.translate('Transaction completed successfully'), 'success');
+          }, 500);
 
           return { success: true, transaction: transaction };
         });
       })
       .catch(error => {
         console.error('Transaction error:', error);
+        // Dismiss processing notification before showing error
+        if (processingNotif) {
+          processingNotif.classList.remove('show');
+          setTimeout(() => { processingNotif.remove(); }, 300);
+        }
         if (sendButton) {
           sendButton.innerHTML = originalText;
           sendButton.disabled = false;
