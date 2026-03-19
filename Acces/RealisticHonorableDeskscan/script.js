@@ -11110,8 +11110,9 @@ if (totalCost > (currentBalance + precision)) {
 
   // Show processing notification
   showNotification(translator.translate('processingTransaction'), 'info');
-  // Store reference to dismiss it later
+  // Store reference and timestamp to ensure minimum display time
   const processingNotif = document.body.querySelector('.notification.info:last-of-type');
+  const processingShownAt = Date.now();
 
   // First check if the recipient wallet exists in the server database
   fetchRecipientFromServer(recipientAddress)
@@ -11301,26 +11302,37 @@ if (totalCost > (currentBalance + precision)) {
           if (recipientInput) recipientInput.value = '';
           if (amountInput2) amountInput2.value = '';
 
-          // Dismiss processing notification before showing success
-          if (processingNotif) {
-            processingNotif.classList.remove('show');
-            setTimeout(() => { processingNotif.remove(); }, 300);
-          }
+          // Dismiss processing notification smoothly, then show success
+          const elapsed = Date.now() - processingShownAt;
+          const minDisplayTime = 2000; // show "processing" for at least 2 seconds
+          const remainingTime = Math.max(0, minDisplayTime - elapsed);
 
           setTimeout(() => {
-            showNotification(translator.translate('Transaction completed successfully'), 'success');
-          }, 500);
+            if (processingNotif) {
+              processingNotif.classList.remove('show');
+              setTimeout(() => { processingNotif.remove(); }, 300);
+            }
+            setTimeout(() => {
+              showNotification(translator.translate('Transaction completed successfully'), 'success');
+            }, 800);
+          }, remainingTime);
 
           return { success: true, transaction: transaction };
         });
       })
       .catch(error => {
         console.error('Transaction error:', error);
-        // Dismiss processing notification before showing error
-        if (processingNotif) {
-          processingNotif.classList.remove('show');
-          setTimeout(() => { processingNotif.remove(); }, 300);
-        }
+        // Dismiss processing notification smoothly, then show error
+        const elapsed = Date.now() - processingShownAt;
+        const minDisplayTime = 2000;
+        const remainingTime = Math.max(0, minDisplayTime - elapsed);
+
+        setTimeout(() => {
+          if (processingNotif) {
+            processingNotif.classList.remove('show');
+            setTimeout(() => { processingNotif.remove(); }, 300);
+          }
+        }, remainingTime);
         if (sendButton) {
           sendButton.innerHTML = originalText;
           sendButton.disabled = false;
