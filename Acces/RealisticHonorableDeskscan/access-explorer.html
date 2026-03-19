@@ -2775,25 +2775,16 @@
                 return;
             }
 
-            // Enhanced duplicate removal with multiple criteria
+            // Remove duplicates by transaction hash only
             const uniqueTransactions = [];
             const seenHashes = new Set();
-            const seenCombinations = new Set();
 
             transactions.forEach(tx => {
                 const txHash = tx.hash || tx.txHash || tx.transactionHash || tx.id;
-                const from = tx.from || tx.fromAddress || tx.sender || '';
-                const to = tx.to || tx.toAddress || tx.recipient || '';
-                const value = tx.value || tx.amount || 0;
-                const timestamp = tx.timestamp || 0;
 
-                // Create unique combination key
-                const combinationKey = `${from}_${to}_${value}_${Math.floor(timestamp/60)}`; // Group by minute
-
-                // Only add if hash is unique AND combination is unique
-                if (txHash && !seenHashes.has(txHash) && !seenCombinations.has(combinationKey)) {
+                // Only add if hash is unique
+                if (txHash && !seenHashes.has(txHash)) {
                     seenHashes.add(txHash);
-                    seenCombinations.add(combinationKey);
                     uniqueTransactions.push(tx);
                 }
             });
