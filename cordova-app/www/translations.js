@@ -1135,7 +1135,7 @@ processingTransaction: "Traitement de la transaction en cours...",
 "Technical Whitepaper": "Livre blanc technique",
 "Comprehensive technical documentation and project overview": "Documentation technique complète et aperçu du projet",
 
-"Download Whitepaper": "Télécharger le livre blanc",
+"View Whitepaper": "Voir le livre blanc",
 "whitepaper_download_success": "Téléchargement du livre blanc réussi !",
 "pdf_generation_error": "Une erreur s'est produite lors de la génération du PDF. Veuillez réessayer.",
 
@@ -1901,7 +1901,7 @@ processingTransaction: "Procesando transacción...",
 "Technical Whitepaper": "Libro blanco técnico",
 "Comprehensive technical documentation and project overview": "Documentación técnica completa y visión general del proyecto",
 
-"Download Whitepaper": "Descargar libro blanco",
+"View Whitepaper": "Ver libro blanco",
 "whitepaper_download_success": "¡Descarga del libro blanco exitosa!",
 "pdf_generation_error": "Ocurrió un error al generar el PDF. Por favor, inténtelo de nuevo.",
 
@@ -2650,7 +2650,7 @@ processingTransaction: "Elaborazione della transazione in corso...",
 "Technical Whitepaper": "Whitepaper tecnico",
 "Comprehensive technical documentation and project overview": "Documentazione tecnica completa e panoramica del progetto",
 
-"Download Whitepaper": "Scarica il whitepaper",
+"View Whitepaper": "Visualizza il whitepaper",
 "whitepaper_download_success": "Whitepaper scaricato con successo!",
 "pdf_generation_error": "Si è verificato un errore durante la generazione del PDF. Riprova.",
 
@@ -3395,7 +3395,7 @@ processingTransaction: "İşlem işleniyor...",
 "Technical Whitepaper": "Teknik Whitepaper",
 "Comprehensive technical documentation and project overview": "Kapsamlı teknik dokümantasyon ve proje genel bakışı",
 
-"Download Whitepaper": "Whitepaper İndir",
+"View Whitepaper": "Whitepaper Görüntüle",
 "whitepaper_download_success": "Whitepaper başarıyla indirildi!",
 "pdf_generation_error": "PDF oluşturulurken hata oluştu. Lütfen tekrar deneyin.",
 
@@ -4152,7 +4152,7 @@ processingTransaction: "İşlem işleniyor...",
 "Technical Whitepaper": "तकनीकी व्हाइटपेपर",
 "Comprehensive technical documentation and project overview": "व्यापक तकनीकी दस्तावेज़ और परियोजना का अवलोकन",
 
-"Download Whitepaper": "व्हाइटपेपर डाउनलोड करें",
+"View Whitepaper": "व्हाइटपेपर देखें",
 "whitepaper_download_success": "व्हाइटपेपर सफलतापूर्वक डाउनलोड हुआ!",
 "pdf_generation_error": "PDF बनाने में त्रुटि। कृपया पुनः प्रयास करें।",
 
@@ -4901,7 +4901,7 @@ processingTransaction: "İşlem işleniyor...",
 "Technical Whitepaper": "技术白皮书",
 "Comprehensive technical documentation and project overview": "全面的技术文档与项目概览",
 
-"Download Whitepaper": "下载白皮书",
+"View Whitepaper": "查看白皮书",
 "whitepaper_download_success": "白皮书下载成功！",
 "pdf_generation_error": "生成 PDF 文件时出错，请重试。",
 
@@ -5674,7 +5674,7 @@ processingTransaction: "İşlem işleniyor...",
 "Technical Whitepaper": "技術ホワイトペーパー",
 "Comprehensive technical documentation and project overview": "包括的な技術文書とプロジェクト概要",
 
-"Download Whitepaper": "ホワイトペーパーをダウンロード",
+"View Whitepaper": "ホワイトペーパーを見る",
 "whitepaper_download_success": "ホワイトペーパーが正常にダウンロードされました！",
 "pdf_generation_error": "PDF ファイルの生成中にエラーが発生しました。もう一度お試しください。",
 
@@ -6423,7 +6423,7 @@ processingTransaction: "İşlem işleniyor...",
 "Technical Whitepaper": "기술 백서",
 "Comprehensive technical documentation and project overview": "포괄적인 기술 문서 및 프로젝트 개요",
 
-"Download Whitepaper": "백서 다운로드",
+"View Whitepaper": "백서 보기",
 "whitepaper_download_success": "백서가 성공적으로 다운로드되었습니다!",
 "pdf_generation_error": "PDF 파일 생성 중 오류가 발생했습니다. 다시 시도해주세요.",
 
@@ -7179,7 +7179,7 @@ processingTransaction: "İşlem işleniyor...",
 "Technical Whitepaper": "Whitepaper Técnico",
 "Comprehensive technical documentation and project overview": "Documentação técnica abrangente e visão geral do projeto",
 
-"Download Whitepaper": "Baixar Whitepaper",
+"View Whitepaper": "Ver Whitepaper",
 "whitepaper_download_success": "Whitepaper baixado com sucesso!",
 "pdf_generation_error": "Ocorreu um erro ao gerar o PDF. Por favor, tente novamente.",
 
@@ -7938,7 +7938,7 @@ insufficientBalance: "Недостаточно средств для этой т
 "Technical Whitepaper": "Технический Whitepaper",
 "Comprehensive technical documentation and project overview": "Комплексная техническая документация и обзор проекта",
 
-"Download Whitepaper": "Скачать Whitepaper",
+"View Whitepaper": "Просмотреть Whitepaper",
 "whitepaper_download_success": "Whitepaper успешно загружен!",
 "pdf_generation_error": "Произошла ошибка при создании PDF. Пожалуйста, попробуйте снова.",
 
@@ -8709,7 +8709,7 @@ insufficientBalance: "Недостаточно средств для этой т
 "Technical Whitepaper": "Technisches Whitepaper",
 "Comprehensive technical documentation and project overview": "Umfassende technische Dokumentation und Projektübersicht",
 
-"Download Whitepaper": "Whitepaper herunterladen",
+"View Whitepaper": "Whitepaper ansehen",
 "whitepaper_download_success": "Whitepaper erfolgreich heruntergeladen!",
 "pdf_generation_error": "Fehler bei der PDF-Erstellung. Bitte versuchen Sie es erneut.",
 
@@ -8730,7 +8730,7 @@ insufficientBalance: "Недостаточно средств для этой т
     "logout": "Abmelden",
 
     // Sidebar navigation items
-    "Dashboard": "Startseite",
+    "Dashboard": "Dashboard",
     "Processing": "Point Processing",
     "Referrals": "Empfehlungen",
     "Chat": "Chat",
@@ -9544,7 +9544,7 @@ insufficientBalance: "Недостаточно средств для этой т
     "Comprehensive technical documentation and project overview": 
       "توثيق تقني شامل ونظرة عامة على المشروع",
 
-    "Download Whitepaper": "تحميل الورقة البيضاء",
+    "View Whitepaper": "عرض الورقة البيضاء",
     "whitepaper_download_success": "تم تحميل الورقة البيضاء بنجاح!",
     "pdf_generation_error": "حدث خطأ أثناء إنشاء ملف PDF. يرجى المحاولة مرة أخرى.",
 
@@ -10296,7 +10296,7 @@ insufficientBalance: "Недостаточно средств для этой т
 "Technical Whitepaper": "Whitepaper Teknis",
 "Comprehensive technical documentation and project overview": "Dokumentasi teknis komprehensif dan gambaran proyek",
 
-"Download Whitepaper": "Unduh Whitepaper",
+"View Whitepaper": "Lihat Whitepaper",
 "whitepaper_download_success": "Whitepaper berhasil diunduh!",
 "pdf_generation_error": "Terjadi kesalahan saat membuat file PDF. Silakan coba lagi.",
 
@@ -11064,7 +11064,7 @@ insufficientBalance: "Недостаточно средств для этой т
 "Technical Whitepaper": "Biała Księga Techniczna",
 "Comprehensive technical documentation and project overview": "Kompleksowa dokumentacja techniczna i przegląd projektu",
 
-"Download Whitepaper": "Pobierz Białą Księgę",
+"View Whitepaper": "Zobacz Białą Księgę",
 "whitepaper_download_success": "Biała księga została pomyślnie pobrana!",
 "pdf_generation_error": "Wystąpił błąd podczas tworzenia pliku PDF. Spróbuj ponownie.",
 
