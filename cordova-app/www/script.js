@@ -11606,7 +11606,8 @@ if (totalCost > (currentBalance + precision)) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + (currentUser?.token || '')
+          'Authorization': 'Bearer ' + (currentUser?.token || ''),
+          'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
         },
         body: JSON.stringify(transactionData)
       });

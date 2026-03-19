@@ -7679,6 +7679,23 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        // 🔒 Session token verification — prevents forged JWT attacks
+        const sessionToken = req.headers['x-session-token'];
+        if (!sessionToken) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Session token required' }));
+          return;
+        }
+        const sessionCheck = await pool.query(
+          'SELECT session_token FROM users WHERE id = $1',
+          [decoded.userId]
+        );
+        if (!sessionCheck.rows[0] || sessionCheck.rows[0].session_token !== sessionToken) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
+          return;
+        }
+
         const data = await parseRequestBody(req);
         let { 
           sender, 
