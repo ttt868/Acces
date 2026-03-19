@@ -7845,8 +7845,9 @@ const server = http.createServer(async (req, res) => {
         const safeSender = (sender && sender !== 'undefined' && sender !== undefined) ? sender : null;
         const safeRecipient = (recipient && recipient !== 'undefined' && recipient !== undefined) ? recipient : null;
 
-        // التحقق من كفاية الرصيد للمرسل المحلي فقط
-        if (senderData && senderBalanceOld < (numericAmount + gasFee)) {
+        // التحقق من كفاية الرصيد للمرسل المحلي فقط (مع tolerance لمنع أخطاء floating-point)
+        const balancePrecision = 0.000000001;
+        if (senderData && (senderBalanceOld + balancePrecision) < (numericAmount + gasFee)) {
           // Silent - reduce console spam
           
           res.writeHead(400, { 'Content-Type': 'application/json' });
