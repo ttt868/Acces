@@ -6984,9 +6984,62 @@ function startGradualAccumulation() {
 
     console.log('Initializing dashboard timer for user:', currentUser.id);
 
+    const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+
+    // ✅ جلب boost data من السيرفر مباشرة — لا تحتاج Activity
+    try {
+      const boostResp = await fetch(_apiBase + `/api/processing/accumulated/${currentUser.id}?st=${encodeURIComponent(currentUser.sessionToken || currentUser.session_token || '')}`);
+      if (boostResp.ok) {
+        const boostData = await boostResp.json();
+        if (boostData.success) {
+          const refs = boostData.activeReferrals || 0;
+          const adBoost = boostData.adBoostActive || false;
+          let multiplier = 1.0;
+          if (refs > 0) multiplier += refs * 0.04;
+          if (adBoost) multiplier += 0.12;
+
+          if (!window.localBoostData) {
+            window.localBoostData = {
+              startTimeSec: Math.floor(currentUser.processing_start_time_seconds || Date.now() / 1000),
+              multiplier: multiplier,
+              activeReferrals: refs,
+              adBoostActive: adBoost,
+              startTimeFixed: false
+            };
+          } else {
+            window.localBoostData.multiplier = multiplier;
+            window.localBoostData.activeReferrals = refs;
+            window.localBoostData.adBoostActive = adBoost;
+          }
+
+          // ✅ حفظ القيمة المتجمعة من السيرفر
+          if (boostData.accumulatedReward !== undefined) {
+            currentUser.processing_accumulated = boostData.accumulatedReward;
+            currentUser.accumulatedReward = boostData.accumulatedReward;
+          }
+          // ✅ تحديث base_reward من السيرفر
+          if (boostData.base_reward) {
+            window.serverBaseReward = parseFloat(boostData.base_reward);
+          }
+
+          // ✅ عرض القيمة المتجمعة فوراً في Dashboard
+          const accReward = boostData.accumulatedReward || currentUser.processing_accumulated || 0;
+          if (accReward > 0) {
+            const sessionEarnedEl = document.getElementById('session-earned-value');
+            if (sessionEarnedEl) {
+              sessionEarnedEl.textContent = '+' + formatNumberSmart(accReward);
+            }
+          }
+
+          console.log(`✅ Dashboard boost data loaded: multiplier=${multiplier}, refs=${refs}, adBoost=${adBoost}, accumulated=${boostData.accumulatedReward || 0}`);
+        }
+      }
+    } catch (e) {
+      console.error('Dashboard boost fetch error:', e);
+    }
+
     try {
       //  processing page 
-      const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
       const response = await fetch(_apiBase + '/api/processing/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -7010,6 +7063,11 @@ function startGradualAccumulation() {
             currentUser.processing_start_time_seconds = Math.floor(new Date(data.processing_start_time).getTime() / 1000);
           }
           saveUserSession(currentUser);
+          
+          // ✅ تحديث base_reward من السيرفر
+          if (data.base_reward) {
+            window.serverBaseReward = parseFloat(data.base_reward);
+          }
           
           //  
           updateDashboardProcessingTimer(remainingSeconds);
@@ -7067,34 +7125,60 @@ function startGradualAccumulation() {
   function updateDashboardSessionEarned() {
     const sessionEarnedEl = document.getElementById('session-earned-value');
     if (!sessionEarnedEl) return;
-    
-    if (!currentUser || currentUser.processing_active !== 1) {
-      sessionEarnedEl.textContent = '+0.0';
-      return;
+
+    // إذا accumulated-coins فيه قيمة (Activity شغال) → انسخها فوراً
+    const accEl = document.getElementById('accumulated-coins');
+    if (accEl) {
+      const val = accEl.textContent.trim();
+      const num = parseFloat(val);
+      if (!isNaN(num) && num > 0) {
+        sessionEarnedEl.textContent = '+' + val;
+        return;
+      }
     }
 
-    const startTimeSec = Math.floor(
-      currentUser.processing_start_time_seconds ||
-      (currentUser.processing_start_time ? new Date(currentUser.processing_start_time).getTime() / 1000 : 0)
-    );
-    if (!startTimeSec) return;
+    if (!currentUser) return;
 
-    const nowSec = Math.floor(Date.now() / 1000);
-    const elapsed = Math.max(0, nowSec - startTimeSec);
-    const duration = 86400;
-    const baseReward = window.serverBaseReward || 0.25;
-    const multiplier = (window.localBoostData && window.localBoostData.multiplier) || 1.0;
-    const boostedReward = baseReward * multiplier;
+    // إذا الجلسة نشطة → احسب نفس calculateAndDisplayLocally بالضبط
+    if (currentUser.processing_active === 1) {
+      const startTimeSec = Math.floor(
+        currentUser.processing_start_time_seconds ||
+        (currentUser.processing_start_time ? new Date(currentUser.processing_start_time).getTime() / 1000 : 0)
+      );
+      if (startTimeSec) {
+        const nowSec = Math.floor(Date.now() / 1000);
+        const elapsed = Math.max(0, nowSec - startTimeSec);
 
-    let accumulated;
-    if (elapsed >= duration) {
-      accumulated = boostedReward;
-    } else {
-      accumulated = (boostedReward / duration) * elapsed;
+        var processingDuration = 86400;
+        if (currentUser.processing_end_time && currentUser.processing_start_time) {
+          var actualDuration = Math.floor((parseInt(currentUser.processing_end_time) - parseInt(currentUser.processing_start_time)) / 1000);
+          if (actualDuration > 0 && actualDuration <= 86400) {
+            processingDuration = actualDuration;
+          }
+        }
+
+        const baseReward = window.serverBaseReward || 0.25;
+        const multiplier = (window.localBoostData && window.localBoostData.multiplier) || 1.0;
+        const boostedReward = baseReward * multiplier;
+
+        let accumulated;
+        if (elapsed >= processingDuration) {
+          accumulated = boostedReward;
+        } else {
+          accumulated = (boostedReward / processingDuration) * elapsed;
+        }
+
+        if (accumulated > 0) {
+          sessionEarnedEl.textContent = '+' + formatNumberSmart(accumulated);
+          return;
+        }
+      }
     }
 
-    if (accumulated > 0) {
-      sessionEarnedEl.textContent = '+' + formatNumberSmart(accumulated);
+    // إذا الجلسة مكتملة → القيمة المحفوظة
+    const saved = currentUser.processing_accumulated || currentUser.accumulatedReward || 0;
+    if (saved > 0) {
+      sessionEarnedEl.textContent = '+' + formatNumberSmart(saved);
     }
   }
 
@@ -7107,6 +7191,7 @@ function startGradualAccumulation() {
     }
 
     let remainingSeconds = initialSeconds;
+    const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
     
     console.log('Starting dashboard countdown with', remainingSeconds, 'seconds');
 
@@ -7121,7 +7206,6 @@ function startGradualAccumulation() {
       // Update dashboard displays
       updateDashboardProcessingTimer(remainingSeconds);
       updateDashboardSessionEarned();
-     
       
       // Update hashrate display every 5 seconds (same as processing page)
       if (remainingSeconds % 5 === 0) {
@@ -7135,24 +7219,61 @@ function startGradualAccumulation() {
         
         // Update to show processing completed
         updateDashboardProcessingTimer(0);
+
+        // ✅ عرض القيمة النهائية الكاملة
+        const baseReward = window.serverBaseReward || 0.25;
+        const finalMult = (window.localBoostData && window.localBoostData.multiplier) || 1.0;
+        const finalReward = baseReward * finalMult;
+        const sessionEarnedEl = document.getElementById('session-earned-value');
+        if (sessionEarnedEl) {
+          sessionEarnedEl.textContent = '+' + formatNumberSmart(finalReward);
+        }
         
-        console.log('Dashboard countdown completed');
+        console.log('Dashboard countdown completed, final reward:', finalReward);
       }
       
-      // Sync with server every 30 seconds
-      if (remainingSeconds % 30 === 0) {
+      // ✅ جلب boost data كل 5 ثواني — نفس Activity بالضبط
+      if (remainingSeconds % 5 === 0 && remainingSeconds > 0) {
         try {
-          const response = await fetch(`/api/processing/countdown/status/${currentUser.id}`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.remaining_seconds !== undefined) {
-              remainingSeconds = data.remaining_seconds;
-              console.log('Dashboard timer synced with server:', remainingSeconds);
+          const boostResp = await fetch(_apiBase + `/api/processing/accumulated/${currentUser.id}?st=${encodeURIComponent(currentUser.sessionToken || currentUser.session_token || '')}`);
+          if (boostResp.ok) {
+            const bData = await boostResp.json();
+            if (bData.success) {
+              const refs = bData.activeReferrals || 0;
+              const adBoost = bData.adBoostActive || false;
+              let mult = 1.0;
+              if (refs > 0) mult += refs * 0.04;
+              if (adBoost) mult += 0.12;
+
+              if (!window.localBoostData) {
+                window.localBoostData = { startTimeSec: Math.floor(currentUser.processing_start_time_seconds || Date.now() / 1000), multiplier: mult, activeReferrals: refs, adBoostActive: adBoost, startTimeFixed: false };
+              } else {
+                window.localBoostData.multiplier = mult;
+                window.localBoostData.activeReferrals = refs;
+                window.localBoostData.adBoostActive = adBoost;
+              }
+              if (bData.base_reward) {
+                window.serverBaseReward = parseFloat(bData.base_reward);
+              }
             }
           }
-        } catch (error) {
-          console.error('Error syncing dashboard timer:', error);
-        }
+        } catch (e) {}
+      }
+
+      // مزامنة timer مع السيرفر كل 30 ثانية
+      if (remainingSeconds % 30 === 0 && remainingSeconds > 0) {
+        try {
+          const timerResp = await fetch(_apiBase + `/api/processing/countdown/status/${currentUser.id}`);
+          if (timerResp.ok) {
+            const data = await timerResp.json();
+            if (data.success && data.remaining_seconds !== undefined) {
+              remainingSeconds = data.remaining_seconds;
+            }
+            if (data.base_reward) {
+              window.serverBaseReward = parseFloat(data.base_reward);
+            }
+          }
+        } catch (error) {}
       }
     }, 1000);
   }
