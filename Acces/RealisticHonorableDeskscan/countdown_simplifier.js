@@ -163,15 +163,12 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
         return true;
       }
 
-      // 🔒 SESSION TOKEN VALIDATION
-      if (sessionToken) {
-        const tokenValid = await validateSessionTokenSimplifier(userId, sessionToken);
-        if (!tokenValid) {
-          console.log(`🔒 [SIMPLIFIER] BLOCKED: Invalid session token for user ${userId} on countdown/complete`);
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
-          return true;
-        }
+      // 🔒 SECURITY: Mandatory session token validation
+      if (!sessionToken || !(await validateSessionTokenSimplifier(userId, sessionToken))) {
+        console.log(`🔒 [SIMPLIFIER] BLOCKED: Invalid session token for user ${userId} on countdown/complete`);
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
+        return true;
       }
 
       // Get current user data including boost
@@ -297,15 +294,12 @@ export async function handleSimplifiedProcessingAPI(req, res, pathname, method) 
       return true;
     }
 
-    // 🔒 SESSION TOKEN VALIDATION
-    if (sessionToken) {
-      const tokenValid = await validateSessionTokenSimplifier(userId, sessionToken);
-      if (!tokenValid) {
-        console.log(`🔒 [SIMPLIFIER] BLOCKED: Invalid session token for user ${userId} on countdown/start`);
-        res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
-        return true;
-      }
+    // 🔒 SECURITY: Mandatory session token validation
+    if (!sessionToken || !(await validateSessionTokenSimplifier(userId, sessionToken))) {
+      console.log(`🔒 [SIMPLIFIER] BLOCKED: Invalid session token for user ${userId} on countdown/start`);
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Session expired. Please login again.', requireRelogin: true }));
+      return true;
     }
 
     const now = Math.floor(Date.now() / 1000);

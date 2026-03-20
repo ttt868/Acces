@@ -2523,6 +2523,15 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/processing/countdown-status' && req.method === 'GET') {
     try {
+      // 🔒 SECURITY: Require Bearer token
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      const decoded = await verifyToken(token);
+      if (!decoded) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+        return;
+      }
+
       const url = new URL(req.url, `http://${req.headers.host}`);
       const userId = parsedUrl.searchParams.get('userId');
       const result = await getProcessingCountdownStatus(userId);
@@ -3352,8 +3361,15 @@ const server = http.createServer(async (req, res) => {
 
     // ========== WEB PUSH NOTIFICATION ENDPOINTS ==========
     
-    // POST /api/push/test - Test send web push to a user (for debugging)
+    // POST /api/push/test - BLOCKED (debug endpoint)
     if (pathname === '/api/push/test' && req.method === 'POST') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Endpoint disabled' }));
+      return;
+    }
+
+    // POST /api/push/test - BLOCKED (original code below, unreachable)
+    if (false) {
       try {
         const { userId } = await parseRequestBody(req);
         console.log('🔔 [PUSH TEST] Testing push for userId:', userId);
@@ -3429,8 +3445,14 @@ const server = http.createServer(async (req, res) => {
       }
     }
     
-    // GET /api/push/subscriptions/:userId - Check subscriptions for a user
+    // GET /api/push/subscriptions/:userId - BLOCKED (debug endpoint)
     if (pathname.startsWith('/api/push/subscriptions/') && req.method === 'GET') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Endpoint disabled' }));
+      return;
+    }
+
+    if (false) {
       try {
         const userId = pathname.split('/').pop();
         const result = await pool.query(
@@ -3477,6 +3499,15 @@ const server = http.createServer(async (req, res) => {
       try {
         console.log('🔔 [PUSH] Received subscription request');
         const { userId, subscription, language } = await parseRequestBody(req);
+
+        // 🔒 SECURITY: Verify Bearer token matches userId
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const decoded = await verifyToken(token);
+        if (!decoded || decoded.userId !== parseInt(userId)) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
         console.log('🔔 [PUSH] userId:', userId, 'endpoint:', subscription?.endpoint?.substring(0, 50), 'language:', language);
         
         if (!userId || !subscription || !subscription.endpoint) {
@@ -3520,6 +3551,15 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/push/update-language' && req.method === 'POST') {
       try {
         const { userId, endpoint, language } = await parseRequestBody(req);
+
+        // 🔒 SECURITY: Verify Bearer token matches userId
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const decoded = await verifyToken(token);
+        if (!decoded || decoded.userId !== parseInt(userId)) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
         
         if (!userId || !language) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -3555,6 +3595,15 @@ const server = http.createServer(async (req, res) => {
     // DELETE /api/push/unsubscribe - Remove push subscription
     if (pathname === '/api/push/unsubscribe' && req.method === 'DELETE') {
       try {
+        // 🔒 SECURITY: Require Bearer token
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const decoded = await verifyToken(token);
+        if (!decoded) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+
         const { endpoint } = await parseRequestBody(req);
         
         if (!endpoint) {
@@ -3580,9 +3629,18 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    // POST /api/push/renew-subscription - Auto-renew expired subscription (Facebook/Instagram style)
+    // POST /api/push/renew-subscription - Auto-renew expired subscription
     if (pathname === '/api/push/renew-subscription' && req.method === 'POST') {
       try {
+        // 🔒 SECURITY: Require Bearer token
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const decoded = await verifyToken(token);
+        if (!decoded) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+
         const { oldEndpoint, newSubscription } = await parseRequestBody(req);
         
         if (!newSubscription || !newSubscription.endpoint) {
@@ -3651,6 +3709,15 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/fcm/register' && req.method === 'POST') {
       try {
         const { userId, token, platform, language } = await parseRequestBody(req);
+
+        // 🔒 SECURITY: Verify Bearer token matches userId
+        const authToken = req.headers.authorization?.replace('Bearer ', '');
+        const decoded = await verifyToken(authToken);
+        if (!decoded || decoded.userId !== parseInt(userId)) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
         
         if (!userId || !token) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -3685,8 +3752,14 @@ const server = http.createServer(async (req, res) => {
 
     // DELETE /api/fcm/unregister - Remove FCM token
 
-    // POST /api/fcm/send - Send FCM notification (for testing)
+    // POST /api/fcm/send - BLOCKED (testing endpoint)
     if (pathname === '/api/fcm/send' && req.method === 'POST') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Endpoint disabled' }));
+      return;
+    }
+
+    if (false) {
       try {
         const { userId, title, body } = await parseRequestBody(req);
         
@@ -3711,6 +3784,15 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/fcm/unregister' && req.method === 'DELETE') {
       try {
+        // 🔒 SECURITY: Require Bearer token
+        const authToken = req.headers.authorization?.replace('Bearer ', '');
+        const decoded = await verifyToken(authToken);
+        if (!decoded) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+
         const { token } = await parseRequestBody(req);
         
         if (!token) {
@@ -3763,6 +3845,15 @@ const server = http.createServer(async (req, res) => {
     // GET /api/ad-boost/check - Check if user is eligible to watch an ad
     if (pathname === '/api/ad-boost/check' && req.method === 'GET') {
       try {
+        // 🔒 SECURITY: Require Bearer token
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const decoded = await verifyToken(token);
+        if (!decoded) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+
         const url = new URL(req.url, `http://${req.headers.host}`);
         const userId = parsedUrl.searchParams.get('userId');
 
@@ -3796,6 +3887,14 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const { userId, transactionId, adCompleted, session_token } = await parseRequestBody(req);
+
+        // 🔒 SECURITY: Authenticate request - prevent free token injection
+        const authGrant = await authenticateRequest(req, userId);
+        if (authGrant.error) {
+          res.writeHead(authGrant.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: authGrant.error }));
+          return;
+        }
 
         if (!userId || !transactionId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -3834,6 +3933,15 @@ const server = http.createServer(async (req, res) => {
     // GET /api/ad-boost/status - Get current ad boost status
     if (pathname === '/api/ad-boost/status' && req.method === 'GET') {
       try {
+        // 🔒 SECURITY: Require Bearer token
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const decoded = await verifyToken(token);
+        if (!decoded) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+
         const url = new URL(req.url, `http://${req.headers.host}`);
         const userId = parsedUrl.searchParams.get('userId');
 
@@ -4103,6 +4211,15 @@ const server = http.createServer(async (req, res) => {
         const userId = pathname.replace('/api/wallet/auto-create/', '');
         const body = await parseRequestBody(req);
         const email = body.email;
+
+        // 🔒 SECURITY: Verify Bearer token matches userId
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const decoded = await verifyToken(token);
+        if (!decoded || decoded.userId !== parseInt(userId)) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
 
         // Silent - reduce console spam
 
@@ -5479,14 +5596,11 @@ const server = http.createServer(async (req, res) => {
       try {
         const { userId, sessionToken } = await parseRequestBody(req);
 
-        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
-        let _sessionValid = true;
-        if (sessionToken) {
-          const tokenValid = await validateSessionToken(userId, sessionToken);
-          if (!tokenValid) {
-            console.log(`🔒 Session mismatch for user ${userId} on /api/processing/start - continuing silently`);
-            _sessionValid = false;
-          }
+        // 🔒 SECURITY: Mandatory session token validation
+        if (!sessionToken || !(await validateSessionToken(userId, sessionToken))) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
+          return;
         }
 
         const now = Math.floor(Date.now() / 1000);
@@ -5784,14 +5898,11 @@ const server = http.createServer(async (req, res) => {
         const userData = await parseRequestBody(req);
         const { userId, forceStatus, sessionToken } = userData;
 
-        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
-        let _sessionValid = true;
-        if (sessionToken) {
-          const tokenValid = await validateSessionToken(userId, sessionToken);
-          if (!tokenValid) {
-            console.log(`🔒 Session mismatch for user ${userId} on /api/update-processing - continuing silently`);
-            _sessionValid = false;
-          }
+        // 🔒 SECURITY: Mandatory session token validation
+        if (!sessionToken || !(await validateSessionToken(userId, sessionToken))) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
+          return;
         }
         const now = Date.now();
 
@@ -9207,14 +9318,11 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
-        let _sessionValid = true;
-        if (sessionToken) {
-          const tokenValid = await validateSessionToken(userId, sessionToken);
-          if (!tokenValid) {
-            console.log(`🔒 Session mismatch for user ${userId} on /api/processing/countdown/complete - continuing silently`);
-            _sessionValid = false;
-          }
+        // 🔒 SECURITY: Mandatory session token validation
+        if (!sessionToken || !(await validateSessionToken(userId, sessionToken))) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
+          return;
         }
 
         // Import the completeProcessing function
@@ -9313,14 +9421,11 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
-        let _sessionValid = true;
-        if (sessionToken) {
-          const tokenValid = await validateSessionToken(userId, sessionToken);
-          if (!tokenValid) {
-            console.log(`🔒 Session mismatch for user ${userId} on /api/processing/countdown/start - continuing silently`);
-            _sessionValid = false;
-          }
+        // 🔒 SECURITY: Mandatory session token validation
+        if (!sessionToken || !(await validateSessionToken(userId, sessionToken))) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
+          return;
         }
 
         const now = Math.floor(Date.now() / 1000);

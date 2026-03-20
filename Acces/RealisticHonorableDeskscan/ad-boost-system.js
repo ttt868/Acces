@@ -120,7 +120,11 @@
 
         const response = await fetch('/api/ad-boost/grant', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'X-Session-Token': localStorage.getItem('session_token') || ''
+          },
           body: JSON.stringify({
             userId: currentUserId,
             transactionId: transactionId,
@@ -190,7 +194,11 @@
     try {
       // Check eligibility مع تحديث فوري
       console.log('Checking eligibility at: /api/ad-boost/check?userId=' + userId);
-      const response = await fetch(`/api/ad-boost/check?userId=${userId}`);
+      const response = await fetch(`/api/ad-boost/check?userId=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
       const result = await response.json();
 
       console.log('Eligibility check result:', result);
@@ -513,7 +521,11 @@
     if (!userId) return;
 
     try {
-      const response = await fetch(`/api/ad-boost/status?userId=${userId}`);
+      const response = await fetch(`/api/ad-boost/status?userId=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
       const result = await response.json();
 
       if (result.success && result.exists) {
@@ -549,7 +561,11 @@
     if (!window.currentUser || !window.currentUser.id) return;
 
     try {
-      const response = await fetch(`/api/ad-boost/status?userId=${window.currentUser.id}`);
+      const response = await fetch(`/api/ad-boost/status?userId=${window.currentUser.id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
       const data = await response.json();
 
       if (data.success && data.boostActive) {

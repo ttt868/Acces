@@ -265,7 +265,8 @@ async function registerPushNotifications(userId) {
     const response = await fetch(_apiBase + '/api/push/subscribe', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
       body: JSON.stringify({
         userId: userId,
@@ -13097,7 +13098,10 @@ if (totalCost > (currentBalance + precision)) {
       // تشغيل في الخلفية بدون انتظار
       fetch(`/api/wallet/auto-create/${userData.user.id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({ email: userData.user.email })
       }).then(walletResponse => {
         if (walletResponse.ok) {

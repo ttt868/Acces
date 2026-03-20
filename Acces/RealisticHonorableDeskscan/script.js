@@ -253,7 +253,8 @@ async function registerPushNotifications(userId) {
     const response = await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
       body: JSON.stringify({
         userId: userId,
@@ -12925,7 +12926,10 @@ if (totalCost > (currentBalance + precision)) {
       // تشغيل في الخلفية بدون انتظار
       fetch(`/api/wallet/auto-create/${userData.user.id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({ email: userData.user.email })
       }).then(walletResponse => {
         if (walletResponse.ok) {
@@ -13724,12 +13728,32 @@ window.cancelProfileChanges = cancelProfileChanges;
          // Update user data with default avatar (not null)
          if (currentUser) {
            currentUser.avatar = defaultAvatar;
+           currentUser.lastProfileUpdate = Date.now();
 
-           // Save the change immediately to server with default avatar - without additional notification
-           if (typeof saveProfileChanges === 'function') {
-             // Pass true as third parameter to prevent showing "updated successfully" notification
-             saveProfileChanges(currentUser.name, defaultAvatar, true);
-           }
+           // Send delete directly to server
+           fetch(window.location.origin + '/api/profile/delete-photo', {
+             method: 'POST',
+             headers: {
+               'Content-Type': 'application/json',
+               'Authorization': 'Bearer ' + (currentUser?.token || ''),
+               'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+             },
+             body: JSON.stringify({ userId: currentUser.id })
+           }).then(function(r) { return r.json(); }).then(function(data) {
+             if (!data.success) {
+               fetch(window.location.origin + '/api/users/update-profile', {
+                 method: 'PUT',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+               }).catch(function() {});
+             }
+           }).catch(function() {
+             fetch(window.location.origin + '/api/users/update-profile', {
+               method: 'PUT',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+             }).catch(function() {});
+           });
 
            // Show single success notification only
            if (typeof showNotification === 'function') {
@@ -14257,9 +14281,33 @@ window.cancelProfileChanges = cancelProfileChanges;
 
       if (currentUser) {
         currentUser.avatar = defaultAvatar;
-        if (typeof saveProfileChanges === 'function') {
-          saveProfileChanges(currentUser.name, defaultAvatar, true);
-        }
+        currentUser.lastProfileUpdate = Date.now();
+
+        // Send delete directly to server
+        fetch(window.location.origin + '/api/profile/delete-photo', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + (currentUser?.token || ''),
+            'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+          },
+          body: JSON.stringify({ userId: currentUser.id })
+        }).then(function(r) { return r.json(); }).then(function(data) {
+          if (!data.success) {
+            fetch(window.location.origin + '/api/users/update-profile', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+            }).catch(function() {});
+          }
+        }).catch(function() {
+          fetch(window.location.origin + '/api/users/update-profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
+          }).catch(function() {});
+        });
+
         if (typeof showNotification === 'function') {
           showNotification('Profile photo changed to default', 'success');
         }
