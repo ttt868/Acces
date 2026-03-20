@@ -2767,6 +2767,14 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        // 🔒 SECURITY: Validate session token
+        const sessionToken = req.headers['x-session-token'];
+        if (!await validateSessionToken(decoded.userId, sessionToken)) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid session' }));
+          return;
+        }
+
         const userId = decoded.userId;
         
         // Get current missions
@@ -2861,6 +2869,14 @@ const server = http.createServer(async (req, res) => {
         if (!decoded) {
           res.writeHead(401, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Unauthorized' }));
+          return;
+        }
+
+        // 🔒 SECURITY: Validate session token
+        const sessionToken = req.headers['x-session-token'];
+        if (!await validateSessionToken(decoded.userId, sessionToken)) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid session' }));
           return;
         }
 
@@ -3060,6 +3076,15 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        // 🔒 SECURITY: Validate session token
+        const sessionToken = req.headers['x-session-token'];
+        if (!await validateSessionToken(decoded.userId, sessionToken)) {
+          client.release();
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid session' }));
+          return;
+        }
+
         const userId = decoded.userId;
         const { missionId } = await parseRequestBody(req);
         
@@ -3233,6 +3258,15 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        // 🔒 SECURITY: Validate session token
+        const sessionToken = req.headers['x-session-token'];
+        if (!await validateSessionToken(decoded.userId, sessionToken)) {
+          client.release();
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid session' }));
+          return;
+        }
+
         const userId = decoded.userId;
         const { missionId } = await parseRequestBody(req);
 
@@ -3306,6 +3340,14 @@ const server = http.createServer(async (req, res) => {
         if (!decoded) {
           res.writeHead(401, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Unauthorized' }));
+          return;
+        }
+
+        // 🔒 SECURITY: Validate session token
+        const sessionToken = req.headers['x-session-token'];
+        if (!await validateSessionToken(decoded.userId, sessionToken)) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid session' }));
           return;
         }
 
@@ -3855,7 +3897,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         const url = new URL(req.url, `http://${req.headers.host}`);
-        const userId = parsedUrl.searchParams.get('userId');
+        const userId = url.searchParams.get('userId');
 
         if (!userId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -3943,7 +3985,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         const url = new URL(req.url, `http://${req.headers.host}`);
-        const userId = parsedUrl.searchParams.get('userId');
+        const userId = url.searchParams.get('userId');
 
         if (!userId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -4283,8 +4325,16 @@ const server = http.createServer(async (req, res) => {
 
         // 🔒 Return existing session token (don't regenerate on data fetch)
         // Token is only generated on actual login (signin/signup/google)
-        // 🔒 Strip sensitive fields — never expose password or raw private key via profile endpoint
-        const { password, wallet_private_key, ...safeUser } = user;
+        // 🔒 Strip sensitive fields — never expose password, private key, or pin_hash
+        const { password, wallet_private_key, pin_hash, ...safeUser } = user;
+
+        // 🔒 Only include session_token if request has valid Bearer token matching this user
+        // This allows the app to restore sessions, but prevents unauthenticated session theft
+        const authToken = req.headers.authorization?.replace('Bearer ', '');
+        const decoded = authToken ? await verifyToken(authToken) : null;
+        if (!decoded || decoded.userId !== user.id) {
+          delete safeUser.session_token;
+        }
 
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ user: safeUser, success: true }));
@@ -4667,10 +4717,11 @@ const server = http.createServer(async (req, res) => {
         // ✅ EXISTING USER: موجود بالفعل - إرجاع البيانات مباشرة (رمز الإحالة من DB)
         // 🔒 Don't regenerate session_token here — this is a data fetch, not a login
         if (existingUser.rows.length > 0) {
-          const existingUserData = existingUser.rows[0];
+          // 🔒 Strip sensitive fields — never expose session_token, pin_hash, password, or private key
+          const { password: pw, wallet_private_key: wpk, session_token: st, pin_hash: ph, ...safeExisting } = existingUser.rows[0];
           
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-          res.end(JSON.stringify({ user: existingUserData, success: true }));
+          res.end(JSON.stringify({ user: safeExisting, success: true }));
           return;
         }
 
@@ -4827,8 +4878,9 @@ const server = http.createServer(async (req, res) => {
               
               if (existingUserData.rows.length > 0) {
                 console.log(`Returning existing user after duplicate key error: ${userData.email}`);
+                const { password: p2, wallet_private_key: wpk2, session_token: st2, pin_hash: ph2, ...safeDup } = existingUserData.rows[0];
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-                res.end(JSON.stringify({ user: existingUserData.rows[0], success: true }));
+                res.end(JSON.stringify({ user: safeDup, success: true }));
                 return;
               }
             } catch (fetchError) {
@@ -4846,8 +4898,14 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    // POST /api/auth/google - Save user from Google OAuth
+    // POST /api/auth/google - BLOCKED (unused endpoint - web uses /api/users, login via Google Identity Services)
     if (pathname === '/api/auth/google' && req.method === 'POST') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Endpoint disabled' }));
+      return;
+    }
+
+    if (false) {
       try {
         const { email, name, googleId, picture } = await parseRequestBody(req);
         
@@ -5974,8 +6032,14 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // POST /api/network/migrate-balances - ترحيل جميع الأرصدة إلى الشبكة
+    // POST /api/network/migrate-balances - BLOCKED (admin endpoint)
     if (pathname === '/api/network/migrate-balances' && req.method === 'POST') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Endpoint disabled' }));
+      return;
+    }
+
+    if (false) {
       try {
         const { migrateBalancesToNetwork } = await import('./network-api.js');
         
@@ -5994,8 +6058,14 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // POST /api/network/sync-all-balances - مزامنة شاملة لجميع الأرصدة
+    // POST /api/network/sync-all-balances - BLOCKED (admin endpoint)
     if (pathname === '/api/network/sync-all-balances' && req.method === 'POST') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Endpoint disabled' }));
+      return;
+    }
+
+    if (false) {
       try {
         const { syncAllBalancesToNetwork } = await import('./network-api.js');
         
@@ -6059,8 +6129,14 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // POST /api/network/force-sync/:userId - فرض مزامنة رصيد مستخدم محدد
+    // POST /api/network/force-sync/:userId - BLOCKED (admin endpoint)
     if (pathname.match(/^\/api\/blockchain\/force-sync\/\d+$/) && req.method === 'POST') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Endpoint disabled' }));
+      return;
+    }
+
+    if (false) {
       try {
         const userId = pathname.split('/')[4];
         const { ensureUserBalanceSync } = await import('./network-api.js');
@@ -6082,8 +6158,14 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // POST /api/network/sync-transactions - مزامنة المعاملات مع البلوك تشين
+    // POST /api/network/sync-transactions - BLOCKED (admin endpoint)
     if (pathname === '/api/network/sync-transactions' && req.method === 'POST') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Endpoint disabled' }));
+      return;
+    }
+
+    if (false) {
       try {
         const { syncTransactionsToNetwork } = await import('./network-api.js');
         
@@ -6992,8 +7074,17 @@ const server = http.createServer(async (req, res) => {
     // POST /api/wallet/set-active - Set active wallet for user
     if (pathname === '/api/wallet/set-active' && req.method === 'POST') {
       try {
-        const { handleSetActiveWallet } = await import('./wallet-api.js');
         const data = await parseRequestBody(req);
+
+        // 🔒 SECURITY: Authenticate request
+        const authWallet = await authenticateRequest(req, data.userId);
+        if (authWallet.error) {
+          res.writeHead(authWallet.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: authWallet.error }));
+          return;
+        }
+
+        const { handleSetActiveWallet } = await import('./wallet-api.js');
 
         // Process the request
         const result = await handleSetActiveWallet({ body: data }, res);
@@ -11072,8 +11163,14 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // Endpoint لمزامنة الأرصدة من blockchain إلى قاعدة البيانات
+    // Endpoint لمزامنة الأرصدة من blockchain إلى قاعدة البيانات - BLOCKED (admin endpoint)
     if (pathname === '/api/admin/sync-balances' && req.method === 'POST') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Endpoint disabled' }));
+      return;
+    }
+
+    if (false) {
       try {
         console.log('🔄 Starting balance synchronization from blockchain to database...');
         

@@ -402,7 +402,8 @@
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Session-Token': user.sessionToken || user.session_token || ''
         }
       });
 
@@ -585,7 +586,8 @@
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Session-Token': user.sessionToken || user.session_token || ''
         },
         body: JSON.stringify({
           missionId: missionId,
@@ -655,7 +657,8 @@
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Session-Token': user.sessionToken || user.session_token || ''
         },
         body: JSON.stringify({ missionId })
       });
@@ -743,7 +746,8 @@
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Session-Token': user.sessionToken || user.session_token || ''
         },
         body: JSON.stringify({ missionId, page })
       });
@@ -795,7 +799,8 @@
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Session-Token': user.sessionToken || user.session_token || ''
         }
       });
 

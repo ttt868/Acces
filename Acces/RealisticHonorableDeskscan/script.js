@@ -12894,7 +12894,11 @@ if (totalCost > (currentBalance + precision)) {
     const apiUrl = `${window.location.origin}/api/user/${encodeURIComponent(email)}`;
     console.log('Checking if user exists at:', apiUrl);
 
-    const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+      }
+    });
 
     // Handle 404 as "user not found" rather than an error
     if (response.status === 404) {

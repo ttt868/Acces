@@ -47,17 +47,19 @@
     var transactionId = 'ad_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
     var _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
+    var _sessionToken = (window.currentUser && (window.currentUser.sessionToken || window.currentUser.session_token)) || '';
     fetch(_apiBase + '/api/ad-boost/grant', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + localStorage.getItem('token'),
-        'X-Session-Token': localStorage.getItem('session_token') || ''
+        'X-Session-Token': _sessionToken
       },
       body: JSON.stringify({
         userId: currentUserId,
         transactionId: transactionId,
-        adCompleted: true
+        adCompleted: true,
+        session_token: _sessionToken
       })
     })
     .then(function(response) {

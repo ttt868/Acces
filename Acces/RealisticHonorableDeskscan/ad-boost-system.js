@@ -118,17 +118,19 @@
       try {
         const transactionId = `ad_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+        const _sessionToken = (window.currentUser && (window.currentUser.sessionToken || window.currentUser.session_token)) || '';
         const response = await fetch('/api/ad-boost/grant', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'X-Session-Token': localStorage.getItem('session_token') || ''
+            'X-Session-Token': _sessionToken
           },
           body: JSON.stringify({
             userId: currentUserId,
             transactionId: transactionId,
-            adCompleted: true
+            adCompleted: true,
+            session_token: _sessionToken
           })
         });
 
