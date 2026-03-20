@@ -9605,6 +9605,15 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/processing/complete' && req.method === 'POST') {
       try {
         const { userId, completed, forceStop, addReward, accumulated } = await parseRequestBody(req);
+
+        // 🔒 SECURITY: Authenticate request
+        const authComplete = await authenticateRequest(req, userId);
+        if (authComplete.error) {
+          res.writeHead(authComplete.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: authComplete.error }));
+          return;
+        }
+
         console.log(`Received processing completion request for user ${userId}, completed: ${completed}, forceStop: ${forceStop}, addReward: ${addReward}, accumulated: ${accumulated}`);
 
         // First check if user exists
@@ -9737,6 +9746,14 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ success: false, error: 'Missing required parameters' }));
           return;
         }
+
+        // 🔒 SECURITY: Authenticate request
+        const authHistAdd = await authenticateRequest(req, userId);
+        if (authHistAdd.error) {
+          res.writeHead(authHistAdd.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: authHistAdd.error }));
+          return;
+        }
         
         // Insert new history entry
         const result = await pool.query(
@@ -9769,6 +9786,14 @@ const server = http.createServer(async (req, res) => {
         if (!entryId || !userId || amount === undefined) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Missing required parameters' }));
+          return;
+        }
+
+        // 🔒 SECURITY: Authenticate request
+        const authHistUpd = await authenticateRequest(req, userId);
+        if (authHistUpd.error) {
+          res.writeHead(authHistUpd.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: authHistUpd.error }));
           return;
         }
         
@@ -10282,6 +10307,14 @@ const server = http.createServer(async (req, res) => {
           console.log('Profile update failed: No user ID provided');
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'User ID is required' }));
+          return;
+        }
+
+        // 🔒 SECURITY: Authenticate request
+        const authProfile = await authenticateRequest(req, userId);
+        if (authProfile.error) {
+          res.writeHead(authProfile.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: authProfile.error }));
           return;
         }
 

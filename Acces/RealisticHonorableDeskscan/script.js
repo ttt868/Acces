@@ -1653,7 +1653,9 @@ For more information, visit our platform at: ${window.location.origin}
       const response = await fetch('/api/users/update-profile', {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (currentUser?.token || ''),
+          'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
         },
         body: JSON.stringify({
           userId: currentUser.id,
@@ -13743,14 +13745,14 @@ window.cancelProfileChanges = cancelProfileChanges;
              if (!data.success) {
                fetch(window.location.origin + '/api/users/update-profile', {
                  method: 'PUT',
-                 headers: { 'Content-Type': 'application/json' },
+                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (currentUser?.token || ''), 'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || '' },
                  body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
                }).catch(function() {});
              }
            }).catch(function() {
              fetch(window.location.origin + '/api/users/update-profile', {
                method: 'PUT',
-               headers: { 'Content-Type': 'application/json' },
+               headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (currentUser?.token || ''), 'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || '' },
                body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
              }).catch(function() {});
            });
@@ -14102,7 +14104,9 @@ window.cancelProfileChanges = cancelProfileChanges;
              const response = await fetch(`${window.location.origin}${endpoint.url}`, {
                method: endpoint.method,
                headers: {
-                 'Content-Type': 'application/json'
+                 'Content-Type': 'application/json',
+                 'Authorization': 'Bearer ' + (currentUser?.token || ''),
+                 'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
                },
                body: JSON.stringify(updateData),
                timeout: 8000
@@ -14296,14 +14300,14 @@ window.cancelProfileChanges = cancelProfileChanges;
           if (!data.success) {
             fetch(window.location.origin + '/api/users/update-profile', {
               method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (currentUser?.token || ''), 'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || '' },
               body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
             }).catch(function() {});
           }
         }).catch(function() {
           fetch(window.location.origin + '/api/users/update-profile', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (currentUser?.token || ''), 'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || '' },
             body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
           }).catch(function() {});
         });
