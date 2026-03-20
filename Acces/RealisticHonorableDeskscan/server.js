@@ -3887,15 +3887,6 @@ const server = http.createServer(async (req, res) => {
     // GET /api/ad-boost/check - Check if user is eligible to watch an ad
     if (pathname === '/api/ad-boost/check' && req.method === 'GET') {
       try {
-        // 🔒 SECURITY: Require Bearer token
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        const decoded = await verifyToken(token);
-        if (!decoded) {
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
-          return;
-        }
-
         const url = new URL(req.url, `http://${req.headers.host}`);
         const userId = url.searchParams.get('userId');
 
@@ -3975,15 +3966,6 @@ const server = http.createServer(async (req, res) => {
     // GET /api/ad-boost/status - Get current ad boost status
     if (pathname === '/api/ad-boost/status' && req.method === 'GET') {
       try {
-        // 🔒 SECURITY: Require Bearer token
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        const decoded = await verifyToken(token);
-        if (!decoded) {
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
-          return;
-        }
-
         const url = new URL(req.url, `http://${req.headers.host}`);
         const userId = url.searchParams.get('userId');
 
@@ -4327,14 +4309,6 @@ const server = http.createServer(async (req, res) => {
         // Token is only generated on actual login (signin/signup/google)
         // 🔒 Strip sensitive fields — never expose password, private key, or pin_hash
         const { password, wallet_private_key, pin_hash, ...safeUser } = user;
-
-        // 🔒 Only include session_token if request has valid Bearer token matching this user
-        // This allows the app to restore sessions, but prevents unauthenticated session theft
-        const authToken = req.headers.authorization?.replace('Bearer ', '');
-        const decoded = authToken ? await verifyToken(authToken) : null;
-        if (!decoded || decoded.userId !== user.id) {
-          delete safeUser.session_token;
-        }
 
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ user: safeUser, success: true }));
