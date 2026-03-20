@@ -48,11 +48,12 @@
 
     var _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
     var _sessionToken = (window.currentUser && (window.currentUser.sessionToken || window.currentUser.session_token)) || '';
+    var _bearerToken = (window.currentUser && window.currentUser.token) || '';
     fetch(_apiBase + '/api/ad-boost/grant', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('token'),
+        'Authorization': 'Bearer ' + _bearerToken,
         'X-Session-Token': _sessionToken
       },
       body: JSON.stringify({
@@ -101,11 +102,7 @@
     console.log('[BOOST] showAdBoostModal for user:', userId);
 
     var _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
-    fetch(_apiBase + '/api/ad-boost/check?userId=' + userId, {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    })
+    fetch(_apiBase + '/api/ad-boost/check?userId=' + userId)
     .then(function(response) { return response.json(); })
     .then(function(result) {
       console.log('[BOOST] Eligibility:', JSON.stringify(result));
@@ -315,11 +312,7 @@
     var userId = window.currentUser && window.currentUser.id;
 
     var _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
-    fetch(_apiBase + '/api/ad-boost/status?userId=' + userId, {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    })
+    fetch(_apiBase + '/api/ad-boost/status?userId=' + userId)
     .then(function(response) { return response.json(); })
     .then(function(result) {
       if (result.success && result.exists && result.boostActive) {
@@ -345,11 +338,7 @@
     if (!window.currentUser || !window.currentUser.id) return;
 
     var _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
-    fetch(_apiBase + '/api/ad-boost/status?userId=' + window.currentUser.id, {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    })
+    fetch(_apiBase + '/api/ad-boost/status?userId=' + window.currentUser.id)
     .then(function(response) { return response.json(); })
     .then(function(data) {
       if (data.success && data.boostActive) {

@@ -4689,10 +4689,10 @@ const server = http.createServer(async (req, res) => {
         );
 
         // ✅ EXISTING USER: موجود بالفعل - إرجاع البيانات مباشرة (رمز الإحالة من DB)
-        // 🔒 Don't regenerate session_token here — this is a data fetch, not a login
+        // session_token must be returned so the client can use it for countdown auth
         if (existingUser.rows.length > 0) {
-          // 🔒 Strip sensitive fields — never expose session_token, pin_hash, password, or private key
-          const { password: pw, wallet_private_key: wpk, session_token: st, pin_hash: ph, ...safeExisting } = existingUser.rows[0];
+          // Strip only truly sensitive fields — password, private key, pin_hash
+          const { password: pw, wallet_private_key: wpk, pin_hash: ph, ...safeExisting } = existingUser.rows[0];
           
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
           res.end(JSON.stringify({ user: safeExisting, success: true }));
@@ -10991,15 +10991,14 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const token = authHeader.replace('Bearer ', '');
-        const decoded = verifyToken(token);
-        if (!decoded || !decoded.uid) {
+        const decoded = await verifyToken(token);
+        if (!decoded || !decoded.userId) {
           res.writeHead(401, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Invalid token' }));
           return;
         }
         // Verify the token's user matches the requested userId
-        const tokenUser = await pool.query('SELECT id FROM users WHERE firebase_uid = $1 OR email = $2', [decoded.uid, decoded.email]);
-        if (tokenUser.rows.length === 0 || tokenUser.rows[0].id !== parseInt(userId)) {
+        if (decoded.userId !== parseInt(userId)) {
           res.writeHead(403, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'User mismatch' }));
           return;

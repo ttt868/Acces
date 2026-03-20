@@ -4828,14 +4828,22 @@ ${translator.translate('This code has been preserved with ULTRA-ENHANCED system 
             });
             const data = await resp.json();
             
-            // 🔒 SECURITY: Handle 401 - session mismatch (ذكي - يعيد المحاولة بدون توكن)
+            // 🔒 SECURITY: Handle 401 - session mismatch (refresh token and retry)
             if (resp.status === 401 && data.requireRelogin) {
-              console.log('🔒 Session mismatch detected - retrying without token');
+              console.log('🔒 Session mismatch detected - refreshing token and retrying');
               try {
+                // Fetch fresh session_token from server
+                const freshResp = await fetch('/api/user/' + encodeURIComponent(currentUser.email));
+                const freshData = await freshResp.json();
+                if (freshData.success && freshData.user && freshData.user.session_token) {
+                  currentUser.sessionToken = freshData.user.session_token;
+                  currentUser.session_token = freshData.user.session_token;
+                  saveUserSession(currentUser);
+                }
                 const retryResp = await fetch('/api/processing/countdown/start', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ userId: currentUser.id })
+                  body: JSON.stringify({ userId: currentUser.id, sessionToken: currentUser.sessionToken || currentUser.session_token || '' })
                 });
                 const retryData = await retryResp.json();
                 if (retryResp.ok && retryData.success) {
@@ -5394,15 +5402,23 @@ processingButton.addEventListener('click', async function(e) {
 
     console.log(`[SCRIPT] Processing start response status: ${response.status}`);
 
-    // 🔒 SECURITY: Handle 401 - session mismatch (ذكي - يعيد المحاولة بدون توكن)
+    // 🔒 SECURITY: Handle 401 - session mismatch (refresh token and retry)
     if (response.status === 401) {
       try {
         const authData = await response.json();
-        console.log('🔒 Session mismatch detected - retrying without token');
+        console.log('🔒 Session mismatch detected - refreshing token and retrying');
+        // Fetch fresh session_token from server
+        const freshResp = await fetch('/api/user/' + encodeURIComponent(currentUser.email));
+        const freshData = await freshResp.json();
+        if (freshData.success && freshData.user && freshData.user.session_token) {
+          currentUser.sessionToken = freshData.user.session_token;
+          currentUser.session_token = freshData.user.session_token;
+          saveUserSession(currentUser);
+        }
         const retryResp = await fetch('/api/processing/countdown/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: currentUser.id })
+          body: JSON.stringify({ userId: currentUser.id, sessionToken: currentUser.sessionToken || currentUser.session_token || '' })
         });
         const retryData = await retryResp.json();
         if (retryResp.ok && retryData.success) {
@@ -8532,6 +8548,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
         // Don't store name or avatar in localStorage to ensure fresh data on login
       };
       localStorage.setItem('accessoireUser', JSON.stringify(minimalUserData));
+      // Also store token separately for modules that read localStorage.getItem('token')
+      if (user.token) localStorage.setItem('token', user.token);
       console.log('Saved minimal user session for:', minimalUserData.email);
       
       // ✅ Dispatch custom event for notification system (same-tab)
