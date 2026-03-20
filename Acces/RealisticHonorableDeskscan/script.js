@@ -6303,7 +6303,11 @@ function startGradualAccumulation() {
         try {
           const saveResponse = await fetch('/api/processing/save-completed', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + (currentUser?.token || ''),
+              'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+            },
             body: JSON.stringify({ 
               userId: currentUser.id,
               completedReward: finalReward,
@@ -6622,7 +6626,11 @@ function startGradualAccumulation() {
                 console.log(`✅ Saving completed reward to server: ${finalReward}`);
                 const saveResponse = await fetch('/api/processing/save-completed', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + (currentUser?.token || ''),
+                    'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+                  },
                   body: JSON.stringify({ 
                     userId: currentUser.id,
                     completedReward: finalReward,
@@ -7388,7 +7396,11 @@ function startGradualAccumulation() {
             try {
               await fetch('/api/processing/history/cleanup-collecting', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + (currentUser?.token || ''),
+                  'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+                },
                 body: JSON.stringify({ userId: currentUser.id })
               });
               console.log('Session ended - cleaned up "Collecting..." from UI and database');
@@ -8733,7 +8745,10 @@ window.addEventListener('load', applyArabicCssIfNeeded);
             try {
               const refreshRes = await fetch('/api/session/refresh', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + (currentUser?.token || '')
+                },
                 body: JSON.stringify({ userId: currentUser.id })
               });
               if (refreshRes.ok) {

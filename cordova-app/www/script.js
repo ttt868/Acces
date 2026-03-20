@@ -6349,7 +6349,11 @@ function startGradualAccumulation() {
           const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
           const saveResponse = await fetch(_apiBase + '/api/processing/save-completed', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + (currentUser?.token || ''),
+              'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+            },
             body: JSON.stringify({ 
               userId: currentUser.id,
               completedReward: finalReward,
@@ -6673,7 +6677,11 @@ function startGradualAccumulation() {
                 const _apiBase2 = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
                 const saveResponse = await fetch(_apiBase2 + '/api/processing/save-completed', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + (currentUser?.token || ''),
+                    'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+                  },
                   body: JSON.stringify({ 
                     userId: currentUser.id,
                     completedReward: finalReward,
@@ -7439,7 +7447,11 @@ function startGradualAccumulation() {
               const _cleanupApiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
               await fetch(_cleanupApiBase + '/api/processing/history/cleanup-collecting', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + (currentUser?.token || ''),
+                  'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+                },
                 body: JSON.stringify({ userId: currentUser.id })
               });
               console.log('Session ended - cleaned up "Collecting..." from UI and database');
@@ -8861,7 +8873,10 @@ window.addEventListener('load', applyArabicCssIfNeeded);
               const _apiOrigin3 = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : 'https://accesschain.org';
               const refreshRes = await fetch(_apiOrigin3 + '/api/session/refresh', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer ' + (currentUser?.token || '')
+                },
                 body: JSON.stringify({ userId: currentUser.id })
               });
               if (refreshRes.ok) {
@@ -13996,7 +14011,11 @@ window.cancelProfileChanges = cancelProfileChanges;
            const apiBase = (typeof getApiOrigin !== 'undefined' ? getApiOrigin() : window.location.origin);
            fetch(apiBase + '/api/profile/delete-photo', {
              method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
+             headers: {
+               'Content-Type': 'application/json',
+               'Authorization': 'Bearer ' + (currentUser?.token || ''),
+               'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+             },
              body: JSON.stringify({ userId: currentUser.id })
            }).then(function(r) { return r.json(); }).then(function(data) {
              if (!data.success) {
@@ -14547,7 +14566,11 @@ window.cancelProfileChanges = cancelProfileChanges;
       const apiBase = (typeof getApiOrigin !== 'undefined' ? getApiOrigin() : window.location.origin);
       fetch(apiBase + '/api/profile/delete-photo', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (currentUser?.token || ''),
+          'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+        },
         body: JSON.stringify({ userId: currentUser.id })
       }).then(function(r) { return r.json(); }).then(function(data) {
         if (data.success) {

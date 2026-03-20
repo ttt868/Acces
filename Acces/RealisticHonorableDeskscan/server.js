@@ -2500,6 +2500,15 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/processing/start-countdown' && req.method === 'POST') {
     try {
       const { userId } = await parseRequestBody(req);
+      
+      // 🔒 SECURITY: Authenticate request
+      const authSC = await authenticateRequest(req, userId);
+      if (authSC.error) {
+        res.writeHead(authSC.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: authSC.error }));
+        return;
+      }
+      
       const result = await startProcessingCountdown(userId);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
@@ -2531,6 +2540,15 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/processing/complete-countdown' && req.method === 'POST') {
     try {
       const { userId } = await parseRequestBody(req);
+      
+      // 🔒 SECURITY: Authenticate request
+      const authCC = await authenticateRequest(req, userId);
+      if (authCC.error) {
+        res.writeHead(authCC.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: authCC.error }));
+        return;
+      }
+      
       const result = await completeProcessingCountdown(userId);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(result));
@@ -7665,14 +7683,18 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
-        let _sessionValid = true;
-        if (sessionToken) {
-          const tokenValid = await validateSessionToken(userId, sessionToken);
-          if (!tokenValid) {
-            console.log(`🔒 Session mismatch for user ${userId} on /api/processing/cleanup - continuing silently`);
-            _sessionValid = false;
-          }
+        // 🔒 SECURITY: Mandatory session token validation
+        if (!sessionToken) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+        const tokenValid = await validateSessionToken(userId, sessionToken);
+        if (!tokenValid) {
+          console.log(`🔒 REJECTED: Invalid session for user ${userId} on /api/processing/cleanup`);
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
+          return;
         }
         
         console.log(`Cleaning up processing sessions for user ${userId}`);
@@ -9050,11 +9072,19 @@ const server = http.createServer(async (req, res) => {
     // POST /api/processing/history/cleanup-collecting - Clean up collecting entries
     if (pathname === '/api/processing/history/cleanup-collecting' && req.method === 'POST') {
       try {
-        const { userId } = await parseRequestBody(req);
+        const { userId, sessionToken: bodySessionToken } = await parseRequestBody(req);
         
         if (!userId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Missing userId' }));
+          return;
+        }
+
+        // 🔒 SECURITY: Auth via headers or body
+        const effectiveST = req.headers['x-session-token'] || bodySessionToken;
+        if (!effectiveST || !(await validateSessionToken(userId, effectiveST))) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
           return;
         }
 
@@ -9094,14 +9124,18 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
-        let _sessionValid = true;
-        if (sessionToken) {
-          const tokenValid = await validateSessionToken(userId, sessionToken);
-          if (!tokenValid) {
-            console.log(`🔒 Session mismatch for user ${userId} on /api/processing/save-completed - continuing silently`);
-            _sessionValid = false;
-          }
+        // 🔒 SECURITY: Mandatory session token validation
+        if (!sessionToken) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+        const saveSessionValid = await validateSessionToken(userId, sessionToken);
+        if (!saveSessionValid) {
+          console.log(`🔒 REJECTED: Invalid session for user ${userId} on /api/processing/save-completed`);
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
+          return;
         }
 
         const rewardAmount = parseFloat(completedReward);
@@ -9664,11 +9698,19 @@ const server = http.createServer(async (req, res) => {
     // POST /api/processing/history/cleanup-collecting - Remove all "Collecting..." entries from database
     if (pathname === '/api/processing/history/cleanup-collecting' && req.method === 'POST') {
       try {
-        const { userId } = await parseRequestBody(req);
+        const { userId, sessionToken: bodySessionToken } = await parseRequestBody(req);
         
         if (!userId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Missing required parameter: userId' }));
+          return;
+        }
+
+        // 🔒 SECURITY: Auth via headers or body
+        const effectiveST2 = req.headers['x-session-token'] || bodySessionToken;
+        if (!effectiveST2 || !(await validateSessionToken(userId, effectiveST2))) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
           return;
         }
 
@@ -9713,6 +9755,14 @@ const server = http.createServer(async (req, res) => {
         if (!userId || amount === undefined) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Missing required parameters: userId and amount' }));
+          return;
+        }
+
+        // 🔒 SECURITY: Authenticate request
+        const authUC = await authenticateRequest(req, userId);
+        if (authUC.error) {
+          res.writeHead(authUC.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: authUC.error }));
           return;
         }
 
@@ -9806,6 +9856,14 @@ const server = http.createServer(async (req, res) => {
         if (!userId) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'User ID is required' }));
+          return;
+        }
+
+        // 🔒 SECURITY: Authenticate request
+        const authPhoto = await authenticateRequest(req, userId);
+        if (authPhoto.error) {
+          res.writeHead(authPhoto.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: authPhoto.error }));
           return;
         }
 
@@ -10712,6 +10770,7 @@ const server = http.createServer(async (req, res) => {
     // ========== SESSION MANAGEMENT (Single-Device Enforcement) ==========
 
     // POST /api/session/refresh - Generate new session token on login (invalidates other devices)
+    // 🔒 SECURITY: Requires Bearer token (JWT from Firebase login)
     if (pathname === '/api/session/refresh' && req.method === 'POST') {
       try {
         const { userId } = await parseRequestBody(req);
@@ -10720,6 +10779,29 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ success: false }));
           return;
         }
+        
+        // 🔒 SECURITY: Verify Bearer token matches userId
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = verifyToken(token);
+        if (!decoded || !decoded.uid) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid token' }));
+          return;
+        }
+        // Verify the token's user matches the requested userId
+        const tokenUser = await pool.query('SELECT id FROM users WHERE firebase_uid = $1 OR email = $2', [decoded.uid, decoded.email]);
+        if (tokenUser.rows.length === 0 || tokenUser.rows[0].id !== parseInt(userId)) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'User mismatch' }));
+          return;
+        }
+        
         const newToken = await updateSessionToken(userId);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, session_token: newToken }));
