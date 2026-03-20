@@ -3751,15 +3751,6 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/fcm/register' && req.method === 'POST') {
       try {
         const { userId, token, platform, language } = await parseRequestBody(req);
-
-        // 🔒 SECURITY: Verify Bearer token matches userId
-        const authToken = req.headers.authorization?.replace('Bearer ', '');
-        const decoded = await verifyToken(authToken);
-        if (!decoded || decoded.userId !== parseInt(userId)) {
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
-          return;
-        }
         
         if (!userId || !token) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
