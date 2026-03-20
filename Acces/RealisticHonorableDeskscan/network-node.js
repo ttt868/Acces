@@ -1616,15 +1616,19 @@ class NetworkNode {
           break;
 
         case 'eth_sendTransaction':
-          console.log(`📤 طلب إرسال معاملة عبر RPC:`, {
-            from: params[0].from,
-            to: params[0].to,
-            value: params[0].value,
-            chainId: '0x5968'
-          });
-          result = await this.sendTransaction(params[0]);
-          // Silent - reduce console spam
-          break;
+          // 🔒 SECURITY: eth_sendTransaction is BLOCKED on public RPC
+          // External wallets (MetaMask, Trust Wallet) ALWAYS use eth_sendRawTransaction
+          // eth_sendTransaction requires holding the private key on the node (like Geth personal API)
+          // Allowing it on public RPC = anyone can send from any address without signature
+          console.error(`🚫 BLOCKED: eth_sendTransaction attempt from ${params[0]?.from} - use eth_sendRawTransaction`);
+          return {
+            jsonrpc: '2.0',
+            id: id,
+            error: {
+              code: -32601,
+              message: 'eth_sendTransaction is not supported. Use eth_sendRawTransaction with a signed transaction.'
+            }
+          };
 
         case 'eth_sendRawTransaction':
           // Handle raw signed transactions with INSTANT MetaMask balance update
@@ -1692,25 +1696,8 @@ class NetworkNode {
                   }
                 }
                 
-                // محاولة 2: استخدام recent nonce activity (فقط كـ last resort)
-                if (!txData.from && this.lastUsedNonces && this.lastUsedNonces.size > 0) {
-                  console.log('⚠️ Using last resort: recent nonce activity...');
-                  
-                  let recentSender = null;
-                  let recentNonce = -1;
-                  
-                  for (const [address, nonce] of this.lastUsedNonces.entries()) {
-                    if (nonce > recentNonce) {
-                      recentNonce = nonce;
-                      recentSender = address;
-                    }
-                  }
-                  
-                  if (recentSender) {
-                    console.log(`⚠️ Using recent sender: ${recentSender} (nonce: ${recentNonce})`);
-                    txData.from = recentSender;
-                  }
-                }
+                // 🔒 SECURITY: No fallback guessing - if ECDSA fails, reject the transaction
+                // Never guess sender from nonce activity - it's a security risk
               }
               
               // التحقق النهائي
@@ -1740,12 +1727,8 @@ class NetworkNode {
               throw new Error('Transaction rejected: Missing recipient address for regular transaction');
             }
 
-            // 🔧 ENHANCED SENDER DETECTION: استخدام الكشف المحسن للعنوان الصحيح
-            const correctSenderAddress = this.detectCorrectSenderAddress(txData.from, txData.value);
-            if (correctSenderAddress !== txData.from) {
-              console.log(`🔄 SENDER CORRECTED: ${txData.from} → ${correctSenderAddress}`);
-              txData.from = correctSenderAddress;
-            }
+            // � SECURITY: Always trust ECDSA-recovered sender address
+            // Never override cryptographically verified sender with guesses
 
             // ADVANCED SECURITY CHECKS
 
@@ -7162,25 +7145,9 @@ class NetworkNode {
     }
   }
 
-  // الكشف عن العنوان الصحيح للمرسل
+  // 🔐 SECURITY: Always return ECDSA-recovered sender - never override with guesses
   detectCorrectSenderAddress(detectedSender, requiredAmount) {
-    const connectedAddresses = Array.from(this.connectedWallets.keys());
-
-    if (connectedAddresses.length === 0) {
-      // إذا لم تكن هناك محافظ متصلة، استخدم العنوان المكتشف
-      return detectedSender;
-    }
-
-    // البحث عن عنوان متصل لديه رصيد كافٍ
-    for (const address of connectedAddresses) {
-      const balance = this.blockchain.getBalance(address);
-      if (balance >= requiredAmount) {
-        return address; // تم العثور على المرسل الصحيح
-      }
-    }
-
-    // إذا لم يتم العثور على عنوان برصيد كافٍ، استخدم أول عنوان متصل كمرسل افتراضي
-    return connectedAddresses[0];
+    return detectedSender;
   }
 
   // التحقق من checksum للعنوان
@@ -7474,25 +7441,9 @@ class NetworkNode {
     }
   }
 
-  // الكشف عن العنوان الصحيح للمرسل
+  // 🔐 SECURITY: Always return ECDSA-recovered sender - never override with guesses
   detectCorrectSenderAddress(detectedSender, requiredAmount) {
-    const connectedAddresses = Array.from(this.connectedWallets.keys());
-
-    if (connectedAddresses.length === 0) {
-      // إذا لم تكن هناك محافظ متصلة، استخدم العنوان المكتشف
-      return detectedSender;
-    }
-
-    // البحث عن عنوان متصل لديه رصيد كافٍ
-    for (const address of connectedAddresses) {
-      const balance = this.blockchain.getBalance(address);
-      if (balance >= requiredAmount) {
-        return address; // تم العثور على المرسل الصحيح
-      }
-    }
-
-    // إذا لم يتم العثور على عنوان برصيد كافٍ، استخدم أول عنوان متصل كمرسل افتراضي
-    return connectedAddresses[0];
+    return detectedSender;
   }
 
   // التحقق من checksum للعنوان
@@ -7786,25 +7737,9 @@ class NetworkNode {
     }
   }
 
-  // الكشف عن العنوان الصحيح للمرسل
+  // 🔐 SECURITY: Always return ECDSA-recovered sender - never override with guesses
   detectCorrectSenderAddress(detectedSender, requiredAmount) {
-    const connectedAddresses = Array.from(this.connectedWallets.keys());
-
-    if (connectedAddresses.length === 0) {
-      // إذا لم تكن هناك محافظ متصلة، استخدم العنوان المكتشف
-      return detectedSender;
-    }
-
-    // البحث عن عنوان متصل لديه رصيد كافٍ
-    for (const address of connectedAddresses) {
-      const balance = this.blockchain.getBalance(address);
-      if (balance >= requiredAmount) {
-        return address; // تم العثور على المرسل الصحيح
-      }
-    }
-
-    // إذا لم يتم العثور على عنوان برصيد كافٍ، استخدم أول عنوان متصل كمرسل افتراضي
-    return connectedAddresses[0];
+    return detectedSender;
   }
 
   // التحقق من checksum للعنوان
@@ -8058,25 +7993,9 @@ class NetworkNode {
     }
   }
 
-  // الكشف عن العنوان الصحيح للمرسل
+  // 🔐 SECURITY: Always return ECDSA-recovered sender - never override with guesses
   detectCorrectSenderAddress(detectedSender, requiredAmount) {
-    const connectedAddresses = Array.from(this.connectedWallets.keys());
-
-    if (connectedAddresses.length === 0) {
-      // إذا لم تكن هناك محافظ متصلة، استخدم العنوان المكتشف
-      return detectedSender;
-    }
-
-    // البحث عن عنوان متصل لديه رصيد كافٍ
-    for (const address of connectedAddresses) {
-      const balance = this.blockchain.getBalance(address);
-      if (balance >= requiredAmount) {
-        return address; // تم العثور على المرسل الصحيح
-      }
-    }
-
-    // إذا لم يتم العثور على عنوان برصيد كافٍ، استخدم أول عنوان متصل كمرسل افتراضي
-    return connectedAddresses[0];
+    return detectedSender;
   }
 
   // التحقق من checksum للعنوان

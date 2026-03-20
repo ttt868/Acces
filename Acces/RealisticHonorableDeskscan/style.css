@@ -1588,15 +1588,15 @@ html.dark-theme .logo {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 0;
+  padding: 8px 0;
   color: var(--text-color);
-  font-size: 12px;
+  font-size: 11px;
   text-align: center; /* Ensure text is centered */
 }
 
 .mobile-nav-item i {
-  font-size: 20px;
-  margin-bottom: 4px;
+  font-size: 18px;
+  margin-bottom: 3px;
 }
 
 .mobile-nav-item.active {
