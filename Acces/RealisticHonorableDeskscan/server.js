@@ -3541,15 +3541,6 @@ const server = http.createServer(async (req, res) => {
       try {
         console.log('🔔 [PUSH] Received subscription request');
         const { userId, subscription, language } = await parseRequestBody(req);
-
-        // 🔒 SECURITY: Verify Bearer token matches userId
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        const decoded = await verifyToken(token);
-        if (!decoded || decoded.userId !== parseInt(userId)) {
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
-          return;
-        }
         console.log('🔔 [PUSH] userId:', userId, 'endpoint:', subscription?.endpoint?.substring(0, 50), 'language:', language);
         
         if (!userId || !subscription || !subscription.endpoint) {
@@ -3593,15 +3584,6 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/push/update-language' && req.method === 'POST') {
       try {
         const { userId, endpoint, language } = await parseRequestBody(req);
-
-        // 🔒 SECURITY: Verify Bearer token matches userId
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        const decoded = await verifyToken(token);
-        if (!decoded || decoded.userId !== parseInt(userId)) {
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
-          return;
-        }
         
         if (!userId || !language) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -3637,15 +3619,6 @@ const server = http.createServer(async (req, res) => {
     // DELETE /api/push/unsubscribe - Remove push subscription
     if (pathname === '/api/push/unsubscribe' && req.method === 'DELETE') {
       try {
-        // 🔒 SECURITY: Require Bearer token
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        const decoded = await verifyToken(token);
-        if (!decoded) {
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
-          return;
-        }
-
         const { endpoint } = await parseRequestBody(req);
         
         if (!endpoint) {
@@ -3674,15 +3647,6 @@ const server = http.createServer(async (req, res) => {
     // POST /api/push/renew-subscription - Auto-renew expired subscription
     if (pathname === '/api/push/renew-subscription' && req.method === 'POST') {
       try {
-        // 🔒 SECURITY: Require Bearer token
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        const decoded = await verifyToken(token);
-        if (!decoded) {
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
-          return;
-        }
-
         const { oldEndpoint, newSubscription } = await parseRequestBody(req);
         
         if (!newSubscription || !newSubscription.endpoint) {
