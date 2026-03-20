@@ -12771,6 +12771,9 @@ if (totalCost > (currentBalance + precision)) {
     document.documentElement.classList.add('app-ready');
     document.body.classList.add('app-ready');
 
+    // Update system bars color immediately after login (remove login screen colors)
+    if (typeof window.updateSystemBarsColor === 'function') window.updateSystemBarsColor();
+
     // 📲 إظهار install prompt فوراً بعد قبول الشروط والدخول
     setTimeout(() => {
       if (typeof showInstallButton === 'function') {
