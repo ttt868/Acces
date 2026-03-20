@@ -1612,7 +1612,29 @@ async function verifyToken(token) {
   }
 }
 
-// 🛡️ CRITICAL BALANCE PROTECTION: Audit logging for ALL balance changes
+// � SECURITY HELPER: Authenticate request with token + session token + userId match
+async function authenticateRequest(req, requiredUserId) {
+  const authToken = req.headers.authorization?.replace('Bearer ', '');
+  const decoded = await verifyToken(authToken);
+  if (!decoded) return { error: 'Authentication required', status: 401 };
+
+  const sessionToken = req.headers['x-session-token'];
+  if (!sessionToken) return { error: 'Session token required', status: 401 };
+
+  const sessionCheck = await pool.query('SELECT session_token FROM users WHERE id = $1', [decoded.userId]);
+  if (!sessionCheck.rows[0] || sessionCheck.rows[0].session_token !== sessionToken) {
+    return { error: 'Invalid session', status: 403 };
+  }
+
+  const uid = parseInt(requiredUserId);
+  if (uid && uid !== decoded.userId) {
+    return { error: 'Cannot perform actions for another user', status: 403 };
+  }
+
+  return { success: true, userId: decoded.userId, email: decoded.email };
+}
+
+// �🛡️ CRITICAL BALANCE PROTECTION: Audit logging for ALL balance changes
 async function logBalanceChange(userId, email, oldBalance, newBalance, operationType, reason = '', ipAddress = null) {
   try {
     const changeAmount = parseFloat(newBalance) - parseFloat(oldBalance);
@@ -5033,9 +5055,19 @@ const server = http.createServer(async (req, res) => {
     }
 
     // PUT /api/users/:userId/lastpayout - Update user's last payout
+    // 🔒 SECURITY: Requires authentication
     if (pathname.match(/^\/api\/users\/\d+\/lastpayout$/) && req.method === 'PUT') {
       try {
         const userId = parseInt(pathname.split('/')[3]);
+        const data = await parseRequestBody(req);
+        
+        // 🔒 SECURITY: Authenticate request
+        const auth = await authenticateRequest(req, userId);
+        if (auth.error) {
+          res.writeHead(auth.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: auth.error }));
+          return;
+        }
         const timestamp = Date.now();
         await pool.query(
           'UPDATE users SET last_payout = $1, processing_end_time = $2, processing_active = $3 WHERE id = $4',
@@ -6574,7 +6606,11 @@ const server = http.createServer(async (req, res) => {
     }
 
     // API لإشعار المحافظ الخارجية بمعاملة مستلمة جديدة
+    // 🔒 SECURITY: Blocked - transaction notifications are handled internally
     if (pathname === '/api/external-wallet/notify-received' && req.method === 'POST') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Endpoint disabled for security' }));
+      return;
       try {
         const { walletAddress, transactionHash, amount, fromAddress } = await parseRequestBody(req);
         
@@ -6636,6 +6672,14 @@ const server = http.createServer(async (req, res) => {
             success: false, 
             error: 'Missing or invalid parameters' 
           }));
+          return;
+        }
+
+        // 🔒 SECURITY: Authenticate and verify userId matches
+        const auth = await authenticateRequest(req, userId);
+        if (auth.error) {
+          res.writeHead(auth.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: auth.error }));
           return;
         }
 
@@ -6853,6 +6897,14 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        // 🔒 SECURITY: Authenticate and verify userId matches
+        const auth = await authenticateRequest(req, userId);
+        if (auth.error) {
+          res.writeHead(auth.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: auth.error }));
+          return;
+        }
+
         // Update user's balance in database
         await pool.query(
           'UPDATE users SET coins = $1 WHERE id = $2',
@@ -6887,6 +6939,14 @@ const server = http.createServer(async (req, res) => {
             success: false, 
             error: 'Missing or invalid parameters' 
           }));
+          return;
+        }
+
+        // 🔒 SECURITY: Authenticate and verify userId matches
+        const auth = await authenticateRequest(req, userId);
+        if (auth.error) {
+          res.writeHead(auth.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: auth.error }));
           return;
         }
 
@@ -7357,7 +7417,11 @@ const server = http.createServer(async (req, res) => {
     }
 
     // POST /api/network/mine - Mine a new block
+    // 🔒 SECURITY: Blocked - mining is handled automatically by the network
     if (pathname === '/api/network/mine' && req.method === 'POST') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Mining endpoint disabled for security' }));
+      return;
       try {
         const { processorAddress } = await parseRequestBody(req);
         const { getNetworkNode } = await import('./network-api.js');
@@ -7391,7 +7455,11 @@ const server = http.createServer(async (req, res) => {
     }
 
     // POST /api/network/send-external - Send to external networks (ready for future integration)
+    // 🔒 SECURITY: Blocked - use eth_sendRawTransaction via RPC instead
     if (pathname === '/api/network/send-external' && req.method === 'POST') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Endpoint disabled. Use RPC eth_sendRawTransaction.' }));
+      return;
       try {
         const { to, amount, network, fromAddress, privateKey } = await parseRequestBody(req);
         
@@ -8516,6 +8584,14 @@ const server = http.createServer(async (req, res) => {
       try {
         const userId = parseInt(pathname.split('/')[3]);
         const data = await parseRequestBody(req);
+        
+        // 🔒 SECURITY: Authenticate request
+        const auth = await authenticateRequest(req, userId);
+        if (auth.error) {
+          res.writeHead(auth.status, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: auth.error }));
+          return;
+        }
         const timestamp = Date.now();
 
         await pool.query(
@@ -8540,14 +8616,18 @@ const server = http.createServer(async (req, res) => {
       try {
         const { userId, sessionToken } = await parseRequestBody(req);
 
-        // 🔒 SESSION TOKEN VALIDATION (ذكي - لا يطلب إعادة تسجيل)
-        let _sessionValid = true;
-        if (sessionToken) {
-          const tokenValid = await validateSessionToken(userId, sessionToken);
-          if (!tokenValid) {
-            console.log(`🔒 Session mismatch for user ${userId} on /api/processing/payout - continuing silently`);
-            _sessionValid = false;
-          }
+        // 🔒 SECURITY: Require valid session token (mandatory)
+        if (!sessionToken) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+        const tokenValid = await validateSessionToken(userId, sessionToken);
+        if (!tokenValid) {
+          console.log(`🔒 REJECTED: Invalid session for user ${userId} on /api/processing/payout`);
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
+          return;
         }
         const timestamp = Date.now();
 
@@ -8570,11 +8650,27 @@ const server = http.createServer(async (req, res) => {
     // POST /api/activity/sync-final-accumulated - 🚀 Lightweight endpoint to sync final accumulated value at session end
     if (pathname === '/api/activity/sync-final-accumulated' && req.method === 'POST') {
       try {
-        const { userId, finalAccumulated } = await parseRequestBody(req);
+        const { userId, finalAccumulated, sessionToken: bodySessionToken } = await parseRequestBody(req);
         
         if (!userId || finalAccumulated === undefined) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false }));
+          return;
+        }
+        
+        // 🔒 SECURITY: Auth via headers OR body sessionToken
+        const headerSessionToken = req.headers['x-session-token'];
+        const effectiveSessionToken = headerSessionToken || bodySessionToken;
+        
+        if (!effectiveSessionToken) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+        const sessionValid = await validateSessionToken(userId, effectiveSessionToken);
+        if (!sessionValid) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
           return;
         }
         
@@ -8602,8 +8698,11 @@ const server = http.createServer(async (req, res) => {
             const rewardProgress = Math.min(1, Math.max(0, elapsedSec / processingDuration));
             const serverCalculatedReward = roundReward(boostedReward * rewardProgress);
             
-            // استخدم القيمة الأعلى (من العميل أو السيرفر)
-            rewardValue = Math.max(clientRewardValue, serverCalculatedReward);
+            // 🔒 SECURITY: Trust server calculation, cap client value
+            rewardValue = serverCalculatedReward;
+            if (clientRewardValue > serverCalculatedReward * 1.05) {
+              console.log(`🔒 [SECURITY] Final sync user ${userId}: Client sent ${clientRewardValue.toFixed(8)}, server cap ${serverCalculatedReward.toFixed(8)}`);
+            }
             
             if (serverCalculatedReward > clientRewardValue) {
               console.log(`🛡️ [BOOST PROTECTION] User ${userId}: Client sent ${clientRewardValue.toFixed(8)}, server calculated ${serverCalculatedReward.toFixed(8)} (boost: ${sessionLockedBoost.toFixed(2)}x)`);
@@ -8646,11 +8745,28 @@ const server = http.createServer(async (req, res) => {
     // يُستدعى كل 5 دقائق لحفظ الرصيد المتراكم تحسباً لإغلاق الصفحة المفاجئ
     if (pathname === '/api/activity/sync-accumulated' && req.method === 'POST') {
       try {
-        const { userId, accumulated } = await parseRequestBody(req);
+        const { userId, accumulated, sessionToken: bodySessionToken } = await parseRequestBody(req);
         
         if (!userId || accumulated === undefined) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false }));
+          return;
+        }
+        
+        // 🔒 SECURITY: Auth via headers OR body sessionToken (sendBeacon can't set headers)
+        const headerSessionToken = req.headers['x-session-token'];
+        const authToken = req.headers.authorization?.replace('Bearer ', '');
+        const effectiveSessionToken = headerSessionToken || bodySessionToken;
+        
+        if (!effectiveSessionToken) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Authentication required' }));
+          return;
+        }
+        const sessionValid = await validateSessionToken(userId, effectiveSessionToken);
+        if (!sessionValid) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Invalid session' }));
           return;
         }
         
@@ -8677,8 +8793,11 @@ const server = http.createServer(async (req, res) => {
             const rewardProgress = Math.min(1, Math.max(0, elapsedSec / processingDuration));
             const serverCalculatedReward = roundReward(boostedReward * rewardProgress);
             
-            // استخدم القيمة الأعلى
-            accumulatedValue = Math.max(clientAccumulatedValue, serverCalculatedReward);
+            // 🔒 SECURITY: Trust server calculation, cap client value
+            accumulatedValue = serverCalculatedReward;
+            if (clientAccumulatedValue > serverCalculatedReward * 1.05) {
+              console.log(`🔒 [SECURITY] User ${userId}: Client sent ${clientAccumulatedValue.toFixed(8)}, server cap ${serverCalculatedReward.toFixed(8)}`);
+            }
           }
         }
         
@@ -8705,7 +8824,11 @@ const server = http.createServer(async (req, res) => {
     }
 
     // POST /api/processing/accumulate - Update accumulated processing reward
+    // 🔒 SECURITY: Blocked - use sync-accumulated instead
     if (pathname === '/api/processing/accumulate' && req.method === 'POST') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Endpoint disabled for security' }));
+      return;
       try {
         const { userId, amount } = await parseRequestBody(req);
         

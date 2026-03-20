@@ -6000,10 +6000,15 @@ function startGradualAccumulation() {
         const _syncApiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
         await fetch(_syncApiBase + '/api/activity/sync-accumulated', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + (currentUser?.token || ''),
+            'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+          },
           body: JSON.stringify({
             userId: currentUser.id,
-            accumulated: accumulatedValue
+            accumulated: accumulatedValue,
+            sessionToken: currentUser?.sessionToken || currentUser?.session_token || ''
           }),
           keepalive: true
         });
@@ -6021,7 +6026,8 @@ function startGradualAccumulation() {
     if (accumulatedValue > 0 && currentUser?.id) {
       navigator.sendBeacon('/api/activity/sync-accumulated', JSON.stringify({
         userId: currentUser.id,
-        accumulated: accumulatedValue
+        accumulated: accumulatedValue,
+        sessionToken: currentUser?.sessionToken || currentUser?.session_token || ''
       }));
     }
   });
@@ -6033,7 +6039,8 @@ function startGradualAccumulation() {
       if (accumulatedValue > 0 && currentUser?.id) {
         navigator.sendBeacon('/api/activity/sync-accumulated', JSON.stringify({
           userId: currentUser.id,
-          accumulated: accumulatedValue
+          accumulated: accumulatedValue,
+          sessionToken: currentUser?.sessionToken || currentUser?.session_token || ''
         }));
       }
     }
@@ -6098,7 +6105,11 @@ function startGradualAccumulation() {
       const _apiBase = (typeof window.getApiOrigin === 'function') ? window.getApiOrigin() : window.location.origin;
       const response = await fetch(_apiBase + '/api/user/update-coins', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (currentUser?.token || ''),
+          'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+        },
         body: JSON.stringify({ 
           userId: currentUser.id,
           coins: preciseBalance
@@ -11088,7 +11099,11 @@ window.copyAccountAddress = function() {
     try {
       const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/sync-balance`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (currentUser?.token || ''),
+          'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+        },
         body: JSON.stringify({ userId, balance })
       });
 
@@ -11578,7 +11593,11 @@ if (totalCost > (currentBalance + precision)) {
     try {
       const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/user/update-coins`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (currentUser?.token || ''),
+          'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
+        },
         body: JSON.stringify({ userId, coins: newCoins })
       });
 
@@ -15707,7 +15726,9 @@ window.cancelProfileChanges = cancelProfileChanges;
       const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}/api/users/${userId}/lastpayout`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (currentUser?.token || ''),
+          'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
         },
         body: JSON.stringify({ timestamp: Date.now() })
       });
