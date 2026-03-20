@@ -170,7 +170,14 @@ document.addEventListener('deviceready', function() {
     // StatusBar + NavigationBar: dynamic colors based on theme
     if (window.StatusBar) {
         window.updateSystemBarsColor = function() {
-            var isDark = document.body.classList.contains('dark-theme');
+            // Detect dark mode from multiple theme systems:
+            // 1. Dashboard: body.dark-theme class
+            // 2. Explorer pages: html[data-theme="dark"]
+            // 3. add-network: dark by default, body.light-mode = light
+            var isDark = document.body.classList.contains('dark-theme') ||
+                         document.documentElement.getAttribute('data-theme') === 'dark' ||
+                         (localStorage.getItem('theme') === 'dark' && !document.body.classList.contains('light-mode'));
+            var isMainApp = !!document.getElementById('app-container');
             var isLogin = document.getElementById('login-container') && 
                           document.getElementById('login-container').style.display !== 'none' &&
                           !document.documentElement.classList.contains('user-logged-in');
@@ -192,15 +199,29 @@ document.addEventListener('deviceready', function() {
                 if (window.NavigationBar) {
                     NavigationBar.backgroundColorByHexString('#9b59b6', false);
                 }
+            } else if (!isMainApp && isDark) {
+                // Explorer/external pages dark mode
+                StatusBar.backgroundColorByHexString('#0d1117');
+                StatusBar.styleLightContent();
+                if (window.NavigationBar) {
+                    NavigationBar.backgroundColorByHexString('#161b22', false);
+                }
+            } else if (!isMainApp && !isDark) {
+                // Explorer/external pages light mode
+                StatusBar.backgroundColorByHexString('#ffffff');
+                StatusBar.styleDefault();
+                if (window.NavigationBar) {
+                    NavigationBar.backgroundColorByHexString('#f8f9fa', true);
+                }
             } else if (isDark) {
-                // Dark mode: same color for both bars
+                // Dashboard dark mode
                 StatusBar.backgroundColorByHexString('#252525');
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
                     NavigationBar.backgroundColorByHexString('#252525', false);
                 }
             } else {
-                // Light mode: page background top, gray bottom (buttons visible)
+                // Dashboard light mode
                 StatusBar.backgroundColorByHexString('#f7fafc');
                 StatusBar.styleDefault();
                 if (window.NavigationBar) {
@@ -210,6 +231,13 @@ document.addEventListener('deviceready', function() {
         };
         // Apply initial colors
         window.updateSystemBarsColor();
+        
+        // Auto-detect theme changes via MutationObserver
+        var observer = new MutationObserver(function() {
+            window.updateSystemBarsColor();
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     }
     
     // ✅ Setup Native Local Notifications
