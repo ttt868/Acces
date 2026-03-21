@@ -9414,6 +9414,11 @@ function initializeGoogleSignIn() {
       }
     }
 
+    // تأكد من ظهور زر العين في صفحة Network
+    if (window.BalancePrivacyManager) {
+      window.BalancePrivacyManager.updateEyeIcon();
+    }
+
     // QR container — static HTML handles display, no spinner needed
     const qrContainer = document.querySelector('.qrcode-container');
 
@@ -11256,14 +11261,26 @@ if (totalCost > (currentBalance + precision)) {
             currentUser.wallet.balance = serverBalance;
             updateUserCoins(serverBalance);
 
+            // تحديث جميع عناصر الرصيد فوراً بغض النظر عن حالة الإخفاء
+            const smartBalance = formatNumberSmart(serverBalance);
             const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
+            
+            // تحديث originalValues في BalancePrivacyManager
+            if (window.balancePrivacy && window.balancePrivacy.originalValues) {
+              window.balancePrivacy.originalValues.set('#user-coins', smartBalance);
+              window.balancePrivacy.originalValues.set('#profile-coins', smartBalance);
+              window.balancePrivacy.originalValues.set('#network-coins', smartBalance);
+            }
+            
             if (!isBalanceHidden) {
               const walletBalanceElement = document.getElementById('network-coins');
-              if (walletBalanceElement) walletBalanceElement.textContent = formatNumberSmart(serverBalance);
+              if (walletBalanceElement) walletBalanceElement.textContent = smartBalance;
               const userCoinsElement = document.getElementById('user-coins');
-              if (userCoinsElement) userCoinsElement.textContent = formatNumberSmart(serverBalance);
+              if (userCoinsElement) userCoinsElement.textContent = smartBalance;
               const profileCoinsElement = document.getElementById('profile-coins');
-              if (profileCoinsElement) profileCoinsElement.textContent = formatNumberSmart(serverBalance);
+              if (profileCoinsElement) profileCoinsElement.textContent = smartBalance;
+              const transferBalance = document.getElementById('Transfer-balance');
+              if (transferBalance) transferBalance.textContent = smartBalance;
             }
             saveUserSession(currentUser);
           } else {
@@ -12604,7 +12621,7 @@ if (totalCost > (currentBalance + precision)) {
   function updateUserCoins(coins) {
     const isBalanceHidden = localStorage.getItem('balanceHidden') === 'true';
     if (!isBalanceHidden) {
-      const coinElements = document.querySelectorAll('#user-coins, #profile-coins');
+      const coinElements = document.querySelectorAll('#user-coins, #profile-coins, #network-coins');
       coinElements.forEach(element => {
         element.textContent = formatCoins(coins);
       });
@@ -14710,6 +14727,11 @@ window.cancelProfileChanges = cancelProfileChanges;
         // Initialize wallet data (updates balance, address) — QR generated inside initializeUserWallet
         initializeUserWallet().then(function() {
           updateTransactionList();
+          // تأكد من ظهور زر العين وحالة الخصوصية الصحيحة
+          if (window.BalancePrivacyManager) {
+            window.BalancePrivacyManager.updateEyeIcon();
+            window.BalancePrivacyManager.applyPrivacyState();
+          }
         }).catch(function(e) { console.error('[Network page] Wallet init failed:', e); });
       } else {
         showNotification(translator.translate('Please log in to access your wallet'), 'info');

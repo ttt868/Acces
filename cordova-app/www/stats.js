@@ -93,12 +93,16 @@ class BalancePrivacyManager {
       if (icon) {
         if (this.isBalanceHidden) {
           // العين مغلقة مع خط
-          icon.className = 'far fa-eye-slash';
+          icon.className = 'fas fa-eye-slash';
         } else {
           // العين مفتوحة
-          icon.className = 'far fa-eye';
+          icon.className = 'fas fa-eye';
         }
       }
+      // تأكد أن الزر ظاهر دائماً
+      button.style.display = 'inline-flex';
+      button.style.visibility = 'visible';
+      button.style.opacity = '1';
     });
   }
 
