@@ -211,7 +211,7 @@ document.addEventListener('deviceready', function() {
                 StatusBar.backgroundColorByHexString('#ffffff');
                 StatusBar.styleDefault();
                 if (window.NavigationBar) {
-                    NavigationBar.backgroundColorByHexString('#f8f9fa', true);
+                    NavigationBar.backgroundColorByHexString('#ffffff', true);
                 }
             } else if (isDark) {
                 // Dashboard dark mode
