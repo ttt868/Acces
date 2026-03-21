@@ -211,7 +211,7 @@ document.addEventListener('deviceready', function() {
                 StatusBar.backgroundColorByHexString('#ffffff');
                 StatusBar.styleDefault();
                 if (window.NavigationBar) {
-                    NavigationBar.backgroundColorByHexString('#ffffff', true);
+                    NavigationBar.backgroundColorByHexString('#ffffff', false);
                 }
             } else if (isDark) {
                 // Dashboard dark mode
@@ -225,7 +225,7 @@ document.addEventListener('deviceready', function() {
                 StatusBar.backgroundColorByHexString('#f7fafc');
                 StatusBar.styleDefault();
                 if (window.NavigationBar) {
-                    NavigationBar.backgroundColorByHexString('#f7fafc', true);
+                    NavigationBar.backgroundColorByHexString('#f7fafc', false);
                 }
             }
         };
