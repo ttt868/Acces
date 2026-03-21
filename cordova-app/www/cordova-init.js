@@ -266,6 +266,18 @@ document.addEventListener('deviceready', function() {
     document.addEventListener('backbutton', function(e) {
         e.preventDefault();
         
+        // If leaderboard modal is open — close it
+        var leaderboardModal = document.getElementById('leaderboardModal');
+        if (leaderboardModal && leaderboardModal.classList.contains('active')) {
+            if (typeof window.closeLeaderboardModal === 'function') {
+                window.closeLeaderboardModal();
+            } else {
+                leaderboardModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            return;
+        }
+        
         // If we're on a sub-page (whitepaper.html, about.html, etc.) — go back to main app
         var currentPath = window.location.pathname || '';
         var isMainPage = currentPath.endsWith('index.html') || currentPath.endsWith('/') || currentPath === '';
