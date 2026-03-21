@@ -62,6 +62,13 @@ jobs:
       working-directory: cordova-app
       run: npm install
     
+    - name: Clean platforms before plugin install
+      working-directory: cordova-app
+      run: |
+        echo '🧹 Removing stale platforms/android to avoid API load errors...'
+        rm -rf platforms/android
+        echo '✅ Cleaned'
+
     - name: Install Cordova Plugins (without local-notification)
       working-directory: cordova-app
       run: |
@@ -120,6 +127,18 @@ jobs:
         echo '🔧 Removing local-notification plugin from platform...'
         rm -rf platforms/android/app/src/main/java/de/appplant 2>/dev/null || true
         echo '✅ Removed local-notification'
+
+    - name: Patch NavigationBar plugin for WindowInsetsController API 30+
+      working-directory: cordova-app
+      run: |
+        echo '🔧 Patching NavigationBar plugin for modern Android...'
+        NAV_JAVA="platforms/android/app/src/main/java/com/viniciusfagundes/cordova/plugin/navigationbar/NavigationBar.java"
+        if [ -f "$NAV_JAVA" ]; then
+          cp plugins/cordova-plugin-navigationbar-color/src/android/NavigationBar.java "$NAV_JAVA"
+          echo '✅ NavigationBar.java patched with WindowInsetsController support'
+        else
+          echo '⚠️ NavigationBar.java not found at expected path'
+        fi
     
     - name: Fix play-services-identity version in plugin
       working-directory: cordova-app

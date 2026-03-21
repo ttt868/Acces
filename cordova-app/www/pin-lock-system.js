@@ -6,7 +6,7 @@
   'use strict';
 
   // ===== BUILD VERSION (auto-updated by after_prepare hook on each build) =====
-  var BUILD_ID = '__BUILD_20260312_000000__';
+  var BUILD_ID = 'b20260321_031640';
 
   // Detect if app was updated (build changed since last unlock)
   function _isAppUpdated() {
