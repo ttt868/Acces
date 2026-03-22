@@ -51,18 +51,18 @@
     <meta name="description" content="AccessScan is the official blockchain explorer for Access Network. Search transactions, blocks, addresses, and tokens. Track real-time blockchain activity.">
     <meta name="robots" content="index, follow">
     <meta name="keywords" content="AccessScan, Access Network explorer, blockchain explorer, crypto explorer, transaction tracker, block explorer, wallet tracker">
-    <link rel="canonical" href="https://accesschain.org/access-explorer.html">
+    <link rel="canonical" href="https://accesschain.org/access-explorer">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://accesschain.org/access-explorer.html">
+    <meta property="og:url" content="https://accesschain.org/access-explorer">
     <meta property="og:title" content="AccessScan - The Access Network Explorer">
     <meta property="og:description" content="The official blockchain explorer for Access Network. Search transactions, blocks, and addresses.">
     <meta property="og:image" content="https://accesschain.org/logo.png">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://accesschain.org/access-explorer.html">
+    <meta name="twitter:url" content="https://accesschain.org/access-explorer">
     <meta name="twitter:title" content="AccessScan - The Access Network Explorer">
     <meta name="twitter:description" content="Official blockchain explorer for Access Network.">
     <meta name="twitter:image" content="https://accesschain.org/logo.png">
@@ -1792,15 +1792,15 @@
             <div class="dropdown">
                 <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Network ⌄</a>
                 <div class="dropdown-menu">
-                    <a href="transactions.html" class="dropdown-item">Transactions</a>
+                    <a href="/transactions" class="dropdown-item">Transactions</a>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Pending Transactions 🚫</a>
                     </div>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Contract Internal Transactions 🚫</a>
                     </div>
-                    <a href="blocks.html" class="dropdown-item">View Blocks</a>
-                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <a href="/blocks" class="dropdown-item">View Blocks</a>
+                    <a href="/top-accounts" class="dropdown-item">Top Accounts</a>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Verified Contracts 🚫</a>
                     </div>
@@ -1861,7 +1861,7 @@
             <div class="dropdown">
                 <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Developers ⌄</a>
                 <div class="dropdown-menu">
-                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <a href="/developer-api" class="dropdown-item">API Plans</a>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Input Data Decoder 🚫</a>
                     </div>
@@ -1883,12 +1883,12 @@
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
                     </div>
-                    <a href="gastracker.html" class="dropdown-item">Gas Tracker</a>
-                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <a href="/gastracker" class="dropdown-item">Gas Tracker</a>
+                    <a href="/developer-api" class="dropdown-item">API Plans</a>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Verify Contract 🚫</a>
                     </div>
-                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <a href="/top-accounts" class="dropdown-item">Top Accounts</a>
                     <a href="#" class="dropdown-item" onclick="event.preventDefault(); toggleTheme();" style="display: flex; align-items: center; gap: 8px;">
                         <span id="desktop-theme-text">Light Mode</span>
                         <span id="desktop-theme-icon"><i class="fas fa-sun" style="color: #f59e0b;"></i></span>
@@ -1952,15 +1952,15 @@
             <a href="#" class="mobile-nav-item">Home</a>
 
             <div class="mobile-nav-section">Network</div>
-            <a href="transactions.html" class="mobile-nav-item">Transactions</a>
+            <a href="/transactions" class="mobile-nav-item">Transactions</a>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Pending Transactions 🚫</a>
             </div>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Contract Internal Transactions 🚫</a>
             </div>
-            <a href="blocks.html" class="mobile-nav-item">View Blocks</a>
-            <a href="top-accounts.html" class="mobile-nav-item">Top Accounts</a>
+            <a href="/blocks" class="mobile-nav-item">View Blocks</a>
+            <a href="/top-accounts" class="mobile-nav-item">Top Accounts</a>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Verified Contracts 🚫</a>
             </div>
@@ -2001,7 +2001,7 @@
             </div>
 
             <div class="mobile-nav-section">Developers</div>
-            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <a href="/developer-api" class="mobile-nav-item">API Plans</a>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Input Data Decoder 🚫</a>
             </div>
@@ -2019,8 +2019,8 @@
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
             </div>
-            <a href="gastracker.html" class="mobile-nav-item">Gas Tracker</a>
-            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <a href="/gastracker" class="mobile-nav-item">Gas Tracker</a>
+            <a href="/developer-api" class="mobile-nav-item">API Plans</a>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Verify Contract 🚫</a>
             </div>
@@ -2049,7 +2049,7 @@
                     </svg>
                 </button>
             </div>
-            <button class="back-to-app-btn" onclick="window.location.href='index.html'" style="margin-top: 15px; padding: 12px 24px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-left: auto;">
+            <button class="back-to-app-btn" onclick="window.location.href='/'" style="margin-top: 15px; padding: 12px 24px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-left: auto;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M19 12H5M12 19l-7-7 7-7"/>
                 </svg>
@@ -2183,9 +2183,9 @@
             <div id="gasGuzzlersTransactions" class="gas-guzzler-placeholder" style="display: none;">
                 <h3>Top Gas Guzzlers</h3>
                 <p>Track the addresses consuming the most gas on the Access Network.</p>
-                <a href="gastracker.html">VIEW TOP GAS GUZZLERS →</a>
+                <a href="/gastracker">VIEW TOP GAS GUZZLERS →</a>
             </div>
-            <a href="transactions.html" class="view-all-btn" id="viewAllTransactions">VIEW ALL TRANSACTIONS →</a>
+            <a href="/transactions" class="view-all-btn" id="viewAllTransactions">VIEW ALL TRANSACTIONS →</a>
         </div>
 
         <!-- Latest Blocks -->
@@ -2203,9 +2203,9 @@
             <div id="gasGuzzlersBlocks" class="gas-guzzler-placeholder" style="display: none;">
                 <h3>Top Gas Guzzlers</h3>
                 <p>Track the addresses consuming the most gas on the Access Network.</p>
-                <a href="gastracker.html">VIEW TOP GAS GUZZLERS →</a>
+                <a href="/gastracker">VIEW TOP GAS GUZZLERS →</a>
             </div>
-            <a href="blocks.html" class="view-all-btn" id="viewAllBlocks">VIEW ALL BLOCKS →</a>
+            <a href="/blocks" class="view-all-btn" id="viewAllBlocks">VIEW ALL BLOCKS →</a>
         </div>
     </main>
 
@@ -2259,7 +2259,7 @@
                     <label class="checkbox-container">
                         <input type="checkbox" id="termsCheckbox" required>
                         <span class="checkmark"></span>
-                        I agree to the <a href="terms-of-service.html" target="_blank" style="color: var(--accent-purple);">Terms of Service</a>.
+                        I agree to the <a href="/terms-of-service" target="_blank" style="color: var(--accent-purple);">Terms of Service</a>.
                     </label>
                 </div>
 
@@ -2272,11 +2272,11 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-links">
-                <a href="about.html" class="footer-link">About</a>
-                <a href="faq.html" class="footer-link">FAQ</a>
-                <a href="developer-api.html" class="footer-link">API</a>
-                <a href="contact.html" class="footer-link">Contact Us</a>
-                <a href="terms-of-service.html" class="footer-link">Terms</a>
+                <a href="/about" class="footer-link">About</a>
+                <a href="/faq" class="footer-link">FAQ</a>
+                <a href="/developer-api" class="footer-link">API</a>
+                <a href="/contact" class="footer-link">Contact Us</a>
+                <a href="/terms-of-service" class="footer-link">Terms</a>
             </div>
             <p>&copy; 2025 AccessScan. All rights reserved.</p>
         </div>
@@ -2820,7 +2820,7 @@
 
                 // Check if transaction hash exists and is valid
                 const displayHash = txHash && txHash !== 'Loading...' ? txHash.substring(0, 10) + '...' : 'Loading...';
-                const hashLink = txHash && txHash !== 'Loading...' ? `transaction-details.html?hash=${encodeURIComponent(txHash)}` : '#';
+                const hashLink = txHash && txHash !== 'Loading...' ? `/tx/${encodeURIComponent(txHash)}` : '#';
 
                 // ⭐ Only process valid transactions (this should be filtered already but double-check)
                 if (!from || from === 'null' || from === 'undefined' || from === '' ||
@@ -2848,9 +2848,9 @@
                             <div class="tx-time">${realTimeAgo}</div>
                         </div>
                         <div class="tx-addresses">
-                            <span>From: <a href="address-details.html?address=${encodeURIComponent(from)}" class="address-link">${formatAddress(from)}</a></span>
+                            <span>From: <a href="/address/${encodeURIComponent(from)}" class="address-link">${formatAddress(from)}</a></span>
                             <span style="margin: 0 10px;">→</span>
-                            <span>To: <a href="${to ? `address-details.html?address=${encodeURIComponent(to)}` : '#'}" class="address-link">${to ? formatAddress(to) : 'Contract Creation'}</a></span>
+                            <span>To: <a href="${to ? `/address/${encodeURIComponent(to)}` : '#'}" class="address-link">${to ? formatAddress(to) : 'Contract Creation'}</a></span>
                             <span class="tx-amount">${formatAccessAmount(amount)}</span>
                         </div>
                     </div>
@@ -3343,7 +3343,7 @@
                                 </div>
                                 <div>
                                     <div style="font-weight: 600; color: var(--text-primary);">
-                                        <a href="block-details.html?number=${blockNumber}&hash=${blockHash}"
+                                        <a href="/block/${blockNumber}"
                                            class="tx-hash"
                                            style="color: var(--accent-purple); text-decoration: none;"
                                            onclick="event.stopPropagation(); saveBlockData(${blockNumber}, '${blockHash}', ${JSON.stringify(block).replace(/"/g, '&quot;')})">#${blockNumber.toLocaleString()}</a>
@@ -3396,7 +3396,7 @@
         // Show real block details
         function showRealBlockDetails(blockNumber, blockHash) {
             console.log(`🔍 Showing details for real block ${blockNumber} with hash ${blockHash}`);
-            window.location.href = `block-details.html?number=${blockNumber}&hash=${blockHash}`;
+            window.location.href = `/block/${blockNumber}`;
         }
 
         // Create blocks list from latest block info
@@ -3500,15 +3500,15 @@
             if (!isNaN(query) && query.length < 40) {
                 // Block number (pure digits, not too long)
                 console.log('✅ Detected: Block number');
-                window.location.href = `block-details.html?number=${query}`;
+                window.location.href = `/block/${query}`;
             } else if (cleanQuery.length === 64 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
                 // Transaction hash or Block hash (64 hex chars)
                 console.log('✅ Detected: Transaction/Block hash');
-                window.location.href = `transaction-details.html?hash=${cleanQuery}`;
+                window.location.href = `/tx/${cleanQuery}`;
             } else if (cleanQuery.length === 40 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
                 // Ethereum address (40 hex chars)
                 console.log('✅ Detected: Address');
-                window.location.href = `address-details.html?address=0x${cleanQuery}`;
+                window.location.href = `/address/0x${cleanQuery}`;
             } else {
                 alert('Invalid search query. Please enter a valid block number, transaction hash, or address.');
             }
@@ -3536,7 +3536,7 @@
                         if (found) {
                             const fullHash = found.hash || found.txId || found.transactionHash;
                             console.log('✅ Found matching transaction:', fullHash);
-                            window.location.href = `transaction-details.html?hash=${encodeURIComponent(fullHash)}`;
+                            window.location.href = `/tx/${encodeURIComponent(fullHash)}`;
                             return;
                         }
                     }
@@ -3549,7 +3549,7 @@
                     if (searchData.success && searchData.transaction) {
                         const fullHash = searchData.transaction.hash;
                         console.log('✅ Found transaction via API:', fullHash);
-                        window.location.href = `transaction-details.html?hash=${encodeURIComponent(fullHash)}`;
+                        window.location.href = `/tx/${encodeURIComponent(fullHash)}`;
                         return;
                     }
                 }
@@ -3566,13 +3566,13 @@
         // Show address details
         function showAddressDetails(address) {
             // Navigate to the address details page, passing the address as a query parameter
-            window.location.href = `address-details.html?address=${encodeURIComponent(address)}`;
+            window.location.href = `/address/${encodeURIComponent(address)}`;
         }
 
 
         // Show block details (placeholder)
         function showBlockDetails(blockNumber) {
-            window.location.href = `block-details.html?number=${blockNumber}`;
+            window.location.href = `/block/${blockNumber}`;
         }
 
         // Utility function to get time ago

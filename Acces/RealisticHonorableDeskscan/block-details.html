@@ -46,18 +46,18 @@
     <meta name="description" content="View detailed block information on Access Network. Explore block hash, parent hash, transactions, gas used, and timestamp on AccessScan.">
     <meta name="robots" content="index, follow">
     <meta name="keywords" content="block details, Access Network block, blockchain block info, block hash, AccessScan">
-    <link rel="canonical" href="https://accesschain.org/block-details.html">
+    <link rel="canonical" href="https://accesschain.org/block-details">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://accesschain.org/block-details.html">
+    <meta property="og:url" content="https://accesschain.org/block-details">
     <meta property="og:title" content="Block Details - AccessScan">
     <meta property="og:description" content="View detailed block information on Access Network blockchain.">
     <meta property="og:image" content="https://accesschain.org/logo.png">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://accesschain.org/block-details.html">
+    <meta name="twitter:url" content="https://accesschain.org/block-details">
     <meta name="twitter:title" content="Block Details - AccessScan">
     <meta name="twitter:description" content="View detailed block information on Access Network.">
     <meta name="twitter:image" content="https://accesschain.org/logo.png">
@@ -1222,20 +1222,20 @@
     <!-- Navigation -->
     <nav class="nav">
         <div class="nav-content">
-            <a href="access-explorer.html" class="nav-item">Home</a>
+            <a href="/access-explorer" class="nav-item">Home</a>
 
             <div class="dropdown">
                 <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Network ⌄</a>
                 <div class="dropdown-menu">
-                    <a href="transactions.html" class="dropdown-item">Transactions</a>
+                    <a href="/transactions" class="dropdown-item">Transactions</a>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Pending Transactions 🚫</a>
                     </div>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Contract Internal Transactions 🚫</a>
                     </div>
-                    <a href="blocks.html" class="dropdown-item">View Blocks</a>
-                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <a href="/blocks" class="dropdown-item">View Blocks</a>
+                    <a href="/top-accounts" class="dropdown-item">Top Accounts</a>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Verified Contracts 🚫</a>
                     </div>
@@ -1296,7 +1296,7 @@
             <div class="dropdown">
                 <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Developers ⌄</a>
                 <div class="dropdown-menu">
-                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <a href="/developer-api" class="dropdown-item">API Plans</a>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Input Data Decoder 🚫</a>
                     </div>
@@ -1318,12 +1318,12 @@
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Charts & Stats 🚫</a>
                     </div>
-                    <a href="gastracker.html" class="dropdown-item">Gas Tracker</a>
-                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <a href="/gastracker" class="dropdown-item">Gas Tracker</a>
+                    <a href="/developer-api" class="dropdown-item">API Plans</a>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Verify Contract 🚫</a>
                     </div>
-                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <a href="/top-accounts" class="dropdown-item">Top Accounts</a>
                     <a href="#" class="dropdown-item" onclick="event.preventDefault(); toggleTheme();" style="display: flex; align-items: center; gap: 8px;">
                         <span id="desktop-theme-text">Light Mode</span>
                         <span id="desktop-theme-icon"><i class="fas fa-sun" style="color: #f59e0b;"></i></span>
@@ -1384,18 +1384,18 @@
                 <div class="mobile-menu-divider"></div>
             </div>
 
-            <a href="access-explorer.html" class="mobile-nav-item">Home</a>
+            <a href="/access-explorer" class="mobile-nav-item">Home</a>
 
             <div class="mobile-nav-section">Network</div>
-            <a href="transactions.html" class="mobile-nav-item">Transactions</a>
+            <a href="/transactions" class="mobile-nav-item">Transactions</a>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Pending Transactions 🚫</a>
             </div>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Contract Internal Transactions 🚫</a>
             </div>
-            <a href="blocks.html" class="mobile-nav-item">View Blocks</a>
-            <a href="top-accounts.html" class="mobile-nav-item">Top Accounts</a>
+            <a href="/blocks" class="mobile-nav-item">View Blocks</a>
+            <a href="/top-accounts" class="mobile-nav-item">Top Accounts</a>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Verified Contracts 🚫</a>
             </div>
@@ -1436,7 +1436,7 @@
             </div>
 
             <div class="mobile-nav-section">Developers</div>
-            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <a href="/developer-api" class="mobile-nav-item">API Plans</a>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Input Data Decoder 🚫</a>
             </div>
@@ -1454,8 +1454,8 @@
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Charts & Stats 🚫</a>
             </div>
-            <a href="gastracker.html" class="mobile-nav-item">Gas Tracker</a>
-            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <a href="/gastracker" class="mobile-nav-item">Gas Tracker</a>
+            <a href="/developer-api" class="mobile-nav-item">API Plans</a>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="event.preventDefault(); event.stopPropagation(); showComingSoon(event, this); return false;">Verify Contract 🚫</a>
             </div>
@@ -1471,7 +1471,7 @@
 
     <!-- Main Content -->
     <div class="container">
-        <a href="access-explorer.html" class="back-btn">
+        <a href="/access-explorer" class="back-btn">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                 <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
             </svg>
@@ -1489,7 +1489,7 @@
         <div id="errorState" class="error-message" style="display: none;">
             <h2>Block Not Found</h2>
             <p>The requested block could not be found or does not exist.</p>
-            <button onclick="window.location.href='access-explorer.html'" style="margin-top: 15px; padding: 10px 20px; background: var(--accent-purple); color: white; border: none; border-radius: 6px; cursor: pointer;">
+            <button onclick="window.location.href='/access-explorer'" style="margin-top: 15px; padding: 10px 20px; background: var(--accent-purple); color: white; border: none; border-radius: 6px; cursor: pointer;">
                 Return to Explorer
             </button>
         </div>
@@ -1636,7 +1636,7 @@
                     <label class="checkbox-container">
                         <input type="checkbox" id="termsCheckbox" required>
                         <span class="checkmark"></span>
-                        I agree to the <a href="terms-of-service.html" target="_blank" style="color: var(--accent-purple);">Terms of Service</a>.
+                        I agree to the <a href="/terms-of-service" target="_blank" style="color: var(--accent-purple);">Terms of Service</a>.
                     </label>
                 </div>
 
@@ -1649,11 +1649,11 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-links">
-                <a href="about.html" class="footer-link">About</a>
-                <a href="faq.html" class="footer-link">FAQ</a>
-                <a href="developer-api.html" class="footer-link">API</a>
-                <a href="contact.html" class="footer-link">Contact Us</a>
-                <a href="terms-of-service.html" class="footer-link">Terms</a>
+                <a href="/about" class="footer-link">About</a>
+                <a href="/faq" class="footer-link">FAQ</a>
+                <a href="/developer-api" class="footer-link">API</a>
+                <a href="/contact" class="footer-link">Contact Us</a>
+                <a href="/terms-of-service" class="footer-link">Terms</a>
             </div>
             <p>&copy; 2025 AccessScan. All rights reserved.</p>
         </div>
@@ -1968,7 +1968,7 @@
                                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                                     <i class="fas fa-file-alt" style="color: var(--accent-purple);"></i>
                                     <strong style="color: var(--text-secondary); font-size: 13px;">TX Hash:</strong>
-                                    <a href="transaction-details.html?hash=${txHash}"
+                                    <a href="/tx/${txHash}"
                                        class="tx-hash"
                                        style="color: var(--accent-purple); text-decoration: none; font-family: monospace; font-size: 14px;"
                                        onclick="saveTransactionData('${txHash}', ${JSON.stringify(tx).replace(/'/g, "\\'").replace(/"/g, '&quot;')})"
@@ -1984,7 +1984,7 @@
                             <div class="tx-detail">
                                 <span style="color: var(--text-secondary); font-weight: 500;">From:</span>
                                 ${fromAddress && fromAddress.startsWith('0x') ?
-                                    `<a href="address-details.html?address=${fromAddress}"
+                                    `<a href="/address/${fromAddress}"
                                        class="address-link"
                                        style="color: var(--accent-purple); text-decoration: none; font-family: monospace; margin-left: 8px;"
                                        onmouseover="this.style.textDecoration='underline'"
@@ -1994,7 +1994,7 @@
                             <div class="tx-detail">
                                 <span style="color: var(--text-secondary); font-weight: 500;">To:</span>
                                 ${toAddress && toAddress.startsWith('0x') ?
-                                    `<a href="address-details.html?address=${toAddress}"
+                                    `<a href="/address/${toAddress}"
                                        class="address-link"
                                        style="color: var(--accent-purple); text-decoration: none; font-family: monospace; margin-left: 8px;"
                                        onmouseover="this.style.textDecoration='underline'"

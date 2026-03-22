@@ -48,18 +48,18 @@
     <meta name="description" content="Browse all transactions on Access Network blockchain. View transaction hash, sender, receiver, amount, gas fees, and confirmation status on AccessScan.">
     <meta name="robots" content="index, follow">
     <meta name="keywords" content="Access Network transactions, blockchain transactions, crypto transactions, transaction explorer, AccessScan transactions">
-    <link rel="canonical" href="https://accesschain.org/transactions.html">
+    <link rel="canonical" href="https://accesschain.org/transactions">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://accesschain.org/transactions.html">
+    <meta property="og:url" content="https://accesschain.org/transactions">
     <meta property="og:title" content="Access Network Transactions | AccessScan">
     <meta property="og:description" content="Browse all transactions on Access Network blockchain.">
     <meta property="og:image" content="https://accesschain.org/logo.png">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://accesschain.org/transactions.html">
+    <meta name="twitter:url" content="https://accesschain.org/transactions">
     <meta name="twitter:title" content="Access Network Transactions | AccessScan">
     <meta name="twitter:description" content="Browse transactions on Access Network.">
     <meta name="twitter:image" content="https://accesschain.org/logo.png">
@@ -1621,20 +1621,20 @@
     <!-- Navigation -->
     <nav class="nav">
         <div class="nav-content">
-            <a href="access-explorer.html" class="nav-item">Home</a>
+            <a href="/access-explorer" class="nav-item">Home</a>
 
             <div class="dropdown">
                 <a href="#" class="nav-item active" onclick="toggleDropdown(this, event)">Network ⌄</a>
                 <div class="dropdown-menu">
-                    <a href="transactions.html" class="dropdown-item">Transactions</a>
+                    <a href="/transactions" class="dropdown-item">Transactions</a>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Pending Transactions 🚫</a>
                     </div>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Contract Internal Transactions 🚫</a>
                     </div>
-                    <a href="blocks.html" class="dropdown-item">View Blocks</a>
-                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <a href="/blocks" class="dropdown-item">View Blocks</a>
+                    <a href="/top-accounts" class="dropdown-item">Top Accounts</a>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Verified Contracts 🚫</a>
                     </div>
@@ -1695,7 +1695,7 @@
             <div class="dropdown">
                 <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">Developers ⌄</a>
                 <div class="dropdown-menu">
-                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <a href="/developer-api" class="dropdown-item">API Plans</a>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Input Data Decoder 🚫</a>
                     </div>
@@ -1717,12 +1717,12 @@
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
                     </div>
-                    <a href="gastracker.html" class="dropdown-item">Gas Tracker</a>
-                    <a href="developer-api.html" class="dropdown-item">API Plans</a>
+                    <a href="/gastracker" class="dropdown-item">Gas Tracker</a>
+                    <a href="/developer-api" class="dropdown-item">API Plans</a>
                     <div class="dropdown-item-wrapper">
                         <a href="#" class="dropdown-item disabled-btn" onclick="showComingSoon(event, this)">Verify Contract 🚫</a>
                     </div>
-                    <a href="top-accounts.html" class="dropdown-item">Top Accounts</a>
+                    <a href="/top-accounts" class="dropdown-item">Top Accounts</a>
                     <a href="#" class="dropdown-item" onclick="event.preventDefault(); toggleTheme();" style="display: flex; align-items: center; gap: 8px;">
                         <span id="desktop-theme-text">Light Mode</span>
                         <span id="desktop-theme-icon"><i class="fas fa-sun" style="color: #f59e0b;"></i></span>
@@ -1783,18 +1783,18 @@
                 <div class="mobile-menu-divider"></div>
             </div>
 
-            <a href="access-explorer.html" class="mobile-nav-item">Home</a>
+            <a href="/access-explorer" class="mobile-nav-item">Home</a>
 
             <div class="mobile-nav-section">Network</div>
-            <a href="transactions.html" class="mobile-nav-item">Transactions</a>
+            <a href="/transactions" class="mobile-nav-item">Transactions</a>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Pending Transactions 🚫</a>
             </div>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Contract Internal Transactions 🚫</a>
             </div>
-            <a href="blocks.html" class="mobile-nav-item">View Blocks</a>
-            <a href="top-accounts.html" class="mobile-nav-item">Top Accounts</a>
+            <a href="/blocks" class="mobile-nav-item">View Blocks</a>
+            <a href="/top-accounts" class="mobile-nav-item">Top Accounts</a>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Verified Contracts 🚫</a>
             </div>
@@ -1835,7 +1835,7 @@
             </div>
 
             <div class="mobile-nav-section">Developers</div>
-            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <a href="/developer-api" class="mobile-nav-item">API Plans</a>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Input Data Decoder 🚫</a>
             </div>
@@ -1853,8 +1853,8 @@
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Charts & Stats 🚫</a>
             </div>
-            <a href="gastracker.html" class="mobile-nav-item">Gas Tracker</a>
-            <a href="developer-api.html" class="mobile-nav-item">API Plans</a>
+            <a href="/gastracker" class="mobile-nav-item">Gas Tracker</a>
+            <a href="/developer-api" class="mobile-nav-item">API Plans</a>
             <div class="mobile-nav-item-wrapper">
                 <a href="#" class="mobile-nav-item disabled-btn" onclick="showComingSoon(event, this)">Verify Contract 🚫</a>
             </div>
@@ -1890,7 +1890,7 @@
         <!-- Page Title with API Link -->
         <div class="page-title-section">
             <h1 class="page-main-title">Transactions</h1>
-            <a href="developer-api.html" class="api-docs-link">
+            <a href="/developer-api" class="api-docs-link">
                 &lt;/&gt; API
             </a>
         </div>
@@ -2043,7 +2043,7 @@
                     <label class="checkbox-container">
                         <input type="checkbox" id="termsCheckbox" required>
                         <span class="checkmark"></span>
-                        I agree to the <a href="terms-of-service.html" target="_blank" style="color: var(--accent-purple);">Terms of Service</a>.
+                        I agree to the <a href="/terms-of-service" target="_blank" style="color: var(--accent-purple);">Terms of Service</a>.
                     </label>
                 </div>
 
@@ -2056,11 +2056,11 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-links">
-                <a href="about.html" class="footer-link">About</a>
-                <a href="faq.html" class="footer-link">FAQ</a>
-                <a href="developer-api.html" class="footer-link">API</a>
-                <a href="contact.html" class="footer-link">Contact Us</a>
-                <a href="terms-of-service.html" class="footer-link">Terms</a>
+                <a href="/about" class="footer-link">About</a>
+                <a href="/faq" class="footer-link">FAQ</a>
+                <a href="/developer-api" class="footer-link">API</a>
+                <a href="/contact" class="footer-link">Contact Us</a>
+                <a href="/terms-of-service" class="footer-link">Terms</a>
             </div>
             <p>&copy; 2025 AccessScan. All rights reserved.</p>
         </div>
@@ -2981,11 +2981,11 @@ This is Access Network's own API, completely independent from Ethereum.`;
 
             row.innerHTML = `
                 <td>
-                    <i class="fas fa-eye view-icon" onclick="window.location.href='transaction-details.html?hash=${txHash}'"></i>
+                    <i class="fas fa-eye view-icon" onclick="window.location.href='/tx/${txHash}'"></i>
                 </td>
                 <td>
                     <div class="tx-hash-cell">
-                        <a href="transaction-details.html?hash=${txHash}"
+                        <a href="/tx/${txHash}"
                            class="tx-hash"
                            onclick="saveTransactionData('${txHash}', ${JSON.stringify(tx).replace(/"/g, '&quot;')})">${shortHash}</a>
                         <div class="copy-icon-wrapper">
@@ -2998,7 +2998,7 @@ This is Access Network's own API, completely independent from Ethereum.`;
                 </td>
                 <td>
                     ${tx.block && tx.block !== 'Pending' ?
-                      `<a href="block-details.html?number=${tx.block}"
+                      `<a href="/block/${tx.block}"
                           class="tx-hash"
                           style="color: var(--accent-purple); text-decoration: none;"
                           onclick="saveBlockData(${tx.block}, '${tx.blockHash || ''}', {})">${tx.block}</a>`
@@ -3007,7 +3007,7 @@ This is Access Network's own API, completely independent from Ethereum.`;
                 <td class="age-text">${age}</td>
                 <td>
                     <div class="address-cell">
-                        <a href="address-details.html?address=${fromAddr}" class="address-link">${shortFrom}</a>
+                        <a href="/address/${fromAddr}" class="address-link">${shortFrom}</a>
                         <div class="copy-icon-wrapper">
                             <i class="far fa-copy copy-icon" onclick="copyToClipboard('${fromAddr}', event)" title="Copy Address"></i>
                         </div>
@@ -3015,7 +3015,7 @@ This is Access Network's own API, completely independent from Ethereum.`;
                 </td>
                 <td>
                     <div class="address-cell">
-                        <a href="address-details.html?address=${toAddr}" class="address-link">${shortTo}</a>
+                        <a href="/address/${toAddr}" class="address-link">${shortTo}</a>
                         <div class="copy-icon-wrapper">
                             <i class="far fa-copy copy-icon" onclick="copyToClipboard('${toAddr}', event)" title="Copy Address"></i>
                         </div>
@@ -3203,15 +3203,15 @@ This is Access Network's own API, completely independent from Ethereum.`;
             if (cleanQuery.length === 64 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
                 // Transaction hash (64 hex chars)
                 console.log('✅ Detected: Transaction hash');
-                window.location.href = `transaction-details.html?hash=${cleanQuery}`;
+                window.location.href = `/tx/${cleanQuery}`;
             } else if (cleanQuery.length === 40 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
                 // Ethereum address (40 hex chars)
                 console.log('✅ Detected: Address');
-                window.location.href = `address-details.html?address=0x${cleanQuery}`;
+                window.location.href = `/address/0x${cleanQuery}`;
             } else if (!isNaN(query)) {
                 // Block number
                 console.log('✅ Detected: Block number');
-                window.location.href = `block-details.html?number=${query}`;
+                window.location.href = `/block/${query}`;
             } else {
                 showToast('Invalid search query. Please enter a valid identifier.', 'error');
             }
@@ -3253,15 +3253,15 @@ This is Access Network's own API, completely independent from Ethereum.`;
             if (cleanQuery.length === 64 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
                 // Transaction hash (64 hex chars)
                 console.log('✅ Detected: Transaction hash');
-                window.location.href = `transaction-details.html?hash=${cleanQuery}`;
+                window.location.href = `/tx/${cleanQuery}`;
             } else if (cleanQuery.length === 40 && /^[a-fA-F0-9]+$/.test(cleanQuery)) {
                 // Ethereum address (40 hex chars)
                 console.log('✅ Detected: Address');
-                window.location.href = `address-details.html?address=0x${cleanQuery}`;
+                window.location.href = `/address/0x${cleanQuery}`;
             } else if (!isNaN(query)) {
                 // Block number
                 console.log('✅ Detected: Block number');
-                window.location.href = `block-details.html?number=${query}`;
+                window.location.href = `/block/${query}`;
             } else {
                 showToast('Invalid search query. Please enter a valid identifier.', 'error');
             }

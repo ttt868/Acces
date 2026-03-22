@@ -2433,8 +2433,9 @@ const server = http.createServer(async (req, res) => {
         res.end('Not found');
         return;
       }
-      // Inject <base href="/"> + script before </head>
-      const injection = `<base href="/"><script>
+      // Inject <base href="/"> right after <head> (must be first per HTML spec)
+      // and inject param override script before </head>
+      const paramOverride = `<script>
         // EIP-3091 URL Rewrite: inject params from clean URL
         (function(){
           var origGet = URLSearchParams.prototype.get;
@@ -2445,7 +2446,8 @@ const server = http.createServer(async (req, res) => {
           };
         })();
       </script>`;
-      const modified = content.replace('</head>', injection + '</head>');
+      let modified = content.replace(/<head>/i, '<head>\n<base href="/">');
+      modified = modified.replace('</head>', paramOverride + '</head>');
       res.writeHead(200, { 
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'no-cache'
@@ -2501,7 +2503,15 @@ const server = http.createServer(async (req, res) => {
     '/access-explorer': 'access-explorer.html',
     '/transaction-details': 'transaction-details.html',
     '/address-details': 'address-details.html',
-    '/block-details': 'block-details.html'
+    '/block-details': 'block-details.html',
+    '/about': 'about.html',
+    '/faq': 'faq.html',
+    '/contact': 'contact.html',
+    '/terms-of-service': 'terms-of-service.html',
+    '/whitepaper': 'whitepaper.html',
+    '/privacy-policy': 'privacy-policy.html',
+    '/add-network': 'add-network.html',
+    '/terms-of-service-app': 'terms-of-service-app.html'
   };
   if (cleanUrlMap[pathname]) {
     serveWithRewrite(res, cleanUrlMap[pathname], '{}');
