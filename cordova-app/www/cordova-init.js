@@ -202,9 +202,9 @@ document.addEventListener('deviceready', function() {
                     NavigationBar.backgroundColorByHexString('#9b59b6', false);
                 }
             } else if (document.getElementById('leaderboardModal') && document.getElementById('leaderboardModal').classList.contains('active')) {
-                // Leaderboard modal: exact match with gradient top color
-                StatusBar.overlaysWebView(false);
-                StatusBar.backgroundColorByHexString('#667eea');
+                // Leaderboard modal: overlay mode so gradient shows through status bar
+                StatusBar.overlaysWebView(true);
+                StatusBar.backgroundColorByHexString('#00000000');
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
                     if (isDark) {

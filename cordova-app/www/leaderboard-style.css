@@ -40,8 +40,9 @@
   background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 20px;
+  padding-top: calc(env(safe-area-inset-top, 24px) + 20px);
   z-index: 10;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 .leaderboard-title-row {
