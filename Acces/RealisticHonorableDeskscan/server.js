@@ -2457,8 +2457,7 @@ const server = http.createServer(async (req, res) => {
 
   // /explorer → redirect to explorer page
   if (pathname === '/explorer' || pathname === '/explorer/') {
-    res.writeHead(302, { 'Location': '/access-explorer.html', 'Cache-Control': 'no-cache' });
-    res.end();
+    serveWithRewrite(res, 'access-explorer.html', '{}');
     return;
   }
 
@@ -2487,6 +2486,25 @@ const server = http.createServer(async (req, res) => {
     const blockNum = blockMatch[1];
     console.log(`🔗 EIP-3091 block rewrite: ${pathname} → block-details.html?number=${blockNum}`);
     serveWithRewrite(res, 'block-details.html', `{"number":"${blockNum}","block":"${blockNum}"}`);
+    return;
+  }
+
+  // Clean URL rewrites for all explorer pages (no .html extension needed)
+  const cleanUrlMap = {
+    '/transactions': 'transactions.html',
+    '/blocks': 'blocks.html',
+    '/gastracker': 'gastracker.html',
+    '/top-accounts': 'top-accounts.html',
+    '/latest-mint': 'latest-mint.html',
+    '/developer-api': 'developer-api.html',
+    '/privacy-policy-explorer': 'privacy-policy-explorer.html',
+    '/access-explorer': 'access-explorer.html',
+    '/transaction-details': 'transaction-details.html',
+    '/address-details': 'address-details.html',
+    '/block-details': 'block-details.html'
+  };
+  if (cleanUrlMap[pathname]) {
+    serveWithRewrite(res, cleanUrlMap[pathname], '{}');
     return;
   }
 
