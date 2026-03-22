@@ -205,7 +205,7 @@ document.addEventListener('deviceready', function() {
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
                     if (isDark) {
-                        NavigationBar.backgroundColorByHexString('#1a1a2e', false);
+                        NavigationBar.backgroundColorByHexString('#0f0f1e', false);
                     } else {
                         NavigationBar.backgroundColorByHexString('#ffffff', true);
                     }
