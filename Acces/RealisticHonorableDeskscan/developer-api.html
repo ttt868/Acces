@@ -1606,10 +1606,10 @@
                     </div>
                 </div>
                 <div class="mobile-user-actions">
-                    <a href="#" class="mobile-nav-item" onclick="showUserProfile()">
+                    <a href="javascript:void(0)" class="mobile-nav-item" onclick="showUserProfile()">
                         <i class="fas fa-user"></i> My Profile
                     </a>
-                    <a href="#" class="mobile-nav-item" onclick="logoutExplorer()">
+                    <a href="javascript:void(0)" class="mobile-nav-item" onclick="logoutExplorer()">
                         <i class="fas fa-sign-out-alt"></i> Sign Out
                     </a>
                 </div>
@@ -1618,7 +1618,7 @@
 
             <!-- Sign In Section for Mobile (Only shown when not logged in) -->
             <div class="mobile-signin-section" id="mobileSigninSection">
-                <a href="#" class="mobile-nav-item" onclick="showAuthModal(); return false;">
+                <a href="javascript:void(0)" class="mobile-nav-item" onclick="showAuthModal(); return false;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
                         <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
@@ -1631,7 +1631,7 @@
 
             <a href="/access-explorer" class="mobile-nav-item"><i class="fas fa-home" style="margin-right: 8px;"></i> Home</a>
             <a href="/developer-api" class="mobile-nav-item" style="background: var(--bg-secondary);"><i class="fas fa-book" style="margin-right: 8px;"></i> API Documentation</a>
-            <a href="#" class="mobile-nav-item" onclick="event.preventDefault(); toggleMobileMenu(); document.getElementById('apiKeysList').scrollIntoView({behavior: 'smooth'});"><i class="fas fa-key" style="margin-right: 8px;"></i> API Key Management</a>
+            <a href="javascript:void(0)" class="mobile-nav-item" onclick="event.preventDefault(); toggleMobileMenu(); document.getElementById('apiKeysList').scrollIntoView({behavior: 'smooth'});"><i class="fas fa-key" style="margin-right: 8px;"></i> API Key Management</a>
 
             <div style="padding: 20px; margin-top: auto; border-top: 1px solid var(--border-color);">
                 <button onclick="toggleTheme()" style="width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-primary); font-weight: 500; transition: all 0.2s;">
@@ -1690,7 +1690,7 @@
             </div>
 
             <div class="right-section">
-                <a href="#" class="sign-in-btn" onclick="showAuthModal()" style="display: none;">
+                <a href="javascript:void(0)" class="sign-in-btn" onclick="showAuthModal()" style="display: none;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
                         <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
@@ -1712,12 +1712,12 @@
         <div class="nav-content">
             <a href="/access-explorer" class="nav-item">Home</a>
             <a href="/developer-api" class="nav-item active">API Documentation</a>
-            <a href="#" class="nav-item" onclick="event.preventDefault(); document.getElementById('apiKeysList').scrollIntoView({behavior: 'smooth'});">API Key</a>
+            <a href="javascript:void(0)" class="nav-item" onclick="event.preventDefault(); document.getElementById('apiKeysList').scrollIntoView({behavior: 'smooth'});">API Key</a>
 
             <div class="dropdown">
-                <a href="#" class="nav-item" onclick="toggleDropdown(this, event)">More ⌄</a>
+                <a href="javascript:void(0)" class="nav-item" onclick="toggleDropdown(this, event)">More ⌄</a>
                 <div class="dropdown-menu">
-                    <a href="#" class="dropdown-item" onclick="event.preventDefault(); toggleTheme();" style="display: flex; align-items: center; gap: 8px;">
+                    <a href="javascript:void(0)" class="dropdown-item" onclick="event.preventDefault(); toggleTheme();" style="display: flex; align-items: center; gap: 8px;">
                         <span id="desktop-theme-text">Light Mode</span>
                         <span id="desktop-theme-icon"><i class="fas fa-sun" style="color: #f59e0b;"></i></span>
                     </a>
