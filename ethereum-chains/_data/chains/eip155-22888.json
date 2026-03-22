@@ -18,7 +18,7 @@
   "explorers": [
     {
       "name": "Access Network Explorer",
-      "url": "https://accesschain.org/access-explorer.html",
+      "url": "https://accesschain.org",
       "standard": "EIP3091",
       "icon": "access"
     }
