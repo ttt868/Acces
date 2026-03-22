@@ -15936,6 +15936,8 @@ function openLeaderboardModal() {
     
     // Load initial data
     loadLeaderboardData('all');
+    // Update device system bars color
+    if (typeof window.updateSystemBarsColor === 'function') window.updateSystemBarsColor();
   }
 }
 
@@ -15945,6 +15947,8 @@ function closeLeaderboardModal() {
   if (modal) {
     modal.classList.remove('active');
     document.body.style.overflow = ''; // Restore scrolling
+    // Restore device system bars color
+    if (typeof window.updateSystemBarsColor === 'function') window.updateSystemBarsColor();
   }
 }
 

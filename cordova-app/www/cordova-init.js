@@ -199,6 +199,17 @@ document.addEventListener('deviceready', function() {
                 if (window.NavigationBar) {
                     NavigationBar.backgroundColorByHexString('#9b59b6', false);
                 }
+            } else if (document.getElementById('leaderboardModal') && document.getElementById('leaderboardModal').classList.contains('active')) {
+                // Leaderboard modal open: purple header gradient end color
+                StatusBar.backgroundColorByHexString('#764ba2');
+                StatusBar.styleLightContent();
+                if (window.NavigationBar) {
+                    if (isDark) {
+                        NavigationBar.backgroundColorByHexString('#1a1a2e', false);
+                    } else {
+                        NavigationBar.backgroundColorByHexString('#ffffff', true);
+                    }
+                }
             } else if (!isMainApp && isDark) {
                 // Explorer/external pages dark mode
                 StatusBar.backgroundColorByHexString('#0d1117');
