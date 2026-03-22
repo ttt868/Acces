@@ -200,8 +200,8 @@ document.addEventListener('deviceready', function() {
                     NavigationBar.backgroundColorByHexString('#9b59b6', false);
                 }
             } else if (document.getElementById('leaderboardModal') && document.getElementById('leaderboardModal').classList.contains('active')) {
-                // Leaderboard modal open: blue-purple header gradient start color (top-left)
-                StatusBar.backgroundColorByHexString('#667eea');
+                // Leaderboard modal open: midpoint of header gradient (#667eea → #764ba2)
+                StatusBar.backgroundColorByHexString('#6E65C6');
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
                     if (isDark) {
