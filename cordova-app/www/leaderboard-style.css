@@ -37,12 +37,24 @@
 .leaderboard-header {
   position: sticky;
   top: 0;
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  background-color: #667eea;
   color: white;
   padding: 20px;
-  padding-top: calc(env(safe-area-inset-top, 24px) + 20px);
   z-index: 10;
   box-shadow: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.leaderboard-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, transparent 0%, #764ba2 100%);
+  pointer-events: none;
 }
 
 .leaderboard-title-row {
