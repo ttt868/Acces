@@ -11581,7 +11581,9 @@ if (totalCost > (currentBalance + precision)) {
           'Recipient not found': 'Recipient not found',
           'Transaction already processed': 'Transaction already processed',
           'Missing required transaction parameters': 'Missing required transaction parameters',
-          'Server error while processing transaction': 'Server error while processing transaction'
+          'Server error while processing transaction': 'Server error while processing transaction',
+          'Invalid session': 'Invalid session',
+          'Invalid session - please re-login': 'Invalid session - please re-login'
         };
         const rawMsg = error.message || '';
         const translationKey = serverErrorMap[rawMsg];
