@@ -2006,10 +2006,12 @@
             // تنظيف hash للمعاملات
             if (txHash.startsWith('/tx/')) {
                 txHash = txHash.substring(4);
-                console.log('🔧 Cleaned /tx/ prefix:', txHash);
             } else if (txHash.startsWith('tx/')) {
                 txHash = txHash.substring(3);
-                console.log('🔧 Cleaned tx/ prefix:', txHash);
+            }
+            // إزالة 0x prefix - API يخزن الهاشات بدون 0x
+            if (txHash.startsWith('0x') || txHash.startsWith('0X')) {
+                txHash = txHash.substring(2);
             }
 
             txHash = txHash.trim();
@@ -2027,19 +2029,22 @@
                 return;
             }
 
-            console.log('[TX] Loading:', txHash);
+            // Prepare both variants: with and without 0x
+            const hashClean = txHash.startsWith('0x') ? txHash.substring(2) : txHash;
+            const hashWith0x = '0x' + hashClean;
+            const hashesToTry = [hashClean, hashWith0x];
 
-            // Try direct transaction API first
-            try {
-                const response = await fetch(window.location.origin + '/api/network/transaction/' + txHash);
-                const result = await response.json();
-                
-                if (result && (result.success || result.transaction)) {
-                    displayRealTransactionData(result.transaction || result);
-                    return;
-                }
-            } catch (e) {
-                console.log('[TX] Direct API failed:', e.message);
+            // Try direct transaction API first (try both hash formats)
+            for (const h of hashesToTry) {
+                try {
+                    const response = await fetch(window.location.origin + '/api/network/transaction/' + h);
+                    const result = await response.json();
+                    
+                    if (result && (result.success || result.transaction)) {
+                        displayRealTransactionData(result.transaction || result.data || result);
+                        return;
+                    }
+                } catch (e) {}
             }
 
             // Fallback: Search in latest transactions (last 500)
@@ -2048,20 +2053,16 @@
                 const result = await response.json();
                 
                 if (result.success && result.data) {
-                    const found = result.data.find(tx => 
-                        tx.hash === txHash || 
-                        tx.txId === txHash ||
-                        tx.transactionHash === txHash
-                    );
+                    const found = result.data.find(tx => {
+                        const txH = (tx.hash || tx.txId || tx.transactionHash || '').replace(/^0x/, '');
+                        return txH === hashClean;
+                    });
                     if (found) {
-                        console.log('[TX] Found in latest-transactions:', found);
                         displayRealTransactionData(found);
                         return;
                     }
                 }
-            } catch (e) {
-                console.log('[TX] Fallback failed:', e.message);
-            }
+            } catch (e) {}
 
             // Try RPC as last resort
             try {
@@ -2071,7 +2072,7 @@
                     body: JSON.stringify({
                         jsonrpc: '2.0',
                         method: 'eth_getTransactionByHash',
-                        params: [txHash],
+                        params: [hashWith0x],
                         id: 1
                     })
                 });
@@ -2080,9 +2081,7 @@
                     displayRPCTransactionData(rpcData.result);
                     return;
                 }
-            } catch (e) {
-                console.log('[TX] RPC failed:', e.message);
-            }
+            } catch (e) {}
 
             showTransactionNotFound();
         }

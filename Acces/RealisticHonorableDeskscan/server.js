@@ -2433,8 +2433,7 @@ const server = http.createServer(async (req, res) => {
         res.end('Not found');
         return;
       }
-      // Inject <base href="/"> right after <head> (must be first per HTML spec)
-      // and inject param override script before </head>
+      // Inject param override script before </head>
       const paramOverride = `<script>
         // EIP-3091 URL Rewrite: inject params from clean URL
         (function(){
@@ -2446,7 +2445,11 @@ const server = http.createServer(async (req, res) => {
           };
         })();
       </script>`;
-      let modified = content.replace(/<head>/i, '<head>\n<base href="/">');
+      let modified = content;
+      // Only add <base href="/"> if not already present
+      if (!content.includes('<base href="/">')) {
+        modified = modified.replace(/<head>/i, '<head>\n<base href="/">');
+      }
       modified = modified.replace('</head>', paramOverride + '</head>');
       res.writeHead(200, { 
         'Content-Type': 'text/html; charset=utf-8',
@@ -2466,10 +2469,10 @@ const server = http.createServer(async (req, res) => {
   // /tx/{hash} or /explorer/tx/{hash} → serve transaction-details.html
   const txMatch = pathname.match(/^(?:\/explorer)?\/tx\/(?:hash\/)?(0x)?([a-fA-F0-9]{64})$/);
   if (txMatch) {
-    const txHash = (txMatch[1] || '0x') + txMatch[2];
-    const normalizedHash = txHash.startsWith('0x') ? txHash : '0x' + txHash;
-    console.log(`🔗 EIP-3091 tx rewrite: ${pathname} → transaction-details.html?hash=${normalizedHash}`);
-    serveWithRewrite(res, 'transaction-details.html', `{"hash":"${normalizedHash}"}`);
+    // Keep hash without forced 0x prefix - API stores hashes without 0x
+    const txHash = txMatch[2];
+    console.log(`🔗 EIP-3091 tx rewrite: ${pathname} → transaction-details.html?hash=${txHash}`);
+    serveWithRewrite(res, 'transaction-details.html', `{"hash":"${txHash}"}`);
     return;
   }
 
