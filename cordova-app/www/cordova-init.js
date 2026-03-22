@@ -187,6 +187,7 @@ document.addEventListener('deviceready', function() {
             
             if (isPinScreen) {
                 // PIN screen: dark blue gradient top color
+                StatusBar.overlaysWebView(false);
                 StatusBar.backgroundColorByHexString('#0f0f1e');
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
@@ -194,14 +195,16 @@ document.addEventListener('deviceready', function() {
                 }
             } else if (isLogin) {
                 // Login screen: gradient top color
+                StatusBar.overlaysWebView(false);
                 StatusBar.backgroundColorByHexString('#2980b9');
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
                     NavigationBar.backgroundColorByHexString('#9b59b6', false);
                 }
             } else if (document.getElementById('leaderboardModal') && document.getElementById('leaderboardModal').classList.contains('active')) {
-                // Leaderboard modal open: gradient top color (180deg = uniform top edge)
-                StatusBar.backgroundColorByHexString('#667eea');
+                // Leaderboard modal open: transparent status bar so gradient shows through seamlessly
+                StatusBar.overlaysWebView(true);
+                StatusBar.backgroundColorByHexString('#00000000');
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
                     if (isDark) {
@@ -212,6 +215,7 @@ document.addEventListener('deviceready', function() {
                 }
             } else if (!isMainApp && isDark) {
                 // Explorer/external pages dark mode
+                StatusBar.overlaysWebView(false);
                 StatusBar.backgroundColorByHexString('#0d1117');
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
@@ -219,6 +223,7 @@ document.addEventListener('deviceready', function() {
                 }
             } else if (!isMainApp && !isDark) {
                 // Explorer/external pages light mode
+                StatusBar.overlaysWebView(false);
                 StatusBar.backgroundColorByHexString('#ffffff');
                 StatusBar.styleDefault();
                 if (window.NavigationBar) {
@@ -226,6 +231,7 @@ document.addEventListener('deviceready', function() {
                 }
             } else if (isDark) {
                 // Dashboard dark mode
+                StatusBar.overlaysWebView(false);
                 StatusBar.backgroundColorByHexString('#252525');
                 StatusBar.styleLightContent();
                 if (window.NavigationBar) {
@@ -233,6 +239,7 @@ document.addEventListener('deviceready', function() {
                 }
             } else {
                 // Dashboard light mode
+                StatusBar.overlaysWebView(false);
                 StatusBar.backgroundColorByHexString('#f7fafc');
                 StatusBar.styleDefault();
                 if (window.NavigationBar) {
