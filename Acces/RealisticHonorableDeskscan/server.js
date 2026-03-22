@@ -2419,12 +2419,41 @@ const server = http.createServer(async (req, res) => {
 
   
   // ============================================================
-  // EIP-3091 Block Explorer Routes
-  // Base URL: https://accesschain.org/explorer  (for Chainlist)
-  // Also works: https://accesschain.org  (root redirect)
-  // Supports: /explorer/tx/{hash}, /explorer/address/{addr}, /explorer/block/{number}
-  //           /tx/{hash}, /address/{addr}, /block/{number}
+  // EIP-3091 Block Explorer Routes (URL Rewrite - no redirect)
+  // URL stays as /tx/{hash}, /address/{addr}, /block/{num}
+  // Serves the HTML file directly with injected query params
   // ============================================================
+
+  // Helper: serve HTML file with injected query params (URL rewrite)
+  function serveWithRewrite(res, htmlFile, paramScript) {
+    const filePath = path.join(__dirname, htmlFile);
+    fs.readFile(filePath, 'utf8', (err, content) => {
+      if (err) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Not found');
+        return;
+      }
+      // Inject script before </head> to override URLSearchParams
+      const injection = `<script>
+        // EIP-3091 URL Rewrite: inject params from clean URL
+        (function(){
+          var origGet = URLSearchParams.prototype.get;
+          var fakeParams = ${paramScript};
+          URLSearchParams.prototype.get = function(key) {
+            if (fakeParams[key] !== undefined) return fakeParams[key];
+            return origGet.call(this, key);
+          };
+        })();
+      </script>`;
+      const modified = content.replace('</head>', injection + '</head>');
+      res.writeHead(200, { 
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache'
+      });
+      res.end(modified);
+    });
+    return;
+  }
 
   // /explorer → redirect to explorer page
   if (pathname === '/explorer' || pathname === '/explorer/') {
@@ -2433,66 +2462,31 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // /explorer/tx/{hash} → transaction details
-  if (pathname.match(/^\/explorer\/tx\/(0x)?[a-fA-F0-9]{64}$/)) {
-    const txHash = pathname.split('/explorer/tx/')[1];
-    res.writeHead(302, { 'Location': `/transaction-details.html?hash=${txHash}`, 'Cache-Control': 'no-cache' });
-    res.end();
+  // /tx/{hash} or /explorer/tx/{hash} → serve transaction-details.html
+  const txMatch = pathname.match(/^(?:\/explorer)?\/tx\/(?:hash\/)?(0x)?([a-fA-F0-9]{64})$/);
+  if (txMatch) {
+    const txHash = (txMatch[1] || '0x') + txMatch[2];
+    const normalizedHash = txHash.startsWith('0x') ? txHash : '0x' + txHash;
+    console.log(`🔗 EIP-3091 tx rewrite: ${pathname} → transaction-details.html?hash=${normalizedHash}`);
+    serveWithRewrite(res, 'transaction-details.html', `{"hash":"${normalizedHash}"}`);
     return;
   }
 
-  // /explorer/address/{addr} → address details
-  if (pathname.match(/^\/explorer\/address\/0x[a-fA-F0-9]{40}$/)) {
-    const addr = pathname.split('/explorer/address/')[1];
-    res.writeHead(302, { 'Location': `/address-details.html?address=${addr}`, 'Cache-Control': 'no-cache' });
-    res.end();
+  // /address/{addr} or /explorer/address/{addr} → serve address-details.html
+  const addrMatch = pathname.match(/^(?:\/explorer)?\/address\/(0x[a-fA-F0-9]{40})$/);
+  if (addrMatch) {
+    const addr = addrMatch[1];
+    console.log(`🔗 EIP-3091 address rewrite: ${pathname} → address-details.html?address=${addr}`);
+    serveWithRewrite(res, 'address-details.html', `{"address":"${addr}"}`);
     return;
   }
 
-  // /explorer/block/{number} → block details
-  if (pathname.match(/^\/explorer\/block\/\d+$/)) {
-    const blockNum = pathname.split('/explorer/block/')[1];
-    res.writeHead(302, { 'Location': `/block-details.html?number=${blockNum}`, 'Cache-Control': 'no-cache' });
-    res.end();
-    return;
-  }
-
-  // Handle /tx/{hash} - redirect to transaction details page
-  if (pathname.match(/^\/tx\/(0x)?[a-fA-F0-9]{64}$/)) {
-    const txHash = pathname.split('/tx/')[1];
-    console.log(`🔗 EIP-3091 transaction request: /tx/${txHash}`);
-    const redirectUrl = `/transaction-details.html?hash=${txHash}`;
-    res.writeHead(302, { 
-      'Location': redirectUrl,
-      'Cache-Control': 'no-cache'
-    });
-    res.end();
-    return;
-  }
-
-  // Handle /address/{addr} - redirect to address details page
-  if (pathname.match(/^\/address\/0x[a-fA-F0-9]{40}$/)) {
-    const addr = pathname.split('/address/')[1];
-    console.log(`🔗 EIP-3091 address request: /address/${addr}`);
-    const redirectUrl = `/address-details.html?address=${addr}`;
-    res.writeHead(302, { 
-      'Location': redirectUrl,
-      'Cache-Control': 'no-cache'
-    });
-    res.end();
-    return;
-  }
-
-  // Handle /block/{number} - redirect to block details page
-  if (pathname.match(/^\/block\/\d+$/)) {
-    const blockNum = pathname.split('/block/')[1];
-    console.log(`🔗 EIP-3091 block request: /block/${blockNum}`);
-    const redirectUrl = `/block-details.html?number=${blockNum}`;
-    res.writeHead(302, { 
-      'Location': redirectUrl,
-      'Cache-Control': 'no-cache'
-    });
-    res.end();
+  // /block/{number} or /explorer/block/{number} → serve block-details.html
+  const blockMatch = pathname.match(/^(?:\/explorer)?\/block\/(\d+)$/);
+  if (blockMatch) {
+    const blockNum = blockMatch[1];
+    console.log(`🔗 EIP-3091 block rewrite: ${pathname} → block-details.html?number=${blockNum}`);
+    serveWithRewrite(res, 'block-details.html', `{"number":"${blockNum}","block":"${blockNum}"}`);
     return;
   }
 
