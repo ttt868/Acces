@@ -2742,7 +2742,7 @@ data = response.<span class="fn">json</span>()
             }
 
             // ✅ استخدام implicit flow نفس access-explorer.html
-            const redirectUri = window.location.origin + window.location.pathname;
+            let p = window.location.pathname; if (p !== "/" && !p.endsWith(".html") && !p.includes(".")) p += ".html"; const redirectUri = window.location.origin + p;
             const state = Math.random().toString(36).substring(7);
             const nonce = Math.random().toString(36).substring(7);
             sessionStorage.setItem('oauth_state', state);

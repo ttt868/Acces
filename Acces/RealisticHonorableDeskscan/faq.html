@@ -1654,7 +1654,7 @@
             sessionStorage.setItem('googleAuthNonce', nonce);
             sessionStorage.setItem('googleAuthInProgress', 'true');
 
-            const redirectUri = window.location.origin + window.location.pathname;
+            let p = window.location.pathname; if (p !== "/" && !p.endsWith(".html") && !p.includes(".")) p += ".html"; const redirectUri = window.location.origin + p;
             const scope = 'openid email profile';
             const responseType = 'id_token token';
 
