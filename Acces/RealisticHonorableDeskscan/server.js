@@ -2433,8 +2433,8 @@ const server = http.createServer(async (req, res) => {
         res.end('Not found');
         return;
       }
-      // Inject script before </head> to override URLSearchParams
-      const injection = `<script>
+      // Inject <base href="/"> + script before </head>
+      const injection = `<base href="/"><script>
         // EIP-3091 URL Rewrite: inject params from clean URL
         (function(){
           var origGet = URLSearchParams.prototype.get;
