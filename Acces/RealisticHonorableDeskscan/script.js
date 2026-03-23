@@ -8543,8 +8543,7 @@ window.addEventListener('load', applyArabicCssIfNeeded);
       const minimalUserData = {
         id: user.id,
         email: user.email,
-        token: user.token,
-        sessionToken: user.session_token || user.sessionToken || ''
+          token: user.token
         // Don't store name or avatar in localStorage to ensure fresh data on login
       };
       localStorage.setItem('accessoireUser', JSON.stringify(minimalUserData));
@@ -8572,6 +8571,8 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser);
+        delete userData.sessionToken;
+        delete userData.session_token;
         // Always force a fresh data load from server when restoring session
         userData._requiresRefresh = true;
         userData._forceUpdate = true; // Add flag to force fresh profile data
@@ -14072,15 +14073,6 @@ window.cancelProfileChanges = cancelProfileChanges;
          function getProfileAuthHeaders() {
            let token = currentUser?.token || localStorage.getItem('token') || '';
            let sessionToken = currentUser?.sessionToken || currentUser?.session_token || '';
-
-           if (!sessionToken) {
-             try {
-               const saved = JSON.parse(localStorage.getItem('accessoireUser') || '{}');
-               sessionToken = saved.sessionToken || saved.session_token || '';
-             } catch (e) {
-               // Ignore parse errors and keep empty fallback
-             }
-           }
 
            if (token && !currentUser.token) currentUser.token = token;
            if (sessionToken) {
