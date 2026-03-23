@@ -1035,7 +1035,7 @@ async function handleBlockDetails(req, res, blockId) {
                         currentBlockTx.push(sortedTx[i]);
                         if (currentBlockTx.length >= 3 || i === sortedTx.length - 1) {
                             const tx = currentBlockTx[0];
-                            const blockHash = require('crypto').createHash('sha256')
+                            const blockHash = crypto.createHash('sha256')
                                 .update(`block_${idx}_${tx.timestamp || Date.now()}`)
                                 .digest('hex');
                             

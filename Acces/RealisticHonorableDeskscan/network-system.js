@@ -1643,6 +1643,13 @@ class AccessNetwork extends EventEmitter {
       // بث الكتلة الجديدة للشبكة
       this.broadcastBlock(block);
 
+      // 💾 حفظ البلوك الجديد على الديسك فوراً
+      try {
+        await this.ethereumStorage.saveBlock(block);
+      } catch (saveErr) {
+        console.error('❌ فشل حفظ البلوك على الديسك:', saveErr.message);
+      }
+
       // حفظ البلوكتشين والحالة بعد تعدين كتلة جديدة
       this.saveChain();
       this.saveState();
