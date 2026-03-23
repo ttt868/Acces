@@ -1048,6 +1048,19 @@ async function handleBlockDetails(req, res, blockId) {
         const networkNode = getNetworkNode();
         let block;
 
+        // 🛡️ Reject block numbers beyond the chain — no fake fallback blocks
+        if (networkNode && blockId !== 'latest' && !blockId.startsWith('0x')) {
+            const index = parseInt(blockId);
+            if (index >= networkNode.network.totalBlockCount) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    success: false,
+                    error: 'Block not found'
+                }));
+                return true;
+            }
+        }
+
         // Try from network node first
         if (networkNode) {
             if (blockId === 'latest') {
