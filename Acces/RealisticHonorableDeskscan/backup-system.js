@@ -34,7 +34,7 @@ class BackupSystem {
         pool.query('SELECT * FROM users'),
         pool.query('SELECT * FROM transactions ORDER BY timestamp DESC LIMIT 100000'),
         pool.query('SELECT * FROM permanent_wallet_balances'),
-        pool.query('SELECT * FROM blockchain_blocks ORDER BY block_index DESC LIMIT 10000'),
+        pool.query('SELECT *, parent_hash as previous_hash FROM ethereum_blocks ORDER BY block_index DESC LIMIT 10000'),
         pool.query('SELECT * FROM processing_history ORDER BY timestamp DESC LIMIT 50000')
       ]);
 

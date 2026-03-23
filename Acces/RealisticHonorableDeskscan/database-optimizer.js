@@ -502,7 +502,7 @@ class DatabaseOptimizer {
     
     try {
       const result = await pool.query(
-        'SELECT * FROM blockchain_blocks WHERE block_index = $1 LIMIT 1',
+        'SELECT *, parent_hash as previous_hash FROM ethereum_blocks WHERE block_index = $1 LIMIT 1',
         [blockIndex]
       );
       
@@ -544,7 +544,7 @@ class DatabaseOptimizer {
     
     try {
       const result = await pool.query(`
-        SELECT * FROM blockchain_blocks 
+        SELECT *, parent_hash as previous_hash FROM ethereum_blocks 
         ORDER BY block_index DESC 
         LIMIT $1
       `, [limit]);

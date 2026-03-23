@@ -35,12 +35,12 @@ CREATE INDEX IF NOT EXISTS idx_transactions_recipient_timestamp
 CREATE INDEX IF NOT EXISTS idx_transactions_addresses 
   ON transactions(sender_address, recipient_address, timestamp DESC);
 
--- ✅ BLOCKCHAIN BLOCKS TABLE INDEXES
+-- ✅ ETHEREUM BLOCKS TABLE INDEXES
 -- ==================================================================
-CREATE INDEX IF NOT EXISTS idx_blocks_hash ON blockchain_blocks(hash);
-CREATE INDEX IF NOT EXISTS idx_blocks_previous_hash ON blockchain_blocks(previous_hash);
-CREATE INDEX IF NOT EXISTS idx_blocks_timestamp ON blockchain_blocks(timestamp DESC);
-CREATE INDEX IF NOT EXISTS idx_blocks_index ON blockchain_blocks(block_index);
+CREATE INDEX IF NOT EXISTS idx_blocks_hash ON ethereum_blocks(block_hash);
+CREATE INDEX IF NOT EXISTS idx_blocks_parent_hash ON ethereum_blocks(parent_hash);
+CREATE INDEX IF NOT EXISTS idx_blocks_timestamp ON ethereum_blocks(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_blocks_index ON ethereum_blocks(block_index);
 
 -- ✅ PROCESSING HISTORY TABLE INDEXES
 -- ==================================================================
@@ -92,7 +92,7 @@ CREATE INDEX IF NOT EXISTS idx_transactions_confirmed
 -- ================================================
 VACUUM ANALYZE users;
 VACUUM ANALYZE transactions;
-VACUUM ANALYZE blockchain_blocks;
+VACUUM ANALYZE ethereum_blocks;
 VACUUM ANALYZE processing_history;
 VACUUM ANALYZE referrals;
 

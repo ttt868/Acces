@@ -5059,18 +5059,8 @@ class NetworkNode {
         }
       }
 
-      // حفظ معلومات السجل مع معالجة التكرار للسجلات
-      await pool.query(
-        `INSERT INTO blockchain_blocks (block_index, block_hash, previous_hash, timestamp, transactions_count, difficulty)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (block_index) DO UPDATE SET
-         block_hash = EXCLUDED.block_hash,
-         previous_hash = EXCLUDED.previous_hash,
-         timestamp = EXCLUDED.timestamp,
-         transactions_count = EXCLUDED.transactions_count,
-         difficulty = EXCLUDED.difficulty`,
-        [block.index, block.hash, block.previousHash, block.timestamp, block.transactions.length, this.blockchain.difficulty]
-      );
+      // حفظ معلومات السجل - تم توحيد التخزين في ethereum_blocks فقط
+      // blockchain_blocks لم يعد يُستخدم (بيانات مكررة بأعمدة أقل)
 
       // Log only every 100 blocks to reduce noise
       if (block.index % 100 === 0) {
@@ -5317,25 +5307,8 @@ class NetworkNode {
         CREATE INDEX IF NOT EXISTS idx_wallet_notifications_address ON wallet_notifications(address);
       `);
 
-      // جدول كتل البلوك تشين
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS blockchain_blocks (
-          id SERIAL PRIMARY KEY,
-          block_index INTEGER UNIQUE NOT NULL,
-          block_hash VARCHAR(66) UNIQUE NOT NULL,
-          previous_hash VARCHAR(66),
-          timestamp BIGINT NOT NULL,
-          transactions_count INTEGER DEFAULT 0,
-          difficulty INTEGER DEFAULT 1,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-
-      // إضافة فهرس لجدول الكتل
-      await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_blockchain_blocks_index ON blockchain_blocks(block_index);
-        CREATE INDEX IF NOT EXISTS idx_blockchain_blocks_hash ON blockchain_blocks(block_hash);
-      `);
+      // جدول كتل البلوك تشين (ethereum_blocks هو الجدول الرئيسي الآن)
+      // blockchain_blocks لم يعد يُنشأ - تم توحيد التخزين في ethereum_blocks
 
     } catch (error) {
       console.error('خطأ في إنشاء جداول المحافظ:', error);
@@ -5581,7 +5554,7 @@ class NetworkNode {
       let totalBlocks = this.blockchain.chain.length;
       try {
         const { pool } = await import('./db.js');
-        const blockResult = await pool.query('SELECT COUNT(*) as count FROM blockchain_blocks');
+        const blockResult = await pool.query('SELECT COUNT(*) as count FROM ethereum_blocks');
         totalBlocks = parseInt(blockResult.rows[0]?.count || 0);
       } catch (error) {
         console.warn('⚠️ Failed to get real block count, using chain length:', error.message);

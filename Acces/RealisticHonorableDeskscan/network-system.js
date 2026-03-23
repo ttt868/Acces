@@ -2173,7 +2173,7 @@ class AccessNetwork extends EventEmitter {
     // Get REAL block count from database
     try {
       const { pool } = await import('./db.js');
-      const blockResult = await pool.query('SELECT COUNT(*) as count FROM blockchain_blocks');
+      const blockResult = await pool.query('SELECT COUNT(*) as count FROM ethereum_blocks');
       this.stats.totalBlocks = parseInt(blockResult.rows[0]?.count || 0);
     } catch (error) {
       console.warn('⚠️ Failed to get real block count, using chain length:', error.message);
@@ -2345,7 +2345,7 @@ class AccessNetwork extends EventEmitter {
     // Get REAL block count from database
     try {
       const { pool } = await import('./db.js');
-      const blockResult = await pool.query('SELECT COUNT(*) as count FROM blockchain_blocks');
+      const blockResult = await pool.query('SELECT COUNT(*) as count FROM ethereum_blocks');
       this.stats.totalBlocks = parseInt(blockResult.rows[0]?.count || 0);
     } catch (error) {
       console.warn('⚠️ Failed to get real block count, using chain length:', error.message);
