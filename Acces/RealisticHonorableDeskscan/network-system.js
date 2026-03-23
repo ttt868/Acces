@@ -309,21 +309,18 @@ class AccessNetwork extends EventEmitter {
   // تحميل البيانات المحفوظة بشكل async - دالة منفصلة
   async loadSavedData() {
     try {
-      const loadedChain = await this.ethereumStorage.loadChain();
+      const loadedChain = await this.ethereumStorage.loadChain(this.MAX_CHAIN_IN_MEMORY);
       // ❌ تعطيل تحميل الأرصدة من balances.json القديم - يسبب عودة الأرصدة للقيم القديمة
       // const loadedState = await this.ethereumStorage.loadState();
       const loadedMempool = await this.ethereumStorage.loadMempool();
 
       if (loadedChain && Array.isArray(loadedChain) && loadedChain.length > 0) {
-        // 🧠 MEMORY-EFFICIENT: تحميل آخر 500 بلوك فقط في الذاكرة
-        this.totalBlockCount = loadedChain.length;
-        if (loadedChain.length > this.MAX_CHAIN_IN_MEMORY) {
-          this.chainStartIndex = loadedChain.length - this.MAX_CHAIN_IN_MEMORY;
-          this.chain = loadedChain.slice(this.chainStartIndex);
-          console.log(`🧠 Memory-efficient mode: ${this.chain.length}/${this.totalBlockCount} blocks in RAM`);
-        } else {
-          this.chainStartIndex = 0;
-          this.chain = loadedChain;
+        // 🧠 MEMORY-EFFICIENT: البلوكات المحملة هي بالفعل آخر 500 فقط
+        this.totalBlockCount = loadedChain.totalOnDisk || loadedChain.length;
+        this.chain = loadedChain;
+        this.chainStartIndex = this.totalBlockCount - this.chain.length;
+        if (this.chainStartIndex > 0) {
+          console.log(`🧠 Memory-efficient: ${this.chain.length}/${this.totalBlockCount} blocks in RAM`);
         }
       }
       // ❌ تعطيل: AccessStateStorage (accounts.json) هو المصدر الوحيد للأرصدة الآن
@@ -516,17 +513,11 @@ class AccessNetwork extends EventEmitter {
       // Initializing ledger state - message reduced for performance
 
       // تحميل السلسلة المحفوظة
-      const savedChain = await this.storage.loadChain();
+      const savedChain = await this.storage.loadChain(this.MAX_CHAIN_IN_MEMORY);
       if (savedChain && savedChain.length > 1) {
-        // 🧠 MEMORY-EFFICIENT: تحميل آخر 500 بلوك فقط
-        this.totalBlockCount = savedChain.length;
-        if (savedChain.length > this.MAX_CHAIN_IN_MEMORY) {
-          this.chainStartIndex = savedChain.length - this.MAX_CHAIN_IN_MEMORY;
-          this.chain = savedChain.slice(this.chainStartIndex);
-        } else {
-          this.chainStartIndex = 0;
-          this.chain = savedChain;
-        }
+        this.totalBlockCount = savedChain.totalOnDisk || savedChain.length;
+        this.chain = savedChain;
+        this.chainStartIndex = this.totalBlockCount - this.chain.length;
       }
 
       // تحميل الأرصدة المحفوظة

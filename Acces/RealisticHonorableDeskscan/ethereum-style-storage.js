@@ -425,28 +425,20 @@ class EthereumStyleStorage {
     }
   }
 
-  // 🧠 MEMORY-EFFICIENT: حفظ metadata فقط في network-system.json + ملفات كتل فردية
+  // 🧠 MEMORY-EFFICIENT: حفظ metadata فقط — البلوكات تُحفظ فردياً عند إنشائها
   async saveChain(chainData) {
     try {
-      // حفظ metadata + فقط البلوكات الموجودة في الذاكرة
       const chainFile = path.join(this.stateDir, 'network-system.json');
       const metadataOnly = {
         metadata: chainData.metadata || {
           version: '2.0',
           lastSaved: Date.now(),
-          totalBlocks: chainData.blocks?.length || 0,
+          totalBlocks: 0,
           difficulty: 2
         }
       };
       fs.writeFileSync(chainFile, JSON.stringify(metadataOnly, null, 2));
-
-      // حفظ كل كتلة كملف فردي فقط (لا نكتب كل السلسلة في ملف واحد ضخم)
-      if (chainData.blocks) {
-        for (const block of chainData.blocks) {
-          await this.saveBlock(block);
-        }
-      }
-
+      // ✅ لا نعيد كتابة ملفات البلوكات — كل بلوك يُحفظ فردياً عند إنشائه في saveBlock()
       return true;
     } catch (error) {
       console.error('Error saving chain:', error);
@@ -509,10 +501,10 @@ class EthereumStyleStorage {
     }
   }
 
-  // 🧠 MEMORY-EFFICIENT: تحميل البلوكات من ملفات فردية
-  async loadChain() {
+  // 🧠 MEMORY-EFFICIENT: تحميل آخر N بلوك فقط من ملفات فردية
+  async loadChain(maxBlocks = 0) {
     try {
-      // قراءة ملفات البلوكات الفردية (أخف بكثير من ملف واحد ضخم)
+      // قراءة أسماء الملفات فقط (سريع جداً — بدون قراءة المحتوى)
       const blockFiles = fs.readdirSync(this.blocksDir)
         .filter(file => file.startsWith('block_') && file.endsWith('.json'))
         .sort((a, b) => {
@@ -521,25 +513,28 @@ class EthereumStyleStorage {
           return indexA - indexB;
         });
 
-      if (blockFiles.length === 0) {
-        // fallback: جرب الملف القديم
-        const chainFile = path.join(this.stateDir, 'network-system.json');
-        if (fs.existsSync(chainFile)) {
-          const chainData = JSON.parse(fs.readFileSync(chainFile));
-          return chainData.blocks || [];
-        }
-        return null;
-      }
+      if (blockFiles.length === 0) return null;
+
+      const totalBlocks = blockFiles.length;
+
+      // إذا حُدد maxBlocks، نقرأ فقط آخر maxBlocks ملف
+      const filesToLoad = maxBlocks > 0 && maxBlocks < totalBlocks
+        ? blockFiles.slice(totalBlocks - maxBlocks)
+        : blockFiles;
 
       const blocks = [];
-      for (const file of blockFiles) {
+      for (const file of filesToLoad) {
         try {
           const blockData = JSON.parse(fs.readFileSync(path.join(this.blocksDir, file), 'utf8'));
           blocks.push(blockData);
         } catch (e) { /* skip corrupt file */ }
       }
 
-      console.log(`📦 Loaded ${blocks.length} blocks from disk`);
+      console.log(`📦 Loaded ${blocks.length}/${totalBlocks} blocks from disk`);
+      // نرفق العدد الكلي ك property على المصفوفة
+      if (blocks.length > 0) {
+        blocks.totalOnDisk = totalBlocks;
+      }
       return blocks.length > 0 ? blocks : null;
     } catch (error) {
       console.error('Error loading chain:', error);
