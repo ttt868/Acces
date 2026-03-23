@@ -562,7 +562,6 @@ async function handleNetworkStats(req, res) {
 
         // Get real transaction count from database only
         const txCount = await pool.query('SELECT COUNT(*) as count FROM transactions');
-        const blockCount = await pool.query('SELECT MAX(block_index) as max_block FROM transactions');
         const realTotalTransactions = parseInt(txCount.rows[0]?.count || 0);
 
         // If network node is available, use it for other data
@@ -570,11 +569,14 @@ async function handleNetworkStats(req, res) {
             const networkInfo = networkNode.network.getNetworkInfo();
             const stats = networkNode.getStats();
             const totalSupply = await networkNode.network.calculateCirculatingSupply();
-            const latestBlock = networkNode.network.getLatestBlock();
+
+            // Get real block count from database (not memory)
+            const dbBlockCount = await pool.query('SELECT MAX(block_index) as max_block FROM ethereum_blocks');
+            const realLatestBlock = parseInt(dbBlockCount.rows[0]?.max_block || 0);
 
             const result = {
                 totalTransactions: realTotalTransactions,
-                latestBlock: latestBlock?.index || 0,
+                latestBlock: realLatestBlock,
                 blockTime: 1,
                 totalSupply: totalSupply,
                 networkHashRate: stats?.hashRate || 0,
@@ -589,9 +591,10 @@ async function handleNetworkStats(req, res) {
         }
 
         // Fallback: Get stats from database only
+        const fallbackBlockCount = await pool.query('SELECT MAX(block_index) as max_block FROM ethereum_blocks');
         const result = {
             totalTransactions: realTotalTransactions,
-            latestBlock: parseInt(blockCount.rows[0]?.max_block || 0),
+            latestBlock: parseInt(fallbackBlockCount.rows[0]?.max_block || 0),
             blockTime: 1,
             totalSupply: 0,
             networkHashRate: 0,
