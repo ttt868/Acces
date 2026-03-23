@@ -2395,13 +2395,10 @@ class AccessNetwork extends EventEmitter {
     return this._loadBlockFromDisk(index);
   }
 
-  // 🧠 قراءة بلوك من ملف JSON على القرص
+  // 🧠 قراءة بلوك من القرص — يدعم Sharding + Compression
   _loadBlockFromDisk(index) {
     try {
-      const blockFile = path.join('./ethereum-network-data/blocks', `block_${index}.json`);
-      if (fs.existsSync(blockFile)) {
-        return JSON.parse(fs.readFileSync(blockFile, 'utf8'));
-      }
+      return this.ethereumStorage.loadBlockFromDisk(index);
     } catch (e) { /* silent */ }
     return null;
   }
@@ -2410,13 +2407,27 @@ class AccessNetwork extends EventEmitter {
     // بحث في الذاكرة أولاً
     const memBlock = this.chain.find(block => block.hash === hash);
     if (memBlock) return memBlock;
-    // لا نبحث في كل القرص - Hash lookup مكلف جداً
-    return null;
+    // 🔎 بحث في فهرس Hash على القرص (فوري O(1))
+    return this.ethereumStorage.loadBlockByHash(hash);
   }
 
   getTransactionByHash(txHash) {
+    // بحث في الذاكرة أولاً
     for (const block of this.chain) {
-      const tx = block.transactions.find(t => t.txId === txHash);
+      const tx = block.transactions.find(t => t.txId === txHash || t.hash === txHash);
+      if (tx) {
+        return {
+          ...tx,
+          blockIndex: block.index,
+          blockHash: block.hash,
+          confirmations: this.totalBlockCount - block.index - 1
+        };
+      }
+    }
+    // 🔎 بحث في فهرس Hash على القرص
+    const block = this.ethereumStorage.loadBlockByTxHash(txHash);
+    if (block) {
+      const tx = block.transactions.find(t => t.txId === txHash || t.hash === txHash);
       if (tx) {
         return {
           ...tx,
