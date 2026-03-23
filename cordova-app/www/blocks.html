@@ -1843,6 +1843,7 @@
         let currentPage = 1;
         let entriesPerPage = 50;
         let totalBlocks = 0;
+        let totalPages = 1;
         let realTotalBlocks = 0; // العدد الحقيقي من الشبكة
         let allBlocks = [];
 
@@ -2005,9 +2006,9 @@
 
         async function loadBlocks() {
             try {
-                console.log('🔄 Loading blocks from API...');
+                console.log('🔄 Loading blocks page', currentPage, 'from API...');
 
-                const response = await fetch('https://accesschain.org/api/explorer/latest-blocks?limit=1000');
+                const response = await fetch(`https://accesschain.org/api/explorer/latest-blocks?page=${currentPage}&per_page=${entriesPerPage}`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -2017,18 +2018,15 @@
 
                 if (result.success && result.data && result.data.length > 0) {
                     allBlocks = result.data;
-                    totalBlocks = allBlocks.length;
 
-                    // Always fetch real total blocks count (not limited by API limit)
-                    try {
-                        const statsResp = await fetch('https://accesschain.org/api/explorer/stats');
-                        if (statsResp.ok) {
-                            const statsData = await statsResp.json();
-                            if (statsData.success && statsData.data && statsData.data.latestBlock) {
-                                realTotalBlocks = statsData.data.latestBlock;
-                            }
-                        }
-                    } catch(e) { console.warn('Stats fetch failed, using array length'); }
+                    // Use pagination metadata from server
+                    if (result.pagination) {
+                        totalBlocks = result.pagination.total;
+                        totalPages = result.pagination.total_pages;
+                    } else {
+                        totalBlocks = result.data.length;
+                        totalPages = 1;
+                    }
 
                     // Update statistics
                     updateBlockStatistics(allBlocks);
@@ -2109,9 +2107,7 @@
         }
 
         function displayBlocks() {
-            const startIndex = (currentPage - 1) * entriesPerPage;
-            const endIndex = Math.min(startIndex + entriesPerPage, totalBlocks);
-            const blocksToDisplay = allBlocks.slice(startIndex, endIndex);
+            const blocksToDisplay = allBlocks;
 
             // Update total blocks display (use real total if available)
             const displayTotal = realTotalBlocks > 0 ? realTotalBlocks : totalBlocks;
@@ -2176,7 +2172,7 @@
                 tableBody.appendChild(row);
             });
 
-            updatePaginationInfo(startIndex, endIndex);
+            updatePaginationInfo();
             updatePagination(); // Ensure pagination buttons are updated
             saveBlocksState(); // ✅ حفظ الحالة بعد التحديث
         }
@@ -2211,9 +2207,7 @@
             return 'Just now';
         }
 
-        function updatePaginationInfo(startIndex, endIndex) {
-            const totalPages = Math.ceil(totalBlocks / entriesPerPage);
-
+        function updatePaginationInfo() {
             // Update top pagination
             document.getElementById('pageInfoTop').textContent = `Page ${currentPage} of ${totalPages}`;
 
@@ -2222,8 +2216,6 @@
         }
 
         function updatePagination() {
-            const totalPages = Math.ceil(totalBlocks / entriesPerPage);
-
             // Update page info displays
             document.getElementById('pageInfoTop').textContent = `Page ${currentPage} of ${totalPages}`;
             document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
@@ -2271,14 +2263,12 @@
                 entriesPerPage = parseInt(select.value);
             }
             currentPage = 1;
-            displayBlocks();
+            loadBlocks();
             saveBlocksState(); // ✅ حفظ الحالة الجديدة
         }
 
         function downloadPageData() {
-            const startIndex = (currentPage - 1) * entriesPerPage;
-            const endIndex = Math.min(startIndex + entriesPerPage, totalBlocks);
-            const blocksToDownload = allBlocks.slice(startIndex, endIndex);
+            const blocksToDownload = allBlocks;
 
             // Create CSV content
             let csvContent = 'Block,Age,Txn,Validator,Gas Used,Gas Limit,Reward,Burnt Fees\n';
@@ -2326,41 +2316,38 @@
         }
 
         function goToPage(page) {
-            const totalPages = Math.ceil(totalBlocks / entriesPerPage);
             if (page >= 1 && page <= totalPages) {
                 currentPage = page;
-                displayBlocks();
+                loadBlocks();
                 scrollToTable();
             }
         }
 
         function goToFirstPage() {
             currentPage = 1;
-            displayBlocks();
+            loadBlocks();
             scrollToTable();
         }
 
         function previousPage() {
             if (currentPage > 1) {
                 currentPage--;
-                displayBlocks();
+                loadBlocks();
                 scrollToTable();
             }
         }
 
         function nextPage() {
-            const totalPages = Math.ceil(totalBlocks / entriesPerPage);
             if (currentPage < totalPages) {
                 currentPage++;
-                displayBlocks();
+                loadBlocks();
                 scrollToTable();
             }
         }
 
         function goToLastPage() {
-            const totalPages = Math.ceil(totalBlocks / entriesPerPage);
             currentPage = totalPages;
-            displayBlocks();
+            loadBlocks();
             scrollToTable();
         }
 

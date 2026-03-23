@@ -679,16 +679,26 @@ async function handleLatestTransactions(req, res) {
 async function handleLatestBlocks(req, res) {
     try {
         const url = new URL(req.url, `http://${req.headers.host}`);
+        const page = parseInt(url.searchParams.get('page')) || 0;
+        const perPage = Math.min(Math.max(parseInt(url.searchParams.get('per_page')) || 50, 1), 100);
         const limit = parseInt(url.searchParams.get('limit')) || 10;
 
         const networkNode = getNetworkNode();
         const blocks = [];
 
         if (networkNode) {
-            const latestBlockNumber = networkNode.network.totalBlockCount - 1;
+            const totalBlockCount = networkNode.network.totalBlockCount;
+            const latestBlockNumber = totalBlockCount - 1;
 
-            for (let i = 0; i < limit && (latestBlockNumber - i) >= 0; i++) {
-                const blockIndex = latestBlockNumber - i;
+            // Server-side pagination: ?page=1&per_page=50
+            // Legacy mode: ?limit=1000
+            const usePagination = page > 0;
+            const offset = usePagination ? (page - 1) * perPage : 0;
+            const count = usePagination ? perPage : limit;
+            const startBlock = latestBlockNumber - offset;
+
+            for (let i = 0; i < count && (startBlock - i) >= 0; i++) {
+                const blockIndex = startBlock - i;
                 const block = networkNode.network.getBlockByIndex(blockIndex);
 
                 if (block) {
@@ -770,11 +780,21 @@ async function handleLatestBlocks(req, res) {
             }
         }
 
+        const response = { success: true, data: blocks };
+
+        // Add pagination metadata when using page parameter
+        if (page > 0) {
+            const total = networkNode ? networkNode.network.totalBlockCount : blocks.length;
+            response.pagination = {
+                total: total,
+                page: page,
+                per_page: perPage,
+                total_pages: Math.ceil(total / perPage)
+            };
+        }
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-            success: true,
-            data: blocks
-        }));
+        res.end(JSON.stringify(response));
 
     } catch (error) {
         console.error('Error getting latest blocks:', error);
