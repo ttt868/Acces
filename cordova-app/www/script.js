@@ -1912,12 +1912,11 @@ bodyObserver.observe(document.body, {
         from {
           opacity: 0;
           transform: translateY(50px) scale(0.9);
-           // Build auth headers from currentUser first, then fallback to localStorage
+           // Build auth headers from current user email to avoid stale bearer tokens.
            function getProfileAuthHeaders() {
-             let token = currentUser?.token || localStorage.getItem('token') || '';
+             let token = getFreshAuthToken(currentUser);
              let sessionToken = currentUser?.sessionToken || currentUser?.session_token || '';
 
-             if (token && !currentUser.token) currentUser.token = token;
              if (sessionToken) {
                currentUser.sessionToken = sessionToken;
                currentUser.session_token = sessionToken;
@@ -1944,7 +1943,7 @@ bodyObserver.observe(document.body, {
                if (data?.success && data?.user?.session_token) {
                  currentUser.sessionToken = data.user.session_token;
                  currentUser.session_token = data.user.session_token;
-                 if (!currentUser.token) currentUser.token = localStorage.getItem('token') || '';
+                 getFreshAuthToken(currentUser);
                  saveUserSession(currentUser);
                  return true;
                }
@@ -8718,6 +8717,31 @@ window.addEventListener('load', applyArabicCssIfNeeded);
     }
   }
 
+  function buildEmailAuthToken(email) {
+    const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    if (!normalizedEmail) return '';
+
+    try {
+      return btoa(JSON.stringify({ email: normalizedEmail }));
+    } catch (e) {
+      console.error('Failed to build auth token from email:', e);
+      return '';
+    }
+  }
+
+  function getFreshAuthToken(user = currentUser) {
+    const freshToken = buildEmailAuthToken(user?.email);
+    if (freshToken) {
+      if (user) user.token = freshToken;
+      localStorage.setItem('token', freshToken);
+      return freshToken;
+    }
+
+    const fallbackToken = user?.token || localStorage.getItem('token') || '';
+    if (fallbackToken && user && !user.token) user.token = fallbackToken;
+    return fallbackToken;
+  }
+
 
    // Load user session from localStorage
   function loadUserSession() {
@@ -14686,7 +14710,7 @@ window.cancelProfileChanges = cancelProfileChanges;
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + (currentUser?.token || ''),
+          'Authorization': 'Bearer ' + getFreshAuthToken(currentUser),
           'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
         },
         body: JSON.stringify({ userId: currentUser.id })
@@ -14696,14 +14720,14 @@ window.cancelProfileChanges = cancelProfileChanges;
         } else {
           fetch(apiBase + '/api/users/update-profile', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (currentUser?.token || ''), 'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || '' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getFreshAuthToken(currentUser), 'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || '' },
             body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
           }).catch(function() {});
         }
       }).catch(function() {
         fetch(apiBase + '/api/users/update-profile', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (currentUser?.token || ''), 'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || '' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getFreshAuthToken(currentUser), 'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || '' },
           body: JSON.stringify({ userId: currentUser.id, avatar: defaultAvatar })
         }).catch(function() {});
       });
