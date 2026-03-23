@@ -88,7 +88,18 @@ class EthereumStyleStorage {
         (block_index, block_hash, parent_hash, state_root, transactions_root,
          timestamp, gas_used, gas_limit, difficulty, nonce, extra_data, size)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        ON CONFLICT (block_index) DO NOTHING
+        ON CONFLICT (block_index) DO UPDATE SET
+          block_hash = EXCLUDED.block_hash,
+          parent_hash = EXCLUDED.parent_hash,
+          state_root = EXCLUDED.state_root,
+          transactions_root = EXCLUDED.transactions_root,
+          timestamp = EXCLUDED.timestamp,
+          gas_used = EXCLUDED.gas_used,
+          gas_limit = EXCLUDED.gas_limit,
+          difficulty = EXCLUDED.difficulty,
+          nonce = EXCLUDED.nonce,
+          extra_data = EXCLUDED.extra_data,
+          size = EXCLUDED.size
       `, [
         block.index,
         block.hash,
