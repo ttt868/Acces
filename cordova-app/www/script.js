@@ -1912,12 +1912,64 @@ bodyObserver.observe(document.body, {
         from {
           opacity: 0;
           transform: translateY(50px) scale(0.9);
+           // Build auth headers from currentUser first, then fallback to localStorage
+           function getProfileAuthHeaders() {
+             let token = currentUser?.token || localStorage.getItem('token') || '';
+             let sessionToken = currentUser?.sessionToken || currentUser?.session_token || '';
+
+             if (!sessionToken) {
+               try {
+                 const saved = JSON.parse(localStorage.getItem('accessoireUser') || '{}');
+                 sessionToken = saved.sessionToken || saved.session_token || '';
+               } catch (e) {
+                 // Ignore parse errors and keep empty fallback
+               }
+             }
+
+             if (token && !currentUser.token) currentUser.token = token;
+             if (sessionToken) {
+               currentUser.sessionToken = sessionToken;
+               currentUser.session_token = sessionToken;
+             }
+
+             return {
+               'Content-Type': 'application/json',
+               'Authorization': 'Bearer ' + token,
+               'X-Session-Token': sessionToken
+             };
+           }
+
+           // Refresh session token once if profile endpoint returns 401/403
+           async function refreshProfileSessionToken() {
+             if (!currentUser || !currentUser.email) return false;
+
+             try {
+               const _origin = (typeof window !== 'undefined' && window.location && /^https?:/i.test(window.location.origin))
+                 ? window.location.origin
+                 : '';
+               const response = await fetch(_origin + '/api/user/' + encodeURIComponent(currentUser.email));
+               const data = await response.json();
+
+               if (data?.success && data?.user?.session_token) {
+                 currentUser.sessionToken = data.user.session_token;
+                 currentUser.session_token = data.user.session_token;
+                 if (!currentUser.token) currentUser.token = localStorage.getItem('token') || '';
+                 saveUserSession(currentUser);
+                 return true;
+               }
+             } catch (e) {
+               console.error('Failed to refresh profile session token:', e);
+             }
+
+             return false;
+           }
         }
         to {
           opacity: 1;
           transform: translateY(0) scale(1);
         }
       }
+           let refreshedSessionOnce = false;
     `;
     document.head.appendChild(style);
 
@@ -14429,11 +14481,7 @@ window.cancelProfileChanges = cancelProfileChanges;
 
              const response = await fetch(`${(typeof getApiOrigin !== "undefined" ? getApiOrigin() : window.location.origin)}${endpoint.url}`, {
                method: endpoint.method,
-               headers: {
-                 'Content-Type': 'application/json',
-                 'Authorization': 'Bearer ' + (currentUser?.token || ''),
-                 'X-Session-Token': currentUser?.sessionToken || currentUser?.session_token || ''
-               },
+               headers: getProfileAuthHeaders(),
                body: JSON.stringify(updateData),
                timeout: 8000
              });
@@ -14450,6 +14498,30 @@ window.cancelProfileChanges = cancelProfileChanges;
                  lastError = new Error(result.error || 'Unknown error');
                }
              } else {
+               if ((response.status === 401 || response.status === 403) && !refreshedSessionOnce) {
+                 refreshedSessionOnce = true;
+                 const refreshed = await refreshProfileSessionToken();
+                 if (refreshed) {
+                   const retryResponse = await fetch(`${window.location.origin}${endpoint.url}`, {
+                     method: endpoint.method,
+                     headers: getProfileAuthHeaders(),
+                     body: JSON.stringify(updateData),
+                     timeout: 8000
+                   });
+
+                   if (retryResponse.ok) {
+                     const retryResult = await retryResponse.json();
+                     if (retryResult.success) {
+                       handleSuccessfulUpdate(newName, updateData.avatar, retryResult, skipSuccessMessage);
+                       success = true;
+                       break;
+                     }
+                     lastError = new Error(retryResult.error || 'Unknown error');
+                     continue;
+                   }
+                 }
+               }
+
                lastError = new Error(`Server returned status: ${response.status}`);
                // Don't retry on 404 with this endpoint, move to next one
              }
