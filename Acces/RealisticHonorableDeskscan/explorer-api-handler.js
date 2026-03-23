@@ -688,47 +688,52 @@ async function handleLatestBlocks(req, res) {
         const blocks = [];
 
         if (networkNode) {
-            const latestBlockNumber = networkNode.network.chain.length - 1;
+            // Get real block count from database (not in-memory chain)
+            const dbMaxBlock = await pool.query('SELECT MAX(block_index) as max_block FROM ethereum_blocks');
+            const dbLatestBlock = parseInt(dbMaxBlock.rows[0]?.max_block || 0);
 
-            for (let i = 0; i < limit && (latestBlockNumber - i) >= 0; i++) {
-                const blockIndex = latestBlockNumber - i;
-                const block = networkNode.network.getBlockByIndex(blockIndex);
+            // Use database blocks if available (more complete than memory)
+            const dbBlocks = await pool.query(`
+                SELECT block_index, block_hash, parent_hash, state_root, transactions_root,
+                       timestamp, gas_used, gas_limit, difficulty, nonce, extra_data, size
+                FROM ethereum_blocks
+                ORDER BY block_index DESC
+                LIMIT $1
+            `, [limit]);
 
-                if (block) {
-                    // حساب عدد المعاملات الفعلية بدقة
-                    let txCount = 0;
-                    if (block.transactions && Array.isArray(block.transactions)) {
-                      // استثناء معاملة الـ reward من العدد
-                      txCount = block.transactions.filter(tx => 
+            for (const row of dbBlocks.rows) {
+                const blockIndex = row.block_index;
+
+                // Get transaction count for this block from memory or DB
+                let txCount = 0;
+                const memBlock = networkNode.network.getBlockByIndex(blockIndex);
+                if (memBlock && memBlock.transactions && Array.isArray(memBlock.transactions)) {
+                    txCount = memBlock.transactions.filter(tx => 
                         tx.fromAddress !== null && 
                         tx.toAddress !== '0x0000000000000000000000000000000000000000' &&
                         tx.toAddress !== '0x0000000000000000000000000000000000000001'
-                      ).length;
-                    }
-
-                    // Generate hashes for missing fields
-                    const parentHash = blockIndex > 0 ? (blocks[blocks.length - 1]?.hash || '0x' + crypto.createHash('sha256').update('parent_' + (blockIndex - 1)).digest('hex')) : '0x' + '0'.repeat(64);
-
-                    blocks.push({
-                        number: block.index,
-                        hash: block.hash,
-                        timestamp: Math.floor(block.timestamp / 1000),
-                        transactions: txCount,
-                        transactionCount: txCount,
-                        miner: 'Block Validator',
-                        size: JSON.stringify(block).length,
-                        gasUsed: (txCount) * 21000,
-                        gasLimit: 30000000,
-                        difficulty: block.difficulty || 1,
-                        reward: networkNode.network.processingReward,
-                        parentHash: block.parentHash || parentHash,
-                        stateRoot: block.stateRoot || '0x' + crypto.createHash('sha256').update('state_' + blockIndex).digest('hex'),
-                        transactionsRoot: block.transactionsRoot || '0x' + crypto.createHash('sha256').update('txroot_' + blockIndex + '_' + txCount).digest('hex'),
-                        receiptsRoot: block.receiptsRoot || '0x' + crypto.createHash('sha256').update('receipts_' + blockIndex).digest('hex'),
-                        nonce: '0x0000000000000000',
-                        extraData: '0x'
-                    });
+                    ).length;
                 }
+
+                blocks.push({
+                    number: blockIndex,
+                    hash: row.block_hash,
+                    timestamp: Math.floor(Number(row.timestamp) / 1000),
+                    transactions: txCount,
+                    transactionCount: txCount,
+                    miner: 'Block Validator',
+                    size: row.size || 1024,
+                    gasUsed: Number(row.gas_used) || txCount * 21000,
+                    gasLimit: Number(row.gas_limit) || 30000000,
+                    difficulty: row.difficulty || 1,
+                    reward: networkNode.network.processingReward,
+                    parentHash: row.parent_hash || '0x' + '0'.repeat(64),
+                    stateRoot: row.state_root || '0x' + crypto.createHash('sha256').update('state_' + blockIndex).digest('hex'),
+                    transactionsRoot: row.transactions_root || '0x' + crypto.createHash('sha256').update('txroot_' + blockIndex).digest('hex'),
+                    receiptsRoot: '0x' + crypto.createHash('sha256').update('receipts_' + blockIndex).digest('hex'),
+                    nonce: '0x' + (row.nonce ? row.nonce.toString(16).padStart(16, '0') : '0'.repeat(16)),
+                    extraData: row.extra_data || '0x'
+                });
             }
         } else {
             // Fallback: Get blocks from database by grouping transactions
