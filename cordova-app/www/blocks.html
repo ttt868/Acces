@@ -1967,8 +1967,11 @@
             await fetchRealBlockCount();
             loadBlocks();
 
-            // تحديث تلقائي كل 30 ثانية
-            setInterval(fetchRealBlockCount, 30000);
+            // تحديث تلقائي كل 15 ثانية — يحدّث الجدول + العدد
+            setInterval(() => {
+                loadBlocks();
+                fetchRealBlockCount();
+            }, 15000);
         });
 
         // جلب العدد الحقيقي للبلوكات من الشبكة
