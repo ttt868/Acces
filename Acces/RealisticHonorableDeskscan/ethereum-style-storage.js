@@ -295,16 +295,6 @@ class EthereumStyleStorage {
         }
       }
 
-      // حفظ في قاعدة البيانات - مع معالجة الأخطاء
-      try {
-        await this.saveBlockToDatabase(blockData);
-      } catch (dbError) {
-        // تجاهل أخطاء قاعدة البيانات - البيانات محفوظة في الملفات
-        if (!dbError.message.includes('timeout')) {
-          console.warn('DB save warning (non-critical):', dbError.message);
-        }
-      }
-
       // تقليل رسائل الحفظ المتكررة
         if (block.index % 10 === 0) {
           // Blocks saved silently
@@ -313,47 +303,6 @@ class EthereumStyleStorage {
     } catch (error) {
       console.error('Error saving block:', error);
       return false;
-    }
-  }
-
-  // حفظ الكتلة في قاعدة البيانات
-  async saveBlockToDatabase(block) {
-    try {
-      // محاولة واحدة فقط مع timeout قصير
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('DB timeout')), 10000)
-      );
-      
-      const queryPromise = pool.query(`
-        INSERT INTO ethereum_blocks
-        (block_index, block_hash, parent_hash, state_root, transactions_root,
-         timestamp, gas_used, gas_limit, difficulty, nonce, extra_data, size)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        ON CONFLICT (block_index) DO NOTHING
-      `, [
-        block.index,
-        block.hash,
-        block.previousHash,
-        this.calculateStateRoot(block),
-        this.calculateTransactionsRoot(block),
-        block.timestamp,
-        this.calculateGasUsed(block),
-        21000 * block.transactions.length,
-        block.difficulty || 2,
-        block.nonce || 0,
-        JSON.stringify({ ethereumStyle: true }),
-        JSON.stringify(block).length
-      ]);
-      
-      await Promise.race([queryPromise, timeoutPromise]);
-    } catch (error) {
-      // تجاهل صامت - البيانات محفوظة في الملفات
-      // تجاهل أخطاء duplicate key لأن البيانات موجودة بالفعل
-      if (!error.message.includes('timeout') && 
-          !error.message.includes('DB timeout') &&
-          !error.message.includes('duplicate key')) {
-        console.warn('DB block save skipped:', error.message);
-      }
     }
   }
 
@@ -633,28 +582,6 @@ class EthereumStyleStorage {
   // إنشاء الجداول المطلوبة
   async createTables() {
     try {
-      // جدول الكتل على نمط Ethereum
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS ethereum_blocks (
-          id SERIAL PRIMARY KEY,
-          block_index INTEGER UNIQUE NOT NULL,
-          block_hash VARCHAR(66) UNIQUE NOT NULL,
-          parent_hash VARCHAR(66),
-          state_root VARCHAR(66),
-          transactions_root VARCHAR(66),
-          timestamp BIGINT NOT NULL,
-          gas_used BIGINT DEFAULT 0,
-          gas_limit BIGINT DEFAULT 21000,
-          difficulty INTEGER DEFAULT 2,
-          nonce BIGINT DEFAULT 0,
-          extra_data TEXT,
-          size INTEGER DEFAULT 0,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-
-      
-
       // جدول الحسابات على نمط Ethereum
       await pool.query(`
         CREATE TABLE IF NOT EXISTS ethereum_accounts (
@@ -671,9 +598,6 @@ class EthereumStyleStorage {
 
       // فهارس للأداء
       await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_ethereum_blocks_hash ON ethereum_blocks(block_hash);
-        CREATE INDEX IF NOT EXISTS idx_ethereum_blocks_index ON ethereum_blocks(block_index);
-        
         CREATE INDEX IF NOT EXISTS idx_ethereum_accounts_address ON ethereum_accounts(address);
       `);
 
@@ -904,17 +828,6 @@ class EthereumStyleStorage {
             keptCount++;
           }
         } catch (e) { /* skip */ }
-      }
-
-      // حذف البلوكات القديمة من قاعدة البيانات أيضاً
-      const cutoffTimestamp = now - maxAge;
-      try {
-        await pool.query(`
-          DELETE FROM ethereum_blocks 
-          WHERE timestamp < $1
-        `, [cutoffTimestamp]);
-      } catch (dbError) {
-        // تجاهل أخطاء قاعدة البيانات - الملفات محذوفة
       }
 
       if (archivedCount > 0) {

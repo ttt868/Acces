@@ -5,6 +5,7 @@
 
 import { pool } from './db.js';
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import path from 'path';
 
 class BackupSystem {
@@ -30,11 +31,33 @@ class BackupSystem {
       console.log('🔄 Creating full backup...');
 
       // Backup all critical tables
-      const [users, transactions, wallets, blocks, history] = await Promise.all([
+      const blocksDir = './ethereum-network-data/blocks';
+      let blockFiles = [];
+      try {
+        const entries = fsSync.readdirSync(blocksDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory() && /^\d+$/.test(entry.name)) {
+            const shardDir = path.join(blocksDir, entry.name);
+            for (const file of fsSync.readdirSync(shardDir)) {
+              if (file.match(/block_\d+\.json$/)) {
+                blockFiles.push(path.join(shardDir, file));
+              }
+            }
+          }
+        }
+        // آخر 10000 بلوك فقط
+        blockFiles.sort();
+        if (blockFiles.length > 10000) blockFiles = blockFiles.slice(-10000);
+      } catch (e) { /* silent */ }
+
+      const blockRows = blockFiles.map(f => {
+        try { return JSON.parse(fsSync.readFileSync(f, 'utf8')); } catch(e) { return null; }
+      }).filter(Boolean);
+
+      const [users, transactions, wallets, history] = await Promise.all([
         pool.query('SELECT * FROM users'),
         pool.query('SELECT * FROM transactions ORDER BY timestamp DESC LIMIT 100000'),
         pool.query('SELECT * FROM permanent_wallet_balances'),
-        pool.query('SELECT *, parent_hash as previous_hash FROM ethereum_blocks ORDER BY block_index DESC LIMIT 10000'),
         pool.query('SELECT * FROM processing_history ORDER BY timestamp DESC LIMIT 50000')
       ]);
 
@@ -46,14 +69,14 @@ class BackupSystem {
           users: users.rows,
           transactions: transactions.rows,
           wallets: wallets.rows,
-          blocks: blocks.rows,
+          blocks: blockRows,
           history: history.rows
         },
         stats: {
           totalUsers: users.rows.length,
           totalTransactions: transactions.rows.length,
           totalWallets: wallets.rows.length,
-          totalBlocks: blocks.rows.length,
+          totalBlocks: blockRows.length,
           circulatingSupply: users.rows.reduce((sum, u) => sum + parseFloat(u.coins || 0), 0)
         }
       };

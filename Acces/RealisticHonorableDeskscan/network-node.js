@@ -5059,7 +5059,7 @@ class NetworkNode {
         }
       }
 
-      // حفظ معلومات السجل - تم توحيد التخزين في ethereum_blocks فقط
+      // حفظ معلومات السجل - التخزين على القرص فقط (JSON + Sharding + Hash Index)
       // blockchain_blocks لم يعد يُستخدم (بيانات مكررة بأعمدة أقل)
 
       // Log only every 100 blocks to reduce noise
@@ -5307,8 +5307,7 @@ class NetworkNode {
         CREATE INDEX IF NOT EXISTS idx_wallet_notifications_address ON wallet_notifications(address);
       `);
 
-      // جدول كتل البلوك تشين (ethereum_blocks هو الجدول الرئيسي الآن)
-      // blockchain_blocks لم يعد يُنشأ - تم توحيد التخزين في ethereum_blocks
+      // جدول كتل البلوك تشين - التخزين على القرص فقط (بدون DB)
 
     } catch (error) {
       console.error('خطأ في إنشاء جداول المحافظ:', error);
@@ -5550,15 +5549,8 @@ class NetworkNode {
       const totalSupply = await this.blockchain.calculateCirculatingSupply();
       const totalTransactions = await this.getTotalTransactionCount();
       
-      // Get REAL block count from database
-      let totalBlocks = this.blockchain.chain.length;
-      try {
-        const { pool } = await import('./db.js');
-        const blockResult = await pool.query('SELECT COUNT(*) as count FROM ethereum_blocks');
-        totalBlocks = parseInt(blockResult.rows[0]?.count || 0);
-      } catch (error) {
-        console.warn('⚠️ Failed to get real block count, using chain length:', error.message);
-      }
+      // Get REAL block count from totalBlockCount
+      let totalBlocks = this.blockchain.totalBlockCount || this.blockchain.chain.length;
       
       const activeBalances = this.blockchain.balances.size;
       const pendingTx = this.blockchain.pendingTransactions.length;

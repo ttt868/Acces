@@ -487,7 +487,7 @@ class DatabaseOptimizer {
   // ════════════════════════════════════════════════════════════════
 
   /**
-   * الحصول على بلوك من الكاش
+   * الحصول على بلوك من الكاش (القرص هو المصدر الحقيقي)
    */
   async getBlock(blockIndex) {
     const now = Date.now();
@@ -498,17 +498,17 @@ class DatabaseOptimizer {
       return cached.data;
     }
 
-    this.stats.dbQueries++;
-    
+    // قراءة من القرص بدل DB
     try {
-      const result = await pool.query(
-        'SELECT *, parent_hash as previous_hash FROM ethereum_blocks WHERE block_index = $1 LIMIT 1',
-        [blockIndex]
-      );
-      
-      if (result.rows.length > 0) {
-        this.cache.blocks.set(blockIndex, { data: result.rows[0], cachedAt: now });
-        return result.rows[0];
+      const fs = await import('fs');
+      const path = await import('path');
+      const blocksDir = './ethereum-network-data/blocks';
+      const shard = Math.floor(blockIndex / 10000);
+      const filePath = path.default.join(blocksDir, String(shard), `block_${blockIndex}.json`);
+      if (fs.default.existsSync(filePath)) {
+        const data = JSON.parse(fs.default.readFileSync(filePath, 'utf8'));
+        this.cache.blocks.set(blockIndex, { data, cachedAt: now });
+        return data;
       }
     } catch (error) {
       console.error('getBlock error:', error.message);
@@ -528,35 +528,42 @@ class DatabaseOptimizer {
   }
 
   /**
-   * الحصول على آخر البلوكات - مع كاش
+   * الحصول على آخر البلوكات — من القرص مباشرة
    */
   async getLatestBlocks(limit = 10) {
     const cacheKey = `latest_blocks:${limit}`;
     const now = Date.now();
     
     const cached = this.cache.lastQuery.get(cacheKey);
-    if (cached && (now - cached.timestamp) < 10000) { // 10 ثواني
+    if (cached && (now - cached.timestamp) < 10000) {
       this.stats.cacheHits++;
       return cached.data;
     }
 
-    this.stats.dbQueries++;
-    
     try {
-      const result = await pool.query(`
-        SELECT *, parent_hash as previous_hash FROM ethereum_blocks 
-        ORDER BY block_index DESC 
-        LIMIT $1
-      `, [limit]);
-      
-      this.cache.lastQuery.set(cacheKey, { data: result.rows, timestamp: now });
-      
-      // تخزين كل بلوك في الكاش
-      for (const block of result.rows) {
-        this.cache.blocks.set(block.block_index, { data: block, cachedAt: now });
+      const fs = await import('fs');
+      const path = await import('path');
+      const blocksDir = './ethereum-network-data/blocks';
+      const allFiles = [];
+      const entries = fs.default.readdirSync(blocksDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isDirectory() && /^\d+$/.test(entry.name)) {
+          const shardDir = path.default.join(blocksDir, entry.name);
+          for (const file of fs.default.readdirSync(shardDir)) {
+            const match = file.match(/block_(\d+)\.json$/);
+            if (match) allFiles.push({ index: parseInt(match[1]), dir: shardDir, name: file });
+          }
+        }
       }
+      allFiles.sort((a, b) => b.index - a.index);
+      const latest = allFiles.slice(0, limit);
+      const blocks = latest.map(f => {
+        try { return JSON.parse(fs.default.readFileSync(path.default.join(f.dir, f.name), 'utf8')); }
+        catch(e) { return null; }
+      }).filter(Boolean);
       
-      return result.rows;
+      this.cache.lastQuery.set(cacheKey, { data: blocks, timestamp: now });
+      return blocks;
     } catch (error) {
       console.error('getLatestBlocks error:', error.message);
       return [];
