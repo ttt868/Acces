@@ -1,5 +1,7 @@
 // access point
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 import { EventEmitter } from 'events';
 import EthereumStyleStorage from './ethereum-style-storage.js';
 import { EnhancedConsensusSystem } from './enhanced-consensus-system.js';
@@ -194,6 +196,11 @@ class AccessNetwork extends EventEmitter {
       consensusEfficiency: 100 // كفاءة الإجماع
     };
 
+    // 🧠 MEMORY-EFFICIENT: حد أقصى للبلوكات في الذاكرة
+    this.MAX_CHAIN_IN_MEMORY = 500;
+    this.totalBlockCount = 1; // العدد الكلي الحقيقي لكل البلوكات
+    this.chainStartIndex = 0; // أول index موجود في this.chain
+
     // إنشاء السلسلة فوراً بدون تأخير
     try {
       this.chain = [this.createGenesisBlock()];
@@ -308,7 +315,16 @@ class AccessNetwork extends EventEmitter {
       const loadedMempool = await this.ethereumStorage.loadMempool();
 
       if (loadedChain && Array.isArray(loadedChain) && loadedChain.length > 0) {
-        this.chain = loadedChain;
+        // 🧠 MEMORY-EFFICIENT: تحميل آخر 500 بلوك فقط في الذاكرة
+        this.totalBlockCount = loadedChain.length;
+        if (loadedChain.length > this.MAX_CHAIN_IN_MEMORY) {
+          this.chainStartIndex = loadedChain.length - this.MAX_CHAIN_IN_MEMORY;
+          this.chain = loadedChain.slice(this.chainStartIndex);
+          console.log(`🧠 Memory-efficient mode: ${this.chain.length}/${this.totalBlockCount} blocks in RAM`);
+        } else {
+          this.chainStartIndex = 0;
+          this.chain = loadedChain;
+        }
       }
       // ❌ تعطيل: AccessStateStorage (accounts.json) هو المصدر الوحيد للأرصدة الآن
       // if (loadedState) this.balances = loadedState;
@@ -342,15 +358,16 @@ class AccessNetwork extends EventEmitter {
       const chainData = {
         blocks: this.chain,
         metadata: {
-          version: '1.0',
+          version: '2.0',
           lastSaved: Date.now(),
-          totalBlocks: this.chain.length,
+          totalBlocks: this.totalBlockCount,
+          chainStartIndex: this.chainStartIndex,
+          blocksInMemory: this.chain.length,
           difficulty: this.difficulty
         }
       };
 
       await this.ethereumStorage.saveChain(chainData);
-      // console.log(`💾 Saved ${this.chain.length} blocks to storage`);
     } catch (error) {
       console.error('❌ Error saving blockchain:', error);
     }
@@ -501,8 +518,15 @@ class AccessNetwork extends EventEmitter {
       // تحميل السلسلة المحفوظة
       const savedChain = await this.storage.loadChain();
       if (savedChain && savedChain.length > 1) {
-        this.chain = savedChain;
-        // Data loaded from storage - message reduced for performance
+        // 🧠 MEMORY-EFFICIENT: تحميل آخر 500 بلوك فقط
+        this.totalBlockCount = savedChain.length;
+        if (savedChain.length > this.MAX_CHAIN_IN_MEMORY) {
+          this.chainStartIndex = savedChain.length - this.MAX_CHAIN_IN_MEMORY;
+          this.chain = savedChain.slice(this.chainStartIndex);
+        } else {
+          this.chainStartIndex = 0;
+          this.chain = savedChain;
+        }
       }
 
       // تحميل الأرصدة المحفوظة
@@ -651,6 +675,11 @@ class AccessNetwork extends EventEmitter {
 
   getLatestBlock() {
     return this.chain[this.chain.length - 1];
+  }
+
+  // 🧠 العدد الكلي الحقيقي لكل البلوكات (في الذاكرة + على القرص)
+  getTotalBlockCount() {
+    return this.totalBlockCount;
   }
 
   async addTransaction(transaction) {
@@ -1588,7 +1617,7 @@ class AccessNetwork extends EventEmitter {
 
       // إنشاء السجل الجديد مع المعاملات الصحيحة فقط
       const block = new Block(
-        this.chain.length,
+        this.totalBlockCount,
         validTransactions,
         Date.now(),
         this.getLatestBlock().hash
@@ -1601,6 +1630,14 @@ class AccessNetwork extends EventEmitter {
 
       // إضافة الكتلة للسلسلة
       this.chain.push(block);
+      this.totalBlockCount++;
+
+      // 🧠 MEMORY-EFFICIENT: تقليم البلوكات القديمة من الذاكرة
+      if (this.chain.length > this.MAX_CHAIN_IN_MEMORY) {
+        const trimCount = this.chain.length - this.MAX_CHAIN_IN_MEMORY;
+        this.chain.splice(0, trimCount);
+        this.chainStartIndex += trimCount;
+      }
 
       // تنظيف mempool
       validTransactions.forEach(tx => {
@@ -1628,7 +1665,7 @@ class AccessNetwork extends EventEmitter {
 
       // إرجاع كتلة فارغة في حالة الخطأ لمنع توقف النظام
       const emptyBlock = new Block(
-        this.chain.length,
+        this.totalBlockCount,
         [],
         Date.now(),
         this.getLatestBlock().hash
@@ -1794,10 +1831,10 @@ class AccessNetwork extends EventEmitter {
       await this.storage.saveState({
         balances: balanceObj,
         lastUpdate: Date.now(),
-        blockHeight: this.chain.length - 1
+        blockHeight: this.totalBlockCount - 1
       });
 
-      // ✅ Removed verbose logging for performance
+      // Removed verbose logging for performance
     } catch (error) {
       console.error('Error saving state to storage:', error);
     }
@@ -1863,7 +1900,7 @@ class AccessNetwork extends EventEmitter {
 
       // حفظ stateRoot بعد كل تحديث مهم
       if (this.chain && this.chain.length > 0) {
-        await this.accessStateStorage.flush(this.chain.length - 1);
+        await this.accessStateStorage.flush(this.totalBlockCount - 1);
       }
     } catch (error) {
       console.error(`❌ Error updating State Trie for ${address}:`, error);
@@ -2170,15 +2207,8 @@ class AccessNetwork extends EventEmitter {
   }
 
   async updateStats(block, processingTime) {
-    // Get REAL block count from database
-    try {
-      const { pool } = await import('./db.js');
-      const blockResult = await pool.query('SELECT COUNT(*) as count FROM ethereum_blocks');
-      this.stats.totalBlocks = parseInt(blockResult.rows[0]?.count || 0);
-    } catch (error) {
-      console.warn('⚠️ Failed to get real block count, using chain length:', error.message);
-      this.stats.totalBlocks = this.chain.length;
-    }
+    // 🧠 استخدام totalBlockCount بدلاً من DB query
+    this.stats.totalBlocks = this.totalBlockCount;
 
     // Get REAL transaction count from database
     try {
@@ -2285,7 +2315,7 @@ class AccessNetwork extends EventEmitter {
       infoURL: baseUrl || 'https://access.network',
       
       // معلومات البلوكتشين
-      blockHeight: this.chain.length - 1,
+      blockHeight: this.totalBlockCount - 1,
       difficulty: this.difficulty,
       hashRate: this.stats.hashRate || 0,
       peers: this.peers.size,
@@ -2342,15 +2372,8 @@ class AccessNetwork extends EventEmitter {
 
   // تحديث الإحصائيات
   async updateStats() {
-    // Get REAL block count from database
-    try {
-      const { pool } = await import('./db.js');
-      const blockResult = await pool.query('SELECT COUNT(*) as count FROM ethereum_blocks');
-      this.stats.totalBlocks = parseInt(blockResult.rows[0]?.count || 0);
-    } catch (error) {
-      console.warn('⚠️ Failed to get real block count, using chain length:', error.message);
-      this.stats.totalBlocks = this.chain.length;
-    }
+    // 🧠 استخدام totalBlockCount بدلاً من DB query
+    this.stats.totalBlocks = this.totalBlockCount;
 
     // Get REAL transaction count from database
     try {
@@ -2372,11 +2395,32 @@ class AccessNetwork extends EventEmitter {
   }
 
   getBlockByIndex(index) {
-    return this.chain[index] || null;
+    // 🧠 MEMORY-EFFICIENT: أولاً نبحث في الذاكرة
+    const memoryIndex = index - this.chainStartIndex;
+    if (memoryIndex >= 0 && memoryIndex < this.chain.length) {
+      return this.chain[memoryIndex];
+    }
+    // إذا لم يوجد في الذاكرة، نقرأ من القرص
+    return this._loadBlockFromDisk(index);
+  }
+
+  // 🧠 قراءة بلوك من ملف JSON على القرص
+  _loadBlockFromDisk(index) {
+    try {
+      const blockFile = path.join('./ethereum-network-data/blocks', `block_${index}.json`);
+      if (fs.existsSync(blockFile)) {
+        return JSON.parse(fs.readFileSync(blockFile, 'utf8'));
+      }
+    } catch (e) { /* silent */ }
+    return null;
   }
 
   getBlockByHash(hash) {
-    return this.chain.find(block => block.hash === hash) || null;
+    // بحث في الذاكرة أولاً
+    const memBlock = this.chain.find(block => block.hash === hash);
+    if (memBlock) return memBlock;
+    // لا نبحث في كل القرص - Hash lookup مكلف جداً
+    return null;
   }
 
   getTransactionByHash(txHash) {
@@ -2387,7 +2431,7 @@ class AccessNetwork extends EventEmitter {
           ...tx,
           blockIndex: block.index,
           blockHash: block.hash,
-          confirmations: this.chain.length - block.index - 1
+          confirmations: this.totalBlockCount - block.index - 1
         };
       }
     }
@@ -2421,6 +2465,8 @@ class AccessNetwork extends EventEmitter {
   exportChain() {
     return {
       chain: this.chain,
+      totalBlockCount: this.totalBlockCount,
+      chainStartIndex: this.chainStartIndex,
       pendingTransactions: this.pendingTransactions,
       difficulty: this.difficulty,
       processingReward: this.processingReward,
@@ -2432,6 +2478,8 @@ class AccessNetwork extends EventEmitter {
   importChain(chainData) {
     if (this.isValidChainData(chainData)) {
       this.chain = chainData.chain;
+      this.totalBlockCount = chainData.totalBlockCount || chainData.chain.length;
+      this.chainStartIndex = chainData.chainStartIndex || 0;
       this.pendingTransactions = chainData.pendingTransactions;
       this.difficulty = chainData.difficulty;
       this.processingReward = chainData.processingReward;
@@ -2602,7 +2650,7 @@ class AccessNetwork extends EventEmitter {
         '0x000000000000000000000000' + (to || '0').replace('0x', '').padStart(40, '0')
       ],
       data: '0x' + Math.floor(amount * 1e18).toString(16).padStart(64, '0'),
-      blockNumber: '0x' + (this.chain.length - 1).toString(16),
+      blockNumber: '0x' + (this.totalBlockCount - 1).toString(16),
       transactionHash: txHash,
       logIndex: '0x0',
       removed: false,

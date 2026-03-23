@@ -88,18 +88,7 @@ class EthereumStyleStorage {
         (block_index, block_hash, parent_hash, state_root, transactions_root,
          timestamp, gas_used, gas_limit, difficulty, nonce, extra_data, size)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        ON CONFLICT (block_index) DO UPDATE SET
-          block_hash = EXCLUDED.block_hash,
-          parent_hash = EXCLUDED.parent_hash,
-          state_root = EXCLUDED.state_root,
-          transactions_root = EXCLUDED.transactions_root,
-          timestamp = EXCLUDED.timestamp,
-          gas_used = EXCLUDED.gas_used,
-          gas_limit = EXCLUDED.gas_limit,
-          difficulty = EXCLUDED.difficulty,
-          nonce = EXCLUDED.nonce,
-          extra_data = EXCLUDED.extra_data,
-          size = EXCLUDED.size
+        ON CONFLICT (block_index) DO NOTHING
       `, [
         block.index,
         block.hash,
@@ -436,20 +425,28 @@ class EthereumStyleStorage {
     }
   }
 
-  // حفظ السلسلة كاملة
+  // 🧠 MEMORY-EFFICIENT: حفظ metadata فقط في network-system.json + ملفات كتل فردية
   async saveChain(chainData) {
     try {
+      // حفظ metadata + فقط البلوكات الموجودة في الذاكرة
       const chainFile = path.join(this.stateDir, 'network-system.json');
-      fs.writeFileSync(chainFile, JSON.stringify(chainData, null, 2));
+      const metadataOnly = {
+        metadata: chainData.metadata || {
+          version: '2.0',
+          lastSaved: Date.now(),
+          totalBlocks: chainData.blocks?.length || 0,
+          difficulty: 2
+        }
+      };
+      fs.writeFileSync(chainFile, JSON.stringify(metadataOnly, null, 2));
 
-      // حفظ كل كتلة منفردة أيضاً
+      // حفظ كل كتلة كملف فردي فقط (لا نكتب كل السلسلة في ملف واحد ضخم)
       if (chainData.blocks) {
         for (const block of chainData.blocks) {
           await this.saveBlock(block);
         }
       }
 
-      // Chain data saved silently
       return true;
     } catch (error) {
       console.error('Error saving chain:', error);
@@ -512,16 +509,38 @@ class EthereumStyleStorage {
     }
   }
 
-  // تحميل السلسلة
+  // 🧠 MEMORY-EFFICIENT: تحميل البلوكات من ملفات فردية
   async loadChain() {
     try {
-      const chainFile = path.join(this.stateDir, 'network-system.json');
-      if (fs.existsSync(chainFile)) {
-        const chainData = JSON.parse(fs.readFileSync(chainFile));
-        // Chain data loaded - message reduced for performance
-        return chainData.blocks || [];
+      // قراءة ملفات البلوكات الفردية (أخف بكثير من ملف واحد ضخم)
+      const blockFiles = fs.readdirSync(this.blocksDir)
+        .filter(file => file.startsWith('block_') && file.endsWith('.json'))
+        .sort((a, b) => {
+          const indexA = parseInt(a.match(/block_(\d+)\.json/)[1]);
+          const indexB = parseInt(b.match(/block_(\d+)\.json/)[1]);
+          return indexA - indexB;
+        });
+
+      if (blockFiles.length === 0) {
+        // fallback: جرب الملف القديم
+        const chainFile = path.join(this.stateDir, 'network-system.json');
+        if (fs.existsSync(chainFile)) {
+          const chainData = JSON.parse(fs.readFileSync(chainFile));
+          return chainData.blocks || [];
+        }
+        return null;
       }
-      return null;
+
+      const blocks = [];
+      for (const file of blockFiles) {
+        try {
+          const blockData = JSON.parse(fs.readFileSync(path.join(this.blocksDir, file), 'utf8'));
+          blocks.push(blockData);
+        } catch (e) { /* skip corrupt file */ }
+      }
+
+      console.log(`📦 Loaded ${blocks.length} blocks from disk`);
+      return blocks.length > 0 ? blocks : null;
     } catch (error) {
       console.error('Error loading chain:', error);
       return null;
