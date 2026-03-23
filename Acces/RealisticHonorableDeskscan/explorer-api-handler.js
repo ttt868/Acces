@@ -318,7 +318,7 @@ async function handleStatsModule(params) {
         case 'chainsize':
             if (networkNode) {
                 return {
-                    blockNumber: networkNode.network.chain.length - 1,
+                    blockNumber: networkNode.network.totalBlockCount - 1,
                     chainSize: JSON.stringify(networkNode.network.chain).length,
                     clientType: 'AccessNode'
                 };
@@ -685,7 +685,7 @@ async function handleLatestBlocks(req, res) {
         const blocks = [];
 
         if (networkNode) {
-            const latestBlockNumber = networkNode.network.chain.length - 1;
+            const latestBlockNumber = networkNode.network.totalBlockCount - 1;
 
             for (let i = 0; i < limit && (latestBlockNumber - i) >= 0; i++) {
                 const blockIndex = latestBlockNumber - i;
@@ -891,7 +891,7 @@ async function handleTransactionDetails(req, res, txHash) {
             r: cleanSig ? ('0x' + cleanSig.substring(0, 64)) : null,
             s: cleanSig ? ('0x' + cleanSig.substring(64, 128)) : null,
             v: cleanSig ? ('0x' + cleanSig.substring(128)) : null,
-            confirmations: networkNode ? (networkNode.network.chain.length - (transaction.blockNumber || 0)) : 1,
+            confirmations: networkNode ? (networkNode.network.totalBlockCount - (transaction.blockNumber || 0)) : 1,
             input: '0x',
             logs: [],
             type: 0
@@ -1259,7 +1259,7 @@ async function getTransactionsByAddress(address, startblock = 0, endblock = 'lat
             contractAddress: '',
             cumulativeGasUsed: '21000',
             txreceipt_status: '1',
-            confirmations: networkNode ? (networkNode.network.chain.length - (row.block_index || 0)) : 1
+            confirmations: networkNode ? (networkNode.network.totalBlockCount - (row.block_index || 0)) : 1
         }));
 
         // إذا لم توجد معاملات في قاعدة البيانات، احصل عليها من البلوك تشين
@@ -1279,7 +1279,7 @@ async function getTransactionsByAddress(address, startblock = 0, endblock = 'lat
                 contractAddress: '',
                 cumulativeGasUsed: '21000',
                 txreceipt_status: '1',
-                confirmations: networkNode.network.chain.length - (tx.blockIndex || 0)
+                confirmations: networkNode.network.totalBlockCount - (tx.blockIndex || 0)
             }));
         }
 
