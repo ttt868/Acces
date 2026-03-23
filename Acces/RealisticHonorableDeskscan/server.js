@@ -1295,8 +1295,10 @@ global.sendAllNotificationsToRecipient = sendAllNotificationsToRecipient;
                     const networkNode = getNetworkNode();
                     if (networkNode && networkNode.network.pendingTransactions.length > 0) {
                       const processorAddress = '0x0000000000000000000000000000000000000000'; // System address
-                      const block = networkNode.network.minePendingTransactions(processorAddress);
-                      // Silent - reduce console spam
+                      const block = await networkNode.network.minePendingTransactions(processorAddress);
+                      if (!block || !block.transactions || block.transactions.length === 0) {
+                        // Skip empty or failed blocks
+                      }
                     }
                   } catch (processingError) {
                     // Silent - reduce console spam
@@ -7627,7 +7629,12 @@ const server = http.createServer(async (req, res) => {
             return;
           }
           
-          const block = networkNode.network.minePendingTransactions(processorAddress);
+          const block = await networkNode.network.minePendingTransactions(processorAddress);
+          if (!block || !block.transactions || block.transactions.length === 0) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'No transactions to process' }));
+            return;
+          }
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
             success: true,

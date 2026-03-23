@@ -5014,7 +5014,7 @@ class NetworkNode {
           const systemProcessorAddress = '0x0000000000000000000000000000000000000001';
           const block = await this.blockchain.minePendingTransactions(systemProcessorAddress);
 
-          if (block && block.transactions && Array.isArray(block.transactions)) {
+          if (block && block.transactions && Array.isArray(block.transactions) && block.transactions.length > 0) {
             this.broadcastToSubscribers('newBlock', block);
           }
         }

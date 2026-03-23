@@ -1660,16 +1660,7 @@ class AccessNetwork extends EventEmitter {
       return block;
     } catch (error) {
       console.error('❌ خطأ في تعدين الكتلة:', error);
-
-      // إرجاع كتلة فارغة في حالة الخطأ لمنع توقف النظام
-      const emptyBlock = new Block(
-        this.totalBlockCount,
-        [],
-        Date.now(),
-        this.getLatestBlock().hash
-      );
-
-      return emptyBlock;
+      return null;
     }
   }
 
