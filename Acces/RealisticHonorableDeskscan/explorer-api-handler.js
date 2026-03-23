@@ -12,6 +12,34 @@ import { validateApiKey } from './api-key-manager.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// 🔴 SSE: Real-time block stream clients
+const sseClients = new Set();
+
+// Called from server.js when a new block is mined
+export function notifyNewBlock(block) {
+    if (sseClients.size === 0) return;
+    const data = JSON.stringify({
+        number: block.index,
+        hash: block.hash,
+        timestamp: Math.floor(block.timestamp / 1000),
+        transactionCount: (block.transactions || []).filter(tx =>
+            tx.fromAddress !== null &&
+            tx.toAddress !== '0x0000000000000000000000000000000000000000' &&
+            tx.toAddress !== '0x0000000000000000000000000000000000000001'
+        ).length,
+        gasUsed: ((block.transactions || []).length) * 21000,
+        gasLimit: 30000000,
+        reward: block.reward || 0.25
+    });
+    for (const client of sseClients) {
+        try {
+            client.write(`data: ${data}\n\n`);
+        } catch (e) {
+            sseClients.delete(client);
+        }
+    }
+}
+
 // ✅ API Key validation helper for developer API endpoints
 async function requireApiKey(req, res) {
     const url = new URL(req.url, `http://${req.headers.host}`);
@@ -146,6 +174,20 @@ export async function handleExplorerAPI(req, res, pathname, method) {
 
         if (pathname === '/api/explorer/latest-blocks' && method === 'GET') {
             return await handleLatestBlocks(req, res);
+        }
+
+        // 🔴 SSE: Real-time block stream
+        if (pathname === '/api/explorer/blocks-stream' && method === 'GET') {
+            res.writeHead(200, {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Access-Control-Allow-Origin': '*'
+            });
+            res.write(':ok\n\n');
+            sseClients.add(res);
+            req.on('close', () => sseClients.delete(res));
+            return true;
         }
 
         if (pathname.startsWith('/api/explorer/transaction/') && method === 'GET') {

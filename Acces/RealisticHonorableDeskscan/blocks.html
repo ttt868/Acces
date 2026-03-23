@@ -1972,12 +1972,58 @@
             loadBlocks();
             fetchRealBlockCount();
 
-            // تحديث تلقائي كل 15 ثانية — يحدّث الجدول + العدد
-            setInterval(() => {
-                loadBlocks();
-                fetchRealBlockCount();
-            }, 15000);
+            // 🔴 Real-time: SSE stream for new blocks (zero polling)
+            connectBlockStream();
         });
+
+        // SSE: Real-time block updates — no polling, server pushes instantly
+        function connectBlockStream() {
+            const evtSource = new EventSource('/api/explorer/blocks-stream');
+            evtSource.onmessage = function(event) {
+                try {
+                    const newBlock = JSON.parse(event.data);
+                    console.log('⚡ New block:', newBlock.number);
+
+                    // Update total count
+                    totalBlocks = newBlock.number + 1;
+                    realTotalBlocks = totalBlocks;
+                    totalPages = Math.ceil(totalBlocks / entriesPerPage);
+                    document.getElementById('totalBlocksDisplay').textContent = totalBlocks.toLocaleString();
+
+                    // If on page 1, prepend the new block to the table
+                    if (currentPage === 1) {
+                        // Build block object compatible with displayBlocks format
+                        const block = {
+                            number: newBlock.number,
+                            index: newBlock.number,
+                            hash: newBlock.hash,
+                            timestamp: newBlock.timestamp,
+                            transactionCount: newBlock.transactionCount,
+                            gasUsed: newBlock.gasUsed,
+                            gasLimit: newBlock.gasLimit,
+                            reward: newBlock.reward,
+                            validator: 'Block Validator'
+                        };
+                        allBlocks.unshift(block);
+                        // Trim to entriesPerPage
+                        if (allBlocks.length > entriesPerPage) {
+                            allBlocks.pop();
+                        }
+                        displayBlocks();
+                    }
+                    // Update pagination info even on other pages
+                    updatePaginationInfo();
+                    updatePagination();
+                } catch (e) {
+                    console.warn('SSE parse error:', e);
+                }
+            };
+            evtSource.onerror = function() {
+                console.warn('SSE disconnected, reconnecting in 5s...');
+                evtSource.close();
+                setTimeout(connectBlockStream, 5000);
+            };
+        }
 
         // جلب العدد الحقيقي للبلوكات من الشبكة
         async function fetchRealBlockCount() {

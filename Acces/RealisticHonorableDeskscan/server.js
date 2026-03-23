@@ -1718,7 +1718,7 @@ import { initializeNetwork, handleNetworkAPI, getNetworkNode } from './network-a
 import { ExplorerAPI } from './explorer-api.js';
 
 // Import Explorer API Handler
-import { handleExplorerAPI } from './explorer-api-handler.js';
+import { handleExplorerAPI, notifyNewBlock } from './explorer-api-handler.js';
 
 // تحسين استهلاك الموارد - نظام ذكي يتفاعل حسب النشاط
 const RESOURCE_OPTIMIZATION = {
@@ -11465,6 +11465,8 @@ function initializeWebSockets(httpServer) {
       if (wsRPCHandler) {
         wsRPCHandler.broadcastNewBlock(block);
       }
+      // 🔴 SSE: Push to explorer blocks page clients
+      notifyNewBlock(block);
     });
 
     // Broadcast balance changes to subscribed wallets
