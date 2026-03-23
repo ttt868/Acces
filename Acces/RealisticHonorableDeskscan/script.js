@@ -14094,6 +14094,31 @@ window.cancelProfileChanges = cancelProfileChanges;
          // Show loading notification only once
          showNotification(translator.translate('Updating profile...'), 'info');
 
+         async function ensureProfileAuthContext() {
+           if (!currentUser?.email) return false;
+
+           try {
+             const response = await fetch('/api/user/' + encodeURIComponent(currentUser.email));
+             const data = await response.json();
+
+             if (data?.success && data?.user) {
+               currentUser.id = data.user.id || currentUser.id;
+               currentUser.email = data.user.email || currentUser.email;
+               if (data.user.session_token) {
+                 currentUser.sessionToken = data.user.session_token;
+                 currentUser.session_token = data.user.session_token;
+               }
+               getFreshAuthToken(currentUser);
+               saveUserSession(currentUser);
+               return true;
+             }
+           } catch (e) {
+             console.error('Failed to sync profile auth context:', e);
+           }
+
+           return false;
+         }
+
          // Build auth headers from currentUser first, then fallback to localStorage
          function getProfileAuthHeaders() {
            let token = getFreshAuthToken(currentUser);
@@ -14140,6 +14165,9 @@ window.cancelProfileChanges = cancelProfileChanges;
            name: newName,
            avatar: null // Default to null to indicate no change
          };
+
+         await ensureProfileAuthContext();
+         updateData.userId = currentUser.id;
 
          // If there's a new image, include it but limit the size
          if (newImage) {

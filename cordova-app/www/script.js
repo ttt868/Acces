@@ -1912,54 +1912,12 @@ bodyObserver.observe(document.body, {
         from {
           opacity: 0;
           transform: translateY(50px) scale(0.9);
-           // Build auth headers from current user email to avoid stale bearer tokens.
-           function getProfileAuthHeaders() {
-             let token = getFreshAuthToken(currentUser);
-             let sessionToken = currentUser?.sessionToken || currentUser?.session_token || '';
-
-             if (sessionToken) {
-               currentUser.sessionToken = sessionToken;
-               currentUser.session_token = sessionToken;
-             }
-
-             return {
-               'Content-Type': 'application/json',
-               'Authorization': 'Bearer ' + token,
-               'X-Session-Token': sessionToken
-             };
-           }
-
-           // Refresh session token once if profile endpoint returns 401/403
-           async function refreshProfileSessionToken() {
-             if (!currentUser || !currentUser.email) return false;
-
-             try {
-               const _origin = (typeof window !== 'undefined' && window.location && /^https?:/i.test(window.location.origin))
-                 ? window.location.origin
-                 : '';
-               const response = await fetch(_origin + '/api/user/' + encodeURIComponent(currentUser.email));
-               const data = await response.json();
-
-               if (data?.success && data?.user?.session_token) {
-                 currentUser.sessionToken = data.user.session_token;
-                 currentUser.session_token = data.user.session_token;
-                 getFreshAuthToken(currentUser);
-                 saveUserSession(currentUser);
-                 return true;
-               }
-             } catch (e) {
-               console.error('Failed to refresh profile session token:', e);
-             }
-
-             return false;
-           }
         }
         to {
           opacity: 1;
           transform: translateY(0) scale(1);
         }
       }
-           let refreshedSessionOnce = false;
     `;
     document.head.appendChild(style);
 
@@ -14418,6 +14376,54 @@ window.cancelProfileChanges = cancelProfileChanges;
          // Show loading notification only once
          showNotification(translator.translate('Updating profile...'), 'info');
 
+         let refreshedSessionOnce = false;
+
+         async function ensureProfileAuthContext() {
+           if (!currentUser?.email) return false;
+
+           try {
+             const apiBase = (typeof getApiOrigin !== 'undefined' ? getApiOrigin() : window.location.origin);
+             const response = await fetch(apiBase + '/api/user/' + encodeURIComponent(currentUser.email));
+             const data = await response.json();
+
+             if (data?.success && data?.user) {
+               currentUser.id = data.user.id || currentUser.id;
+               currentUser.email = data.user.email || currentUser.email;
+               if (data.user.session_token) {
+                 currentUser.sessionToken = data.user.session_token;
+                 currentUser.session_token = data.user.session_token;
+               }
+               getFreshAuthToken(currentUser);
+               saveUserSession(currentUser);
+               return true;
+             }
+           } catch (e) {
+             console.error('Failed to sync profile auth context:', e);
+           }
+
+           return false;
+         }
+
+         function getProfileAuthHeaders() {
+           const token = getFreshAuthToken(currentUser);
+           const sessionToken = currentUser?.sessionToken || currentUser?.session_token || '';
+
+           if (sessionToken) {
+             currentUser.sessionToken = sessionToken;
+             currentUser.session_token = sessionToken;
+           }
+
+           return {
+             'Content-Type': 'application/json',
+             'Authorization': 'Bearer ' + token,
+             'X-Session-Token': sessionToken
+           };
+         }
+
+         async function refreshProfileSessionToken() {
+           return ensureProfileAuthContext();
+         }
+
 
          // Create update data
          const updateData = {
@@ -14425,6 +14431,9 @@ window.cancelProfileChanges = cancelProfileChanges;
            name: newName,
            avatar: null // Default to null to indicate no change
          };
+
+         await ensureProfileAuthContext();
+         updateData.userId = currentUser.id;
 
          // If there's a new image, include it but limit the size
          if (newImage) {

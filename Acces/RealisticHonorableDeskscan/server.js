@@ -1616,18 +1616,26 @@ async function verifyToken(token) {
 async function authenticateRequest(req, requiredUserId) {
   const authToken = req.headers.authorization?.replace('Bearer ', '');
   const decoded = await verifyToken(authToken);
-  if (!decoded) return { error: 'Authentication required', status: 401 };
+  if (!decoded) {
+    console.log(`🔒 AUTH REJECTED: token verification failed for requiredUserId=${requiredUserId || 'unknown'}`);
+    return { error: 'Authentication required', status: 401 };
+  }
 
   const sessionToken = req.headers['x-session-token'];
-  if (!sessionToken) return { error: 'Session token required', status: 401 };
+  if (!sessionToken) {
+    console.log(`🔒 AUTH REJECTED: missing session token for decodedUserId=${decoded.userId}, requiredUserId=${requiredUserId || 'unknown'}`);
+    return { error: 'Session token required', status: 401 };
+  }
 
   const sessionCheck = await pool.query('SELECT session_token FROM users WHERE id = $1', [decoded.userId]);
   if (!sessionCheck.rows[0] || sessionCheck.rows[0].session_token !== sessionToken) {
+    console.log(`🔒 AUTH REJECTED: invalid session for decodedUserId=${decoded.userId}, requiredUserId=${requiredUserId || 'unknown'}`);
     return { error: 'Invalid session', status: 403 };
   }
 
   const uid = parseInt(requiredUserId);
   if (uid && uid !== decoded.userId) {
+    console.log(`🔒 AUTH REJECTED: user mismatch decodedUserId=${decoded.userId}, requiredUserId=${uid}, email=${decoded.email}`);
     return { error: 'Cannot perform actions for another user', status: 403 };
   }
 
@@ -10358,6 +10366,7 @@ const server = http.createServer(async (req, res) => {
         // 🔒 SECURITY: Authenticate request
         const authProfile = await authenticateRequest(req, userId);
         if (authProfile.error) {
+          console.log(`🔒 Profile update blocked for userId=${userId}: ${authProfile.error}`);
           res.writeHead(authProfile.status, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: authProfile.error }));
           return;
