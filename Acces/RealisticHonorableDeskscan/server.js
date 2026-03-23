@@ -1605,7 +1605,12 @@ async function verifyToken(token) {
   try {
     const result = await pool.query('SELECT id, session_token FROM users WHERE email = $1', [email.toLowerCase()]);
     if (!result.rows[0]) return null;
-    return { userId: result.rows[0].id, email };
+    const normalizedUserId = Number.parseInt(result.rows[0].id, 10);
+    if (!Number.isFinite(normalizedUserId)) {
+      console.error('Token verification failed: invalid numeric user ID for email:', email);
+      return null;
+    }
+    return { userId: normalizedUserId, email };
   } catch (dbError) {
     console.error('Token verification DB error:', dbError.message);
     return null;
@@ -1627,19 +1632,25 @@ async function authenticateRequest(req, requiredUserId) {
     return { error: 'Session token required', status: 401 };
   }
 
-  const sessionCheck = await pool.query('SELECT session_token FROM users WHERE id = $1', [decoded.userId]);
+  const decodedUserId = Number.parseInt(decoded.userId, 10);
+  if (!Number.isFinite(decodedUserId)) {
+    console.log(`🔒 AUTH REJECTED: decoded user ID is invalid for requiredUserId=${requiredUserId || 'unknown'}`);
+    return { error: 'Authentication required', status: 401 };
+  }
+
+  const sessionCheck = await pool.query('SELECT session_token FROM users WHERE id = $1', [decodedUserId]);
   if (!sessionCheck.rows[0] || sessionCheck.rows[0].session_token !== sessionToken) {
-    console.log(`🔒 AUTH REJECTED: invalid session for decodedUserId=${decoded.userId}, requiredUserId=${requiredUserId || 'unknown'}`);
+    console.log(`🔒 AUTH REJECTED: invalid session for decodedUserId=${decodedUserId}, requiredUserId=${requiredUserId || 'unknown'}`);
     return { error: 'Invalid session', status: 403 };
   }
 
-  const uid = parseInt(requiredUserId);
-  if (uid && uid !== decoded.userId) {
-    console.log(`🔒 AUTH REJECTED: user mismatch decodedUserId=${decoded.userId}, requiredUserId=${uid}, email=${decoded.email}`);
+  const uid = Number.parseInt(requiredUserId, 10);
+  if (uid && uid !== decodedUserId) {
+    console.log(`🔒 AUTH REJECTED: user mismatch decodedUserId=${decodedUserId}, requiredUserId=${uid}, email=${decoded.email}`);
     return { error: 'Cannot perform actions for another user', status: 403 };
   }
 
-  return { success: true, userId: decoded.userId, email: decoded.email };
+  return { success: true, userId: decodedUserId, email: decoded.email };
 }
 
 // �🛡️ CRITICAL BALANCE PROTECTION: Audit logging for ALL balance changes
