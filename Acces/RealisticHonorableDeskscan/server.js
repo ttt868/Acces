@@ -2446,7 +2446,7 @@ const server = http.createServer(async (req, res) => {
   // ============================================================
 
   // Helper: serve HTML file with injected query params (URL rewrite)
-  function serveWithRewrite(res, htmlFile, paramScript) {
+  function serveWithRewrite(res, htmlFile, paramScript, ssrMeta) {
     const filePath = path.join(__dirname, htmlFile);
     fs.readFile(filePath, 'utf8', (err, content) => {
       if (err) {
@@ -2471,7 +2471,18 @@ const server = http.createServer(async (req, res) => {
       if (!content.includes('<base href="/">')) {
         modified = modified.replace(/<head>/i, '<head>\n<base href="/">');
       }
-      modified = modified.replace('</head>', paramOverride + '</head>');
+      // Inject SSR meta tags + JSON-LD for non-browser clients (curl, Chainlist, bots)
+      const ssrHead = ssrMeta ? ssrMeta.head || '' : '';
+      const ssrNoscript = ssrMeta ? ssrMeta.noscript || '' : '';
+      if (ssrHead) {
+        modified = modified.replace('</head>', ssrHead + paramOverride + '</head>');
+      } else {
+        modified = modified.replace('</head>', paramOverride + '</head>');
+      }
+      // Inject SSR noscript block before </body> for non-JS clients
+      if (ssrNoscript) {
+        modified = modified.replace('</body>', ssrNoscript + '</body>');
+      }
       res.writeHead(200, { 
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'no-cache'
@@ -2481,37 +2492,188 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ========= SSR HELPERS FOR EIP-3091 =========
+  // Fetch transaction data and build SSR meta + noscript HTML
+  async function getTransactionSSR(txHash) {
+    try {
+      const networkNode = getNetworkNode();
+      if (!networkNode || !networkNode.network) return null;
+      
+      const hashWith0x = txHash.startsWith('0x') ? txHash : '0x' + txHash;
+      const hashClean = txHash.startsWith('0x') ? txHash.substring(2) : txHash;
+      
+      // Use built-in search (memory + disk)
+      const transaction = networkNode.network.getTransactionByHash(hashClean) || networkNode.network.getTransactionByHash(hashWith0x);
+      if (!transaction) return null;
+      
+      const from = transaction.fromAddress || transaction.from || 'N/A';
+      const to = transaction.toAddress || transaction.to || 'N/A';
+      const amount = transaction.amount || transaction.value || 0;
+      const blockNum = transaction.blockIndex || transaction.blockNumber || 'N/A';
+      const confirmations = transaction.confirmations || 0;
+      
+      const meta = `
+    <meta name="description" content="Transaction ${hashWith0x} on Access Network (Chain ID 22888) - From: ${from} To: ${to} Value: ${amount} ACCESS - Block #${blockNum}">
+    <meta property="og:title" content="Transaction ${hashWith0x} | AccessScan">
+    <meta property="og:description" content="From: ${from} | To: ${to} | Value: ${amount} ACCESS | Block: ${blockNum} | Confirmations: ${confirmations}">
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"WebPage","name":"Transaction ${hashWith0x}","description":"Transaction on Access Network Chain ID 22888","url":"https://accesschain.org/tx/${hashWith0x}","mainEntity":{"@type":"Thing","name":"Transaction","identifier":"${hashWith0x}","additionalProperty":[{"@type":"PropertyValue","name":"from","value":"${from}"},{"@type":"PropertyValue","name":"to","value":"${to}"},{"@type":"PropertyValue","name":"value","value":"${amount} ACCESS"},{"@type":"PropertyValue","name":"blockNumber","value":"${blockNum}"},{"@type":"PropertyValue","name":"status","value":"Confirmed"},{"@type":"PropertyValue","name":"confirmations","value":"${confirmations}"}]}}
+    </script>`;
+      const noscript = `
+    <noscript>
+    <div style="font-family:monospace;padding:20px;max-width:900px;margin:0 auto">
+    <h1>Transaction Details - Access Network (Chain ID: 22888)</h1>
+    <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%">
+    <tr><td><b>Transaction Hash</b></td><td>${hashWith0x}</td></tr>
+    <tr><td><b>Status</b></td><td>Confirmed</td></tr>
+    <tr><td><b>Block</b></td><td>${blockNum}</td></tr>
+    <tr><td><b>Confirmations</b></td><td>${confirmations}</td></tr>
+    <tr><td><b>From</b></td><td>${from}</td></tr>
+    <tr><td><b>To</b></td><td>${to}</td></tr>
+    <tr><td><b>Value</b></td><td>${amount} ACCESS</td></tr>
+    <tr><td><b>Gas Used</b></td><td>${transaction.gasUsed || 21000}</td></tr>
+    <tr><td><b>Nonce</b></td><td>${transaction.nonce || 0}</td></tr>
+    </table>
+    </div>
+    </noscript>`;
+      return { head: meta, noscript: noscript };
+    } catch(e) { return null; }
+  }
+
+  // Fetch block data and build SSR meta + noscript HTML
+  async function getBlockSSR(blockNum) {
+    try {
+      const networkNode = getNetworkNode();
+      if (!networkNode || !networkNode.network) return null;
+      
+      const blockIndex = parseInt(blockNum);
+      const block = networkNode.network.getBlockByIndex(blockIndex);
+      if (!block) return null;
+      
+      const txCount = block.transactions ? block.transactions.length : 0;
+      const validator = block.validator || block.miner || 'Block Validator';
+      let timestamp = block.timestamp || Date.now();
+      if (timestamp > 1e12) timestamp = Math.floor(timestamp / 1000);
+      const dateTime = new Date(timestamp * 1000).toISOString();
+      
+      const meta = `
+    <meta name="description" content="Block #${blockIndex} on Access Network (Chain ID 22888) - ${txCount} transactions - Validated by ${validator} - Hash: ${block.hash}">
+    <meta property="og:title" content="Block #${blockIndex} | AccessScan">
+    <meta property="og:description" content="Transactions: ${txCount} | Validator: ${validator} | Hash: ${block.hash} | Time: ${dateTime}">
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"WebPage","name":"Block #${blockIndex}","description":"Block on Access Network Chain ID 22888","url":"https://accesschain.org/block/${blockIndex}","mainEntity":{"@type":"Thing","name":"Block","identifier":"${blockIndex}","additionalProperty":[{"@type":"PropertyValue","name":"hash","value":"${block.hash}"},{"@type":"PropertyValue","name":"transactions","value":"${txCount}"},{"@type":"PropertyValue","name":"validator","value":"${validator}"},{"@type":"PropertyValue","name":"timestamp","value":"${dateTime}"},{"@type":"PropertyValue","name":"previousHash","value":"${block.previousHash || ''}"},{"@type":"PropertyValue","name":"gasUsed","value":"${block.gasUsed || txCount * 21000}"},{"@type":"PropertyValue","name":"gasLimit","value":"${block.gasLimit || 30000000}"}]}}
+    </script>`;
+      const noscript = `
+    <noscript>
+    <div style="font-family:monospace;padding:20px;max-width:900px;margin:0 auto">
+    <h1>Block #${blockIndex} - Access Network (Chain ID: 22888)</h1>
+    <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%">
+    <tr><td><b>Block Number</b></td><td>${blockIndex}</td></tr>
+    <tr><td><b>Hash</b></td><td>${block.hash}</td></tr>
+    <tr><td><b>Timestamp</b></td><td>${dateTime}</td></tr>
+    <tr><td><b>Transactions</b></td><td>${txCount}</td></tr>
+    <tr><td><b>Validated By</b></td><td>${validator}</td></tr>
+    <tr><td><b>Gas Used</b></td><td>${block.gasUsed || txCount * 21000}</td></tr>
+    <tr><td><b>Gas Limit</b></td><td>${block.gasLimit || 30000000}</td></tr>
+    <tr><td><b>Parent Hash</b></td><td>${block.previousHash || 'N/A'}</td></tr>
+    <tr><td><b>Block Reward</b></td><td>0.25 ACCESS</td></tr>
+    </table>
+    </div>
+    </noscript>`;
+      return { head: meta, noscript: noscript };
+    } catch(e) { return null; }
+  }
+
+  // Fetch address data and build SSR meta + noscript HTML
+  async function getAddressSSR(addr) {
+    try {
+      const networkNode = getNetworkNode();
+      if (!networkNode || !networkNode.network) return null;
+      
+      const balance = networkNode.network.getBalance(addr.toLowerCase());
+      const balanceFormatted = (balance || 0).toFixed(6);
+      
+      // Count transactions from DB (faster and more accurate)
+      let txCount = 0;
+      try {
+        const result = await safeQuery(
+          `SELECT COUNT(*) as total FROM transactions WHERE LOWER(sender_address) = $1 OR LOWER(recipient_address) = $1`,
+          [addr.toLowerCase()]
+        );
+        txCount = result.rows[0]?.total || 0;
+      } catch(e) {
+        // Fallback: count from in-memory chain
+        if (networkNode.network.chain) {
+          for (const block of networkNode.network.chain) {
+            if (block.transactions) {
+              for (const tx of block.transactions) {
+                const txFrom = (tx.fromAddress || tx.from || '').toLowerCase();
+                const txTo = (tx.toAddress || tx.to || '').toLowerCase();
+                if (txFrom === addr.toLowerCase() || txTo === addr.toLowerCase()) {
+                  txCount++;
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      const meta = `
+    <meta name="description" content="Address ${addr} on Access Network (Chain ID 22888) - Balance: ${balanceFormatted} ACCESS - ${txCount} transactions">
+    <meta property="og:title" content="Address ${addr} | AccessScan">
+    <meta property="og:description" content="Balance: ${balanceFormatted} ACCESS | Transactions: ${txCount} | Access Network Chain ID 22888">
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"WebPage","name":"Address ${addr}","description":"Wallet address on Access Network Chain ID 22888","url":"https://accesschain.org/address/${addr}","mainEntity":{"@type":"Thing","name":"Wallet Address","identifier":"${addr}","additionalProperty":[{"@type":"PropertyValue","name":"balance","value":"${balanceFormatted} ACCESS"},{"@type":"PropertyValue","name":"transactions","value":"${txCount}"},{"@type":"PropertyValue","name":"network","value":"Access Network"},{"@type":"PropertyValue","name":"chainId","value":"22888"}]}}
+    </script>`;
+      const noscript = `
+    <noscript>
+    <div style="font-family:monospace;padding:20px;max-width:900px;margin:0 auto">
+    <h1>Address Details - Access Network (Chain ID: 22888)</h1>
+    <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%">
+    <tr><td><b>Address</b></td><td>${addr}</td></tr>
+    <tr><td><b>Balance</b></td><td>${balanceFormatted} ACCESS</td></tr>
+    <tr><td><b>Transactions</b></td><td>${txCount}</td></tr>
+    <tr><td><b>Network</b></td><td>Access Network (Chain ID: 22888)</td></tr>
+    </table>
+    </div>
+    </noscript>`;
+      return { head: meta, noscript: noscript };
+    } catch(e) { return null; }
+  }
+
   // /explorer → redirect to explorer page
   if (pathname === '/explorer' || pathname === '/explorer/') {
     serveWithRewrite(res, 'access-explorer.html', '{}');
     return;
   }
 
-  // /tx/{hash} or /explorer/tx/{hash} → serve transaction-details.html
+  // /tx/{hash} or /explorer/tx/{hash} → serve transaction-details.html with SSR
   const txMatch = pathname.match(/^(?:\/explorer)?\/tx\/(?:hash\/)?(0x)?([a-fA-F0-9]{64})$/);
   if (txMatch) {
-    // Keep hash without forced 0x prefix - API stores hashes without 0x
     const txHash = txMatch[2];
     console.log(`🔗 EIP-3091 tx rewrite: ${pathname} → transaction-details.html?hash=${txHash}`);
-    serveWithRewrite(res, 'transaction-details.html', `{"hash":"${txHash}"}`);
+    const ssrMeta = await getTransactionSSR(txHash);
+    serveWithRewrite(res, 'transaction-details.html', `{"hash":"${txHash}"}`, ssrMeta);
     return;
   }
 
-  // /address/{addr} or /explorer/address/{addr} → serve address-details.html
+  // /address/{addr} or /explorer/address/{addr} → serve address-details.html with SSR
   const addrMatch = pathname.match(/^(?:\/explorer)?\/address\/(0x[a-fA-F0-9]{40})$/);
   if (addrMatch) {
     const addr = addrMatch[1];
     console.log(`🔗 EIP-3091 address rewrite: ${pathname} → address-details.html?address=${addr}`);
-    serveWithRewrite(res, 'address-details.html', `{"address":"${addr}"}`);
+    const ssrMeta = await getAddressSSR(addr);
+    serveWithRewrite(res, 'address-details.html', `{"address":"${addr}"}`, ssrMeta);
     return;
   }
 
-  // /block/{number} or /explorer/block/{number} → serve block-details.html
+  // /block/{number} or /explorer/block/{number} → serve block-details.html with SSR
   const blockMatch = pathname.match(/^(?:\/explorer)?\/block\/(\d+)$/);
   if (blockMatch) {
     const blockNum = blockMatch[1];
     console.log(`🔗 EIP-3091 block rewrite: ${pathname} → block-details.html?number=${blockNum}`);
-    serveWithRewrite(res, 'block-details.html', `{"number":"${blockNum}","block":"${blockNum}"}`);
+    const ssrMeta = await getBlockSSR(blockNum);
+    serveWithRewrite(res, 'block-details.html', `{"number":"${blockNum}","block":"${blockNum}"}`, ssrMeta);
     return;
   }
 
