@@ -1536,7 +1536,7 @@
             <div class="tx-spinner"></div>
         </div>
 
-        <div id="txContentWrapper">
+        <div id="txContentWrapper" style="display: none;">
         <a href="/" class="back-btn">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                 <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
@@ -1546,7 +1546,7 @@
 
         <h1 class="page-title">
             Transaction Details
-            <span class="status-badge status-success" id="txStatus" style="display: none;">Success</span>
+            <span class="status-badge status-success" id="txStatus" style="display: none;"></span>
         </h1>
 
         <!-- Transaction Overview -->
@@ -1556,7 +1556,7 @@
                 <div class="detail-row">
                     <div class="detail-label">Transaction Hash:</div>
                     <div class="detail-value" style="display: flex; align-items: center; gap: 8px;">
-                        <div class="hash-value" id="txHash" style="flex: 1;">Loading...</div>
+                        <div class="hash-value" id="txHash" style="flex: 1;"></div>
                         <button class="copy-btn" onclick="copyToClipboard(document.getElementById('txHash').textContent)" title="Copy">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -1568,20 +1568,19 @@
                 <div class="detail-row">
                     <div class="detail-label">Status:</div>
                     <div class="detail-value">
-                        <span class="status-badge status-pending" id="txStatusMobile">Loading...</span>
+                        <span class="status-badge status-pending" id="txStatusMobile"></span>
                     </div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Block:</div>
                     <div class="detail-value">
-                        <a href="javascript:void(0)" class="block-link" id="blockNumber">Loading...</a>
-                        <span class="usd-value" id="confirmations">Loading...</span>
+                        <a href="javascript:void(0)" class="block-link" id="blockNumber"></a>
+                        <span class="usd-value" id="confirmations"></span>
                     </div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Timestamp:</div>
                     <div class="detail-value" id="txTimestamp">
-                        Loading...
                         <div class="usd-value"></div>
                     </div>
                 </div>
@@ -1595,7 +1594,7 @@
                 <div class="detail-row">
                     <div class="detail-label">From:</div>
                     <div class="detail-value">
-                        <a href="javascript:void(0)" class="address-link" id="fromAddress" onclick="navigateToAddress(this.textContent)">Loading...</a>
+                        <a href="javascript:void(0)" class="address-link" id="fromAddress" onclick="navigateToAddress(this.textContent)"></a>
                         <button class="copy-btn" onclick="copyToClipboard(document.getElementById('fromAddress').textContent)" title="Copy">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -1607,7 +1606,7 @@
                 <div class="detail-row">
                     <div class="detail-label">To:</div>
                     <div class="detail-value">
-                        <a href="javascript:void(0)" class="address-link" id="toAddress" onclick="navigateToAddress(this.textContent)">Loading...</a>
+                        <a href="javascript:void(0)" class="address-link" id="toAddress" onclick="navigateToAddress(this.textContent)"></a>
                         <button class="copy-btn" onclick="copyToClipboard(document.getElementById('toAddress').textContent)" title="Copy">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -1619,24 +1618,24 @@
                 <div class="detail-row">
                     <div class="detail-label">Value:</div>
                     <div class="detail-value">
-                        <div class="amount-value" id="txValue">Loading...</div>
-                        <div class="usd-value" id="txValueUSD">Loading...</div>
+                        <div class="amount-value" id="txValue"></div>
+                        <div class="usd-value" id="txValueUSD"></div>
                     </div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Transaction Fee:</div>
                     <div class="detail-value">
-                        <div class="amount-value" id="txFee">Loading...</div>
-                        <div class="usd-value" id="txFeeUSD">Loading...</div>
+                        <div class="amount-value" id="txFee"></div>
+                        <div class="usd-value" id="txFeeUSD"></div>
                     </div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Nonce:</div>
-                    <div class="detail-value" id="txNonce">Loading...</div>
+                    <div class="detail-value" id="txNonce"></div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Transaction Index:</div>
-                    <div class="detail-value" id="txIndex">Loading...</div>
+                    <div class="detail-value" id="txIndex"></div>
                 </div>
             </div>
         </div>
@@ -1647,30 +1646,30 @@
             <div class="card-body">
                 <div class="detail-row">
                     <div class="detail-label">Gas Limit:</div>
-                    <div class="detail-value" id="gasLimit">Loading...</div>
+                    <div class="detail-value" id="gasLimit"></div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Gas Used:</div>
                     <div class="detail-value">
                         <div class="gas-info">
-                            <span id="gasUsed">Loading...</span>
+                            <span id="gasUsed"></span>
                             <div class="progress-bar">
                                 <div class="progress-fill" id="gasProgressFill" style="width: 0%"></div>
                             </div>
-                            <div class="gas-usage" id="gasUsageText">Loading...</div>
+                            <div class="gas-usage" id="gasUsageText"></div>
                         </div>
                     </div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Gas Price:</div>
                     <div class="detail-value">
-                        <div id="gasPrice">Loading...</div>
-                        <div class="usd-value" id="gasPriceWei">Loading...</div>
+                        <div id="gasPrice"></div>
+                        <div class="usd-value" id="gasPriceWei"></div>
                     </div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Transaction Type:</div>
-                    <div class="detail-value" id="txType">Loading...</div>
+                    <div class="detail-value" id="txType"></div>
                 </div>
             </div>
         </div>
@@ -2035,6 +2034,7 @@
             document.getElementById('gasPrice').textContent = c.gasPrice || '';
             document.getElementById('gasPriceWei').textContent = c.gasPriceWei || '';
             document.getElementById('txType').innerHTML = c.txType || '';
+            showTxContent();
         }
 
         function initializeTransactionDetails() {
