@@ -1972,7 +1972,7 @@
 
             // ⚡ حفظ الكاش لإعادة التحميل بدون وميض
             try {
-                var cacheKey = 'blockCache_' + (blockNumber || number);
+                var cacheKey = 'blockCache_' + number;
                 sessionStorage.setItem(cacheKey, JSON.stringify({
                     number: number.toLocaleString(),
                     validator: validator,
@@ -1992,7 +1992,7 @@
                     receiptsRoot: block.receiptsRoot || hash,
                     nonce: block.nonce || '0x0000000000000000'
                 }));
-                sessionStorage.setItem('lastBlockNumber', blockNumber || number);
+                sessionStorage.setItem('lastBlockNumber', String(number));
             } catch(e) {}
         }
 
