@@ -1614,9 +1614,23 @@
     <script>
     (function() {
         try {
+            // 🔄 حالة OAuth callback - أظهر spinner
+            var hash = window.location.hash;
+            if (hash && hash.indexOf('id_token') !== -1) {
+                document.getElementById('loadingState').style.display = 'flex';
+                return;
+            }
+
             var params = new URLSearchParams(window.location.search);
             var bn = params.get('block') || params.get('number');
-            if (!bn) return;
+
+            // 🔙 زر العودة بالجهاز - لا يوجد block param
+            if (!bn) {
+                var lastBn = sessionStorage.getItem('lastBlockNumber');
+                if (lastBn) bn = lastBn;
+                else return;
+            }
+
             var raw = sessionStorage.getItem('blockCache_' + bn);
             if (!raw) return;
             var c = JSON.parse(raw);
@@ -1840,6 +1854,8 @@
             const hashParams = new URLSearchParams(window.location.hash.substring(1));
             if (hashParams.get('id_token') || sessionStorage.getItem('googleAuthInProgress')) {
                 console.log('[Block] Skipping load - OAuth callback in progress');
+                // أظهر spinner بدل صفحة فارغة
+                document.getElementById('loadingState').style.display = 'flex';
                 return;
             }
 
@@ -1976,6 +1992,7 @@
                     receiptsRoot: block.receiptsRoot || hash,
                     nonce: block.nonce || '0x0000000000000000'
                 }));
+                sessionStorage.setItem('lastBlockNumber', blockNumber || number);
             } catch(e) {}
         }
 

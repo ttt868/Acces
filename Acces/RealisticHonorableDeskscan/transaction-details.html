@@ -1718,9 +1718,23 @@
     <script>
     (function() {
         try {
+            // 🔄 حالة OAuth callback - أظهر spinner فقط
+            var hash = window.location.hash;
+            if (hash && hash.indexOf('id_token') !== -1) {
+                document.getElementById('txLoadingState').style.display = 'flex';
+                return;
+            }
+
             var params = new URLSearchParams(window.location.search);
             var h = params.get('hash');
-            if (!h) return;
+
+            // 🔙 زر العودة بالجهاز - لا يوجد hash param → استعد آخر معاملة
+            if (!h) {
+                var lastHash = sessionStorage.getItem('lastTxHash');
+                if (lastHash) h = lastHash;
+                else return;
+            }
+
             if (h.startsWith('/tx/')) h = h.substring(4);
             else if (h.startsWith('tx/')) h = h.substring(3);
             if (h.startsWith('0x') || h.startsWith('0X')) h = h.substring(2);
@@ -2096,6 +2110,8 @@
             const hashFragment = window.location.hash;
             if ((hashFragment && hashFragment.includes('id_token')) || sessionStorage.getItem('googleAuthInProgress')) {
                 console.log('[TX] Skipping init - OAuth callback in progress');
+                // أظهر spinner بدل صفحة فارغة
+                document.getElementById('txLoadingState').style.display = 'flex';
                 return;
             }
 
@@ -2117,8 +2133,20 @@
                 return; // توقف فوري - الصفحة تبقى مخفية
             }
 
-            // ✅ CHECK: إذا كان الرابط فارغاً (hash فارغ أو غير موجود) - توجيه فوري للمستكشف
+            // ✅ CHECK: إذا كان الرابط فارغاً (hash فارغ أو غير موجود)
             if (!txHash || txHash.trim() === '' || txHash === 'unknown') {
+                // 🔙 محاولة استعادة آخر معاملة (زر العودة بالجهاز)
+                const lastHash = sessionStorage.getItem('lastTxHash');
+                if (lastHash) {
+                    const cached = sessionStorage.getItem('txCache_' + lastHash);
+                    if (cached) {
+                        try {
+                            restoreTxFromCache(JSON.parse(cached));
+                            console.log('🔙 Back button: restored last tx from cache');
+                            return;
+                        } catch(e) {}
+                    }
+                }
                 console.log('🔄 Empty/invalid hash detected, redirecting to explorer...');
                 window.location.replace('/access-explorer');
                 return; // توقف فوري - الصفحة تبقى مخفية
@@ -2502,6 +2530,7 @@
             // ✅ حفظ في cache
             try {
                 const cacheKey = 'txCache_' + (tx.hash || '').replace(/^0x/, '');
+                sessionStorage.setItem('lastTxHash', (tx.hash || '').replace(/^0x/, ''));
                 const cacheData = {
                     hash: document.getElementById('txHash').textContent,
                     status: document.getElementById('txStatus').textContent,
@@ -2803,6 +2832,7 @@
             // ✅ حفظ البيانات في cache لمنع الوميض عند إعادة التحميل
             try {
                 const cacheKey = 'txCache_' + (tx.hash || '').replace(/^0x/, '');
+                sessionStorage.setItem('lastTxHash', (tx.hash || '').replace(/^0x/, ''));
                 const cacheData = {
                     hash: document.getElementById('txHash').textContent,
                     status: document.getElementById('txStatus').textContent,
