@@ -7,51 +7,12 @@ Allow: /
 # Sitemap location
 Sitemap: https://accesschain.org/sitemap.xml
 
-# Google Adsense crawlers - IMPORTANT for ads approval
+# Google Adsense crawlers
 User-agent: Mediapartners-Google
-Allow: /access-project.html
-Allow: /about.html
-Allow: /access-explorer.html
-Allow: /blocks.html
-Allow: /transactions.html
-Allow: /faq.html
-Allow: /whitepaper.html
-Allow: /contact.html
-Allow: /top-accounts.html
-Allow: /privacy-policy.html
-Allow: /privacy-policy-explorer.html
-Allow: /terms-of-service.html
-Allow: /terms-of-service-app.html
-Allow: /block-details.html
-Allow: /transaction-details.html
-Allow: /address-details.html
-Allow: /gastracker.html
-Allow: /developer-api.html
-Allow: /index.html
+Allow: /
 
 User-agent: AdsBot-Google
-Allow: /access-project.html
-Allow: /about.html
-Allow: /access-explorer.html
-Allow: /blocks.html
-Allow: /transactions.html
-Allow: /faq.html
-Allow: /whitepaper.html
-Allow: /contact.html
-Allow: /top-accounts.html
-Allow: /privacy-policy.html
-Allow: /privacy-policy-explorer.html
-Allow: /terms-of-service.html
-Allow: /terms-of-service-app.html
-Allow: /block-details.html
-Allow: /transaction-details.html
-Allow: /address-details.html
-Allow: /gastracker.html
-Allow: /developer-api.html
-Allow: /index.html
+Allow: /
 
 User-agent: Googlebot
 Allow: /
-
-# Crawl delay for all bots
-Crawl-delay: 1

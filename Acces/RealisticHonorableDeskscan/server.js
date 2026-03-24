@@ -2697,7 +2697,8 @@ const server = http.createServer(async (req, res) => {
     '/whitepaper': 'whitepaper.html',
     '/privacy-policy': 'privacy-policy.html',
     '/add-network': 'add-network.html',
-    '/terms-of-service-app': 'terms-of-service-app.html'
+    '/terms-of-service-app': 'terms-of-service-app.html',
+    '/project': 'access-project.html'
   };
   if (cleanUrlMap[pathname]) {
     serveWithRewrite(res, cleanUrlMap[pathname], '{}');
@@ -11388,13 +11389,6 @@ const server = http.createServer(async (req, res) => {
     // Default route handler
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Endpoint not found' }));
-    return;
-  }
-
-  // /project → redirect to access-project.html
-  if (pathname === '/project') {
-    res.writeHead(301, { 'Location': '/access-project.html' });
-    res.end();
     return;
   }
 
