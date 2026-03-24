@@ -2093,7 +2093,8 @@
                 try {
                     const cachedData = JSON.parse(cached);
                     restoreTxFromCache(cachedData);
-                    console.log('⚡ Restored tx from cache instantly');
+                    console.log('⚡ Restored tx from cache - skip network fetch');
+                    return; // بيانات المعاملة لا تتغير - لا حاجة لجلبها مجدداً
                 } catch(e) {}
             }
 
