@@ -1791,6 +1791,13 @@
 
         // Load block details from URL parameters - SIMPLIFIED
         async function loadBlockDetails() {
+            // ✅ لا تحمل البيانات إذا كان OAuth callback جاري (سيتم redirect)
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            if (hashParams.get('id_token') || sessionStorage.getItem('googleAuthInProgress')) {
+                console.log('[Block] Skipping load - OAuth callback in progress');
+                return;
+            }
+
             const urlParams = new URLSearchParams(window.location.search);
             // Support multiple URL formats: ?block=, ?number=, ?hash=
             const blockNumber = urlParams.get('block') || urlParams.get('number');
