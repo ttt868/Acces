@@ -2346,6 +2346,7 @@
             // Start polling for updates after a delay
             setTimeout(() => {
                 startPolling();
+                connectStatsStream();
             }, 2000); // Wait 2 seconds before starting polls
 
             // Only check session validity every 5 minutes (no data refresh)
@@ -4005,12 +4006,44 @@
             alert('You can unsubscribe from AccessScan communications at any time by clicking the unsubscribe link in any email we send you, or by contacting us directly.');
         }
 
-        // Start polling for updates
+        // Start polling for updates (only transactions and blocks lists)
         function startPolling() {
-            // Poll for stats, transactions, and blocks
-            setInterval(loadNetworkStats, 30000); // Poll stats every 30 seconds
-            setInterval(loadLatestTransactions, 15000); // Poll transactions every 15 seconds
-            setInterval(loadLatestBlocks, 20000); // Poll blocks every 20 seconds
+            setInterval(loadLatestTransactions, 15000); // Poll transactions list every 15 seconds
+            setInterval(loadLatestBlocks, 20000); // Poll blocks list every 20 seconds
+        }
+
+        // Real-time stats via SSE (zero polling for TRANSACTIONS & LATEST BLOCK)
+        function connectStatsStream() {
+            const evtSource = new EventSource('https://accesschain.org/api/explorer/blocks-stream');
+            evtSource.onmessage = function(event) {
+                try {
+                    const block = JSON.parse(event.data);
+                    // Update LATEST BLOCK instantly
+                    if (block.number !== undefined) {
+                        document.getElementById('latestBlock').textContent = block.number.toLocaleString();
+                        document.getElementById('blockTime').innerHTML = '(1s)';
+                    }
+                    // Update TRANSACTIONS count instantly
+                    if (block.totalTransactions !== undefined) {
+                        document.getElementById('totalTransactions').textContent = block.totalTransactions.toLocaleString();
+                    }
+                    // Cache the updated stats
+                    try {
+                        localStorage.setItem('explorerStatsCache', JSON.stringify({
+                            totalTransactions: block.totalTransactions,
+                            latestBlock: block.number,
+                            tps: 0,
+                            blockTime: 1
+                        }));
+                    } catch(e) {}
+                } catch (e) {
+                    console.warn('SSE parse error:', e);
+                }
+            };
+            evtSource.onerror = function() {
+                evtSource.close();
+                setTimeout(connectStatsStream, 5000);
+            };
         }
 
         // Close modal when clicking outside

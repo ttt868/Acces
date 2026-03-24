@@ -16,8 +16,18 @@ const __dirname = dirname(__filename);
 const sseClients = new Set();
 
 // Called from server.js when a new block is mined
-export function notifyNewBlock(block) {
+export async function notifyNewBlock(block) {
     if (sseClients.size === 0) return;
+    // Get real total transactions from database for accurate stats
+    let totalTransactions = 0;
+    try {
+        const txCount = await pool.query('SELECT COUNT(*) as count FROM transactions');
+        totalTransactions = parseInt(txCount.rows[0]?.count || 0);
+    } catch (e) { /* silent */ }
+
+    const networkNode = getNetworkNode();
+    const totalBlocks = networkNode ? networkNode.network.totalBlockCount : (block.index + 1);
+
     const data = JSON.stringify({
         number: block.index,
         hash: block.hash,
@@ -29,7 +39,9 @@ export function notifyNewBlock(block) {
         ).length,
         gasUsed: ((block.transactions || []).length) * 21000,
         gasLimit: 30000000,
-        reward: block.reward || 0.25
+        reward: block.reward || 0.25,
+        totalBlocks: totalBlocks,
+        totalTransactions: totalTransactions
     });
     for (const client of sseClients) {
         try {
