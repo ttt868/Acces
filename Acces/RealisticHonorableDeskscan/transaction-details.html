@@ -575,6 +575,27 @@
             color: #856404;
         }
 
+        .tx-loading-state {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+        }
+
+        .tx-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--accent-purple, #7c3aed);
+            border-radius: 50%;
+            animation: txSpin 1s linear infinite;
+        }
+
+        @keyframes txSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .details-card {
             background: var(--bg-primary);
             border-radius: 10px;
@@ -1511,6 +1532,12 @@
 
     <!-- Main Content -->
     <main class="main-content">
+        <!-- Loading State -->
+        <div id="txLoadingState" class="tx-loading-state">
+            <div class="tx-spinner"></div>
+        </div>
+
+        <div id="txContentWrapper" style="display: none;">
         <a href="/" class="back-btn">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                 <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
@@ -1687,6 +1714,7 @@
                 <span><i class="fas fa-file-csv"></i></span> Export CSV
             </button>
         </div>
+        </div><!-- /txContentWrapper -->
     </main>
 
     <!-- Google Sign In Modal -->
@@ -1973,6 +2001,13 @@
         }
 
         // Initialize transaction details page - معالجة ذكية بدون وميض
+        function showTxContent() {
+            const loader = document.getElementById('txLoadingState');
+            const content = document.getElementById('txContentWrapper');
+            if (loader) loader.style.display = 'none';
+            if (content) content.style.display = 'block';
+        }
+
         function initializeTransactionDetails() {
             console.log('🔍 Transaction details page initialized');
 
@@ -2233,6 +2268,7 @@
 
         // Show transaction not found
         function showTransactionNotFound() {
+            showTxContent();
             document.querySelector('.main-content').innerHTML = `
                 <a href="/" class="back-btn">← Back to App</a>
                 <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
@@ -2260,6 +2296,7 @@
 
         // Show transaction error
         function showTransactionError() {
+            showTxContent();
             document.querySelector('.main-content').innerHTML = `
                 <a href="/" class="back-btn">← Back to App</a>
                 <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
@@ -2294,6 +2331,7 @@
 
         // Display RPC transaction data
         function displayRPCTransactionData(tx) {
+            showTxContent();
             console.log('📊 Displaying RPC transaction data:', tx);
 
             const value = tx.value ? parseInt(tx.value, 16) / 1e18 : 0;
@@ -2412,6 +2450,7 @@
 
         // Display REAL transaction data from network
         function displayRealTransactionData(txData) {
+            showTxContent();
             console.log('📊 Displaying REAL network transaction data:', txData);
 
             const tx = txData.data || txData.transaction || txData;
