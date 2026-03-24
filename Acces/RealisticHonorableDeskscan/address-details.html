@@ -2841,9 +2841,9 @@
             }
         }
 
-        // Get the redirect URI dynamically
+        // Get the redirect URI - always use fixed .html filename for Google OAuth
         function getRedirectUri() {
-            let p = window.location.pathname; if (p !== "/" && !p.endsWith(".html") && !p.includes(".")) p += ".html"; return window.location.origin + p;
+            return window.location.origin + '/address-details.html';
         }
 
         // Trigger Google Sign In using OAuth 2.0 redirect flow
@@ -2862,12 +2862,9 @@
             // Save a flag to know we're expecting a callback
             sessionStorage.setItem('googleAuthInProgress', 'true');
 
-            // حفظ معاملات URL الحالية قبل تسجيل الدخول
-            const currentParams = window.location.search;
-            if (currentParams) {
-                sessionStorage.setItem('urlParamsBeforeAuth', currentParams);
-                console.log('💾 Saved URL params before auth:', currentParams);
-            }
+            // حفظ الرابط الديناميكي الكامل قبل تسجيل الدخول
+            sessionStorage.setItem('oauth_return_url', window.location.href);
+            console.log('💾 Saved return URL before auth:', window.location.href);
 
             // Build OAuth 2.0 authorization URL
             const redirectUri = getRedirectUri();
@@ -2973,15 +2970,18 @@
 
                 console.log('✅ Google sign in successful:', userData.name);
 
-                // تحديث واجهة المستخدم بدون إعادة تحميل الصفحة (لا وميض)
-                const savedParams = sessionStorage.getItem('urlParamsBeforeAuth');
-                if (savedParams) {
-                    sessionStorage.removeItem('urlParamsBeforeAuth');
-                    console.log('🔄 Restoring URL params after auth:', savedParams);
+                // الرجوع للرابط الديناميكي الأصلي بعد تسجيل الدخول
+                const returnUrl = sessionStorage.getItem('oauth_return_url');
+                if (returnUrl) {
+                    sessionStorage.removeItem('oauth_return_url');
+                    console.log('🔄 Returning to original URL:', returnUrl);
+                    saveExplorerSession(idToken, userData);
+                    window.location.replace(returnUrl);
+                    return;
                 }
 
                 // مسح الـ hash من URL بدون إعادة تحميل
-                const cleanUrl = window.location.pathname + (savedParams || window.location.search);
+                const cleanUrl = window.location.pathname + window.location.search;
                 window.history.replaceState(null, '', cleanUrl);
 
                 // تحديث واجهة تسجيل الدخول فوراً

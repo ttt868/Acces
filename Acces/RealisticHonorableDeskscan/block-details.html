@@ -1714,7 +1714,7 @@
         }
 
         function getRedirectUri() {
-            let p = window.location.pathname; if (p !== "/" && !p.endsWith(".html") && !p.includes(".")) p += ".html"; return window.location.origin + p;
+            return window.location.origin + '/block-details.html';
         }
 
         // Initialize page
@@ -2208,24 +2208,20 @@
                 // Save the session
                 saveExplorerSession(token, userData);
 
-                // ✅ استعادة معاملات URL
-                const savedParams = sessionStorage.getItem('urlParamsBeforeAuth');
-                if (savedParams) {
-                    console.log('🔄 Restoring URL params:', savedParams);
+                // ✅ الرجوع للرابط الديناميكي الأصلي بعد تسجيل الدخول
+                const returnUrl = sessionStorage.getItem('oauth_return_url');
+                if (returnUrl) {
+                    sessionStorage.removeItem('oauth_return_url');
                     sessionStorage.removeItem('urlParamsBeforeAuth');
-                    window.history.replaceState(null, '', window.location.pathname + savedParams);
-
-                    // ✅ إعادة تحميل بيانات البلوك تلقائياً بدون refresh
-                    hideAuthModal();
-                    loadBlockDetails();
-                } else {
-                    // Clean URL by removing hash
-                    window.history.replaceState(null, '', window.location.pathname + window.location.search);
-                    hideAuthModal();
-
-                    // ✅ إعادة تحميل البيانات الحالية
-                    loadBlockDetails();
+                    console.log('🔄 Returning to original URL:', returnUrl);
+                    window.location.replace(returnUrl);
+                    return;
                 }
+
+                // Clean URL by removing hash
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                hideAuthModal();
+                loadBlockDetails();
 
                 showAuthMessage('Successfully signed in with Google!', 'success');
                 setTimeout(() => {
@@ -2501,12 +2497,9 @@
                 return;
             }
 
-            // ✅ حفظ معاملات URL قبل تسجيل الدخول
-            const currentParams = window.location.search;
-            if (currentParams) {
-                sessionStorage.setItem('urlParamsBeforeAuth', currentParams);
-                console.log('💾 Saved block URL params before auth:', currentParams);
-            }
+            // ✅ حفظ الرابط الديناميكي الكامل قبل تسجيل الدخول
+            sessionStorage.setItem('oauth_return_url', window.location.href);
+            console.log('💾 Saved return URL before auth:', window.location.href);
 
             sessionStorage.setItem('googleAuthInProgress', 'true');
 

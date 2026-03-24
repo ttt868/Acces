@@ -1863,9 +1863,9 @@
             }
         }
 
-        // Get the redirect URI dynamically
+        // Get the redirect URI - always use fixed .html filename for Google OAuth
         function getRedirectUri() {
-            let p = window.location.pathname; if (p !== "/" && !p.endsWith(".html") && !p.includes(".")) p += ".html"; return window.location.origin + p;
+            return window.location.origin + '/transaction-details.html';
         }
 
         // Generate random nonce for security
@@ -1945,19 +1945,18 @@
 
                 console.log('✅ Google sign in successful:', userData.name);
 
-                // استعادة معاملات URL المحفوظة
-                const savedParams = sessionStorage.getItem('urlParamsBeforeAuth');
-                if (savedParams) {
-                    sessionStorage.removeItem('urlParamsBeforeAuth');
-                    console.log('🔄 Restoring URL params after auth:', savedParams);
-                    // إعادة التوجيه مع المعاملات المحفوظة
-                    window.location.href = window.location.pathname + savedParams;
-                } else {
-                    // Clean URL by removing hash
-                    window.history.replaceState(null, '', window.location.pathname + window.location.search);
-                    hideAuthModal();
-                    // window.location.reload(); // Reload only if no params were restored
+                // الرجوع للرابط الديناميكي الأصلي بعد تسجيل الدخول
+                const returnUrl = sessionStorage.getItem('oauth_return_url');
+                if (returnUrl) {
+                    sessionStorage.removeItem('oauth_return_url');
+                    console.log('🔄 Returning to original URL:', returnUrl);
+                    window.location.replace(returnUrl);
+                    return;
                 }
+
+                // Clean URL by removing hash
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                hideAuthModal();
 
                 showAuthMessage('Successfully signed in with Google!', 'success');
                 setTimeout(() => {
@@ -2779,12 +2778,9 @@
 
             sessionStorage.setItem('googleAuthInProgress', 'true');
 
-            // حفظ معاملات URL الحالية قبل تسجيل الدخول
-            const currentParams = window.location.search;
-            if (currentParams) {
-              sessionStorage.setItem('urlParamsBeforeAuth', currentParams);
-              console.log('💾 Saved URL params before auth:', currentParams);
-            }
+            // حفظ الرابط الديناميكي الكامل قبل تسجيل الدخول
+            sessionStorage.setItem('oauth_return_url', window.location.href);
+            console.log('💾 Saved return URL before auth:', window.location.href);
 
             const redirectUri = getRedirectUri();
             const scope = 'openid email profile';
