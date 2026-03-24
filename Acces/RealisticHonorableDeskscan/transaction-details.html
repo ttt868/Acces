@@ -1546,7 +1546,7 @@
 
         <h1 class="page-title">
             Transaction Details
-            <span class="status-badge status-success" id="txStatus">Success</span>
+            <span class="status-badge status-success" id="txStatus" style="display: none;">Success</span>
         </h1>
 
         <!-- Transaction Overview -->
@@ -1977,7 +1977,6 @@
                 if (returnUrl) {
                     sessionStorage.removeItem('oauth_return_url');
                     console.log('🔄 Returning to original URL:', returnUrl);
-                    sessionStorage.setItem('oauth_just_completed', 'true');
                     window.location.replace(returnUrl);
                     return;
                 }
@@ -2008,6 +2007,36 @@
             if (content) content.style.display = 'block';
         }
 
+        // استعادة البيانات من الكاش فوراً بدون وميض
+        function restoreTxFromCache(c) {
+            document.getElementById('txHash').textContent = c.hash || '';
+            const s = document.getElementById('txStatus');
+            s.textContent = c.status || 'Confirmed';
+            s.className = c.statusClass || 'status-badge status-success';
+            s.style.display = '';
+            const sm = document.getElementById('txStatusMobile');
+            sm.textContent = c.statusMobile || 'Confirmed';
+            sm.className = c.statusMobileClass || 'status-badge status-success';
+            document.getElementById('blockNumber').textContent = c.block || '';
+            document.getElementById('confirmations').textContent = c.confirmations || '';
+            document.getElementById('txTimestamp').innerHTML = c.timestamp || '';
+            document.getElementById('fromAddress').textContent = c.from || '';
+            document.getElementById('toAddress').textContent = c.to || '';
+            document.getElementById('txValue').textContent = c.value || '';
+            document.getElementById('txValueUSD').textContent = c.valueUSD || '';
+            document.getElementById('txFee').textContent = c.fee || '';
+            document.getElementById('txFeeUSD').textContent = c.feeUSD || '';
+            document.getElementById('txNonce').textContent = c.nonce || '0';
+            document.getElementById('txIndex').textContent = c.txIndex || '0';
+            document.getElementById('gasLimit').textContent = c.gasLimit || '';
+            document.getElementById('gasUsed').textContent = c.gasUsed || '';
+            document.getElementById('gasProgressFill').style.width = c.gasProgress || '0%';
+            document.getElementById('gasUsageText').textContent = c.gasUsageText || '';
+            document.getElementById('gasPrice').textContent = c.gasPrice || '';
+            document.getElementById('gasPriceWei').textContent = c.gasPriceWei || '';
+            document.getElementById('txType').innerHTML = c.txType || '';
+        }
+
         function initializeTransactionDetails() {
             // ✅ لا تفعل شيء إذا كان OAuth callback جاري (سيتم redirect للرابط الأصلي)
             const hashFragment = window.location.hash;
@@ -2017,15 +2046,6 @@
             }
 
             console.log('🔍 Transaction details page initialized');
-
-            // ✅ إذا رجعنا من OAuth، أظهر spinner حتى تُحمل البيانات
-            if (sessionStorage.getItem('oauth_just_completed')) {
-                sessionStorage.removeItem('oauth_just_completed');
-                const loader = document.getElementById('txLoadingState');
-                const content = document.getElementById('txContentWrapper');
-                if (loader) loader.style.display = 'flex';
-                if (content) content.style.display = 'none';
-            }
 
             const urlParams = new URLSearchParams(window.location.search);
             let txHash = urlParams.get('hash');
@@ -2067,7 +2087,17 @@
             txHash = txHash.trim();
             console.log('✅ Final transaction hash:', txHash);
 
-            // عرض بيانات المعاملة مباشرة
+            // ✅ استعادة البيانات المحفوظة فوراً (بدون وميض)
+            const cached = sessionStorage.getItem('txCache_' + txHash);
+            if (cached) {
+                try {
+                    const cachedData = JSON.parse(cached);
+                    restoreTxFromCache(cachedData);
+                    console.log('⚡ Restored tx from cache instantly');
+                } catch(e) {}
+            }
+
+            // عرض hash مباشرة
             document.getElementById('txHash').textContent = txHash;
             loadTransactionData(txHash);
         }
@@ -2359,6 +2389,15 @@
             document.getElementById('fromAddress').textContent = tx.from || 'Unknown';
             document.getElementById('toAddress').textContent = tx.to || 'Unknown';
 
+            // Status
+            const statusEl = document.getElementById('txStatus');
+            statusEl.textContent = 'Confirmed';
+            statusEl.className = 'status-badge status-success';
+            statusEl.style.display = '';
+            const statusMob = document.getElementById('txStatusMobile');
+            statusMob.textContent = 'Confirmed';
+            statusMob.className = 'status-badge status-success';
+
             document.getElementById('txValue').textContent = formatAccessAmount(value);
             document.getElementById('txValueUSD').textContent = 'Currency not listed yet';
 
@@ -2404,6 +2443,37 @@
             document.getElementById('txType').textContent = 'Legacy (Type 0)';
 
             console.log('✅ RPC transaction data displayed successfully');
+
+            // ✅ حفظ في cache
+            try {
+                const cacheKey = 'txCache_' + (tx.hash || '').replace(/^0x/, '');
+                const cacheData = {
+                    hash: document.getElementById('txHash').textContent,
+                    status: document.getElementById('txStatus').textContent,
+                    statusClass: document.getElementById('txStatus').className,
+                    statusMobile: document.getElementById('txStatusMobile').textContent,
+                    statusMobileClass: document.getElementById('txStatusMobile').className,
+                    block: document.getElementById('blockNumber').textContent,
+                    confirmations: document.getElementById('confirmations').textContent,
+                    timestamp: document.getElementById('txTimestamp').innerHTML,
+                    from: document.getElementById('fromAddress').textContent,
+                    to: document.getElementById('toAddress').textContent,
+                    value: document.getElementById('txValue').textContent,
+                    valueUSD: document.getElementById('txValueUSD').textContent,
+                    fee: document.getElementById('txFee').textContent,
+                    feeUSD: document.getElementById('txFeeUSD').textContent,
+                    nonce: document.getElementById('txNonce').textContent,
+                    txIndex: document.getElementById('txIndex').textContent,
+                    gasLimit: document.getElementById('gasLimit').textContent,
+                    gasUsed: document.getElementById('gasUsed').textContent,
+                    gasProgress: document.getElementById('gasProgressFill').style.width,
+                    gasUsageText: document.getElementById('gasUsageText').textContent,
+                    gasPrice: document.getElementById('gasPrice').textContent,
+                    gasPriceWei: document.getElementById('gasPriceWei').textContent,
+                    txType: document.getElementById('txType').innerHTML
+                };
+                sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+            } catch(e) {}
         }
 
         // Determine transaction type (Contract Deployment, Mint, Create Token, or Transfer)
@@ -2520,6 +2590,7 @@
                     statusElementMobile.className = 'status-badge status-success';
                 }
             }
+            statusElement.style.display = '';
 
             if (tx.blockNumber !== null && tx.blockNumber !== undefined) {
                 document.getElementById('blockNumber').textContent = tx.blockNumber.toLocaleString();
@@ -2673,6 +2744,37 @@
             }
 
             console.log('✅ Real transaction data displayed successfully');
+
+            // ✅ حفظ البيانات في cache لمنع الوميض عند إعادة التحميل
+            try {
+                const cacheKey = 'txCache_' + (tx.hash || '').replace(/^0x/, '');
+                const cacheData = {
+                    hash: document.getElementById('txHash').textContent,
+                    status: document.getElementById('txStatus').textContent,
+                    statusClass: document.getElementById('txStatus').className,
+                    statusMobile: document.getElementById('txStatusMobile').textContent,
+                    statusMobileClass: document.getElementById('txStatusMobile').className,
+                    block: document.getElementById('blockNumber').textContent,
+                    confirmations: document.getElementById('confirmations').textContent,
+                    timestamp: document.getElementById('txTimestamp').innerHTML,
+                    from: document.getElementById('fromAddress').textContent,
+                    to: document.getElementById('toAddress').textContent,
+                    value: document.getElementById('txValue').textContent,
+                    valueUSD: document.getElementById('txValueUSD').textContent,
+                    fee: document.getElementById('txFee').textContent,
+                    feeUSD: document.getElementById('txFeeUSD').textContent,
+                    nonce: document.getElementById('txNonce').textContent,
+                    txIndex: document.getElementById('txIndex').textContent,
+                    gasLimit: document.getElementById('gasLimit').textContent,
+                    gasUsed: document.getElementById('gasUsed').textContent,
+                    gasProgress: document.getElementById('gasProgressFill').style.width,
+                    gasUsageText: document.getElementById('gasUsageText').textContent,
+                    gasPrice: document.getElementById('gasPrice').textContent,
+                    gasPriceWei: document.getElementById('gasPriceWei').textContent,
+                    txType: document.getElementById('txType').innerHTML
+                };
+                sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+            } catch(e) {}
         }
 
         // Get current network height for accurate confirmations
