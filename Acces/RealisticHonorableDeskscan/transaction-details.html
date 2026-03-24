@@ -1713,6 +1713,54 @@
             </button>
         </div>
         </div><!-- /txContentWrapper -->
+
+    <!-- ⚡ INSTANT cache restore - runs synchronously BEFORE DOMContentLoaded -->
+    <script>
+    (function() {
+        try {
+            var params = new URLSearchParams(window.location.search);
+            var h = params.get('hash');
+            if (!h) return;
+            if (h.startsWith('/tx/')) h = h.substring(4);
+            else if (h.startsWith('tx/')) h = h.substring(3);
+            if (h.startsWith('0x') || h.startsWith('0X')) h = h.substring(2);
+            h = h.trim();
+            if (!h) return;
+            var raw = sessionStorage.getItem('txCache_' + h);
+            if (!raw) return;
+            var c = JSON.parse(raw);
+            var el = function(id) { return document.getElementById(id); };
+            el('txHash').textContent = c.hash || '';
+            var s = el('txStatus');
+            s.textContent = c.status || 'Confirmed';
+            s.className = c.statusClass || 'status-badge status-success';
+            s.style.display = '';
+            var sm = el('txStatusMobile');
+            sm.textContent = c.statusMobile || 'Confirmed';
+            sm.className = c.statusMobileClass || 'status-badge status-success';
+            el('blockNumber').textContent = c.block || '';
+            el('confirmations').textContent = c.confirmations || '';
+            el('txTimestamp').innerHTML = c.timestamp || '';
+            el('fromAddress').textContent = c.from || '';
+            el('toAddress').textContent = c.to || '';
+            el('txValue').textContent = c.value || '';
+            el('txValueUSD').textContent = c.valueUSD || '';
+            el('txFee').textContent = c.fee || '';
+            el('txFeeUSD').textContent = c.feeUSD || '';
+            el('txNonce').textContent = c.nonce || '0';
+            el('txIndex').textContent = c.txIndex || '0';
+            el('gasLimit').textContent = c.gasLimit || '';
+            el('gasUsed').textContent = c.gasUsed || '';
+            el('gasProgressFill').style.width = c.gasProgress || '0%';
+            el('gasUsageText').textContent = c.gasUsageText || '';
+            el('gasPrice').textContent = c.gasPrice || '';
+            el('gasPriceWei').textContent = c.gasPriceWei || '';
+            el('txType').innerHTML = c.txType || '';
+            el('txContentWrapper').style.display = 'block';
+            window.__txCacheRestored = true;
+        } catch(e) {}
+    })();
+    </script>
     </main>
 
     <!-- Google Sign In Modal -->
@@ -2038,6 +2086,12 @@
         }
 
         function initializeTransactionDetails() {
+            // ⚡ الكاش المضمّن استعاد البيانات فوراً - لا حاجة لفعل أي شيء
+            if (window.__txCacheRestored) {
+                console.log('⚡ Inline cache already restored - skip init completely');
+                return;
+            }
+
             // ✅ لا تفعل شيء إذا كان OAuth callback جاري (سيتم redirect للرابط الأصلي)
             const hashFragment = window.location.hash;
             if ((hashFragment && hashFragment.includes('id_token')) || sessionStorage.getItem('googleAuthInProgress')) {
