@@ -2990,9 +2990,11 @@
             try {
                 console.log('🔄 Loading REAL blocks only...');
 
-                // Show loading message
+                // Only show loading on first load (when container is empty)
                 const container = document.getElementById('latestBlocks');
-                container.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">Loading real blocks...</div>';
+                if (!container.children.length || container.textContent.trim() === '') {
+                    container.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">Loading real blocks...</div>';
+                }
 
                 // Fetch and display ONLY real data
                 await fetchRealNetworkBlocks();
@@ -4103,19 +4105,18 @@
             alert('You can unsubscribe from AccessScan communications at any time by clicking the unsubscribe link in any email we send you, or by contacting us directly.');
         }
 
-        // Start polling for updates (only transactions and blocks lists)
+        // Start polling for updates (only transactions list - blocks use SSE)
         function startPolling() {
             setInterval(loadLatestTransactions, 15000); // Poll transactions list every 15 seconds
-            setInterval(loadLatestBlocks, 20000); // Poll blocks list every 20 seconds
         }
 
-        // Real-time stats via SSE (zero polling for TRANSACTIONS & LATEST BLOCK)
+        // Real-time stats + blocks via SSE (zero polling)
         function connectStatsStream() {
             const evtSource = new EventSource('/api/explorer/blocks-stream');
             evtSource.onmessage = function(event) {
                 try {
                     const block = JSON.parse(event.data);
-                    // Update LATEST BLOCK instantly
+                    // Update LATEST BLOCK number instantly
                     if (block.number !== undefined) {
                         document.getElementById('latestBlock').textContent = block.number.toLocaleString();
                         document.getElementById('blockTime').innerHTML = '(1s)';
@@ -4124,6 +4125,8 @@
                     if (block.totalTransactions !== undefined) {
                         document.getElementById('totalTransactions').textContent = block.totalTransactions.toLocaleString();
                     }
+                    // Prepend new block to Latest Blocks list instantly
+                    prependNewBlock(block);
                     // Cache the updated stats
                     try {
                         localStorage.setItem('explorerStatsCache', JSON.stringify({
@@ -4141,6 +4144,69 @@
                 evtSource.close();
                 setTimeout(connectStatsStream, 5000);
             };
+        }
+
+        // Prepend a new block to the Latest Blocks list without reloading
+        function prependNewBlock(block) {
+            const container = document.getElementById('latestBlocks');
+            if (!container) return;
+            // Don't prepend if container has loading message
+            if (container.textContent.includes('Loading')) return;
+            // Check if block already displayed
+            if (container.innerHTML.includes('#' + (block.number || 0).toLocaleString())) return;
+
+            const blockNumber = block.number || 0;
+            const txCount = block.transactionCount || 0;
+            const blockHash = block.hash || '0x0';
+            const blockReward = block.reward || 0.25;
+            const gasUsed = block.gasUsed || (txCount * 21000);
+            const gasLimit = block.gasLimit || 30000000;
+            const gasUtilization = ((gasUsed / gasLimit) * 100).toFixed(1);
+
+            const blockHtml = `
+                <div class="list-item" style="cursor: pointer;" onclick="showRealBlockDetails(${blockNumber}, '${blockHash}')">
+                    <div class="tx-details">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="block-icon-box" style="width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">
+                                    <a href="/block/${blockNumber}" class="tx-hash" style="color: var(--accent-purple); text-decoration: none;">#${blockNumber.toLocaleString()}</a>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">just now</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 14px; color: var(--text-primary); font-weight: 500;">
+                                ${txCount} ${txCount === 1 ? 'txn' : 'txns'}
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">in 1s</div>
+                        </div>
+                    </div>
+                    <div class="tx-addresses" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 12px; color: var(--text-secondary);">Validator:</span>
+                                <a href="javascript:void(0)" class="address-link" style="font-size: 13px;">Block Validator</a>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 15px; font-size: 12px; color: var(--text-secondary);">
+                                <span>Gas: ${gasUtilization}%</span>
+                                <span class="tx-amount" style="color: #28a745; font-weight: 600;">${blockReward} ACCESS</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Prepend and remove last if more than 10
+            container.insertAdjacentHTML('afterbegin', blockHtml);
+            const items = container.querySelectorAll('.list-item');
+            if (items.length > 10) {
+                items[items.length - 1].remove();
+            }
+            // Reset hash so displayRealBlocks won't skip next full refresh
+            lastBlocksHash = '';
         }
 
         // Close modal when clicking outside
