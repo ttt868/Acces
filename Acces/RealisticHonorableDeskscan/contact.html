@@ -1067,7 +1067,7 @@
             </div>
 
             <div class="right-section">
-                <a href="#" class="sign-in-btn" onclick="showAuthModal()" style="display: none;">
+                <a href="javascript:void(0)" class="sign-in-btn" onclick="showAuthModal()" style="display: none;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
                         <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
@@ -1238,7 +1238,7 @@
 
             <!-- Sign In Section for Mobile (Only shown when not logged in) -->
             <div class="mobile-signin-section" id="mobileSigninSection">
-                <a href="#" class="mobile-nav-item" onclick="showAuthModal()">
+                <a href="javascript:void(0)" class="mobile-nav-item" onclick="showAuthModal()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
                         <circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
@@ -1691,7 +1691,7 @@
             sessionStorage.setItem('googleAuthNonce', nonce);
             sessionStorage.setItem('googleAuthInProgress', 'true');
 
-            const redirectUri = window.location.origin + window.location.pathname;
+            let p = window.location.pathname; if (p !== "/" && !p.endsWith(".html") && !p.includes(".")) p += ".html"; const redirectUri = window.location.origin + p;
             const scope = 'openid email profile';
             const responseType = 'id_token token';
 
