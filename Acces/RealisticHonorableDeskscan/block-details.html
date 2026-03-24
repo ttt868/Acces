@@ -1610,6 +1610,45 @@
         </div>
     </div>
 
+    <!-- ⚡ INSTANT cache restore - runs synchronously BEFORE DOMContentLoaded -->
+    <script>
+    (function() {
+        try {
+            var params = new URLSearchParams(window.location.search);
+            var bn = params.get('block') || params.get('number');
+            if (!bn) return;
+            var raw = sessionStorage.getItem('blockCache_' + bn);
+            if (!raw) return;
+            var c = JSON.parse(raw);
+            var el = function(id) { return document.getElementById(id); };
+            el('blockNumber').textContent = c.number || '0';
+            el('blockValidator').textContent = c.validator || 'Block Validator';
+            el('blockTime').textContent = '';
+            el('blockHeight').textContent = c.number || '0';
+            el('blockTimestamp').textContent = c.dateTime || '-';
+            el('transactionCount').textContent = c.txCount || '0';
+            el('blockMiner').textContent = c.validator || 'Block Validator';
+            el('blockReward').textContent = c.reward || '0.25 ACCESS';
+            el('blockDifficulty').textContent = c.difficulty || '1';
+            el('totalDifficulty').textContent = c.totalDifficulty || '-';
+            el('blockSize').textContent = c.size || '0 bytes';
+            el('gasUsed').textContent = c.gasUsed || '0 (0.00%)';
+            el('gasLimit').textContent = c.gasLimit || '30,000,000';
+            el('burntFees').textContent = '0.00000000 ACCESS';
+            el('extraData').textContent = c.extraData || '-';
+            el('blockHash').textContent = c.hash || '0x...';
+            el('parentHash').textContent = c.parentHash || '0x...';
+            el('stateRoot').textContent = c.stateRoot || '-';
+            el('transactionsRoot').textContent = c.transactionsRoot || '-';
+            el('receiptsRoot').textContent = c.receiptsRoot || '-';
+            el('blockNonce').textContent = c.nonce || '-';
+            el('loadingState').style.display = 'none';
+            el('blockDetails').style.display = 'block';
+            window.__blockCacheRestored = true;
+        } catch(e) {}
+    })();
+    </script>
+
     <!-- Google Sign In Modal -->
     <div class="auth-modal" id="authModal" onclick="if(event.target === this) hideAuthModal()">
         <div class="auth-container">
@@ -1791,6 +1830,12 @@
 
         // Load block details from URL parameters - SIMPLIFIED
         async function loadBlockDetails() {
+            // ⚡ الكاش المضمّن استعاد البيانات فوراً
+            if (window.__blockCacheRestored) {
+                console.log('⚡ Inline cache already restored - skip load');
+                return;
+            }
+
             // ✅ لا تحمل البيانات إذا كان OAuth callback جاري (سيتم redirect)
             const hashParams = new URLSearchParams(window.location.hash.substring(1));
             if (hashParams.get('id_token') || sessionStorage.getItem('googleAuthInProgress')) {
@@ -1908,6 +1953,30 @@
             // Display transactions
             displayTransactions(block.transactions || []);
             console.log('[Block] Displayed:', number);
+
+            // ⚡ حفظ الكاش لإعادة التحميل بدون وميض
+            try {
+                var cacheKey = 'blockCache_' + (blockNumber || number);
+                sessionStorage.setItem(cacheKey, JSON.stringify({
+                    number: number.toLocaleString(),
+                    validator: validator,
+                    dateTime: dateTime,
+                    txCount: txCount.toLocaleString(),
+                    reward: document.getElementById('blockReward').textContent,
+                    difficulty: (block.difficulty || 1).toLocaleString(),
+                    totalDifficulty: (block.totalDifficulty || (number + 1)).toLocaleString(),
+                    size: (block.size || 1024).toLocaleString() + ' bytes',
+                    gasUsed: gasUsed.toLocaleString() + ' (' + gasPercent + '%)',
+                    gasLimit: gasLimit.toLocaleString(),
+                    extraData: block.extraData || '0x',
+                    hash: hash,
+                    parentHash: block.parentHash || block.previousHash || '0x' + '0'.repeat(64),
+                    stateRoot: block.stateRoot || hash,
+                    transactionsRoot: block.transactionsRoot || block.merkleRoot || hash,
+                    receiptsRoot: block.receiptsRoot || hash,
+                    nonce: block.nonce || '0x0000000000000000'
+                }));
+            } catch(e) {}
         }
 
         // Toggle More Details section
