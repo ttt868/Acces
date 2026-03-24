@@ -2008,6 +2008,13 @@
         }
 
         function initializeTransactionDetails() {
+            // ✅ لا تفعل شيء إذا كان OAuth callback جاري (سيتم redirect للرابط الأصلي)
+            const hashFragment = window.location.hash;
+            if ((hashFragment && hashFragment.includes('id_token')) || sessionStorage.getItem('googleAuthInProgress')) {
+                console.log('[TX] Skipping init - OAuth callback in progress');
+                return;
+            }
+
             console.log('🔍 Transaction details page initialized');
 
             const urlParams = new URLSearchParams(window.location.search);
