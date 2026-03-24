@@ -4,148 +4,134 @@
   <!-- Root URL -->
   <url>
     <loc>https://accesschain.org/</loc>
-    <lastmod>2026-03-02</lastmod>
+    <lastmod>2026-03-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   
-  <!-- Landing Page - Homepage -->
+  <!-- Landing Page -->
   <url>
-    <loc>https://accesschain.org/access-project.html</loc>
-    <lastmod>2026-02-08</lastmod>
+    <loc>https://accesschain.org/project</loc>
+    <lastmod>2026-03-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   
-  <!-- About Page - Primary Content -->
+  <!-- About Page -->
   <url>
-    <loc>https://accesschain.org/about.html</loc>
-    <lastmod>2026-02-08</lastmod>
+    <loc>https://accesschain.org/about</loc>
+    <lastmod>2026-03-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   
-  <!-- Blockchain Explorer - Primary Content -->
+  <!-- Blockchain Explorer -->
   <url>
-    <loc>https://accesschain.org/access-explorer.html</loc>
-    <lastmod>2026-02-08</lastmod>
+    <loc>https://accesschain.org/explorer</loc>
+    <lastmod>2026-03-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- Information Pages -->
   <url>
-    <loc>https://accesschain.org/contact.html</loc>
-    <lastmod>2026-02-08</lastmod>
+    <loc>https://accesschain.org/contact</loc>
+    <lastmod>2026-03-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://accesschain.org/faq.html</loc>
-    <lastmod>2026-02-08</lastmod>
+    <loc>https://accesschain.org/faq</loc>
+    <lastmod>2026-03-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://accesschain.org/whitepaper.html</loc>
-    <lastmod>2026-02-08</lastmod>
+    <loc>https://accesschain.org/whitepaper</loc>
+    <lastmod>2026-03-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
-  
-  <!-- Legal Pages (static HTML versions only) -->
-  <url>
-    <loc>https://accesschain.org/terms-of-service.html</loc>
-    <lastmod>2026-01-29</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://accesschain.org/terms-of-service-app.html</loc>
-    <lastmod>2026-01-29</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://accesschain.org/privacy-policy-explorer.html</loc>
-    <lastmod>2026-01-29</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://accesschain.org/privacy-policy.html</loc>
-    <lastmod>2026-01-29</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
+
   <!-- Explorer Pages -->
   <url>
-    <loc>https://accesschain.org/blocks.html</loc>
-    <lastmod>2026-02-08</lastmod>
+    <loc>https://accesschain.org/blocks</loc>
+    <lastmod>2026-03-24</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://accesschain.org/block-details.html</loc>
-    <lastmod>2026-01-29</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <url>
-    <loc>https://accesschain.org/transactions.html</loc>
-    <lastmod>2026-02-08</lastmod>
+    <loc>https://accesschain.org/transactions</loc>
+    <lastmod>2026-03-24</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://accesschain.org/transaction-details.html</loc>
-    <lastmod>2026-01-29</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <url>
-    <loc>https://accesschain.org/address-details.html</loc>
-    <lastmod>2026-01-29</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <url>
-    <loc>https://accesschain.org/top-accounts.html</loc>
-    <lastmod>2026-02-08</lastmod>
+    <loc>https://accesschain.org/top-accounts</loc>
+    <lastmod>2026-03-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://accesschain.org/gastracker.html</loc>
-    <lastmod>2026-01-29</lastmod>
+    <loc>https://accesschain.org/gastracker</loc>
+    <lastmod>2026-03-24</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.6</priority>
   </url>
   
-  <!-- Developer Pages -->
   <url>
-    <loc>https://accesschain.org/developer-api.html</loc>
-    <lastmod>2026-01-29</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://accesschain.org/latest-mint</loc>
+    <lastmod>2026-03-24</lastmod>
+    <changefreq>hourly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
-    <loc>https://accesschain.org/index.html</loc>
-    <lastmod>2026-02-28</lastmod>
+    <loc>https://accesschain.org/add-network</loc>
+    <lastmod>2026-03-24</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Developer Pages -->
+  <url>
+    <loc>https://accesschain.org/developer-api</loc>
+    <lastmod>2026-03-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Legal Pages -->
+  <url>
+    <loc>https://accesschain.org/terms-of-service</loc>
+    <lastmod>2026-03-24</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://accesschain.org/terms-of-service-app</loc>
+    <lastmod>2026-03-24</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://accesschain.org/privacy-policy-explorer</loc>
+    <lastmod>2026-03-24</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://accesschain.org/privacy-policy</loc>
+    <lastmod>2026-03-24</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
   </url>
 </urlset>
