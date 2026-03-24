@@ -1637,7 +1637,17 @@
             var el = function(id) { return document.getElementById(id); };
             el('blockNumber').textContent = c.number || '0';
             el('blockValidator').textContent = c.validator || 'Block Validator';
-            el('blockTime').textContent = '';
+            // حساب الوقت النسبي من timestamp المحفوظ
+            var ts = c.timestamp;
+            if (ts) {
+                var diff = Math.floor(Date.now() / 1000) - ts;
+                if (diff < 60) el('blockTime').textContent = diff + ' secs ago';
+                else if (diff < 3600) el('blockTime').textContent = Math.floor(diff / 60) + ' mins ago';
+                else if (diff < 86400) el('blockTime').textContent = Math.floor(diff / 3600) + ' hrs ago';
+                else el('blockTime').textContent = Math.floor(diff / 86400) + ' days ago';
+            } else {
+                el('blockTime').textContent = '';
+            }
             el('blockHeight').textContent = c.number || '0';
             el('blockTimestamp').textContent = c.dateTime || '-';
             el('transactionCount').textContent = c.txCount || '0';
@@ -1976,6 +1986,7 @@
                 sessionStorage.setItem(cacheKey, JSON.stringify({
                     number: number.toLocaleString(),
                     validator: validator,
+                    timestamp: timestamp,
                     dateTime: dateTime,
                     txCount: txCount.toLocaleString(),
                     reward: document.getElementById('blockReward').textContent,
