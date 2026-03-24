@@ -11457,31 +11457,47 @@ function initializeWebSockets(httpServer) {
   wsRPCHandler = new WebSocketRPCHandler();
 
   // Connect network events to WebSocket RPC Handler
-  if (global.accessNode && global.accessNode.network) {
-    const network = global.accessNode.network;
-    
-    // Broadcast pending transactions to subscribed wallets
-    network.on('transaction', (transaction) => {
-      if (wsRPCHandler) {
-        wsRPCHandler.broadcastNewPendingTransaction(transaction);
-      }
-    });
+  // Network may not be ready yet (async init), so retry until connected
+  function connectNetworkEvents() {
+    if (global.accessNode && global.accessNode.network) {
+      const network = global.accessNode.network;
+      console.log('✅ SSE: blockMined listener registered on network');
+      
+      // Broadcast pending transactions to subscribed wallets
+      network.on('transaction', (transaction) => {
+        if (wsRPCHandler) {
+          wsRPCHandler.broadcastNewPendingTransaction(transaction);
+        }
+      });
 
-    // Broadcast new blocks to subscribed wallets
-    network.on('blockMined', (block) => {
-      if (wsRPCHandler) {
-        wsRPCHandler.broadcastNewBlock(block);
-      }
-      // 🔴 SSE: Push to explorer blocks page clients
-      notifyNewBlock(block);
-    });
+      // Broadcast new blocks to subscribed wallets
+      network.on('blockMined', (block) => {
+        if (wsRPCHandler) {
+          wsRPCHandler.broadcastNewBlock(block);
+        }
+        // 🔴 SSE: Push to explorer blocks page clients
+        notifyNewBlock(block);
+      });
 
-    // Broadcast balance changes to subscribed wallets
-    network.on('balanceChanged', (balanceData) => {
-      if (wsRPCHandler) {
-        wsRPCHandler.notifyBalanceChange(balanceData.address);
+      // Broadcast balance changes to subscribed wallets
+      network.on('balanceChanged', (balanceData) => {
+        if (wsRPCHandler) {
+          wsRPCHandler.notifyBalanceChange(balanceData.address);
+        }
+      });
+      return true;
+    }
+    return false;
+  }
+
+  // Try immediately, then retry every 2s until network is ready
+  if (!connectNetworkEvents()) {
+    console.log('⏳ SSE: Waiting for network to be ready...');
+    const retryInterval = setInterval(() => {
+      if (connectNetworkEvents()) {
+        clearInterval(retryInterval);
       }
-    });
+    }, 2000);
   }
 
   // Create a single WebSocketServer instance and assign to global variable
