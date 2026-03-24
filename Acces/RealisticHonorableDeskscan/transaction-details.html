@@ -109,16 +109,15 @@
             color: var(--text-primary);
             transition: background-color 0.3s, color 0.3s;
             line-height: 1.6;
-            /* إخفاء فوري افتراضياً - سيتم الإظهار فقط للمعاملات */
-            opacity: 0;
-            visibility: hidden;
+            /* الصفحة مرئية دائماً - الـ spinner يظهر أثناء التحميل */
+            opacity: 1;
+            visibility: visible;
         }
 
         /* إظهار الصفحة فقط عند تأكيد عرضها (للمعاملات) */
         body.show-page {
             opacity: 1;
             visibility: visible;
-            transition: opacity 0.2s ease;
         }
 
         /* Header */
