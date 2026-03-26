@@ -43,16 +43,16 @@ jobs:
         sdkmanager "build-tools;34.0.0" "build-tools;35.0.0" "platforms;android-34" "platforms;android-35"
         echo '✅ Build Tools installed'
     
-    - name: Replace system Gradle with 8.7.0
+    - name: Replace system Gradle with 8.9.0
       run: |
-        echo '🔧 Installing Gradle 8.7.0...'
+        echo '🔧 Installing Gradle 8.9.0...'
         sudo rm -rf /usr/share/gradle*
-        wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -O /tmp/gradle.zip
+        wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip -O /tmp/gradle.zip
         sudo unzip -q /tmp/gradle.zip -d /opt/
-        sudo ln -sf /opt/gradle-8.7/bin/gradle /usr/bin/gradle
-        sudo ln -sf /opt/gradle-8.7/bin/gradle /usr/local/bin/gradle
-        echo "GRADLE_HOME=/opt/gradle-8.7" >> $GITHUB_ENV
-        echo "/opt/gradle-8.7/bin" >> $GITHUB_PATH
+        sudo ln -sf /opt/gradle-8.9/bin/gradle /usr/bin/gradle
+        sudo ln -sf /opt/gradle-8.9/bin/gradle /usr/local/bin/gradle
+        echo "GRADLE_HOME=/opt/gradle-8.9" >> $GITHUB_ENV
+        echo "/opt/gradle-8.9/bin" >> $GITHUB_PATH
         gradle --version
     
     - name: Install Cordova CLI
@@ -116,7 +116,7 @@ jobs:
     - name: Add Android platform (cordova-android 14)
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.9-bin.zip
       run: |
         echo '📱 Adding Android platform 14...'
         cordova platform remove android 2>/dev/null || true
@@ -372,7 +372,7 @@ jobs:
     - name: Build Debug APK
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.9-bin.zip
       run: |
         echo '🚧 Building Debug APK (using compile to preserve manifest fixes)...'
         cordova compile android --debug --verbose
@@ -381,7 +381,7 @@ jobs:
     - name: Build Release APK (Signed)
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.9-bin.zip
       run: |
         echo '🚧 Building Signed Release APK (using compile to preserve manifest fixes)...'
         echo '📋 Using keystore: access-network.keystore'
@@ -397,7 +397,7 @@ jobs:
     - name: Build Release AAB (for Google Play)
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.9-bin.zip
       run: |
         echo '🚧 Building Signed Release AAB for Google Play...'
         echo '📋 Using keystore: access-network.keystore'
