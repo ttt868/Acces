@@ -37,22 +37,22 @@ jobs:
     - name: Accept Android SDK Licenses
       run: yes | sdkmanager --licenses || true
     
-    - name: Install Android Build Tools and SDK 33+34
+    - name: Install Android Build Tools and SDK 35
       run: |
         echo '📦 Installing Build Tools and SDK...'
-        sdkmanager "build-tools;33.0.2" "build-tools;34.0.0" "platforms;android-33" "platforms;android-34"
+        sdkmanager "build-tools;34.0.0" "build-tools;35.0.0" "platforms;android-34" "platforms;android-35"
         echo '✅ Build Tools installed'
     
-    - name: Replace system Gradle with 7.6.4
+    - name: Replace system Gradle with 8.7.0
       run: |
-        echo '🔧 Installing Gradle 7.6.4...'
+        echo '🔧 Installing Gradle 8.7.0...'
         sudo rm -rf /usr/share/gradle*
-        wget -q https://services.gradle.org/distributions/gradle-7.6.4-bin.zip -O /tmp/gradle.zip
+        wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip -O /tmp/gradle.zip
         sudo unzip -q /tmp/gradle.zip -d /opt/
-        sudo ln -sf /opt/gradle-7.6.4/bin/gradle /usr/bin/gradle
-        sudo ln -sf /opt/gradle-7.6.4/bin/gradle /usr/local/bin/gradle
-        echo "GRADLE_HOME=/opt/gradle-7.6.4" >> $GITHUB_ENV
-        echo "/opt/gradle-7.6.4/bin" >> $GITHUB_PATH
+        sudo ln -sf /opt/gradle-8.7/bin/gradle /usr/bin/gradle
+        sudo ln -sf /opt/gradle-8.7/bin/gradle /usr/local/bin/gradle
+        echo "GRADLE_HOME=/opt/gradle-8.7" >> $GITHUB_ENV
+        echo "/opt/gradle-8.7/bin" >> $GITHUB_PATH
         gradle --version
     
     - name: Install Cordova CLI
@@ -113,14 +113,14 @@ jobs:
         echo "{\"android\":{\"debug\":{\"keystore\":\"access-network.keystore\",\"storePassword\":\"${PASS}\",\"alias\":\"access-network\",\"password\":\"${PASS}\",\"keystoreType\":\"jks\"},\"release\":{\"keystore\":\"access-network.keystore\",\"storePassword\":\"${PASS}\",\"alias\":\"access-network\",\"password\":\"${PASS}\",\"keystoreType\":\"jks\"}}}" > build.json
         echo '✅ build.json generated'
 
-    - name: Add Android platform (cordova-android 12.0.1)
+    - name: Add Android platform (cordova-android 14)
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
       run: |
-        echo '📱 Adding Android platform 12.0.1...'
+        echo '📱 Adding Android platform 14...'
         cordova platform remove android 2>/dev/null || true
-        cordova platform add android@12.0.1 --verbose
+        cordova platform add android@14 --verbose
         echo '✅ Android platform added'
     
     - name: Copy google-services.json for Firebase
@@ -318,8 +318,7 @@ jobs:
         echo '🔧 Fixing library conflicts...'
         cat >> platforms/android/build.gradle << 'GRADLE_CONFIG'
         
-        // Force compatible versions for SDK 34 and cordova-android 12
-        // Solution from: https://stackoverflow.com/questions/79408107
+        // Force compatible versions for SDK 35 and cordova-android 14
         allprojects {
             configurations.all {
                 // Exclude error_prone_annotations to fix D8 dexing NullPointerException
@@ -331,24 +330,24 @@ jobs:
             afterEvaluate { project ->
                 if (project.hasProperty('android')) {
                     project.android {
-                        compileSdkVersion 34
+                        compileSdkVersion 35
                     }
                 }
             }
             configurations.all {
                 resolutionStrategy {
-                    force 'androidx.core:core:1.12.0'
-                    force 'androidx.core:core-ktx:1.12.0'
-                    force 'androidx.appcompat:appcompat:1.6.1'
-                    force 'org.jetbrains.kotlin:kotlin-stdlib:1.7.22'
-                    force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.22'
-                    force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.22'
+                    force 'androidx.core:core:1.13.1'
+                    force 'androidx.core:core-ktx:1.13.1'
+                    force 'androidx.appcompat:appcompat:1.7.0'
+                    force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
+                    force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22'
+                    force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22'
                     force 'com.google.android.gms:play-services-auth:20.7.0'
                     force 'com.google.android.gms:play-services-identity:18.1.0'
                     force 'com.google.android.gms:play-services-base:18.3.0'
                     force 'com.google.android.gms:play-services-basement:18.3.0'
-                    force 'com.google.android.gms:play-services-ads:22.3.0'
-                    force 'com.google.android.gms:play-services-ads-lite:22.3.0'
+                    force 'com.google.android.gms:play-services-ads:23.0.0'
+                    force 'com.google.android.gms:play-services-ads-lite:23.0.0'
                 }
             }
         }
@@ -373,7 +372,7 @@ jobs:
     - name: Build Debug APK
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
       run: |
         echo '🚧 Building Debug APK (using compile to preserve manifest fixes)...'
         cordova compile android --debug --verbose
@@ -382,7 +381,7 @@ jobs:
     - name: Build Release APK (Signed)
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
       run: |
         echo '🚧 Building Signed Release APK (using compile to preserve manifest fixes)...'
         echo '📋 Using keystore: access-network.keystore'
@@ -398,7 +397,7 @@ jobs:
     - name: Build Release AAB (for Google Play)
       working-directory: cordova-app
       env:
-        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-8.7-bin.zip
       run: |
         echo '🚧 Building Signed Release AAB for Google Play...'
         echo '📋 Using keystore: access-network.keystore'
