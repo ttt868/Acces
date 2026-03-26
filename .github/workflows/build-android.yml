@@ -90,7 +90,15 @@ jobs:
         mkdir -p ~/.android
         # Copy debug keystore
         cp cordova-app/keystores/debug.keystore ~/.android/debug.keystore
-        # Copy release keystore to cordova-app directory
+        # Generate release keystore if it doesn't exist
+        PASS="${KEYSTORE_PASSWORD:-Access2026Secure}"
+        keytool -genkey -v \
+          -keystore cordova-app/access-network.keystore \
+          -alias access-network \
+          -keyalg RSA -keysize 2048 -validity 10000 \
+          -storepass "${PASS}" -keypass "${PASS}" \
+          -dname "CN=Access Network, OU=Mobile, O=Access Network, L=Unknown, S=Unknown, C=US"
+        echo '✅ Release keystore generated'
         echo '=================================================='
         echo 'Package name: io.accessnetwork.app'
         echo '=================================================='
@@ -379,12 +387,28 @@ jobs:
         echo '📋 Using keystore: access-network.keystore'
         # Verify keystore exists
         ls -la access-network.keystore
-        # Build APK (not AAB) with packageType flag - use compile to skip re-prepare
+        # Build APK with packageType flag - use compile to skip re-prepare
         cordova compile android --release --buildConfig=build.json -- --packageType=apk --verbose
         echo '✅ Release APK built and signed'
         # Verify the APK was created
         echo '📱 Checking output files:'
         find platforms/android -name "*.apk" -o -name "*.aab" -type f 2>/dev/null | head -10
+    
+    - name: Build Release AAB (for Google Play)
+      working-directory: cordova-app
+      env:
+        CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: https://services.gradle.org/distributions/gradle-7.6.4-bin.zip
+      run: |
+        echo '🚧 Building Signed Release AAB for Google Play...'
+        echo '📋 Using keystore: access-network.keystore'
+        # Verify keystore exists
+        ls -la access-network.keystore
+        # Build AAB (bundle) - required for Google Play Store
+        cordova compile android --release --buildConfig=build.json -- --packageType=bundle --verbose
+        echo '✅ Release AAB built and signed'
+        # Verify the AAB was created
+        echo '📦 Checking AAB output files:'
+        find platforms/android -name "*.aab" -type f 2>/dev/null
     
     - name: List APK files
       run: |
@@ -414,6 +438,6 @@ jobs:
       with:
         name: access-network-release-aab
         path: cordova-app/platforms/android/app/build/outputs/bundle/release/*.aab
-        if-no-files-found: warn
+        if-no-files-found: error
         retention-days: 30
 
