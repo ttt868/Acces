@@ -90,15 +90,16 @@ jobs:
         mkdir -p ~/.android
         # Copy debug keystore
         cp cordova-app/keystores/debug.keystore ~/.android/debug.keystore
-        # Generate release keystore if it doesn't exist
-        PASS="${KEYSTORE_PASSWORD:-Access2026Secure}"
-        keytool -genkey -v \
-          -keystore cordova-app/access-network.keystore \
-          -alias access-network \
-          -keyalg RSA -keysize 2048 -validity 10000 \
-          -storepass "${PASS}" -keypass "${PASS}" \
-          -dname "CN=Access Network, OU=Mobile, O=Access Network, L=Unknown, S=Unknown, C=US"
-        echo '✅ Release keystore generated'
+        # Use the existing keystore from the repo (NEVER generate a new one)
+        if [ -f "cordova-app/access-network.keystore" ]; then
+          echo '✅ Using existing release keystore from repo'
+          keytool -list -keystore cordova-app/access-network.keystore \
+            -storepass "${KEYSTORE_PASSWORD:-Access2026Secure}" | head -5
+        else
+          echo '❌ ERROR: access-network.keystore not found in repo!'
+          echo 'This keystore must be committed to the repo to keep the same app signature.'
+          exit 1
+        fi
         echo '=================================================='
         echo 'Package name: io.accessnetwork.app'
         echo '=================================================='
