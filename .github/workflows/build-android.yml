@@ -113,6 +113,26 @@ jobs:
         echo "{\"android\":{\"debug\":{\"keystore\":\"access-network.keystore\",\"storePassword\":\"${PASS}\",\"alias\":\"access-network\",\"password\":\"${PASS}\",\"keystoreType\":\"jks\"},\"release\":{\"keystore\":\"access-network.keystore\",\"storePassword\":\"${PASS}\",\"alias\":\"access-network\",\"password\":\"${PASS}\",\"keystoreType\":\"jks\"}}}" > build.json
         echo '✅ build.json generated'
 
+    - name: Auto bump Android versionCode in CI
+      working-directory: cordova-app
+      env:
+        RUN_NUMBER: ${{ github.run_number }}
+      run: |
+        echo '🔢 Auto-bumping app version for this CI run...'
+        CFG="config.xml"
+        VERSION_CODE=$((20000 + RUN_NUMBER))
+        VERSION_NAME="1.0.${RUN_NUMBER}"
+
+        if grep -q 'android-versionCode="' "$CFG"; then
+          sed -E -i "0,/<widget /s/android-versionCode=\"[0-9]+\"/android-versionCode=\"${VERSION_CODE}\"/" "$CFG"
+        else
+          sed -E -i "0,/<widget /s/<widget /<widget android-versionCode=\"${VERSION_CODE}\" /" "$CFG"
+        fi
+
+        sed -E -i "0,/<widget /s/version=\"[0-9]+\.[0-9]+\.[0-9]+\"/version=\"${VERSION_NAME}\"/" "$CFG"
+        echo "✅ android-versionCode=${VERSION_CODE}, version=${VERSION_NAME}"
+        grep -n '<widget ' "$CFG"
+
     - name: Add Android platform (cordova-android 14)
       working-directory: cordova-app
       env:
