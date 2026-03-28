@@ -3,465 +3,529 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Screenshot Maker — Access Network</title>
+<title>Pro Screenshot Studio</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --panel:#111827;--panel-b:#1f2937;--accent:#6366f1;--accent2:#8b5cf6;
-  --txt:#f9fafb;--muted:#9ca3af;
+  --panel:#0f172a;
+  --panel-b:#1e293b;
+  --txt:#e2e8f0;
+  --muted:#94a3b8;
+  --accent:#0ea5e9;
+  --accent2:#14b8a6;
 }
-body{background:#0d1117;color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;min-height:100vh;overflow-x:hidden}
-
-/* ── PANEL ── */
-.panel{width:290px;min-width:290px;background:var(--panel);border-right:1px solid var(--panel-b);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow-y:auto}
-.panel-head{padding:20px 18px 14px;border-bottom:1px solid var(--panel-b)}
-.panel-head h1{font-size:16px;font-weight:800;background:linear-gradient(135deg,#6366f1,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.panel-head p{font-size:11px;color:var(--muted);margin-top:3px}
+body{
+  background:#020617;
+  color:var(--txt);
+  font-family:"Manrope","Plus Jakarta Sans","Segoe UI",sans-serif;
+  display:flex;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+.panel{
+  width:320px;
+  min-width:320px;
+  max-height:100vh;
+  overflow:auto;
+  background:linear-gradient(180deg,#020617 0%,#0f172a 40%,#0b1220 100%);
+  border-right:1px solid var(--panel-b);
+  position:sticky;
+  top:0;
+}
+.head{padding:18px;border-bottom:1px solid var(--panel-b)}
+.head h1{font-size:16px;font-weight:900;letter-spacing:.02em;background:linear-gradient(135deg,#38bdf8,#2dd4bf);background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.head p{font-size:11px;color:var(--muted);margin-top:4px}
 .sec{padding:14px 18px;border-bottom:1px solid var(--panel-b)}
-.sec h2{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px}
-
-/* template grid */
+.sec h2{font-size:10px;font-weight:800;color:#cbd5e1;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
 .tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.tb{background:#1f2937;border:2px solid transparent;border-radius:10px;padding:9px 6px;cursor:pointer;text-align:center;color:var(--txt);transition:.2s;font-family:inherit}
-.tb:hover{background:#374151}
-.tb.on{border-color:var(--accent);background:rgba(99,102,241,.15)}
-.tb .ic{font-size:22px;display:block;margin-bottom:3px}
-.tb .lb{font-size:10px;font-weight:600}
-
-/* theme dots */
+.tb{background:#111827;border:1px solid #334155;border-radius:11px;color:var(--txt);padding:9px 7px;cursor:pointer;text-align:center;transition:.2s;font-family:inherit}
+.tb .ic{display:block;font-size:18px;margin-bottom:3px}
+.tb .lb{font-size:10px;font-weight:700;line-height:1.2}
+.tb:hover{border-color:#38bdf8;transform:translateY(-1px)}
+.tb.on{background:rgba(14,165,233,.14);border-color:#0ea5e9;box-shadow:0 0 0 1px rgba(14,165,233,.25) inset}
 .th-row{display:flex;gap:8px;flex-wrap:wrap}
-.td{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:.2s;flex-shrink:0}
-.td.on{border-color:#fff;transform:scale(1.15)}
-
-/* upload slots */
-.slot{background:#1f2937;border:2px dashed #374151;border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:7px}
-.slot:hover{border-color:var(--accent);background:rgba(99,102,241,.08)}
-.slot p{font-size:11px;color:var(--muted);margin-bottom:5px}
-.slot img{width:100%;height:70px;object-fit:cover;border-radius:6px;display:none}
+.td{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:.2s}
+.td.on{border-color:#fff;transform:scale(1.12)}
+.sel{width:100%;background:#111827;border:1px solid #334155;color:var(--txt);border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit}
+.slot{background:#111827;border:1px dashed #334155;border-radius:10px;padding:9px;cursor:pointer;margin-bottom:7px;transition:.2s}
+.slot:hover{border-color:#22d3ee;background:#0f1a2f}
+.slot p{font-size:11px;color:#cbd5e1;margin-bottom:5px}
+.slot .hint{font-size:10px;color:var(--muted)}
+.slot img{width:100%;height:66px;object-fit:cover;border-radius:7px;display:none;margin-top:5px}
 .slot input{display:none}
-.slot .ph{font-size:24px}
+.ti{width:100%;background:#111827;border:1px solid #334155;border-radius:8px;padding:8px 10px;color:var(--txt);font-size:12px;margin-bottom:7px;font-family:inherit}
+.ti:focus{outline:none;border-color:#38bdf8}
+.badge{font-size:10px;color:#93c5fd;background:rgba(14,165,233,.18);display:inline-block;border-radius:99px;padding:3px 9px;margin-bottom:6px}
+.dl-btn{width:calc(100% - 36px);margin:14px 18px 18px;border:none;border-radius:12px;padding:12px;background:linear-gradient(120deg,#0891b2,#0ea5e9,#14b8a6);color:white;font-size:13px;font-weight:800;cursor:pointer;transition:.2s;font-family:inherit}
+.dl-btn:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(14,165,233,.35)}
+.preview{flex:1;display:flex;flex-direction:column;align-items:center;padding:30px 30px 24px;overflow:auto;gap:14px}
+.plabel{font-size:11px;color:var(--muted)}
+.tc{position:relative;width:405px;height:720px;border-radius:18px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.65)}
+.tc::before{content:"";position:absolute;inset:0;background:radial-gradient(1100px 340px at 90% -8%,rgba(255,255,255,.13),transparent 52%);pointer-events:none;z-index:1}
+.tc > *{position:relative;z-index:2}
+.th-aurora{background:radial-gradient(circle at 12% 16%,#67e8f9 0%,transparent 30%),radial-gradient(circle at 88% 76%,#22d3ee 0%,transparent 34%),linear-gradient(140deg,#081734,#092847,#0b3c5d)}
+.th-inferno{background:radial-gradient(circle at 85% 20%,#fb923c 0%,transparent 34%),radial-gradient(circle at 20% 85%,#ef4444 0%,transparent 35%),linear-gradient(145deg,#2a0a10,#4a1220,#7c2d12)}
+.th-emerald{background:radial-gradient(circle at 12% 20%,#34d399 0%,transparent 33%),radial-gradient(circle at 80% 80%,#2dd4bf 0%,transparent 36%),linear-gradient(145deg,#022c22,#064e3b,#065f46)}
+.th-carbon{background:radial-gradient(circle at 10% 90%,#475569 0%,transparent 40%),linear-gradient(145deg,#020617,#0f172a,#111827)}
+.th-violet{background:radial-gradient(circle at 90% 12%,#c084fc 0%,transparent 35%),radial-gradient(circle at 20% 80%,#a78bfa 0%,transparent 38%),linear-gradient(145deg,#1e1b4b,#312e81,#4c1d95)}
+.th-sand{background:radial-gradient(circle at 90% 70%,#f59e0b 0%,transparent 36%),radial-gradient(circle at 18% 20%,#fdba74 0%,transparent 34%),linear-gradient(145deg,#3f2a13,#5c3d1c,#7c541f)}
 
-/* text inputs */
-.ti{width:100%;background:#1f2937;border:1px solid #374151;border-radius:8px;padding:7px 11px;color:var(--txt);font-size:12px;margin-bottom:7px;transition:border-color .2s;font-family:inherit}
-.ti:focus{outline:none;border-color:var(--accent)}
-.ti::placeholder{color:var(--muted)}
-
-/* download */
-.dl-btn{margin:14px 18px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:11px;padding:13px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;width:calc(100% - 36px);transition:.2s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
-.dl-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(99,102,241,.4)}
-.dl-btn:active{transform:none}
-.badge{display:inline-block;background:rgba(99,102,241,.2);color:#a5b4fc;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:6px}
-
-/* ── PREVIEW ── */
-.preview{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:36px 40px;overflow:auto;gap:16px}
-.plabel{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
-.pdot{width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block}
-
-/* templates: 405×720 = 1080×1920 @ 37.5% */
-.tc{position:relative;width:405px;height:720px;border-radius:16px;overflow:hidden;box-shadow:0 25px 70px rgba(0,0,0,.7);flex-shrink:0}
-
-/* themes */
-.th-blue{background:linear-gradient(145deg,#050d2e,#0f0c29,#302b63)}
-.th-purple{background:linear-gradient(145deg,#1a0533,#3b0764,#6b21a8)}
-.th-teal{background:linear-gradient(145deg,#052e16,#064e3b,#0d4f4f)}
-.th-black{background:linear-gradient(160deg,#000,#0f0f0f,#1a1a1a)}
-.th-sunset{background:linear-gradient(145deg,#1a0533,#6a0572,#c2410c)}
-.th-ocean{background:linear-gradient(145deg,#0c1445,#1e3a5f,#0e7490)}
-
-/* phone frame */
-.pf{position:relative;background:#0d0d0d;border-radius:44px;padding:13px;box-shadow:0 0 0 1.5px #2a2a2a,0 0 0 3px #111,0 30px 80px rgba(0,0,0,.8),inset 0 1px 2px rgba(255,255,255,.07)}
-.pf.silver{background:#d8d8d8;box-shadow:0 0 0 1.5px #bbb,0 0 0 3px #aaa,0 30px 80px rgba(0,0,0,.5),inset 0 1px 2px rgba(255,255,255,.9)}
-.ps{border-radius:32px;overflow:hidden;background:#000;position:relative}
+/* phone component */
+.pf{position:relative;background:#0b0f14;border-radius:44px;padding:12px;box-shadow:0 0 0 1px #243244,0 0 0 3px #0a0f18,0 26px 65px rgba(0,0,0,.72),inset 0 1px 2px rgba(255,255,255,.08)}
+.pf.silver{background:#d1d5db;box-shadow:0 0 0 1px #9ca3af,0 0 0 3px #e5e7eb,0 22px 60px rgba(0,0,0,.52),inset 0 1px 2px rgba(255,255,255,.8)}
+.ps{border-radius:31px;overflow:hidden;background:#020617;position:relative}
 .ps img{width:100%;height:100%;object-fit:cover;display:block}
-.pnotch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:22px;height:22px;background:#0d0d0d;border-radius:50%;z-index:10}
-.pf.silver .pnotch{background:#d8d8d8}
-.pind{height:4px;border-radius:4px;background:rgba(255,255,255,.25);margin:9px auto 0;width:38%}
+.pnotch{position:absolute;z-index:6;background:#0b0f14;left:50%;transform:translateX(-50%)}
+.pf.silver .pnotch{background:#d1d5db}
+.pind{height:4px;width:37%;margin:8px auto 0;border-radius:4px;background:rgba(255,255,255,.3)}
+.model-tag{position:absolute;right:10px;bottom:16px;font-size:9px;font-weight:700;padding:3px 8px;border-radius:99px;background:rgba(0,0,0,.45);color:#f8fafc;z-index:7;letter-spacing:.04em}
 
-/* deco */
-.deco{position:absolute;border-radius:50%;pointer-events:none}
+body.device-s20 .pnotch{top:11px;width:18px;height:18px;border-radius:50%}
+body.device-s20 .pf{border-radius:38px}
+body.device-iphone14 .pnotch{top:10px;width:78px;height:20px;border-radius:13px}
+body.device-iphone14 .pf{border-radius:48px}
+body.device-pixel8 .pnotch{top:11px;width:22px;height:22px;border-radius:50%}
+body.device-pixel8 .pf{border-radius:36px}
+body.device-xiaomi13 .pnotch{top:11px;width:16px;height:16px;border-radius:50%}
+body.device-xiaomi13 .pf{border-radius:34px}
+body.device-nothing2 .pnotch{top:9px;width:88px;height:12px;border-radius:8px}
+body.device-nothing2 .pf{border-radius:40px}
 
-/* bottom bar */
-.bbar{position:absolute;bottom:0;left:0;right:0;padding:10px 22px;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.35);backdrop-filter:blur(12px);z-index:20}
-.blogo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#6366f1,#8b5cf6);font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.bname{font-size:12px;font-weight:700;color:#fff}
-.burl{font-size:10px;color:rgba(255,255,255,.4)}
+.bbar{position:absolute;left:0;right:0;bottom:0;padding:10px 18px;background:rgba(2,6,23,.45);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;z-index:8}
+.blogo{width:24px;height:24px;border-radius:7px;background:linear-gradient(140deg,#22d3ee,#0ea5e9,#14b8a6)}
+.bname{font-size:12px;font-weight:800;color:#f8fafc}
+.burl{font-size:10px;color:#cbd5e1}
 
-/* ── T1: HERO SOLO ── */
-.t1{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px 70px;gap:14px;position:relative;overflow:hidden}
-.t1-badge{background:rgba(255,255,255,.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:5px 14px;font-size:10px;color:rgba(255,255,255,.8)}
-.t1-title{font-size:28px;font-weight:900;text-align:center;color:#fff;letter-spacing:-.03em;line-height:1.15;text-shadow:0 4px 24px rgba(0,0,0,.6)}
-.t1-sub{font-size:12px;color:rgba(255,255,255,.55);text-align:center;margin-top:-6px}
+/* template blocks */
+.t{width:100%;height:100%;position:relative;overflow:hidden}
+.t-title{font-size:27px;font-weight:900;line-height:1.14;color:#fff;letter-spacing:-.03em;text-shadow:0 8px 30px rgba(0,0,0,.55)}
+.t-sub{font-size:12px;color:rgba(255,255,255,.78)}
 
-/* ── T2: DUO TILT ── */
-.t2{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 16px 70px;position:relative;overflow:hidden}
-.t2-phones{display:flex;align-items:flex-end;justify-content:center;position:relative;margin-top:18px}
-.t2-left{transform:rotate(-11deg) translateX(24px) translateY(10px);z-index:1;filter:brightness(.8)}
-.t2-right{transform:rotate(11deg) translateX(-24px) translateY(10px);z-index:1;filter:brightness(.8)}
-.t2-title{font-size:22px;font-weight:900;text-align:center;color:#fff;letter-spacing:-.02em}
-.t2-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:5px;text-align:center}
+/* T1 */
+.t1{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:42px 24px 72px;gap:10px}
+.t1 .pf{margin-top:10px}
 
-/* ── T3: FEATURE SIDE ── */
-.t3{width:100%;height:100%;display:flex;align-items:center;padding:36px 22px 70px 30px;position:relative;overflow:hidden;gap:16px}
-.t3-txt{flex:1;display:flex;flex-direction:column;gap:0}
-.t3-chip{display:inline-block;background:rgba(99,102,241,.25);border:1px solid rgba(99,102,241,.45);border-radius:20px;padding:3px 10px;font-size:9px;color:#a5b4fc;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
-.t3-title{font-size:22px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:14px}
-.t3-list{list-style:none;display:flex;flex-direction:column;gap:9px}
-.t3-list li{display:flex;align-items:center;gap:7px;font-size:11px;color:rgba(255,255,255,.7)}
-.t3-list li::before{content:'✦';color:#6366f1;font-size:9px;flex-shrink:0}
+/* T2 split + tilt */
+.t2{display:grid;grid-template-columns:1fr 1fr;padding:0 0 68px}
+.t2-left{padding:90px 20px 20px 24px;background:linear-gradient(140deg,rgba(2,6,23,.35),rgba(2,6,23,.05));display:flex;flex-direction:column;justify-content:flex-start}
+.t2-right{display:flex;align-items:center;justify-content:center;position:relative}
+.t2-right .pf{transform:rotate(-13deg) translateY(16px)}
+.t2-right .pf.alt{position:absolute;transform:rotate(11deg) translate(56px,102px) scale(.74);opacity:.95}
 
-/* ── T4: STAGGERED ── */
-.t4{width:100%;height:100%;position:relative;overflow:hidden}
-.t4-back{position:absolute;top:50px;left:10px;transform:rotate(-9deg);z-index:1;filter:brightness(.65) blur(.5px)}
-.t4-front{position:absolute;bottom:55px;right:10px;transform:rotate(6deg);z-index:2}
-.t4-txt{position:absolute;bottom:54px;left:26px;z-index:3}
-.t4-title{font-size:20px;font-weight:900;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.9)}
-.t4-sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:3px}
-.t4-line{width:40px;height:3px;background:linear-gradient(90deg,#6366f1,transparent);border-radius:2px;margin-bottom:8px}
+/* T3 feature side */
+.t3{display:flex;gap:12px;align-items:center;padding:36px 18px 68px 24px}
+.t3 .info{flex:1}
+.t3 ul{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.t3 li{font-size:11px;color:#ecfeff;display:flex;align-items:center;gap:6px}
+.t3 li::before{content:"✦";color:#67e8f9;font-size:9px}
 
-/* ── T5: TRIO ── */
-.t5{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 10px 70px;position:relative;overflow:hidden}
-.t5-title{font-size:24px;font-weight:900;color:#fff;text-align:center;letter-spacing:-.02em}
-.t5-sub{font-size:12px;color:rgba(255,255,255,.5);text-align:center;margin-top:5px;margin-bottom:20px}
-.t5-phones{display:flex;align-items:flex-end;justify-content:center;gap:8px}
-.t5-sl{transform:rotate(-9deg) scale(.83) translateY(14px);transform-origin:bottom center;filter:brightness(.72);margin-right:-8px}
-.t5-sr{transform:rotate(9deg) scale(.83) translateY(14px);transform-origin:bottom center;filter:brightness(.72);margin-left:-8px}
-.t5-dots{display:flex;gap:7px;margin-top:16px}
-.t5-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.25)}
-.t5-dot.on{background:#fff;width:20px;border-radius:4px}
+/* T4 drop phone */
+.t4{display:grid;grid-template-columns:1fr 1fr;padding:16px 14px 68px;gap:8px}
+.t4-col{display:flex;align-items:flex-end;justify-content:center;position:relative}
+.t4-col.left{align-items:center}
+.t4-col.left .pf{transform:rotate(6deg) translateY(-6px)}
+.t4-col.right .pf.back{position:absolute;transform:rotate(-9deg) translate(-34px,-70px) scale(.78);opacity:.7}
+.t4-col.right .pf.front{transform:rotate(18deg) translate(34px,86px)}
 
-/* loading */
-.loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+/* T5 trio */
+.t5{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 6px 68px}
+.t5-row{display:flex;align-items:flex-end;gap:4px;margin-top:18px}
+.t5-row .l{transform:rotate(-10deg) scale(.82) translateY(18px)}
+.t5-row .c{transform:translateY(0)}
+.t5-row .r{transform:rotate(10deg) scale(.82) translateY(18px)}
+
+/* T6 grid six */
+.t6{padding:20px 14px 68px;display:flex;flex-direction:column;gap:10px}
+.t6 h3{font-size:18px;font-weight:900;text-align:center;color:#fff}
+.t6-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.t6-grid .pf{padding:8px;border-radius:26px}
+.t6-grid .ps{border-radius:20px}
+.t6-grid .pind{display:none}
+
+/* T7 snake bottom */
+.t7{padding:24px 8px 68px;display:flex;flex-direction:column;align-items:center}
+.t7-head{text-align:center;margin-bottom:14px}
+.t7-snake{position:absolute;left:0;right:0;bottom:78px;height:320px}
+.t7-snake .p1{position:absolute;left:-12px;bottom:10px;transform:rotate(-18deg) scale(.74)}
+.t7-snake .p2{position:absolute;left:74px;bottom:46px;transform:rotate(-12deg) scale(.76)}
+.t7-snake .p3{position:absolute;left:156px;bottom:80px;transform:rotate(-5deg) scale(.78)}
+.t7-snake .p4{position:absolute;left:240px;bottom:114px;transform:rotate(4deg) scale(.8)}
+.t7-snake .p5{position:absolute;left:322px;bottom:150px;transform:rotate(12deg) scale(.82)}
+.t7-snake .p6{position:absolute;left:120px;bottom:-22px;transform:rotate(8deg) scale(.7)}
+
+/* T8 fan eight */
+.t8{padding:30px 8px 68px;display:flex;flex-direction:column;align-items:center}
+.t8-wheel{position:relative;width:100%;height:470px;margin-top:10px}
+.t8-wheel .pf{position:absolute;left:50%;top:50%;transform-origin:center 300px}
+.t8-wheel .a{transform:translate(-50%,-50%) rotate(-36deg) scale(.62)}
+.t8-wheel .b{transform:translate(-50%,-50%) rotate(-26deg) scale(.66)}
+.t8-wheel .c{transform:translate(-50%,-50%) rotate(-16deg) scale(.7)}
+.t8-wheel .d{transform:translate(-50%,-50%) rotate(-6deg) scale(.75)}
+.t8-wheel .e{transform:translate(-50%,-50%) rotate(6deg) scale(.75)}
+.t8-wheel .f{transform:translate(-50%,-50%) rotate(16deg) scale(.7)}
+.t8-wheel .g{transform:translate(-50%,-50%) rotate(26deg) scale(.66)}
+.t8-wheel .h{transform:translate(-50%,-50%) rotate(36deg) scale(.62)}
+
+.loading{display:none;position:fixed;inset:0;background:rgba(2,6,23,.88);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:12px}
 .loading.show{display:flex}
-.spin{width:44px;height:44px;border:4px solid rgba(99,102,241,.25);border-top-color:#6366f1;border-radius:50%;animation:sp .7s linear infinite}
+.spin{width:40px;height:40px;border-radius:50%;border:4px solid rgba(14,165,233,.25);border-top-color:#22d3ee;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
+
+@media (max-width:990px){
+  body{flex-direction:column}
+  .panel{width:100%;min-width:100%;position:static;max-height:none}
+  .preview{padding:16px}
+}
 </style>
 </head>
-<body>
+<body class="device-s20">
+<div class="loading" id="ld"><div class="spin"></div><p style="font-size:12px;color:#cbd5e1">Rendering PNG...</p></div>
 
-<div class="loading" id="ld"><div class="spin"></div><p style="color:var(--muted);font-size:13px">Generating PNG…</p></div>
-
-<!-- ═══ PANEL ═══ -->
 <div class="panel">
-  <div class="panel-head">
-    <h1>📱 Screenshot Maker</h1>
-    <p>Play Store • Professional Templates</p>
+  <div class="head">
+    <h1>Pro Screenshot Studio</h1>
+    <p>8 templates, 8 screenshots, multiple devices</p>
   </div>
 
-  <!-- Templates -->
   <div class="sec">
-    <h2>Template</h2>
+    <h2>Templates</h2>
     <div class="tpl-grid">
-      <button class="tb on" onclick="setT(1)"><span class="ic">📱</span><span class="lb">Hero Solo</span></button>
-      <button class="tb" onclick="setT(2)"><span class="ic">📱📱</span><span class="lb">Duo Tilt</span></button>
-      <button class="tb" onclick="setT(3)"><span class="ic">✦ 📱</span><span class="lb">Feature Side</span></button>
-      <button class="tb" onclick="setT(4)"><span class="ic">🎭</span><span class="lb">Staggered</span></button>
-      <button class="tb" onclick="setT(5)"><span class="ic">📱📱📱</span><span class="lb">Trio</span></button>
+      <button class="tb on" onclick="setT(1)"><span class="ic">1</span><span class="lb">Hero Solo</span></button>
+      <button class="tb" onclick="setT(2)"><span class="ic">2</span><span class="lb">Split Tilt</span></button>
+      <button class="tb" onclick="setT(3)"><span class="ic">3</span><span class="lb">Feature Side</span></button>
+      <button class="tb" onclick="setT(4)"><span class="ic">4</span><span class="lb">Falling Pair</span></button>
+      <button class="tb" onclick="setT(5)"><span class="ic">5</span><span class="lb">Trio Stage</span></button>
+      <button class="tb" onclick="setT(6)"><span class="ic">6</span><span class="lb">Six Grid</span></button>
+      <button class="tb" onclick="setT(7)"><span class="ic">7</span><span class="lb">Snake Bottom</span></button>
+      <button class="tb" onclick="setT(8)"><span class="ic">8</span><span class="lb">Fan Eight</span></button>
     </div>
   </div>
 
-  <!-- Themes -->
   <div class="sec">
-    <h2>Color Theme</h2>
+    <h2>Theme</h2>
+    <div class="th-row" id="themeDots">
+      <div class="td on" style="background:linear-gradient(135deg,#081734,#22d3ee)" onclick="setTh('aurora',this)"></div>
+      <div class="td" style="background:linear-gradient(135deg,#2a0a10,#ef4444)" onclick="setTh('inferno',this)"></div>
+      <div class="td" style="background:linear-gradient(135deg,#022c22,#34d399)" onclick="setTh('emerald',this)"></div>
+      <div class="td" style="background:linear-gradient(135deg,#020617,#475569)" onclick="setTh('carbon',this)"></div>
+      <div class="td" style="background:linear-gradient(135deg,#1e1b4b,#c084fc)" onclick="setTh('violet',this)"></div>
+      <div class="td" style="background:linear-gradient(135deg,#3f2a13,#fdba74)" onclick="setTh('sand',this)"></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>Device Model</h2>
+    <select class="sel" id="deviceModel" onchange="setDevice(this.value)">
+      <option value="s20">Samsung Galaxy S20</option>
+      <option value="iphone14">iPhone 14 Pro</option>
+      <option value="pixel8">Google Pixel 8</option>
+      <option value="xiaomi13">Xiaomi 13</option>
+      <option value="nothing2">Nothing Phone (2)</option>
+    </select>
+  </div>
+
+  <div class="sec">
+    <h2>Frame Finish</h2>
     <div class="th-row">
-      <div class="td on" style="background:linear-gradient(135deg,#050d2e,#302b63)" onclick="setTh('blue',this)" title="Deep Blue"></div>
-      <div class="td" style="background:linear-gradient(135deg,#1a0533,#6b21a8)" onclick="setTh('purple',this)" title="Purple"></div>
-      <div class="td" style="background:linear-gradient(135deg,#052e16,#0d4f4f)" onclick="setTh('teal',this)" title="Teal"></div>
-      <div class="td" style="background:linear-gradient(160deg,#000,#1a1a1a)" onclick="setTh('black',this)" title="Black"></div>
-      <div class="td" style="background:linear-gradient(135deg,#1a0533,#c2410c)" onclick="setTh('sunset',this)" title="Sunset"></div>
-      <div class="td" style="background:linear-gradient(135deg,#0c1445,#0e7490)" onclick="setTh('ocean',this)" title="Ocean"></div>
+      <div class="td on" id="fc-dark" style="background:#0b0f14;border:2px solid #334155" onclick="setFrame('dark',this)"></div>
+      <div class="td" id="fc-silver" style="background:#d1d5db;border:2px solid #94a3b8" onclick="setFrame('silver',this)"></div>
     </div>
   </div>
 
-  <!-- Frame color -->
   <div class="sec">
-    <h2>Phone Frame</h2>
-    <div class="th-row">
-      <div class="td on" style="background:#0d0d0d;border:2px solid #333" id="fc-dark" onclick="setFrame('dark',this)" title="Dark"></div>
-      <div class="td" style="background:#d8d8d8;border:2px solid #bbb" id="fc-silver" onclick="setFrame('silver',this)" title="Silver"></div>
-    </div>
+    <h2>Screenshots (1-8)</h2>
+    <div id="slotsWrap"></div>
+    <p class="hint" style="font-size:10px;color:var(--muted)">The active template decides how many slots are needed.</p>
   </div>
 
-  <!-- Upload -->
-  <div class="sec">
-    <h2>Screenshots</h2>
-    <div class="slot" onclick="up(1)">
-      <p>📱 Phone 1 – Main</p>
-      <input type="file" id="u1" accept="image/*" onchange="loadImg(this,1)">
-      <img id="pv1"><span class="ph" id="pp1">⬆</span>
-    </div>
-    <div class="slot" id="slot2" onclick="up(2)" style="display:none">
-      <p>📱 Phone 2 – Second</p>
-      <input type="file" id="u2" accept="image/*" onchange="loadImg(this,2)">
-      <img id="pv2"><span class="ph" id="pp2">⬆</span>
-    </div>
-    <div class="slot" id="slot3" onclick="up(3)" style="display:none">
-      <p>📱 Phone 3 – Third</p>
-      <input type="file" id="u3" accept="image/*" onchange="loadImg(this,3)">
-      <img id="pv3"><span class="ph" id="pp3">⬆</span>
-    </div>
-  </div>
-
-  <!-- Text -->
   <div class="sec">
     <h2>Text</h2>
-    <input class="ti" id="ti-title" placeholder="Main Title" value="Access Network" oninput="upTxt()">
-    <input class="ti" id="ti-sub"   placeholder="Subtitle" value="Mine. Earn. Grow." oninput="upTxt()">
-    <input class="ti" id="ti-f1"   placeholder="Feature 1" value="🔒 Secure Wallet" oninput="upTxt()">
-    <input class="ti" id="ti-f2"   placeholder="Feature 2" value="⚡ Fast Mining" oninput="upTxt()">
-    <input class="ti" id="ti-f3"   placeholder="Feature 3" value="📊 Live Rewards" oninput="upTxt()">
-    <input class="ti" id="ti-f4"   placeholder="Feature 4" value="🌐 Multi-language" oninput="upTxt()">
+    <input class="ti" id="ti-title" value="Access Network" placeholder="Title" oninput="upTxt()">
+    <input class="ti" id="ti-sub" value="Mine. Earn. Grow." placeholder="Subtitle" oninput="upTxt()">
+    <input class="ti" id="ti-f1" value="Secure wallet" placeholder="Feature 1" oninput="upTxt()">
+    <input class="ti" id="ti-f2" value="Fast rewards" placeholder="Feature 2" oninput="upTxt()">
+    <input class="ti" id="ti-f3" value="Live analytics" placeholder="Feature 3" oninput="upTxt()">
+    <input class="ti" id="ti-f4" value="Global support" placeholder="Feature 4" oninput="upTxt()">
   </div>
 
-  <!-- Export -->
   <div class="sec">
     <h2>Export</h2>
-    <span class="badge">1080 × 1920 px</span>
-    <p style="font-size:10px;color:var(--muted)">Play Store phone screenshot format</p>
+    <span class="badge">1080 x 1920 PNG</span>
+    <p style="font-size:10px;color:var(--muted)">All templates are full background with no empty corners.</p>
   </div>
-  <button class="dl-btn" onclick="dl()">⬇ Download PNG</button>
+  <button class="dl-btn" onclick="dl()">Download PNG</button>
 </div>
 
-<!-- ═══ PREVIEW ═══ -->
 <div class="preview">
-  <p class="plabel"><span class="pdot"></span>Live preview • displayed at 37.5% — export is full 1080×1920</p>
+  <p class="plabel">Live preview (405 x 720). Export is full 1080 x 1920.</p>
 
-  <!-- ── T1: HERO SOLO ── -->
-  <div class="tc th-blue" id="t1" style="display:flex">
-    <div class="t1">
-      <div class="deco" style="width:320px;height:320px;background:radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 70%);top:20%;left:50%;transform:translate(-50%,-50%)"></div>
-      <div class="deco" style="width:180px;height:180px;border:1px solid rgba(99,102,241,.15);top:-30px;right:-30px"></div>
-      <div class="deco" style="width:120px;height:120px;border:1px solid rgba(139,92,246,.12);bottom:120px;left:-20px"></div>
-      <div class="t1-badge">📱 Access Network</div>
-      <div class="t1-title" id="tx-t1-title">Access<br>Network</div>
-      <div class="t1-sub" id="tx-t1-sub">Mine. Earn. Grow.</div>
-      <div class="pf" id="pf1" style="margin-top:8px">
-        <div class="pnotch" id="pn1"></div>
-        <div class="ps" style="width:220px;height:440px">
-          <img id="s1a" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='440'%3E%3Crect fill='%231a1a2e'/%3E%3Ctext x='50%25' y='50%25' fill='rgba(255,255,255,.2)' font-size='13' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3EUpload Screenshot%3C/text%3E%3C/svg%3E">
-        </div>
+  <div class="tc th-aurora" id="t1" style="display:block">
+    <div class="t t1">
+      <div class="t-title" id="tx1-title">Access<br>Network</div>
+      <div class="t-sub" id="tx1-sub">Mine. Earn. Grow.</div>
+      <div class="pf" id="pf1a">
+        <div class="pnotch"></div>
+        <span class="model-tag">S20</span>
+        <div class="ps" style="width:226px;height:456px"><img data-slot="1" src="" alt="slot1"></div>
         <div class="pind"></div>
       </div>
     </div>
-    <div class="bbar"><div class="blogo">⬡</div><div class="bname" id="tx-t1-name">Access Network</div><div class="burl">accesschain.org</div></div>
+    <div class="bbar"><div class="blogo"></div><div class="bname" id="bn1">Access Network</div><div class="burl">accesschain.org</div></div>
   </div>
 
-  <!-- ── T2: DUO TILT ── -->
-  <div class="tc th-blue" id="t2" style="display:none">
-    <div class="t2">
-      <div class="deco" style="width:380px;height:380px;background:radial-gradient(circle,rgba(99,102,241,.14) 0%,transparent 70%);top:45%;left:50%;transform:translate(-50%,-50%)"></div>
-      <div class="t2-title" id="tx-t2-title">Access Network</div>
-      <div class="t2-sub" id="tx-t2-sub">Mine. Earn. Grow.</div>
-      <div class="t2-phones">
-        <div class="t2-left">
-          <div class="pf" id="pf2a"><div class="pnotch" id="pn2a"></div>
-            <div class="ps" style="width:160px;height:320px"><img id="s2a" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='320'%3E%3Crect fill='%230d1117'/%3E%3Ctext x='50%25' y='50%25' fill='rgba(255,255,255,.2)' font-size='11' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3EPhone 1%3C/text%3E%3C/svg%3E"></div>
-            <div class="pind"></div></div>
-        </div>
-        <div class="t2-right">
-          <div class="pf" id="pf2b"><div class="pnotch" id="pn2b"></div>
-            <div class="ps" style="width:160px;height:320px"><img id="s2b" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='320'%3E%3Crect fill='%230d1117'/%3E%3Ctext x='50%25' y='50%25' fill='rgba(255,255,255,.2)' font-size='11' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3EPhone 2%3C/text%3E%3C/svg%3E"></div>
-            <div class="pind"></div></div>
-        </div>
+  <div class="tc th-aurora" id="t2" style="display:none">
+    <div class="t t2">
+      <div class="t2-left">
+        <div class="t-title" id="tx2-title">Access Network</div>
+        <div class="t-sub" id="tx2-sub" style="margin-top:8px">Mine. Earn. Grow.</div>
+      </div>
+      <div class="t2-right">
+        <div class="pf" id="pf2a"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:178px;height:356px"><img data-slot="1" src="" alt="slot1"></div><div class="pind"></div></div>
+        <div class="pf alt" id="pf2b"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:178px;height:356px"><img data-slot="2" src="" alt="slot2"></div><div class="pind"></div></div>
       </div>
     </div>
-    <div class="bbar"><div class="blogo">⬡</div><div class="bname" id="tx-t2-name">Access Network</div><div class="burl">accesschain.org</div></div>
+    <div class="bbar"><div class="blogo"></div><div class="bname" id="bn2">Access Network</div><div class="burl">accesschain.org</div></div>
   </div>
 
-  <!-- ── T3: FEATURE SIDE ── -->
-  <div class="tc th-blue" id="t3" style="display:none">
-    <div class="t3">
-      <div class="deco" style="width:280px;height:280px;background:radial-gradient(circle,rgba(99,102,241,.14) 0%,transparent 70%);top:40%;left:10%;transform:translate(-50%,-50%)"></div>
-      <div class="t3-txt">
-        <span class="t3-chip">ACCESS NETWORK</span>
-        <div class="t3-title" id="tx-t3-title">Access<br>Network</div>
-        <ul class="t3-list">
-          <li id="tx-t3-f1">Secure Wallet</li>
-          <li id="tx-t3-f2">Fast Mining</li>
-          <li id="tx-t3-f3">Live Rewards</li>
-          <li id="tx-t3-f4">Multi-language</li>
-          <li>24/7 Blockchain</li>
+  <div class="tc th-aurora" id="t3" style="display:none">
+    <div class="t t3">
+      <div class="info">
+        <div class="t-title" id="tx3-title">Access<br>Network</div>
+        <ul>
+          <li id="tx3-f1">Secure wallet</li>
+          <li id="tx3-f2">Fast rewards</li>
+          <li id="tx3-f3">Live analytics</li>
+          <li id="tx3-f4">Global support</li>
         </ul>
       </div>
-      <div class="pf" id="pf3"><div class="pnotch" id="pn3"></div>
-        <div class="ps" style="width:186px;height:372px"><img id="s3a" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='186' height='372'%3E%3Crect fill='%231a1a2e'/%3E%3Ctext x='50%25' y='50%25' fill='rgba(255,255,255,.2)' font-size='12' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3EUpload%3C/text%3E%3C/svg%3E"></div>
-        <div class="pind"></div></div>
+      <div class="pf" id="pf3a"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:184px;height:368px"><img data-slot="1" src="" alt="slot1"></div><div class="pind"></div></div>
     </div>
-    <div class="bbar"><div class="blogo">⬡</div><div class="bname">Access Network</div><div class="burl">accesschain.org</div></div>
+    <div class="bbar"><div class="blogo"></div><div class="bname">Access Network</div><div class="burl">accesschain.org</div></div>
   </div>
 
-  <!-- ── T4: STAGGERED ── -->
-  <div class="tc th-purple" id="t4" style="display:none">
-    <div class="t4">
-      <div class="deco" style="width:360px;height:360px;background:radial-gradient(circle,rgba(192,57,43,.12) 0%,transparent 70%);bottom:-80px;right:-80px"></div>
-      <div class="deco" style="width:220px;height:220px;background:radial-gradient(circle,rgba(107,33,168,.2) 0%,transparent 70%);top:-40px;left:-40px"></div>
-      <div class="t4-back">
-        <div class="pf" id="pf4a" style="opacity:.85"><div class="pnotch" id="pn4a"></div>
-          <div class="ps" style="width:186px;height:372px"><img id="s4a" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='186' height='372'%3E%3Crect fill='%231a0533'/%3E%3Ctext x='50%25' y='50%25' fill='rgba(255,255,255,.18)' font-size='12' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3EPhone 2%3C/text%3E%3C/svg%3E"></div>
-          <div class="pind"></div></div>
-      </div>
-      <div class="t4-front">
-        <div class="pf" id="pf4b"><div class="pnotch" id="pn4b"></div>
-          <div class="ps" style="width:206px;height:412px"><img id="s4b" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='206' height='412'%3E%3Crect fill='%233b0764'/%3E%3Ctext x='50%25' y='50%25' fill='rgba(255,255,255,.2)' font-size='12' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3EPhone 1%3C/text%3E%3C/svg%3E"></div>
-          <div class="pind"></div></div>
-      </div>
-      <div class="t4-txt">
-        <div class="t4-line"></div>
-        <div class="t4-title" id="tx-t4-title">Access Network</div>
-        <div class="t4-sub" id="tx-t4-sub">Mine. Earn. Grow.</div>
+  <div class="tc th-aurora" id="t4" style="display:none">
+    <div class="t t4">
+      <div class="t4-col left"><div class="pf" id="pf4a"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:170px;height:340px"><img data-slot="1" src="" alt="slot1"></div><div class="pind"></div></div></div>
+      <div class="t4-col right">
+        <div class="pf back" id="pf4b"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:156px;height:312px"><img data-slot="2" src="" alt="slot2"></div><div class="pind"></div></div>
+        <div class="pf front" id="pf4c"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:174px;height:348px"><img data-slot="3" src="" alt="slot3"></div><div class="pind"></div></div>
       </div>
     </div>
+    <div class="bbar"><div class="blogo"></div><div class="bname" id="tx4-title">Access Network</div><div class="burl">Drop + Tilt</div></div>
   </div>
 
-  <!-- ── T5: TRIO ── -->
-  <div class="tc th-teal" id="t5" style="display:none">
-    <div class="t5">
-      <div class="deco" style="width:420px;height:200px;background:radial-gradient(ellipse,rgba(13,79,79,.35) 0%,transparent 70%);top:44%;left:50%;transform:translate(-50%,-60%)"></div>
-      <div class="t5-title" id="tx-t5-title">Access Network</div>
-      <div class="t5-sub" id="tx-t5-sub">Mine. Earn. Grow.</div>
-      <div class="t5-phones">
-        <div class="t5-sl">
-          <div class="pf" id="pf5a"><div class="pnotch" id="pn5a"></div>
-            <div class="ps" style="width:134px;height:268px"><img id="s5a" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='134' height='268'%3E%3Crect fill='%230d1117'/%3E%3Ctext x='50%25' y='50%25' fill='rgba(255,255,255,.2)' font-size='10' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3EPhone 2%3C/text%3E%3C/svg%3E"></div>
-            <div class="pind" style="width:30%;height:3px;margin-top:7px"></div></div>
-        </div>
-        <div>
-          <div class="pf" id="pf5b"><div class="pnotch" id="pn5b"></div>
-            <div class="ps" style="width:184px;height:368px"><img id="s5b" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='184' height='368'%3E%3Crect fill='%230d4f4f'/%3E%3Ctext x='50%25' y='50%25' fill='rgba(255,255,255,.2)' font-size='12' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3EMain Phone%3C/text%3E%3C/svg%3E"></div>
-            <div class="pind"></div></div>
-        </div>
-        <div class="t5-sr">
-          <div class="pf" id="pf5c"><div class="pnotch" id="pn5c"></div>
-            <div class="ps" style="width:134px;height:268px"><img id="s5c" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='134' height='268'%3E%3Crect fill='%230d1117'/%3E%3Ctext x='50%25' y='50%25' fill='rgba(255,255,255,.2)' font-size='10' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif'%3EPhone 3%3C/text%3E%3C/svg%3E"></div>
-            <div class="pind" style="width:30%;height:3px;margin-top:7px"></div></div>
-        </div>
+  <div class="tc th-aurora" id="t5" style="display:none">
+    <div class="t t5">
+      <div class="t-title" id="tx5-title">Access Network</div>
+      <div class="t-sub" id="tx5-sub" style="margin-top:5px">Mine. Earn. Grow.</div>
+      <div class="t5-row">
+        <div class="pf l" id="pf5a"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:134px;height:270px"><img data-slot="1" src="" alt="slot1"></div><div class="pind"></div></div>
+        <div class="pf c" id="pf5b"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:184px;height:368px"><img data-slot="2" src="" alt="slot2"></div><div class="pind"></div></div>
+        <div class="pf r" id="pf5c"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:134px;height:270px"><img data-slot="3" src="" alt="slot3"></div><div class="pind"></div></div>
       </div>
-      <div class="t5-dots"><div class="t5-dot on"></div><div class="t5-dot"></div><div class="t5-dot"></div></div>
     </div>
-    <div class="bbar"><div class="blogo">⬡</div><div class="bname">Access Network</div><div class="burl">accesschain.org</div></div>
+    <div class="bbar"><div class="blogo"></div><div class="bname">Access Network</div><div class="burl">Trio showcase</div></div>
+  </div>
+
+  <div class="tc th-aurora" id="t6" style="display:none">
+    <div class="t t6">
+      <h3 id="tx6-title">Access Network</h3>
+      <div class="t6-grid">
+        <div class="pf" id="pf6a"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:102px;height:196px"><img data-slot="1" src="" alt="slot1"></div></div>
+        <div class="pf" id="pf6b"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:102px;height:196px"><img data-slot="2" src="" alt="slot2"></div></div>
+        <div class="pf" id="pf6c"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:102px;height:196px"><img data-slot="3" src="" alt="slot3"></div></div>
+        <div class="pf" id="pf6d"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:102px;height:196px"><img data-slot="4" src="" alt="slot4"></div></div>
+        <div class="pf" id="pf6e"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:102px;height:196px"><img data-slot="5" src="" alt="slot5"></div></div>
+        <div class="pf" id="pf6f"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:102px;height:196px"><img data-slot="6" src="" alt="slot6"></div></div>
+      </div>
+    </div>
+    <div class="bbar"><div class="blogo"></div><div class="bname">Access Network</div><div class="burl">6 screens</div></div>
+  </div>
+
+  <div class="tc th-aurora" id="t7" style="display:none">
+    <div class="t t7">
+      <div class="t7-head"><div class="t-title" id="tx7-title">Access Network</div><div class="t-sub" id="tx7-sub">Snake style bottom gallery</div></div>
+      <div class="t7-snake">
+        <div class="pf p1" id="pf7a"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:122px;height:236px"><img data-slot="1" src="" alt="slot1"></div><div class="pind"></div></div>
+        <div class="pf p2" id="pf7b"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:122px;height:236px"><img data-slot="2" src="" alt="slot2"></div><div class="pind"></div></div>
+        <div class="pf p3" id="pf7c"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:122px;height:236px"><img data-slot="3" src="" alt="slot3"></div><div class="pind"></div></div>
+        <div class="pf p4" id="pf7d"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:122px;height:236px"><img data-slot="4" src="" alt="slot4"></div><div class="pind"></div></div>
+        <div class="pf p5" id="pf7e"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:122px;height:236px"><img data-slot="5" src="" alt="slot5"></div><div class="pind"></div></div>
+        <div class="pf p6" id="pf7f"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:122px;height:236px"><img data-slot="6" src="" alt="slot6"></div><div class="pind"></div></div>
+      </div>
+    </div>
+    <div class="bbar"><div class="blogo"></div><div class="bname">Access Network</div><div class="burl">Bottom snake</div></div>
+  </div>
+
+  <div class="tc th-aurora" id="t8" style="display:none">
+    <div class="t t8">
+      <div class="t-title" id="tx8-title">Access Network</div>
+      <div class="t-sub" id="tx8-sub" style="margin-top:6px">8 screenshots fan</div>
+      <div class="t8-wheel">
+        <div class="pf a" id="pf8a"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:120px;height:232px"><img data-slot="1" src="" alt="slot1"></div><div class="pind"></div></div>
+        <div class="pf b" id="pf8b"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:120px;height:232px"><img data-slot="2" src="" alt="slot2"></div><div class="pind"></div></div>
+        <div class="pf c" id="pf8c"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:120px;height:232px"><img data-slot="3" src="" alt="slot3"></div><div class="pind"></div></div>
+        <div class="pf d" id="pf8d"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:120px;height:232px"><img data-slot="4" src="" alt="slot4"></div><div class="pind"></div></div>
+        <div class="pf e" id="pf8e"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:120px;height:232px"><img data-slot="5" src="" alt="slot5"></div><div class="pind"></div></div>
+        <div class="pf f" id="pf8f"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:120px;height:232px"><img data-slot="6" src="" alt="slot6"></div><div class="pind"></div></div>
+        <div class="pf g" id="pf8g"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:120px;height:232px"><img data-slot="7" src="" alt="slot7"></div><div class="pind"></div></div>
+        <div class="pf h" id="pf8h"><div class="pnotch"></div><span class="model-tag">S20</span><div class="ps" style="width:120px;height:232px"><img data-slot="8" src="" alt="slot8"></div><div class="pind"></div></div>
+      </div>
+    </div>
+    <div class="bbar"><div class="blogo"></div><div class="bname">Access Network</div><div class="burl">8 screens</div></div>
   </div>
 </div>
 
 <script>
-let curT=1, curTh='blue', curFr='dark';
-const imgSrc=[null,null,null]; // uploaded images by slot 1,2,3
+let curT=1;
+let curTh='aurora';
+let curFrame='dark';
+let curDevice='s20';
+const uploaded = Array(8).fill(null);
+const templateSlots = {1:1,2:2,3:1,4:3,5:3,6:6,7:6,8:8};
 
-/* ─ phone slots per template ─ */
-const slots={1:1, 2:2, 3:1, 4:2, 5:3};
+function makePlaceholder(n){
+  return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='640'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%230f172a'/%3E%3Cstop offset='1' stop-color='%231e293b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' fill='rgba(255,255,255,.38)' font-size='28' text-anchor='middle' dominant-baseline='middle' font-family='Arial'%3ESlot " + n + "%3C/text%3E%3C/svg%3E";
+}
 
-/* ─ which template images come from which upload slot ─ */
-// slot1 → main; slot2 → secondary; slot3 → third
-const imgTargets={
-  1:['s1a'],
-  2:['s2a'],
-  3:['s3a','s4b','s5b'],  // slot1 main phone
-};
-const imgTargets2={
-  2:['s2b','s4a','s5a'],  // slot2
-};
-const imgTargets3={
-  3:['s5c'],               // slot3
-};
+function renderSlots(){
+  const wrap=document.getElementById('slotsWrap');
+  wrap.innerHTML='';
+  for(let i=1;i<=8;i++){
+    const d=document.createElement('div');
+    d.className='slot';
+    d.id='slot'+i;
+    d.innerHTML='<p>Screenshot '+i+'</p><div class="hint">Tap to upload</div><input type="file" id="u'+i+'" accept="image/*"><img id="pv'+i+'" alt="preview '+i+'">';
+    d.onclick=()=>document.getElementById('u'+i).click();
+    wrap.appendChild(d);
+    const input=document.getElementById('u'+i);
+    input.onchange=(e)=>loadImg(e.target,i);
+    if(uploaded[i-1]){
+      const pv=document.getElementById('pv'+i);
+      pv.src=uploaded[i-1];
+      pv.style.display='block';
+    }
+  }
+  showNeededSlots();
+}
 
-function up(n){document.getElementById('u'+n).click()}
-
-function loadImg(input,n){
-  if(!input.files[0])return;
-  const r=new FileReader();
-  r.onload=e=>{
-    imgSrc[n-1]=e.target.result;
-    const pv=document.getElementById('pv'+n);
-    pv.src=e.target.result; pv.style.display='block';
-    document.getElementById('pp'+n).style.display='none';
-    // assign to relevant screens
-    const targets=n===1?['s1a','s3a','s4b','s5b']:n===2?['s2a','s2b','s4a','s5a']:['s5c'];
-    targets.forEach(id=>{const el=document.getElementById(id);if(el)el.src=e.target.result});
-  };
-  r.readAsDataURL(input.files[0]);
+function showNeededSlots(){
+  const need=templateSlots[curT] || 1;
+  for(let i=1;i<=8;i++){
+    const el=document.getElementById('slot'+i);
+    if(!el)continue;
+    el.style.display = i<=need ? 'block':'none';
+  }
 }
 
 function setT(n){
   curT=n;
-  for(let i=1;i<=5;i++){document.getElementById('t'+i).style.display='none'}
-  const el=document.getElementById('t'+n);
-  el.style.display='flex';
-  el.className='tc th-'+curTh;
-  // show/hide upload slots
-  const cnt=slots[n];
-  document.getElementById('slot2').style.display=cnt>=2?'block':'none';
-  document.getElementById('slot3').style.display=cnt>=3?'block':'none';
-  // update active btn
-  document.querySelectorAll('.tb').forEach((b,i)=>b.classList.toggle('on',i===n-1));
-  applyFrame();
+  for(let i=1;i<=8;i++){
+    const t=document.getElementById('t'+i);
+    if(t)t.style.display='none';
+  }
+  const active=document.getElementById('t'+n);
+  active.style.display='block';
+  active.className='tc th-'+curTh;
+  document.querySelectorAll('.tb').forEach((b,idx)=>b.classList.toggle('on',idx===n-1));
+  showNeededSlots();
   upTxt();
+  applyFrame();
 }
 
 function setTh(th,dot){
   curTh=th;
-  document.querySelectorAll('.td').forEach(d=>d.classList.remove('on'));
+  document.querySelectorAll('#themeDots .td').forEach(x=>x.classList.remove('on'));
   dot.classList.add('on');
-  document.getElementById('t'+curT).className='tc th-'+th;
+  const active=document.getElementById('t'+curT);
+  active.className='tc th-'+th;
 }
 
-function setFrame(fr,dot){
-  curFr=fr;
-  document.querySelectorAll('#fc-dark,#fc-silver').forEach(d=>d.classList.remove('on'));
+function setFrame(kind,dot){
+  curFrame=kind;
+  document.querySelectorAll('#fc-dark,#fc-silver').forEach(x=>x.classList.remove('on'));
   dot.classList.add('on');
   applyFrame();
 }
 
 function applyFrame(){
-  const ids=['pf1','pf2a','pf2b','pf3','pf4a','pf4b','pf5a','pf5b','pf5c'];
-  const niids=['pn1','pn2a','pn2b','pn3','pn4a','pn4b','pn5a','pn5b','pn5c'];
-  ids.forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el)return;
-    if(curFr==='silver'){el.classList.add('silver')}
-    else{el.classList.remove('silver')}
-  });
-  niids.forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el)return;
-    el.style.background=curFr==='silver'?'#d8d8d8':'#0d0d0d';
+  document.querySelectorAll('.pf').forEach(el=>{
+    if(curFrame==='silver')el.classList.add('silver');
+    else el.classList.remove('silver');
   });
 }
 
-function set(id,val){const el=document.getElementById(id);if(el)el.textContent=val}
-function setH(id,val){const el=document.getElementById(id);if(el)el.innerHTML=val}
+function setDevice(device){
+  curDevice=device;
+  document.body.className='device-'+device;
+  const label = device==='s20' ? 'S20' : device==='iphone14' ? 'iPhone 14' : device==='pixel8' ? 'Pixel 8' : device==='xiaomi13' ? 'Xiaomi 13' : 'Nothing (2)';
+  document.querySelectorAll('.model-tag').forEach(t=>{t.textContent=label});
+}
+
+function loadImg(input,n){
+  if(!input.files || !input.files[0])return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    uploaded[n-1]=e.target.result;
+    const pv=document.getElementById('pv'+n);
+    pv.src=e.target.result;
+    pv.style.display='block';
+    document.querySelectorAll('img[data-slot="'+n+'"]').forEach(img=>{img.src=e.target.result});
+  };
+  rd.readAsDataURL(input.files[0]);
+}
+
+function setTxt(id,val){const el=document.getElementById(id);if(el)el.textContent=val}
+function setHtml(id,val){const el=document.getElementById(id);if(el)el.innerHTML=val}
 
 function upTxt(){
-  const title=document.getElementById('ti-title').value;
-  const sub  =document.getElementById('ti-sub').value;
-  const f1   =document.getElementById('ti-f1').value;
-  const f2   =document.getElementById('ti-f2').value;
-  const f3   =document.getElementById('ti-f3').value;
-  const f4   =document.getElementById('ti-f4').value;
-  setH('tx-t1-title',title.replace(' ','<br>'));
-  set('tx-t1-sub',sub); set('tx-t1-name',title);
-  set('tx-t2-title',title); set('tx-t2-sub',sub); set('tx-t2-name',title);
-  setH('tx-t3-title',title.replace(' ','<br>'));
-  set('tx-t3-f1',f1); set('tx-t3-f2',f2); set('tx-t3-f3',f3); set('tx-t3-f4',f4);
-  set('tx-t4-title',title); set('tx-t4-sub',sub);
-  set('tx-t5-title',title); set('tx-t5-sub',sub);
+  const title=document.getElementById('ti-title').value.trim() || 'Access Network';
+  const sub=document.getElementById('ti-sub').value.trim() || 'Mine. Earn. Grow.';
+  const f1=document.getElementById('ti-f1').value.trim() || 'Secure wallet';
+  const f2=document.getElementById('ti-f2').value.trim() || 'Fast rewards';
+  const f3=document.getElementById('ti-f3').value.trim() || 'Live analytics';
+  const f4=document.getElementById('ti-f4').value.trim() || 'Global support';
+
+  setHtml('tx1-title',title.replace(/\s+/,'<br>')); setTxt('tx1-sub',sub); setTxt('bn1',title);
+  setTxt('tx2-title',title); setTxt('tx2-sub',sub); setTxt('bn2',title);
+  setHtml('tx3-title',title.replace(/\s+/,'<br>')); setTxt('tx3-f1',f1); setTxt('tx3-f2',f2); setTxt('tx3-f3',f3); setTxt('tx3-f4',f4);
+  setTxt('tx4-title',title);
+  setTxt('tx5-title',title); setTxt('tx5-sub',sub);
+  setTxt('tx6-title',title);
+  setTxt('tx7-title',title); setTxt('tx7-sub',sub);
+  setTxt('tx8-title',title); setTxt('tx8-sub',sub);
+}
+
+function hydratePlaceholders(){
+  for(let i=1;i<=8;i++){
+    const ph = makePlaceholder(i);
+    document.querySelectorAll('img[data-slot="'+i+'"]').forEach(img=>{
+      img.src = uploaded[i-1] || ph;
+    });
+  }
 }
 
 async function dl(){
   document.getElementById('ld').classList.add('show');
   try{
     const el=document.getElementById('t'+curT);
-    const c=await html2canvas(el,{
-      scale:2.667, useCORS:true, allowTaint:true,
-      backgroundColor:null, logging:false,
-      width:405, height:720
-    });
+    const canvas=await html2canvas(el,{scale:2.667,useCORS:true,allowTaint:true,backgroundColor:null,width:405,height:720,logging:false});
     const a=document.createElement('a');
-    a.download='access-screenshot-t'+curT+'-'+Date.now()+'.png';
-    a.href=c.toDataURL('image/png',1.0);
+    a.download='pro-screenshot-template-'+curT+'-'+Date.now()+'.png';
+    a.href=canvas.toDataURL('image/png',1.0);
     a.click();
-  }catch(e){alert('Error: '+e.message)}
-  finally{document.getElementById('ld').classList.remove('show')}
+  }catch(err){
+    alert('Export failed: '+err.message);
+  }finally{
+    document.getElementById('ld').classList.remove('show');
+  }
 }
 
+renderSlots();
+setDevice('s20');
+hydratePlaceholders();
+upTxt();
 setT(1);
 </script>
 </body>
