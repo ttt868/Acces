@@ -6045,3 +6045,76 @@ input[type="number"],
   }
 }
 }
+
+/* === Login Screen - أجهزة ضيقة أفقياً (≤ 380px) === */
+@media (max-width: 380px) {
+  .login-box {
+    padding: 28px 16px;
+  }
+
+  .login-logo {
+    width: 60px;
+    height: 60px;
+  }
+
+  .logo-container h1 {
+    font-size: 20px;
+  }
+
+  .tagline {
+    font-size: 12px;
+  }
+
+  .login-form {
+    gap: 14px;
+  }
+
+  .google-signin-button,
+  html[lang="ar"] .google-signin-button,
+  body.arabic .google-signin-button,
+  html[lang="es"] .google-signin-button,
+  body.spanish .google-signin-button,
+  html[lang="fr"] .google-signin-button,
+  body.french .google-signin-button,
+  html[lang="id"] .google-signin-button,
+  body.indonesian .google-signin-button,
+  html[lang="pl"] .google-signin-button,
+  body.polish .google-signin-button {
+    width: 100% !important;
+    min-width: unset !important;
+    max-width: 100% !important;
+    font-size: 14px;
+    padding: 10px 12px;
+    height: 46px;
+  }
+
+  .referral-input input {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  .language-selector select {
+    font-size: 12px;
+    padding: 5px 8px;
+  }
+}
+
+/* === Login Screen - أصغر الأجهزة (≤ 340px) === */
+@media (max-width: 340px) {
+  .login-box {
+    padding: 22px 12px;
+  }
+
+  .login-logo {
+    width: 52px;
+    height: 52px;
+  }
+
+  .logo-container h1 {
+    font-size: 18px;
+  }
+
+  .tagline {
+    font-size: 11px;
+  }
+}
